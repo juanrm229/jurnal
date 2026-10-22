@@ -238,3 +238,59 @@ describe('kartu rahasia', () => {
     expect(after.drops.some((x: any) => x.id === a.id)).toBe(true);
   });
 });
+
+describe('mode pisah, kenangan, blokir', () => {
+  it('Mode Pisah: masing-masing hanya melihat Drop miliknya', async () => {
+    env.setNow('2026-11-02T05:00:00Z');
+    const a = await new Client(env.app, 'a@pisah.id').signup('A');
+    const b = await new Client(env.app, 'b@pisah.id').signup('B');
+    const duo = await a.createCircle('duo', 'A & B');
+    await b.accept(await a.invite(duo.id));
+    const d = '2026-11-02';
+    await a.ok('POST', '/v1/drops', a.dropBody(d, { text: 'dari A' }, { circleId: duo.id }));
+    await b.ok('POST', '/v1/drops', b.dropBody(d, { text: 'dari B' }, { circleId: duo.id }));
+    await b.ok('POST', `/v1/days/${d}/seal`, { tz: b.tz });
+    expect((await b.ok('GET', `/v1/circles/${duo.id}/days/${d}`)).drops).toHaveLength(2);
+    await a.ok('POST', `/v1/circles/${duo.id}/split`);
+    const after = await b.ok('GET', `/v1/circles/${duo.id}/days/${d}`);
+    expect(after.drops.map((x: any) => b.open(x).text)).toEqual(['dari B']);
+    expect(after.locked[0].reason).toBe('split');
+    expect((await a.req('POST', '/v1/drops', a.dropBody(d, { text: 'lagi' }, { circleId: duo.id }))).status).toBe(409);
+  });
+
+  it('Mode Kenangan butuh dua konfirmasi di lingkaran dan bisa dibatalkan', async () => {
+    const x = await new Client(env.app, 'x@kenang.id').signup('X');
+    const y = await new Client(env.app, 'y@kenang.id').signup('Y');
+    const z = await new Client(env.app, 'z@kenang.id').signup('Z');
+    const c = await x.createCircle('circle', 'XYZ');
+    const inv = await x.invite(c.id, 5);
+    await y.accept(inv);
+    await z.accept(inv);
+    const first = await x.ok('POST', `/v1/circles/${c.id}/memorial`, { userId: z.userId });
+    expect(first.confirmed).toBe(false);
+    const second = await y.ok('POST', `/v1/circles/${c.id}/memorial`, { userId: z.userId });
+    expect(second.confirmed).toBe(true);
+    const s1 = await x.ok('GET', `/v1/circles/${c.id}`);
+    expect(s1.members.find((m: any) => m.userId === z.userId).state).toBe('remembered');
+    await z.ok('POST', `/v1/circles/${c.id}/memorial/undo`);
+    const s2 = await x.ok('GET', `/v1/circles/${c.id}`);
+    expect(s2.members.find((m: any) => m.userId === z.userId).state).toBe('active');
+  });
+
+  it('blokir menyembunyikan isi orang yang diblokir', async () => {
+    const p = await new Client(env.app, 'p@blok.id').signup('P');
+    const q = await new Client(env.app, 'q@blok.id').signup('Q');
+    const r = await new Client(env.app, 'r@blok.id').signup('R');
+    const c = await p.createCircle('circle', 'PQR');
+    const inv = await p.invite(c.id, 5);
+    await q.accept(inv);
+    await r.accept(inv);
+    const d = '2026-11-02';
+    await q.ok('POST', '/v1/drops', q.dropBody(d, { text: 'dari Q' }, { circleId: c.id }));
+    await p.ok('POST', '/v1/drops', p.dropBody(d, { text: 'dari P' }, { circleId: c.id }));
+    await p.ok('POST', `/v1/days/${d}/seal`, { tz: p.tz });
+    await p.ok('POST', `/v1/blocks/${q.userId}`);
+    const v = await p.ok('GET', `/v1/circles/${c.id}/days/${d}`);
+    expect(v.drops.every((x: any) => x.authorId !== q.userId)).toBe(true);
+  });
+});

@@ -37,7 +37,7 @@ cd apps/mobile && EXPO_OFFLINE=1 npx expo start      # tekan w untuk web, atau b
 ### Tes
 
 ```bash
-npm test                   # core (13) + server (16): E2EE, streak, Hijriah, segel timbal balik, kapsul waktu, Surat Tersesat, rotasi kunci, pembayaran, Wrap publik…
+npm test                   # core (13) + server (19): E2EE, streak, Hijriah, segel timbal balik, kapsul waktu, Surat Tersesat, rotasi kunci, pembayaran, Wrap publik…
 npm run typecheck          # semua workspace
 CHROMIUM_PATH=/path/ke/chromium npm run e2e   # butuh server + web berjalan
 ```
