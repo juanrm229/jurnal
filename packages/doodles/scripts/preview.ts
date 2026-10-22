@@ -2,14 +2,25 @@
  * Membuat preview.html berisi semua doodle + contoh "taman setahun".
  * Jalankan: npx tsx scripts/preview.ts
  */
-import { writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { DOODLES, GARDEN_IDS, INK, PAPER, doodleToSvg, gardenDoodleFor } from '../src/index';
 import type { Doodle } from '../src/types';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const out = join(here, '..', 'preview.html');
+// Paket ini sengaja tanpa @types/node (tsconfig "types": []), jadi API Node diambil lewat getBuiltinModule.
+interface NodeProcess {
+  getBuiltinModule(id: 'node:fs'): { writeFileSync(path: string, data: string): void };
+  getBuiltinModule(id: 'node:path'): { join(...p: string[]): string; dirname(p: string): string };
+  getBuiltinModule(id: 'node:url'): { fileURLToPath(u: string): string };
+}
+const g = globalThis as unknown as {
+  process: NodeProcess;
+  console: { log(...a: unknown[]): void; warn(...a: unknown[]): void };
+};
+const { writeFileSync } = g.process.getBuiltinModule('node:fs');
+const path = g.process.getBuiltinModule('node:path');
+const { fileURLToPath } = g.process.getBuiltinModule('node:url');
+const log = g.console;
+const here = path.dirname(fileURLToPath((import.meta as unknown as { url: string }).url));
+const out = path.join(here, '..', 'preview.html');
 
 /** Kotak pembatas kira-kira dengan menyampel kurva (hanya M/L/C/Q/Z yang dipakai). */
 function bbox(paths: string[]): [number, number, number, number] {
@@ -135,5 +146,5 @@ ${sections}
 `;
 
 writeFileSync(out, html);
-console.log(`preview → ${out} (${DOODLES.length} doodle)`);
-if (warnings.length) console.warn(warnings.join('\n'));
+log.log(`preview → ${out} (${DOODLES.length} doodle)`);
+if (warnings.length) log.warn(warnings.join('\n'));

@@ -22,7 +22,7 @@ import {
   rotateCircleBody,
   updateCircleBody,
 } from '@sehari/core';
-import { and, eq, gte, inArray, isNotNull, lte, ne } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { type AppEnv, body, say, type Services } from '../context';
 import { schema } from '../db';
@@ -468,4 +468,3 @@ export function inviteRoutes(s: Services, auth: ReturnType<typeof import('./auth
   return r;
 }
 
-export { ne };

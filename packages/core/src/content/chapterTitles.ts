@@ -71,6 +71,8 @@ export interface ChapterTitlePattern {
   id: string;
   /** Makin tinggi makin khas, makin didahulukan. */
   weight: number;
+  /** Pola dengan grup yang sama tidak muncul bersamaan di putaran pertama (mis. dua judul soal hujan). */
+  group?: string;
   when: (f: ChapterFeatures) => boolean;
   templates: string[];
 }
@@ -131,12 +133,14 @@ const MONTH_TEMPLATES: Record<number, string[]> = {
 export const CHAPTER_TITLE_PATTERNS: ChapterTitlePattern[] = [
   {
     id: 'hujan-bulan-juni',
+    group: 'hujan',
     weight: 10,
     when: (f) => f.month === 6 && f.rainyDays >= 3,
     templates: ['Hujan Bulan Juni Versi Kita', 'Bab Hujan yang Tabah di Bulan Juni'],
   },
   {
     id: 'hujan-dan-lagu',
+    group: 'hujan',
     weight: 9,
     when: (f) => rainRatio(f) >= 0.35 && (moodIs('rindu', 'sedih')(f) || f.songs >= 8),
     templates: [
@@ -147,12 +151,14 @@ export const CHAPTER_TITLE_PATTERNS: ChapterTitlePattern[] = [
   },
   {
     id: 'kata-dan-kota',
+    group: 'kota',
     weight: 9,
     when: (f) => !!f.topWord && f.cities >= 3,
     templates: ['Bulan {Kata} dan Kota yang Berpindah-pindah', 'Bab {Kata} di {nKota} Kota'],
   },
   {
     id: 'hujan',
+    group: 'hujan',
     weight: 7,
     when: (f) => rainRatio(f) >= 0.35 || f.rainyDays >= 10,
     templates: [
@@ -166,6 +172,7 @@ export const CHAPTER_TITLE_PATTERNS: ChapterTitlePattern[] = [
   },
   {
     id: 'banyak-kota',
+    group: 'kota',
     weight: 7,
     when: (f) => f.cities >= 3,
     templates: [
@@ -177,12 +184,14 @@ export const CHAPTER_TITLE_PATTERNS: ChapterTitlePattern[] = [
   },
   {
     id: 'hening',
+    group: 'pelan',
     weight: 7,
     when: (f) => f.silentDays >= 3,
     templates: ['Bab Lilin-lilin Kecil', 'Bulan Kita Saling Menjaga', 'Bab Hari-hari yang Pelan', 'Bulan yang Kita Lewati Bersama'],
   },
   {
     id: 'dua-kota',
+    group: 'kota',
     weight: 6,
     when: (f) => f.cities === 2,
     templates: ['Bab Dua Kota, Satu Senja', 'Bulan Peluk dari Jauh', 'Bab Jarak yang Terasa Dekat'],
@@ -195,18 +204,21 @@ export const CHAPTER_TITLE_PATTERNS: ChapterTitlePattern[] = [
   },
   {
     id: 'lagu-tema',
+    group: 'lagu',
     weight: 6,
     when: (f) => !!f.topSongTitle,
     templates: ['Bab yang Diiringi “{lagu}”', 'Bulan Kita Memutar “{lagu}”', '“{lagu}” dan Hal-hal Lainnya'],
   },
   {
     id: 'peluk',
+    group: 'peluk',
     weight: 6,
     when: (f) => f.hugs >= Math.max(15, f.totalDays),
     templates: ['Bulan Banyak Peluk', 'Bab Peluk yang Dikirim Diam-diam', 'Bulan Kita Saling Menghangatkan'],
   },
   {
     id: 'selalu-datang',
+    group: 'pelan',
     weight: 6,
     when: (f) => f.totalDays >= 20 && sealRatio(f) >= 0.9,
     templates: ['Bulan yang Tak Pernah Absen', 'Bab Api yang Selalu Hangat', 'Bulan Kita Selalu Datang'],
@@ -221,24 +233,28 @@ export const CHAPTER_TITLE_PATTERNS: ChapterTitlePattern[] = [
   ),
   {
     id: 'kemarau',
+    group: 'hujan',
     weight: 5,
     when: (f) => f.rainyDays === 0 && f.totalDays >= 20,
     templates: ['Bulan Tanpa Payung', 'Bab Matahari yang Rajin', '{bulan} yang Terang Benderang'],
   },
   {
     id: 'kota-utama',
+    group: 'kota',
     weight: 5,
     when: (f) => !!f.topCity,
     templates: ['Catatan dari {kota}', 'Bab {kota} dan Kita', 'Bulan {kota} Rasa Rumah', 'Senja-senja di {kota}'],
   },
   {
     id: 'banyak-lagu',
+    group: 'lagu',
     weight: 5,
     when: (f) => f.songs >= 12,
     templates: ['Bulan Banyak Lagu', 'Bab Playlist yang Terus Bertambah', 'Bulan Kita Bergantian Pegang Musik'],
   },
   {
     id: 'kabut',
+    group: 'pelan',
     weight: 5,
     when: (f) => f.totalDays > 0 && sealRatio(f) < 0.4,
     templates: ['Bulan Banyak Kabut', 'Bab Hari-hari yang Disimpan Pelan-pelan', 'Bulan Sibuk, tapi Tetap Kembali'],
@@ -333,12 +349,17 @@ export function suggestChapterTitles(features: ChapterFeatures, seed: number): s
   };
 
   // Putaran pertama: satu judul per pola, supaya usulannya beragam.
+  const usedGroups = new Set<string>();
   for (const pattern of ranked) {
     if (result.length >= target) break;
+    if (pattern.group && usedGroups.has(pattern.group)) continue;
     const n = pattern.templates.length;
     const start = Math.floor(rand() * n);
     for (let i = 0; i < n; i++) {
-      if (tryAdd(fill(pattern.templates[(start + i) % n] ?? '', f))) break;
+      if (tryAdd(fill(pattern.templates[(start + i) % n] ?? '', f))) {
+        if (pattern.group) usedGroups.add(pattern.group);
+        break;
+      }
     }
   }
 

@@ -51,7 +51,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         }
       : { provider: 'local' },
     push: { expoAccessToken: env.EXPO_ACCESS_TOKEN, enabled: env.PUSH_DISABLED !== '1' },
-    anthropic: { apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL ?? 'claude-haiku-5-5' },
+    anthropic: { apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL ?? 'claude-opus-5-5' },
     devAuth: env.NODE_ENV !== 'production' && env.DEV_AUTH !== '0',
   };
 }

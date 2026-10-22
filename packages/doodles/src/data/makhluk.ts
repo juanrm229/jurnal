@@ -1,5 +1,5 @@
 import type { Doodle } from '../types';
-import { maker, type Pen } from '../pen';
+import { maker, sampleCatmull, type Pen, type Pt } from '../pen';
 
 const d = maker('makhluk');
 
@@ -66,14 +66,14 @@ export const makhluk: Doodle[] = [
     // jejak terbang
     p.dashed(
       [
-        [52, 44],
-        [57, 50],
-        [52, 55],
-        [46, 52],
-        [44, 57],
+        [51, 44],
+        [56, 49],
+        [53, 54],
+        [48, 52],
+        [45, 56],
       ],
-      2.6,
-      2.6,
+      1.8,
+      2.8,
     );
   }),
 
@@ -619,36 +619,60 @@ export const makhluk: Doodle[] = [
   }),
 
   d('cacing', 'Cacing', (p) => {
-    const center = (x: number): number => 38 + Math.sin(((x - 10) / 40) * Math.PI * 2) * 6;
-    const top: Array<[number, number]> = [];
-    const bot: Array<[number, number]> = [];
-    for (let x = 10; x <= 50; x += 4) {
-      const y = center(x);
-      const dy = (center(x + 0.5) - center(x - 0.5)) / 1;
-      const len = Math.hypot(1, dy);
-      const nx = -dy / len;
-      const ny = 1 / len;
-      top.push([x - nx * 3.6, y - ny * 3.6]);
-      bot.push([x + nx * 3.6, y + ny * 3.6]);
+    const spine = sampleCatmull(
+      [
+        [13, 45],
+        [21, 39],
+        [30, 43],
+        [39, 47],
+        [47, 41],
+        [51, 35],
+      ],
+      6,
+    );
+    const rad = (i: number): number => 2 + Math.min(1, i / (spine.length * 0.35)) * 1.7;
+    const r = 3.7;
+    const off = (i: number, side: number): Pt => {
+      const r = rad(i);
+      const a = spine[Math.max(0, i - 1)]!;
+      const b = spine[Math.min(spine.length - 1, i + 1)]!;
+      const q = spine[i]!;
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const l = Math.hypot(dx, dy) || 1;
+      return [q[0] - (dy / l) * r * side, q[1] + (dx / l) * r * side];
+    };
+    const idx: number[] = [];
+    for (let i = 0; i < spine.length; i += 3) idx.push(i);
+    if (idx[idx.length - 1] !== spine.length - 1) idx.push(spine.length - 1);
+    const s0 = spine[0]!;
+    const s1 = spine[1]!;
+    const e0 = spine[spine.length - 1]!;
+    const e1 = spine[spine.length - 2]!;
+    const tip = (q: [number, number], prev: [number, number], r: number): Pt => {
+      const dx = q[0] - prev[0];
+      const dy = q[1] - prev[1];
+      const l = Math.hypot(dx, dy) || 1;
+      return [q[0] + (dx / l) * r, q[1] + (dy / l) * r];
+    };
+    p.shape([
+      ...idx.map((i) => off(i, -1)),
+      tip(e0, e1, r),
+      ...[...idx].reverse().map((i) => off(i, 1)),
+      tip(s0, s1, rad(0)),
+    ]);
+    for (const i of [6, 10, 14]) {
+      const a = off(i, -1);
+      const b = off(i, 1);
+      p.line(a[0], a[1], b[0], b[1], 0.05);
     }
-    const t0 = top[0]!;
-    const b0 = bot[0]!;
-    const tN = top[top.length - 1]!;
-    const bN = bot[bot.length - 1]!;
-    p.curve([...top, [tN[0] + 3.6, (tN[1] + bN[1]) / 2], ...[...bot].reverse(), [b0[0] - 3.4, (t0[1] + b0[1]) / 2], t0], {
-      wob: 0.25,
-    });
-    for (const x of [18, 24, 30]) {
-      const y = center(x);
-      p.line(x - 0.8, y - 3, x + 0.8, y + 3, 0.05);
-    }
-    p.dot(46.4, center(46) - 0.8, 1.1);
-    p.dot(50.4, center(50) - 0.6, 1.1);
+    p.dot(49.5, 36.5, 1.1);
+    smile(p, 51.6, 40.2, 1.4);
     p.curve(
       [
-        [6, 50],
-        [28, 51],
-        [58, 50],
+        [6, 52],
+        [28, 53],
+        [58, 52],
       ],
       { wob: 0.25 },
     );

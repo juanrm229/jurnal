@@ -55,7 +55,7 @@ export class S3BlobStore implements BlobStore {
     return `${this.cfg.endpoint.replace(/\/$/, '')}/${this.cfg.bucket}/${encodeURIComponent(key).replace(/%2F/g, '/')}`;
   }
   async put(key: string, data: Uint8Array, contentType = 'application/octet-stream') {
-    const res = await this.client.fetch(this.url(key), { method: 'PUT', body: data, headers: { 'content-type': contentType } });
+    const res = await this.client.fetch(this.url(key), { method: 'PUT', body: data as unknown as BodyInit, headers: { 'content-type': contentType } });
     if (!res.ok) throw new Error(`S3 put gagal: ${res.status}`);
   }
   async get(key: string) {

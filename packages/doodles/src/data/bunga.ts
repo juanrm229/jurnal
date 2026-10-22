@@ -250,12 +250,7 @@ export const bunga: Doodle[] = [
     );
     p.dot(cx, cy + 0.8, 1.1);
     // kuncup
-    p.shape([
-      [24.5, 30],
-      [21, 28],
-      [19.5, 31.5],
-      [22.5, 33.5],
-    ]);
+    p.petal(24.2, 31, 150, 5, 5.5);
     p.leaf(24, 53, 9, 46, 6.5, { bend: -2 });
     p.leaf(25, 53, 44, 49, 6.5, { bend: 2 });
     p.curve(

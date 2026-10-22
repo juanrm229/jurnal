@@ -196,7 +196,7 @@ const RINDU_CARDS: DailyCard[] = [
   r('tontonan-bareng', 'tantangan', 'Nonton bareng jauh', 'Tonton satu episode yang sama di jam yang sama. Tulis satu komentar.', 'ringan', { doodle: 'lampu' }),
   r('foto-buram', 'kenangan', 'Foto paling buram', 'Cari foto kita yang paling buram tapi paling berharga.', 'nostalgia', { doodle: 'kamera' }),
   r('susah-minggu-ini', 'pertanyaan', 'Paling susah', 'Apa yang paling susah dari jarak minggu ini?', 'dalam'),
-  r('mudah-minggu-ini', 'pertanyaan', 'Paling mudah', 'Dan apa yang ternyata paling mudah?', 'syukur'),
+  r('mudah-minggu-ini', 'pertanyaan', 'Paling mudah', 'Apa yang ternyata paling mudah dari jarak minggu ini?', 'syukur'),
   r('minggu-pagi', 'pertanyaan', 'Minggu pagi nanti', 'Seperti apa Minggu pagi kita kalau nanti tinggal sekota?', 'mimpi', { fit: DUO, doodle: 'rumah' }),
   r('tulis-nama', 'tantangan', 'Tulis namaku', 'Tulis namaku di sesuatu: embun di kaca, pasir, atau struk belanja. Potret.', 'lucu', { fit: DUO }),
   r('kesal-jadi-rindu', 'rahasia', 'Dulu kesal', 'Kebiasaanku yang dulu bikin kesal, sekarang malah kamu rindukan?', 'lucu', { fit: DUO }),
