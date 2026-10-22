@@ -12,9 +12,14 @@
     "dev:mobile": "npm run start -w @sehari/mobile",
     "web": "npm run web -w @sehari/mobile",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "e2e": "node e2e/flow.mjs",
+    "seed": "npx tsx apps/server/scripts/seed.ts"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
   }
 }
