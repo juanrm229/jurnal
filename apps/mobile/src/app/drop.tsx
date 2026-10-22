@@ -50,7 +50,7 @@ export default function DropComposer() {
   const active = circles.filter((x) => x.status === 'active' && x.me?.state === 'active');
   const createDrop = useCreateDrop();
 
-  const initialMode: Mode = params.kind === 'photo' ? 'photo' : params.kind === 'mood' ? 'mood' : 'text';
+  const initialMode: Mode = params.kind === 'photo' ? 'photo' : params.kind === 'mood' ? 'mood' : params.kind === 'silent' ? 'silent' : 'text';
   const [mode, setMode] = useState<Mode>(initialMode);
   const [text, setText] = useState('');
   const [mood, setMood] = useState<MoodCode | undefined>();

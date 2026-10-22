@@ -54,6 +54,10 @@ export interface WrapInput {
   motifs?: string[];
   /** Judul bab tiap bulan untuk Tahun Kita. */
   chapterTitles?: { month: string; title: string }[];
+  /** Pembaca Wrap — supaya penutup menyebut orang lain, bukan dirinya. */
+  viewerId?: string;
+  /** Hari ini menurut pembaca; menentukan apakah streak "saat ini" relevan. */
+  today?: DayKey;
 }
 
 export type WrapCard =
@@ -327,12 +331,22 @@ export function buildWrap(input: WrapInput): Wrap {
   }
 
   if (input.streak && input.scope !== 'moment') {
+    // Hari yang tersegel semua anggota dalam periode ini.
+    const memberIds = input.members.map((m) => m.userId);
+    const together = days.filter((d) => memberIds.length > 1 && memberIds.every((id) => (input.seals[id] ?? []).includes(d)));
+    let run = 0;
+    let longestInPeriod = 0;
+    for (const d of days) {
+      run = together.includes(d) ? run + 1 : 0;
+      longestInPeriod = Math.max(longestInPeriod, run);
+    }
+    const isCurrent = !input.today || (input.today >= r.start && input.today <= r.end);
     cards.push({
       type: 'streak',
       title: 'Api yang kita jaga',
-      current: input.streak.current,
-      longest: input.streak.longest,
-      togetherDays: input.streak.togetherDays,
+      current: isCurrent ? input.streak.current : run,
+      longest: isCurrent ? input.streak.longest : longestInPeriod,
+      togetherDays: together.length,
       perMember: input.members.map((m) => ({
         userId: m.userId,
         days: (input.seals[m.userId] ?? []).filter((d) => d >= r.start && d <= r.end).length,
@@ -383,7 +397,7 @@ export function buildWrap(input: WrapInput): Wrap {
   const closings: Record<WrapScope, string> = {
     week: 'Sampai jumpa di adegan berikutnya.',
     month: 'Bab ini selesai. Halaman berikutnya masih kosong, dan itu kabar baik.',
-    year: `Satu jilid lagi di rak kalian. Terima kasih sudah menjalani ${input.period} bersama ${input.members.length > 2 ? 'mereka' : name(input.members[1]?.userId ?? '')}.`,
+    year: `Satu jilid lagi di rak kalian. Terima kasih sudah menjalani ${input.period} bersama ${input.members.length > 2 ? 'mereka' : name(input.members.find((m) => m.userId !== input.viewerId)?.userId ?? input.members[1]?.userId ?? '')}.`,
     moment: 'Acaranya selesai, kenangannya baru mulai.',
   };
   cards.push({ type: 'closing', text: closings[input.scope], doodle: 'tunas' });

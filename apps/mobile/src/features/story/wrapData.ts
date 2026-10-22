@@ -1,3 +1,4 @@
+import { todayIn } from '@sehari/core';
 /**
  * Bahan Wrap dirangkai di perangkat: Drop didekripsi di sini, lalu `buildWrap`
  * menghitung kartu-kartunya. Tidak ada isi yang dikirim ke server.
@@ -179,6 +180,8 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
       chapterTitles,
       genreName,
       motifs: motifList,
+      viewerId: me.user.id,
+      today: todayIn(me.user.tz, new Date(), true),
     };
     const wrap = buildWrap(input);
     const suggestedTitle = scope === 'month' && !chapterTitle && drops.length ? suggestTitlesFor(input)[0] : undefined;

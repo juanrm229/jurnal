@@ -37,7 +37,7 @@ export default function Ekspedisi() {
   const done = list.filter((e) => e.completedAt);
   const faded = list.filter((e) => !e.completedAt && e.endDay < today);
   const fit = kindToFit(circle.kind);
-  const options = EXPEDITIONS.filter((e) => e.fit.includes('semua') || e.fit.includes(fit));
+  const options = EXPEDITIONS.filter((e) => (e.fit.includes('semua') || e.fit.includes(fit)) && e.id !== running?.code);
   const blocked = !!running || !!upcoming || circle.status !== 'active';
 
   const start = async (code: string) => {

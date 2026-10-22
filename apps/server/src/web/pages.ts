@@ -10,6 +10,7 @@ import { Hono } from 'hono';
 import type { Services } from '../context';
 import { schema } from '../db';
 import { fulfillOrder } from '../routes/billing';
+import { runJobs } from '../jobs/scheduler';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const LAVENDER = '#A9A4E8';
@@ -143,6 +144,19 @@ location.replace('sehari://j/'+t+'?k='+encodeURIComponent(f.slice(1)));setTimeou
       ),
     ),
   );
+
+  // Mode pengembangan: jalankan penjadwal sekarang & antar surat tanpa menunggu.
+  if (s.cfg.devAuth) {
+    r.post('/dev/jobs', async (c) => {
+      await runJobs(s);
+      return c.json({ ok: true });
+    });
+    r.post('/dev/letters/:id/deliver', async (c) => {
+      await s.db.update(schema.letters).set({ deliverOn: s.now().toISOString().slice(0, 10) }).where(eq(schema.letters.id, c.req.param('id')));
+      await runJobs(s);
+      return c.json({ ok: true });
+    });
+  }
 
   if (s.payments.name === 'dev') {
     r.get('/dev/pay/:orderId', async (c) => {

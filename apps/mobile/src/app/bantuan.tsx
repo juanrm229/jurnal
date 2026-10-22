@@ -16,7 +16,7 @@ interface Action {
 }
 
 /** "119 ext. 8" → tel:119, "WA 08111-129-129" → wa.me, URL → dibuka apa adanya. */
-export function actionsFor(r: HelpResource): Action[] {
+function actionsFor(r: HelpResource): Action[] {
   return r.contact
     .split('·')
     .map((s) => s.trim())
@@ -96,7 +96,7 @@ export default function Help() {
       </Section>
 
       <Section title="ruang hening">
-        <Sticky color="blue" tilt={-1} pin={false} onPress={() => router.push('/drop')}>
+        <Sticky color="blue" tilt={-1} pin={false} onPress={() => router.push({ pathname: '/drop', params: { kind: 'silent' } })}>
           <Row gap={12} style={{ alignItems: 'flex-start' }}>
             <Doodle id="ui-hening" size={32} />
             <View style={{ flex: 1, gap: 4 }}>
