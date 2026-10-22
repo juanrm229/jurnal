@@ -10,6 +10,8 @@ Isi lingkaran **dienkripsi end-to-end** di perangkat. Server hanya menyimpan cip
 
 `apps/web` adalah versi web penuh fitur yang bisa dipasang di layar utama HP: halaman jurnal bebas (ketuk di mana saja untuk menulis, seret & putar foto dan stiker di atas tulisan, tempel foto langsung dari galeri/papan klip), upacara segel dengan amplop & lilin, buka bersama berdampingan seperti buku, lingkaran, kenangan, surat, Wrap, papan & kitab, serta tema warna tinta doodle & kertas.
 
+Coba di laptop dengan satu perintah: `npm run lokal` lalu buka http://localhost:8787 (lihat [docs/coba-lokal.md](docs/coba-lokal.md)). Untuk mengembangkan:
+
 ```bash
 npm install
 npm run dev:server   # API :8787

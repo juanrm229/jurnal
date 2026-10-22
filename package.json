@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "lokal": "node scripts/lokal.mjs",
     "dev:server": "npm run dev -w @sehari/server",
     "dev:mobile": "npm run start -w @sehari/mobile",
     "web": "npm run dev -w @sehari/web",
