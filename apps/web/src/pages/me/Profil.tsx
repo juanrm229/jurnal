@@ -6,13 +6,10 @@ import { useMe } from '@/lib/data';
 import { back } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { CityPicker } from '@/ui/art';
+import { AvatarPicker } from '@/ui/AvatarPicker';
 import { Avatar, Doodle, Header, Section, Toggle } from '@/ui/kit';
 import { ErrText, errMsg, Note } from './kit';
 
-const AVATARS = [
-  'tunas', 'bunga-matahari', 'kaktus', 'jamur', 'siput', 'lebah', 'kucing', 'apel', 'labu', 'tulip', 'kupu-kupu', 'burung',
-  'kelinci', 'landak', 'katak', 'bebek', 'ikan', 'kepik', 'capung', 'teratai', 'anggrek', 'semanggi', 'cangkir', 'gitar',
-];
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 const DAYS_IN = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -74,19 +71,8 @@ export default function ProfilEdit() {
         </p>
       </Section>
 
-      <Section title="doodle-mu">
-        <div className="row wrap" style={{ gap: 10 }}>
-          {AVATARS.map((a) => (
-            <button
-              key={a}
-              aria-label={a}
-              aria-pressed={a === doodle}
-              onClick={() => setDoodle(a)}
-              style={{ padding: 8, borderRadius: 16, background: a === doodle ? 'var(--pill)' : 'var(--card)', border: `1px solid ${a === doodle ? 'var(--ink)' : 'var(--card-edge)'}` }}>
-              <Doodle id={a} size={32} />
-            </button>
-          ))}
-        </div>
+      <Section title="wajahmu">
+        <AvatarPicker value={doodle} onChange={setDoodle} onUploaded={setMe} />
       </Section>
 
       <Section title="kota sekarang">

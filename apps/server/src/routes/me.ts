@@ -107,6 +107,21 @@ export function meRoutes(s: Services) {
     return c.json(res);
   });
 
+  // Foto profil sendiri (opsional, pengganti doodle). Kecil & tidak dienkripsi:
+  // hanya terlihat lewat alamat acak oleh orang yang melihat profilmu.
+  r.post('/avatar', async (c) => {
+    const user = c.get('user');
+    const type = c.req.header('content-type') ?? '';
+    if (!/^image\/(jpeg|png|webp)$/.test(type)) throw bad('avatar_type', 'Foto profil harus JPG, PNG, atau WebP.');
+    const data = new Uint8Array(await c.req.arrayBuffer());
+    if (data.byteLength > 300_000) throw bad('avatar_size', 'Foto profil terlalu besar (maks 300 KB).');
+    const id = newId().slice(0, 16);
+    await s.blobs.put(`avatar/${id}`, data);
+    if (user.doodle.startsWith('foto:')) await s.blobs.delete(`avatar/${user.doodle.slice(5)}`).catch(() => {});
+    await s.db.update(schema.users).set({ doodle: `foto:${id}` }).where(eq(schema.users.id, user.id));
+    return c.json(await buildMe(s, user.id));
+  });
+
   r.post('/push-token', async (c) => {
     const input = await body(c, pushTokenBody);
     await s.db.update(sessions).set({ pushToken: input.token }).where(eq(sessions.id, c.get('session').id));

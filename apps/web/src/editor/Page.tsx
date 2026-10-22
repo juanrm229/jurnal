@@ -4,8 +4,9 @@
  * foto boleh menimpa tulisan. Tata letak tersimpan di dalam payload terenkripsi.
  */
 import { type Audience, type DropPayload, MOODS, type PageLayout, type ReactionKind } from '@sehari/core';
-import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { DOODLES, fnv1a } from '@sehari/doodles';
 import { Doodle } from '@/ui/kit';
 import { PageElement } from './elements';
 
@@ -83,6 +84,10 @@ export interface PageProps {
   renderTools?: (item: PageItem & { layout: PageLayout }) => ReactNode;
   head?: ReactNode;
   foot?: ReactNode;
+  /** Pengganti isi halaman kosong yang bisa disunting. */
+  empty?: ReactNode;
+  /** Benih doodle kecil di pinggir kertas (sama di semua perangkat). */
+  margins?: string;
   sealed?: boolean;
   mood?: string;
   minHeight?: number;
@@ -98,6 +103,14 @@ export function Page(props: PageProps) {
   const [live, setLive] = useState<Record<string, PageLayout>>({});
   // Ketukan yang hanya melepas pilihan/penyuntingan tidak membuat tulisan baru.
   const dismissed = useRef(false);
+  // Dua jari: cubit untuk memperbesar, putar untuk memutar elemen terpilih.
+  const pts = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef(false);
+  const pinch = useRef<null | { id: string; start: PageLayout; d0: number; a0: number; last: PageLayout }>(null);
+  const two = () => {
+    const [a, b] = [...pts.current.values()];
+    return { d: Math.hypot(b!.x - a!.x, b!.y - a!.y), a: Math.atan2(b!.y - a!.y, b!.x - a!.x) };
+  };
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -109,8 +122,29 @@ export function Page(props: PageProps) {
   }, []);
 
   const laid = withLayouts(items).map((it) => ({ ...it, layout: live[it.id] ?? it.layout }));
+  const marginDoodles = useMemo(() => {
+    if (!props.margins) return [];
+    const pool = DOODLES.filter((d) => ['stiker', 'cuaca', 'perasaan', 'bunga'].includes(d.category)).map((d) => d.id);
+    const h = fnv1a(props.margins);
+    return [0, 1, 2, 3, 4].map((i) => {
+      const r = fnv1a(`${props.margins}:${i}`);
+      const left = i % 2 === 0;
+      return { id: pool[(h + r) % pool.length]!, x: left ? 8 + (r % 40) : 930 - (r % 30), y: 260 + i * 230 + (r % 120), rot: (r % 40) - 20, size: 46 + (r % 24) };
+    });
+  }, [props.margins]);
   const bottom = laid.reduce((m, it) => Math.max(m, it.layout.y + (it.payload.kind === 'photo' ? it.layout.w * 1.1 : 260)), 0);
   const height = Math.max(props.minHeight ?? 1300, bottom + 260);
+
+  const endPointer = (id: number) => {
+    pts.current.delete(id);
+    const p = pinch.current;
+    if (p && pts.current.size < 2) {
+      pinch.current = null;
+      props.onLayout?.(p.id, p.last);
+      window.setTimeout(() => setLive(({ [p.id]: _, ...rest }) => rest), 400);
+    }
+    if (pts.current.size === 0) window.setTimeout(() => (gesture.current = false), 50);
+  };
 
   const toPage = (clientX: number, clientY: number) => {
     const r = ref.current!.getBoundingClientRect();
@@ -124,7 +158,33 @@ export function Page(props: PageProps) {
     <div
       ref={ref}
       className={['page lined', dragOver ? 'drag-over' : '', props.sealed ? 'sealed' : '', props.className].filter(Boolean).join(' ')}
-      style={{ height: height * scale, '--s': scale, '--page-wash': moodColor ?? 'transparent', filter: aged ? `sepia(${aged * 0.55}) saturate(${1 - aged * 0.2})` : undefined } as CSSProperties}
+      style={{ height: height * scale, '--s': scale, '--page-wash': moodColor ?? 'transparent', filter: aged ? `sepia(${aged * 0.55}) saturate(${1 - aged * 0.2})` : undefined, touchAction: editable && selectedId ? 'none' : undefined } as CSSProperties}
+      onPointerDownCapture={(e) => {
+        pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pts.current.size === 2 && editable && selectedId) {
+          const it = laid.find((x) => x.id === selectedId);
+          if (it && it.authorId === props.viewerId) {
+            const t = two();
+            pinch.current = { id: it.id, start: it.layout, d0: Math.max(1, t.d), a0: t.a, last: it.layout };
+            gesture.current = true;
+          }
+        }
+      }}
+      onPointerMoveCapture={(e) => {
+        if (!pts.current.has(e.pointerId)) return;
+        pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        const p = pinch.current;
+        if (!p || pts.current.size < 2) return;
+        const t = two();
+        const w = Math.round(Math.max(70, Math.min(1000, p.start.w * (t.d / p.d0))));
+        let rot = p.start.rot + ((t.a - p.a0) * 180) / Math.PI;
+        if (Math.abs(rot) < 3) rot = 0;
+        const next = { ...p.start, w, rot: Math.round(rot * 10) / 10, x: Math.round(p.start.x + (p.start.w - w) / 2), y: Math.round(p.start.y + ((p.start.w - w) / 2) * 0.7) };
+        p.last = next;
+        setLive((m) => ({ ...m, [p.id]: next }));
+      }}
+      onPointerUpCapture={(e) => endPointer(e.pointerId)}
+      onPointerCancelCapture={(e) => endPointer(e.pointerId)}
       onPointerDown={(e) => {
         dismissed.current = !!(selectedId || props.editingId);
         if (e.target === ref.current || (e.target as HTMLElement).dataset.paper) onSelect?.(null);
@@ -152,6 +212,17 @@ export function Page(props: PageProps) {
           props.onFiles(files, p.x - 200, p.y - 150);
         }
       }}>
+      {props.margins ? (
+        <>
+          <span className="page-tape l" />
+          <span className="page-tape r" />
+        </>
+      ) : null}
+      {marginDoodles.map((m, i) => (
+        <span key={i} className="margin-doodle" data-paper="1" style={{ left: m.x * scale, top: m.y * scale, transform: `rotate(${m.rot}deg)` }}>
+          <Doodle id={m.id} size={m.size * scale} sw={2} />
+        </span>
+      ))}
       {props.head ? <div className="page-head">{props.head}</div> : null}
       {laid
         .sort((a, b) => a.layout.z - b.layout.z)
@@ -171,6 +242,7 @@ export function Page(props: PageProps) {
             }}
             onTap={(at) => props.onItemTap?.(it.id, at)}
             onEdit={() => props.onEdit?.(it.id)}
+            gesture={gesture}
             tools={selectedId === it.id && editable ? props.renderTools?.(it) : null}>
             <PageElement
               item={it}
@@ -183,7 +255,8 @@ export function Page(props: PageProps) {
           </Movable>
         ))}
       {props.foot}
-      {editable && items.length === 0 ? (
+      {editable && items.length === 0 && props.empty ? props.empty : null}
+      {editable && items.length === 0 && !props.empty ? (
         <div data-paper="1" style={{ position: 'absolute', left: 0, right: 0, top: '38%', textAlign: 'center', color: 'var(--ink-soft)', pointerEvents: 'none' }}>
           <Doodle id="penyiram" size={64 * Math.max(scale, 0.7)} draw className="sway" />
           <div className="hand" style={{ fontSize: Math.max(22, 44 * scale), color: 'var(--ink-soft)' }}>
@@ -207,9 +280,11 @@ function Movable({
   onCommit,
   onTap,
   onEdit,
+  gesture,
   tools,
   children,
 }: {
+  gesture: React.RefObject<boolean>;
   item: PageItem & { layout: PageLayout };
   scale: number;
   editable: boolean;
@@ -259,6 +334,10 @@ function Movable({
   const move = (e: React.PointerEvent) => {
     const d = drag.current;
     if (!d) return;
+    if (gesture.current) {
+      d.moved = true;
+      return;
+    }
     const dx = e.clientX - d.sx;
     const dy = e.clientY - d.sy;
     if (!d.moved && Math.hypot(dx, dy) < 4) return;
@@ -281,6 +360,7 @@ function Movable({
     drag.current = null;
     setDragging(false);
     if (!d) return;
+    if (gesture.current) return;
     if (d.moved) onCommit(last.current);
     else if (d.kind === 'move' && selected && editable) onEdit();
     void e;

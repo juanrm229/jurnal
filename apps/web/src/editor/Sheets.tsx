@@ -3,9 +3,11 @@ import { DOODLES } from '@sehari/doodles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchSongMeta, parseSongUrl } from '@/lib/songs';
 import { Doodle, MoodPicker, Sheet } from '@/ui/kit';
+import { FILLS, SPECIAL, StickerArt } from './stickers';
 
 
 const STICKER_CATS: { id: string; label: string }[] = [
+  { id: 'scrapbook', label: 'selotip & cap' },
   { id: 'stiker', label: 'hiasan' },
   { id: 'perasaan', label: 'perasaan' },
   { id: 'makanan', label: 'makanan' },
@@ -21,8 +23,8 @@ const STICKER_CATS: { id: string; label: string }[] = [
 ];
 
 export function StickerSheet({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (id: string) => void }) {
-  const cats = STICKER_CATS.filter((c) => DOODLES.some((d) => d.category === c.id));
-  const [cat, setCat] = useState(cats[0]?.id ?? 'bunga');
+  const cats = STICKER_CATS.filter((c) => c.id === 'scrapbook' || DOODLES.some((d) => d.category === c.id));
+  const [cat, setCat] = useState('perasaan');
   const [q, setQ] = useState('');
   const list = useMemo(
     () => DOODLES.filter((d) => d.category !== 'ui' && (q ? d.name.toLowerCase().includes(q.toLowerCase()) || d.id.includes(q.toLowerCase()) : d.category === cat)),
@@ -38,13 +40,23 @@ export function StickerSheet({ open, onClose, onPick }: { open: boolean; onClose
           </button>
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 6 }}>
-        {list.map((d) => (
-          <button key={d.id} title={d.name} onClick={() => onPick(d.id)} className="icon-btn" style={{ aspectRatio: '1', background: 'var(--card)' }}>
-            <Doodle id={d.id} size={48} />
-          </button>
-        ))}
-      </div>
+      {cat === 'scrapbook' && !q ? (
+        <div className="sticker-grid wide">
+          {SPECIAL.map((id, i) => (
+            <button key={id} title={id} onClick={() => onPick(id)} className="sticker-cell">
+              <StickerArt id={id} fill={FILLS[i % 6]} scale={0.5} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="sticker-grid">
+          {list.map((d, i) => (
+            <button key={d.id} title={d.name} onClick={() => onPick(d.id)} className="sticker-cell">
+              <StickerArt id={d.id} fill={FILLS[i % 6]} />
+            </button>
+          ))}
+        </div>
+      )}
     </Sheet>
   );
 }

@@ -28,6 +28,8 @@ import { defaultWidth, Page, type PageItem, PAGE_W } from '@/editor/Page';
 import { SealCeremony } from '@/editor/Seal';
 import { MoodSheet, PromptSheet, SilentSheet, SongSheet, StickerSheet, VoiceSheet } from '@/editor/Sheets';
 import { TEXT_SIZES } from '@/editor/elements';
+import { FILLS, isSpecial, LINES, specialWidth } from '@/editor/stickers';
+import { DockBtn, EmptyPage, Tile, useKeyboardInset } from '@/editor/dock';
 import { api } from '@/lib/api';
 import { buildDropBody, type CircleView, type DraftDrop, newDropId, nowParts, openDrop, qk, updateDrop, useCircles, useKeyring, useMe, useMyDay, useToday } from '@/lib/data';
 import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
@@ -83,7 +85,10 @@ export default function Today() {
 
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'sticker' | 'mood' | 'song' | 'voice' | 'prompt' | 'silent' | 'audience'>(null);
+  const [sheet, setSheet] = useState<null | 'sticker' | 'mood' | 'song' | 'voice' | 'prompt' | 'silent' | 'audience' | 'more' | 'caption'>(null);
+  const [caption, setCaption] = useState('');
+  const [captionFor, setCaptionFor] = useState<string | null>(null);
+  const kb = useKeyboardInset();
   const [sealing, setSealing] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const pageBox = useRef<HTMLDivElement>(null);
@@ -285,6 +290,61 @@ export default function Today() {
 
   if (q.isLoading || !ring) return <Growing label="membuka halaman…" />;
 
+  const openCaption = (it: Item) => {
+    setCaptionFor(it.id);
+    setCaption(it.payload.text ?? '');
+    setSheet('caption');
+  };
+  const saveCaption = () => {
+    if (captionFor) restyle(captionFor, (p) => ({ ...p, text: caption.trim() || undefined }));
+    setSheet(null);
+  };
+  const addSticker = (id: string) => {
+    const w = isSpecial(id) ? specialWidth(id) : 150;
+    const c = viewCenter(w);
+    const fill = id.startsWith('cap:') ? undefined : FILLS[Math.floor(Math.random() * 6)];
+    void create({ ...base('sticker', { ...c, w, rot: Math.round((Math.random() - 0.5) * (id.startsWith('washi:') ? 30 : 20)) }), sticker: id, text: id.startsWith('cap:') ? day : undefined, style: fill ? { fill } : undefined });
+  };
+  const cycle = <T,>(list: readonly T[], cur: T | undefined) => list[(Math.max(0, list.indexOf(cur as T)) + 1) % list.length]!;
+  const toolsFor = (it: Item) => {
+    const k = it.payload.kind;
+    const p = it.payload;
+    const common = (
+      <>
+        <DockBtn icon="ui-tambah" label="ke depan" onClick={() => restyle(it.id, (x) => ({ ...x, layout: { ...x.layout!, z: nextZ() } }))} />
+        <DockBtn icon={it.audience === 'self' ? 'ui-gembok' : 'ui-gembok-buka'} label={it.audience === 'self' ? 'hanya aku' : 'bersama'} onClick={() => restyle(it.id, (x) => x, it.audience === 'self' ? (circleIds.length ? 'circle' : 'self') : 'self')} />
+        <DockBtn icon="ui-hapus" label="hapus" danger onClick={() => void remove(it.id)} />
+      </>
+    );
+    if (['text', 'idea', 'card', 'answer', 'word', 'expedition'].includes(k))
+      return (
+        <>
+          <DockBtn icon="pena" label="ubah" onClick={() => setEditing(it.id)} />
+          <DockBtn icon="ui-teks" label={p.style?.font === 'hand' ? 'mesin tik' : 'tulisan tangan'} onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, font: x.style?.font === 'hand' ? 'mono' : 'hand' } }))} />
+          <DockBtn icon="ui-cari" label="ukuran" onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, size: cycle([TEXT_SIZES.s, TEXT_SIZES.m, TEXT_SIZES.l, TEXT_SIZES.xl], (x.style?.size ?? TEXT_SIZES.m) as 38) } }))} />
+          <DockBtn swatch={p.style?.color ?? 'var(--text)'} label="warna" onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, color: cycle(['var(--text)', ...LINES] as const, (x.style?.color ?? 'var(--text)') as 'var(--text)') } }))} />
+          {common}
+        </>
+      );
+    if (k === 'sticker')
+      return (
+        <>
+          {!p.sticker?.startsWith('cap:') ? <DockBtn swatch={p.style?.fill ?? 'none'} label="isi" onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, fill: cycle(FILLS, (x.style?.fill ?? 'none') as 'none') } }))} /> : null}
+          {!p.sticker?.startsWith('washi:') ? <DockBtn swatch={p.color ?? 'var(--ink)'} label="garis" onClick={() => restyle(it.id, (x) => ({ ...x, color: cycle(LINES, (x.color ?? 'var(--ink)') as 'var(--ink)') }))} /> : null}
+          {!isSpecial(p.sticker) ? <DockBtn icon="bingkai-polaroid" label={p.style?.cut === false ? 'tanpa tepi' : 'tepi putih'} onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, cut: x.style?.cut === false } }))} /> : null}
+          {common}
+        </>
+      );
+    if (k === 'photo')
+      return (
+        <>
+          <DockBtn icon="pena" label="keterangan" onClick={() => openCaption(it)} />
+          {common}
+        </>
+      );
+    return common;
+  };
+
   const head = (
     <div className="row between" style={{ alignItems: 'flex-start' }}>
       <div>
@@ -303,26 +363,45 @@ export default function Today() {
 
   const selectedItem = items.find((x) => x.id === selected);
 
+  const tools = selectedItem && !selectedItem.draft && !selectedItem.pending ? toolsFor(selectedItem) : null;
+  const names = active.filter((c) => circleIds.includes(c.id)).map((c) => c.name).join(' · ');
+
   return (
-    <main className="screen" style={{ maxWidth: 760 }}>
-      {/* Bilah atas: siapa yang menjalani hari ini bersamamu */}
-      <div className="row between" style={{ padding: '4px 2px 14px' }}>
+    <main className="screen today" style={{ maxWidth: 760 }}>
+      <header className="today-top">
         <Link to="/" className="row" aria-label="beranda">
-          <Doodle id="tunas" size={28} />
+          <Doodle id="tunas" size={26} />
           <span className="h2">sehari</span>
         </Link>
-        <div className="row" style={{ gap: 4 }}>
-          {active.slice(0, 3).map((c) => (
+        <div className="row" style={{ gap: 2 }}>
+          {active.slice(0, 2).map((c) => (
             <TogetherChip key={c.id} c={c} meId={me.user.id} day={day} />
           ))}
+          <Link to="/lingkaran" className="icon-btn" aria-label="lingkaran">
+            <Doodle id="ui-lingkaran" size={22} />
+          </Link>
+          <Link to="/kenangan" className="icon-btn" aria-label="kenangan">
+            <Doodle id="ui-kenangan" size={22} />
+          </Link>
+          <Link to="/aku" className="icon-btn" aria-label="aku">
+            <Avatar doodle={me.user.doodle} size={30} />
+          </Link>
         </div>
-      </div>
+      </header>
 
       {params.day && day !== today ? (
         <div className="card flat small row between" style={{ marginBottom: 12 }}>
           <span>{sealed ? 'Halaman ini sudah tersegel.' : editable ? 'Halaman kemarin masih bisa disegel sampai 04.00.' : 'Hari ini hilang di kabut — tidak apa-apa.'}</span>
           <Link to="/hari" className="pill">hari ini</Link>
         </div>
+      ) : null}
+
+      {editable ? (
+        <button className="for-chip" onClick={() => setSheet('audience')}>
+          <span className="tiny ink-soft">untuk</span>
+          <span className="small ink">{defaultAudience === 'self' ? '🔒 hanya aku' : names}</span>
+          <span className="tiny soft">· {items.filter((x) => !x.draft).length} hal di kapsul</span>
+        </button>
       ) : null}
 
       <div ref={pageBox}>
@@ -338,11 +417,8 @@ export default function Today() {
           }}
           onEdit={(id) => {
             const it = items.find((x) => x.id === id);
-            if (it && (it.payload.text !== undefined || ['text', 'idea', 'word', 'card', 'answer', 'expedition'].includes(it.payload.kind))) setEditing(id);
-            else if (it?.payload.kind === 'photo') {
-              const cap = window.prompt('keterangan foto', it.payload.text ?? '');
-              if (cap !== null) restyle(id, (p) => ({ ...p, text: cap.trim() || undefined }));
-            }
+            if (it && (it.payload.text !== undefined || ['text', 'idea', 'word', 'card', 'answer', 'expedition'].includes(it.payload.kind)) && it.payload.kind !== 'photo' && it.payload.kind !== 'sticker') setEditing(id);
+            else if (it?.payload.kind === 'photo') openCaption(it);
           }}
           onText={setText}
           onEndEdit={endEdit}
@@ -352,30 +428,8 @@ export default function Today() {
           head={head}
           sealed={sealed}
           mood={mood}
-          renderTools={(it) => (
-            <>
-              {['text', 'idea', 'card', 'answer'].includes(it.payload.kind) ? (
-                <>
-                  <button onClick={() => restyle(it.id, (p) => ({ ...p, style: { ...p.style, font: p.style?.font === 'hand' ? 'mono' : 'hand' } }))}>{it.payload.style?.font === 'hand' ? 'mesin tik' : 'tulisan tangan'}</button>
-                  <button
-                    onClick={() =>
-                      restyle(it.id, (p) => {
-                        const order = [TEXT_SIZES.s, TEXT_SIZES.m, TEXT_SIZES.l, TEXT_SIZES.xl];
-                        const i = order.indexOf((p.style?.size ?? TEXT_SIZES.m) as (typeof order)[number]);
-                        return { ...p, style: { ...p.style, size: order[(i + 1) % order.length] } };
-                      })
-                    }>
-                    ukuran
-                  </button>
-                  <button onClick={() => restyle(it.id, (p) => ({ ...p, style: { ...p.style, color: p.style?.color ? undefined : 'var(--ink)' } }))}>{it.payload.style?.color ? 'hitam' : 'tinta'}</button>
-                </>
-              ) : null}
-              {it.payload.kind === 'photo' ? <button onClick={() => { const cap = window.prompt('keterangan foto', it.payload.text ?? ''); if (cap !== null) restyle(it.id, (p) => ({ ...p, text: cap.trim() || undefined })); }}>keterangan</button> : null}
-              <button onClick={() => restyle(it.id, (p) => ({ ...p, layout: { ...p.layout!, z: nextZ() } }))}>ke depan</button>
-              <button onClick={() => restyle(it.id, (p) => p, it.audience === 'self' ? (circleIds.length ? 'circle' : 'self') : 'self')}>{it.audience === 'self' ? '🔒 hanya aku' : 'bersama'}</button>
-              <button onClick={() => void remove(it.id)}>hapus</button>
-            </>
-          )}
+          margins={`${me.user.id}:${day}`}
+          empty={<EmptyPage />}
           foot={
             sealed ? (
               <div data-paper="1" style={{ position: 'absolute', left: 0, right: 0, bottom: 30, textAlign: 'center', pointerEvents: 'none' }}>
@@ -391,51 +445,38 @@ export default function Today() {
 
       {editable ? (
         <>
-          <div className="row between mt" style={{ alignItems: 'center' }}>
-            <button className="pill" onClick={() => setSheet('audience')}>
-              untuk: {defaultAudience === 'self' ? 'hanya aku' : active.filter((c) => circleIds.includes(c.id)).map((c) => c.name).join(' · ')}
-            </button>
-            <span className="tiny soft">{items.filter((x) => !x.draft).length} hal di kapsul</span>
-          </div>
-          <div className="mt" style={{ paddingBottom: 150 }}>
-            <button className="btn" disabled={!items.some((x) => !x.draft)} onClick={() => { if (editing) endEdit(editing); setSelected(null); setSealing(true); }}>
-              <Doodle id="segel-lilin" size={22} color="currentColor" /> {COPY.seal.cta}
-            </button>
-            <p className="tiny soft center">{items.length ? COPY.seal.ctaSub : COPY.seal.nothingYet}</p>
-          </div>
-          <nav className="toolbar" aria-label="alat halaman">
-            <button onClick={() => { const c = viewCenter(560); addText(c.x, c.y); }}>
-              <Doodle id="ui-teks" size={22} color="currentColor" />
-              tulis
-            </button>
-            <button onClick={() => fileInput.current?.click()}>
-              <Doodle id="ui-foto" size={22} color="currentColor" />
-              foto
-            </button>
-            <button onClick={() => setSheet('sticker')}>
-              <Doodle id="bintang-kecil" size={22} color="currentColor" />
-              stiker
-            </button>
-            <button onClick={() => setSheet('voice')}>
-              <Doodle id="ui-mikrofon" size={22} color="currentColor" />
-              suara
-            </button>
-            <button onClick={() => setSheet('song')}>
-              <Doodle id="ui-lagu" size={22} color="currentColor" />
-              lagu
-            </button>
-            <button onClick={() => setSheet('mood')}>
-              <Doodle id="ui-palet" size={22} color="currentColor" />
-              warna
-            </button>
-            <button onClick={() => setSheet('prompt')}>
-              <Doodle id="kartu" size={22} color="currentColor" />
-              kartu
-            </button>
-            <button onClick={() => setSheet('silent')}>
-              <Doodle id="lilin" size={22} color="currentColor" />
-              hening
-            </button>
+          <div style={{ height: 120 }} />
+          <nav className={`dock ${tools || editing ? 'context' : ''}`} style={{ bottom: `calc(env(safe-area-inset-bottom) + 12px + ${kb}px)` }} aria-label="alat halaman">
+            {editing ? (
+              <>
+                <span className="dock-hint small">menulis…</span>
+                <span className="grow" />
+                <button className="dock-done" onMouseDown={(e) => e.preventDefault()} onClick={() => { endEdit(editing); setSelected(null); }}>
+                  <Doodle id="ui-centang" size={20} color="currentColor" sw={3} /> selesai
+                </button>
+              </>
+            ) : tools ? (
+              <>
+                <div className="dock-scroll">{tools}</div>
+                <button className="dock-done" onClick={() => setSelected(null)} aria-label="selesai">
+                  <Doodle id="ui-centang" size={20} color="currentColor" sw={3} />
+                </button>
+              </>
+            ) : (
+              <>
+                <DockBtn icon="ui-teks" label="tulis" onClick={() => { const c = viewCenter(560); addText(c.x, c.y); }} />
+                <DockBtn icon="ui-foto" label="foto" onClick={() => fileInput.current?.click()} />
+                <DockBtn icon="kilau" label="stiker" onClick={() => setSheet('sticker')} />
+                <DockBtn icon="ui-tambah" label="lainnya" onClick={() => setSheet('more')} />
+                <span className="grow" />
+                <button className="dock-seal" disabled={!items.some((x) => !x.draft)} onClick={() => { setSelected(null); setSealing(true); }} aria-label={COPY.seal.cta}>
+                  <span className="wax-mini">
+                    <Doodle id="tunas" size={24} color="var(--on-ink)" sw={3} />
+                  </span>
+                  <span className="tiny">segel</span>
+                </button>
+              </>
+            )}
           </nav>
           <input ref={fileInput} type="file" accept="image/*" multiple hidden onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) void addPhotos(f); }} />
         </>
@@ -448,16 +489,37 @@ export default function Today() {
                 </Link>
               ))
             : null}
+          <Link to="/kenangan" className="btn ghost">
+            <Doodle id="ui-kenangan" size={22} /> ke kenangan
+          </Link>
         </div>
       )}
+
+      <Sheet open={sheet === 'more'} onClose={() => setSheet(null)} title="tambahkan">
+        <div className="tile-grid">
+          <Tile icon="ui-mikrofon" label="suara" sub="rekam tawa, hujan, selamat tidur" onClick={() => setSheet('voice')} />
+          <Tile icon="ui-lagu" label="lagu" sub="yang diputar berulang hari ini" onClick={() => setSheet('song')} />
+          <Tile icon="ui-palet" label="warna hari" sub="satu warna untuk rasa hari ini" onClick={() => setSheet('mood')} />
+          <Tile icon="kartu" label="kartu & pertanyaan" sub="kalau bingung mau menulis apa" onClick={() => setSheet('prompt')} />
+          <Tile icon="stempel" label="cap tanggal" sub="cap pos hari ini" onClick={() => { setSheet(null); addSticker('cap:pos'); }} />
+          <Tile icon="selotip" label="selotip washi" sub="tempel di sudut foto" onClick={() => { setSheet(null); addSticker('washi:garis'); }} />
+          <Tile icon="lilin" label="ruang hening" sub="hari berat boleh cuma lilin" onClick={() => setSheet('silent')} />
+          <Tile icon="ui-lingkaran" label="untuk siapa" sub={defaultAudience === 'self' ? 'hanya aku' : names} onClick={() => setSheet('audience')} />
+        </div>
+      </Sheet>
+      <Sheet open={sheet === 'caption'} onClose={() => setSheet(null)} title="keterangan foto">
+        <div className="col">
+          <input className="field hand" style={{ fontSize: 26 }} value={caption} maxLength={120} placeholder="di mana, sama siapa, kenapa…" autoFocus onChange={(e) => setCaption(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveCaption()} />
+          <button className="btn" onClick={saveCaption}>simpan</button>
+        </div>
+      </Sheet>
 
       <StickerSheet
         open={sheet === 'sticker'}
         onClose={() => setSheet(null)}
         onPick={(id) => {
           setSheet(null);
-          const c = viewCenter(150);
-          void create({ ...base('sticker', { ...c, w: 150, rot: Math.round((Math.random() - 0.5) * 20) }), sticker: id });
+          addSticker(id);
         }}
       />
       <MoodSheet

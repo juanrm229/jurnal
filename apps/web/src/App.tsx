@@ -20,7 +20,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/mulai/pulihkan', page('auth/Pulihkan'), false, false],
   ['/mulai/undang', page('auth/Undang'), true, false],
   ['/j/:token', page('Join'), false, false],
-  ['/hari', page('Today'), true, true],
+  ['/hari', page('Today'), true, false],
   ['/hari/:day', page('Today'), true, false],
   ['/lingkaran', page('circles/Circles'), true, true],
   ['/l/baru', page('circles/NewCircle'), true, false],

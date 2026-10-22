@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { gardenSeedFor } from '@/lib/garden';
 import { useCircles, useLetters, useMe, useMyDays, useOnThisDay, useToday } from '@/lib/data';
 import { Link, navigate } from '@/lib/router';
+import { Scene } from '@/ui/art';
 import { Doodle, ListLink } from '@/ui/kit';
 
 /** Kenangan: taman tahunan milikmu, hari ini di tahun-tahun lalu, surat, dan cerita per lingkaran. */
@@ -28,6 +29,9 @@ export default function Kenangan() {
     <main className="screen">
       <h1 className="display ink mt" style={{ margin: '12px 0 4px' }}>kenangan</h1>
       <p className="small soft">Satu tanaman untuk setiap hari yang disegel. Hari yang terlewat hanya kabut.</p>
+      <div style={{ maxWidth: 420, margin: '-6px auto -18px' }}>
+        <Scene id="taman-tahun" speed={1.6} />
+      </div>
 
       <div className="card mt" style={{ padding: '18px 14px' }}>
         <div className="row between" style={{ marginBottom: 12 }}>

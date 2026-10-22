@@ -305,9 +305,9 @@ function demoItems(): PageItem[] {
     { ...base('photo', { x: 470, y: 210, w: 460, rot: 4, z: 3 }, { text: 'hujan, lagi. dari jendela kos.', media: [{ id: 'demo', key: '', mime: 'image/svg+xml', width: 480, height: 320 }] }), localUrl: sceneUrl('hujan-jendela') },
     base('text', { x: 60, y: 250, w: 470, rot: -1.5, z: 2 }, { text: 'kita batal pergi gara-gara hujan.\ntapi malah ngobrol sampai jam dua.', style: { font: 'hand', size: 46 } }),
     base('mood', { x: 70, y: 540, w: 360, rot: -2, z: 1 }, { mood: 'tenang' as MoodCode }),
-    base('sticker', { x: 380, y: 160, w: 120, rot: -14, z: 5 }, { sticker: 'payung-terbuka' }),
-    base('sticker', { x: 830, y: 760, w: 110, rot: 10, z: 6 }, { sticker: 'teh-panas' }),
-    base('sticker', { x: 90, y: 700, w: 90, rot: 0, z: 6 }, { sticker: 'hati-garis' }),
+    base('sticker', { x: 380, y: 160, w: 120, rot: -14, z: 5 }, { sticker: 'payung-terbuka', style: { fill: '#BFDBFE' } }),
+    base('sticker', { x: 830, y: 760, w: 110, rot: 10, z: 6 }, { sticker: 'teh-panas', style: { fill: '#FED7AA' } }),
+    base('sticker', { x: 90, y: 700, w: 90, rot: 0, z: 6 }, { sticker: 'hati-garis', style: { fill: '#FBCFE8' } }),
     base('text', { x: 120, y: 820, w: 640, rot: 0, z: 4 }, { text: 'satu hal yang ingin kuingat: suara tawamu waktu listriknya mati.', style: { font: 'mono', size: 30 } }),
   ];
 }
@@ -387,7 +387,7 @@ function Playground() {
           <Doodle id="ui-foto" size={18} color="currentColor" /> tempel fotomu
         </button>
         {stickers.map((s) => (
-          <button key={s} className="pill" aria-label={`stiker ${s}`} onClick={() => setSel(add('sticker', { x: 200 + Math.random() * 500, y: 300 + Math.random() * 400, w: 130, rot: (Math.random() - 0.5) * 24 }, { sticker: s }))}>
+          <button key={s} className="pill" aria-label={`stiker ${s}`} onClick={() => setSel(add('sticker', { x: 200 + Math.random() * 500, y: 300 + Math.random() * 400, w: 130, rot: (Math.random() - 0.5) * 24 }, { sticker: s, style: { fill: ['#FDE68A', '#FBCFE8', '#BFDBFE', '#BBF7D0', '#FED7AA', '#DDD6FE'][Math.floor(Math.random() * 6)] } }))}>
             <Doodle id={s} size={22} />
           </button>
         ))}

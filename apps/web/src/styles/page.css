@@ -12,7 +12,8 @@
   border-radius: 6px 22px 22px 6px;
   background:
     radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--page-wash, transparent) 22%, transparent), transparent 60%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.035), transparent 4%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.045), transparent 4%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
     var(--card);
   box-shadow:
     0 1px 0 rgba(0, 0, 0, 0.04),
@@ -76,10 +77,10 @@
 }
 .el .handle {
   position: absolute;
-  right: -18px;
-  bottom: -18px;
-  width: 30px;
-  height: 30px;
+  right: -22px;
+  bottom: -22px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--ink);
   border: 3px solid var(--card);
@@ -95,7 +96,7 @@
   position: fixed;
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom) + 158px);
-  transform: translateX(-50%);
+  translate: -50% 0;
   max-width: calc(100vw - 24px);
   overflow-x: auto;
   scrollbar-width: none;
@@ -252,7 +253,7 @@
 .toolbar {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
+  translate: -50% 0;
   bottom: calc(env(safe-area-inset-bottom) + 84px);
   z-index: 45;
   display: flex;
@@ -562,4 +563,28 @@
     transform: scale(0.2);
     opacity: 0;
   }
+}
+
+/* Selotip di atas halaman */
+.page-tape {
+  position: absolute;
+  top: -6px;
+  width: calc(var(--s) * 190px);
+  height: calc(var(--s) * 44px);
+  min-height: 14px;
+  background: color-mix(in srgb, var(--ink) 16%, #fff);
+  opacity: 0.75;
+  clip-path: polygon(0 10%, 4% 0, 8% 12%, 12% 2%, 88% 6%, 92% 0, 96% 10%, 100% 4%, 100% 92%, 96% 100%, 92% 90%, 88% 98%, 12% 94%, 8% 100%, 4% 90%, 0 96%);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.page-tape.l {
+  left: 42%;
+  transform: rotate(-4deg);
+}
+.page-tape.r {
+  right: calc(var(--s) * 150px);
+  transform: rotate(3deg);
+  background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--ink) 14%, #fff) 0 6px, color-mix(in srgb, var(--ink) 26%, #fff) 6px 12px);
 }

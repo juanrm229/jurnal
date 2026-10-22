@@ -82,14 +82,23 @@ async function flow() {
   const box = await page.boundingBox();
   await a.mouse.click(box.x + box.width * 0.2, box.y + box.width * 0.35);
   await a.keyboard.type('hari ini hujan, kita batal pergi.');
-  await a.keyboard.press('Escape');
+  await a.click('.dock-done');
   await a.waitForTimeout(600);
   // Foto
   await a.setInputFiles('input[type=file][accept="image/*"]', 'e2e/foto.jpg');
   await a.waitForTimeout(1500);
   await shot(a, '12b-photo');
   // Stiker
-  await a.click('.toolbar button:has-text("stiker")');
+  await a.click('.dock button:has-text("stiker")');
+  await a.waitForTimeout(400);
+  await shot(a, '12c-stiker');
+  await a.locator('.sheet .pill:has-text("selotip")').click();
+  await a.waitForTimeout(300);
+  await shot(a, '12d-selotip');
+  await a.locator('.sheet .sticker-cell').nth(7).click();
+  await a.waitForTimeout(500);
+  await a.click('.dock button:has-text("stiker")');
+  await a.locator('.sheet .pill:has-text("perasaan")').click();
   await a.locator('.sheet button[title]').nth(3).click();
   await a.waitForTimeout(800);
   // Geser fotonya ke atas tulisan
@@ -100,7 +109,14 @@ async function flow() {
   await a.mouse.move(pb.x + pb.width / 2 - 80, pb.y + pb.height / 2 - 60, { steps: 8 });
   await a.mouse.up();
   await a.waitForTimeout(900);
+  await shot(a, '13a-today-selected');
+  await a.click('.dock-done');
+  await a.waitForTimeout(300);
   await shot(a, '13-today-filled');
+  await a.click('.dock button:has-text("lainnya")');
+  await a.waitForTimeout(400);
+  await shot(a, '13b-lainnya');
+  await a.keyboard.press('Escape');
 
   // B bergabung
   const b = await ctx();
@@ -117,12 +133,12 @@ async function flow() {
   const bbox = await b.locator('.page').boundingBox();
   await b.mouse.click(bbox.x + bbox.width * 0.15, bbox.y + bbox.width * 0.4);
   await b.keyboard.type('capek. tapi ada es teh gratis.');
-  await b.keyboard.press('Escape');
+  await b.click('.dock-done');
   await b.waitForTimeout(800);
 
   // Segel keduanya
   for (const [p, n] of [[a, 'a'], [b, 'b']]) {
-    await p.click('button:has-text("segel")');
+    await p.click('.dock-seal');
     await p.fill('.seal-overlay input.field', n === 'a' ? 'hujan yang baik.' : 'besok lebih ringan.');
     await shot(p, `30-seal-${n}`);
     await p.focus('.hold-btn');
@@ -134,7 +150,18 @@ async function flow() {
   }
   await a.locator('a:has-text("buka bersama")').first().click();
   await a.waitForTimeout(2600);
-  await shot(a, '40-together', true);
+  await shot(a, '40-together');
+  await a.locator('.pager-tabs button').nth(1).click();
+  await a.waitForTimeout(900);
+  await shot(a, '40b-together-partner');
+  await a.goto(`${APP}/aku/profil`);
+  await a.waitForTimeout(1200);
+  await a.locator('.avatar-grid button').nth(5).click();
+  await a.locator('.bg-dot').nth(2).click();
+  await a.waitForTimeout(500);
+  await shot(a, '42-avatar');
+  await b.goto(`${APP}/hari/${new Date(Date.now() + 86400000).toISOString().slice(0, 10)}`);
+  await b.goto(`${APP}/hari`);
   await a.setViewportSize({ width: 1280, height: 900 });
   await a.waitForTimeout(1200);
   await shot(a, '41-together-desktop', true);

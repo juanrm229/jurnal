@@ -1,6 +1,7 @@
 import { type FlameLevel, MOOD_CODES, MOODS, type MoodCode } from '@sehari/core';
 import { getDoodle } from '@sehari/doodles';
 import { type CSSProperties, type ReactNode, createContext, memo, useCallback, useContext, useEffect, useState } from 'react';
+import { API_URL } from '@/lib/api';
 import { back } from '@/lib/router';
 
 // ── Doodle ──────────────────────────────────────────────────────────────────
@@ -187,10 +188,30 @@ export function ToastHost({ children }: { children: ReactNode }) {
 
 // ── Kecil-kecil ─────────────────────────────────────────────────────────────
 
+export const AVATAR_BG = ['kertas', 'kuning', 'persik', 'hijau', 'biru', 'tinta'] as const;
+const BG: Record<string, string> = {
+  kertas: 'var(--card)',
+  kuning: 'var(--sticky-yellow)',
+  persik: 'var(--sticky-peach)',
+  hijau: 'var(--sticky-green)',
+  biru: 'var(--sticky-blue)',
+  tinta: 'var(--ink)',
+};
+
+/** "tunas", "tunas|persik" (doodle + warna latar), atau "foto:<id>" (foto sendiri). */
+export function parseAvatar(v: string | null | undefined): { photo?: string; doodle: string; bg: string } {
+  if (v?.startsWith('foto:')) return { photo: `${API_URL}/v1/avatars/${v.slice(5)}`, doodle: 'tunas', bg: 'kertas' };
+  const [doodle, bg] = (v || 'tunas').split('|');
+  return { doodle: doodle || 'tunas', bg: bg && BG[bg] ? bg : 'kertas' };
+}
+
 export function Avatar({ doodle, size = 36, sealed, dim, title }: { doodle: string; size?: number; sealed?: boolean; dim?: boolean; title?: string }) {
+  const a = parseAvatar(doodle);
+  const ring = sealed ? 'var(--ink)' : 'color-mix(in srgb, var(--ink) 35%, transparent)';
   return (
     <span
       title={title}
+      className="avatar"
       style={{
         width: size,
         height: size,
@@ -198,12 +219,13 @@ export function Avatar({ doodle, size = 36, sealed, dim, title }: { doodle: stri
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: sealed ? 'var(--pill)' : 'var(--card)',
-        border: `1.5px solid ${sealed ? 'var(--ink)' : 'var(--ink-soft)'}`,
+        background: a.photo ? 'var(--card)' : BG[a.bg],
+        boxShadow: `0 0 0 ${size > 40 ? 2.5 : 1.5}px ${ring}${sealed ? ', 0 0 0 4px var(--paper), 0 0 0 5.5px color-mix(in srgb, var(--ink) 40%, transparent)' : ''}`,
         opacity: dim ? 0.5 : 1,
         flexShrink: 0,
+        overflow: 'hidden',
       }}>
-      <Doodle id={doodle} size={size * 0.68} />
+      {a.photo ? <img src={a.photo} alt="" width={size} height={size} style={{ objectFit: 'cover', width: '100%', height: '100%' }} /> : <Doodle id={a.doodle} size={size * 0.68} color={a.bg === 'tinta' ? 'var(--on-ink)' : undefined} />}
     </span>
   );
 }

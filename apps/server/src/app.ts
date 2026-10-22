@@ -34,6 +34,15 @@ export function createApp(s: Services) {
   const v1 = new Hono<AppEnv>();
   v1.get('/config', (c) => c.json({ freeAll: s.cfg.freeAll, devAuth: s.cfg.devAuth, vapidPublicKey: s.cfg.vapid?.publicKey ?? null }));
   v1.route('/auth', authRoutes(s));
+  v1.get('/avatars/:id', async (c) => {
+    const id = c.req.param('id');
+    if (!/^[a-z0-9]{6,32}$/i.test(id)) return c.notFound();
+    const data = await s.blobs.get(`avatar/${id}`);
+    if (!data) return c.notFound();
+    const sig = data.subarray(0, 4);
+    const type = sig[0] === 0x89 ? 'image/png' : sig[0] === 0x52 ? 'image/webp' : 'image/jpeg';
+    return c.body(data as never, 200, { 'content-type': type, 'cache-control': 'public, max-age=31536000, immutable' });
+  });
   v1.route('/invites', inviteRoutes(s, auth));
   v1.route('/billing/webhook', webhookRoutes(s) as never);
 

@@ -11,6 +11,7 @@ import { newDropId, qk, useCircle, useCircleDay, useKeyring, useMe, useOpenDrops
 import { Link, navigate, useParams } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { claimTokens, tokenCandidates } from '@/lib/tokens';
+import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
 
 const REACTIONS: { kind: ReactionKind; label: string; doodle: string }[] = [
@@ -38,6 +39,10 @@ export default function Together() {
   const [won, setWon] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const pointer = useRef({ x: 0, y: 0 });
+  const narrow = useMedia('(max-width: 820px)');
+  const [idx, setIdx] = useState(0);
+  const [dir, setDir] = useState<'next' | 'prev' | 'none'>('none');
+  const swipe = useRef<null | { x: number; y: number; t: number }>(null);
   const aged = circle?.settings.yellowingPages && circle.status === 'active' ? yellowing(q.data?.lastVisitedOn ?? day, today) : 0;
 
   useEffect(() => {
@@ -92,9 +97,16 @@ export default function Together() {
   const data = q.data;
   const name = (uid: string) => (uid === me.user.id ? 'kamu' : (circle.members.find((m) => m.userId === uid)?.penName ?? 'seseorang'));
   // Halamanku dulu (kiri), lalu yang lain.
-  const ordered = [...pages].sort((a, b) => (a.member.userId === me.user.id ? -1 : b.member.userId === me.user.id ? 1 : 0)).filter((p) => p.items.length || p.locked.length || p.member.userId === me.user.id);
+  const ordered = [...pages].sort((a, b) => (a.member.userId === me.user.id ? -1 : b.member.userId === me.user.id ? 1 : 0));
   // Halaman berdampingan dibuat sama tinggi.
   const pageH = Math.max(1200, ...ordered.map((p) => withLayouts(p.items).reduce((m, it) => Math.max(m, it.layout.y + (it.payload.kind === 'photo' ? it.layout.w * 1.1 : 260)), 0) + 260));
+  const go = (i: number) => {
+    const n = Math.max(0, Math.min(ordered.length - 1, i));
+    if (n === idx) return;
+    setDir(n > idx ? 'next' : 'prev');
+    setIdx(n);
+    setTap(null);
+  };
   const canReact = circle.status === 'active' || circle.status === 'memorial';
   const tapped = tap ? drops.find((d) => d.wire.id === tap.dropId) : undefined;
 
@@ -172,14 +184,36 @@ export default function Together() {
           <div className="hand" style={{ fontSize: 34 }}>{circle.name}</div>
           <div className="tiny">{formatDayLong(day)}</div>
         </div>
-        <div className="spread">
-          {ordered.map((p) => (
-            <div key={p.member.userId} style={{ position: 'relative' }} onPointerDown={(e) => (pointer.current = { x: e.clientX, y: e.clientY })}>
+        {narrow && ordered.length > 1 ? (
+          <div className="pager-tabs" role="tablist">
+            {ordered.map((p, i) => (
+              <button key={p.member.userId} role="tab" aria-selected={i === idx} className={i === idx ? 'on' : ''} onClick={() => go(i)}>
+                <Avatar doodle={p.info?.doodle ?? 'tunas'} size={30} sealed={p.member.sealed} />
+                <span>{name(p.member.userId)}</span>
+                <i>{p.items.length || (p.locked.length ? '🔒' : '·')}</i>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div
+          className={narrow ? 'pager' : 'spread'}
+          onPointerDown={(e) => (swipe.current = { x: e.clientX, y: e.clientY, t: Date.now() })}
+          onPointerUp={(e) => {
+            const s0 = swipe.current;
+            swipe.current = null;
+            if (!narrow || !s0) return;
+            const dx = e.clientX - s0.x;
+            const dy = e.clientY - s0.y;
+            if (Math.abs(dx) > 60 && Math.abs(dy) < 60 && Date.now() - s0.t < 700) go(idx + (dx < 0 ? 1 : -1));
+          }}>
+          {(narrow ? ordered.slice(idx, idx + 1) : ordered).map((p) => (
+            <div key={p.member.userId} className={narrow ? `pager-page turn-${dir}` : undefined} style={{ position: 'relative' }} onPointerDown={(e) => (pointer.current = { x: e.clientX, y: e.clientY })}>
               <Page
                 items={p.items}
                 viewerId={me.user.id}
                 aged={aged}
                 minHeight={pageH}
+                margins={`${p.member.userId}:${day}`}
                 mood={p.items.find((x) => x.payload.mood)?.payload.mood}
                 head={
                   <div className="row between">
@@ -202,9 +236,12 @@ export default function Together() {
                   <>
                     {p.locked.length ? <LockedNote locked={p.locked} who={name(p.member.userId)} /> : null}
                     {!p.items.length && !p.locked.length ? (
-                      <div data-paper="1" style={{ position: 'absolute', top: '40%', left: 0, right: 0, textAlign: 'center', pointerEvents: 'none' }}>
-                        <Doodle id="kabut" size={60} color="var(--fog)" />
-                        <p className="small soft">{day < today ? COPY.streak.fog : COPY.empty.circle}</p>
+                      <div data-paper="1" style={{ position: 'absolute', top: '22%', left: '8%', right: '8%', textAlign: 'center', pointerEvents: 'none' }}>
+                        <Scene id={day < today ? 'langit-malam' : 'hujan-jendela'} speed={1.4} />
+                        <p className="hand" style={{ fontSize: 26, color: 'var(--ink)' }}>
+                          {p.member.userId === me.user.id ? 'halamanmu masih kosong.' : day < today ? COPY.streak.fog : `${name(p.member.userId)} belum menulis hari ini.`}
+                        </p>
+                        {p.member.userId === me.user.id && day === today ? <p className="tiny soft">tulis sesuatu di halaman hari ini</p> : null}
                       </div>
                     ) : null}
                   </>
@@ -222,6 +259,17 @@ export default function Together() {
             </div>
           ))}
         </div>
+        {narrow && ordered.length > 1 ? (
+          <div className="row between mt">
+            <button className="pill" disabled={idx === 0} onClick={() => go(idx - 1)}>
+              <Doodle id="ui-kembali" size={16} color="currentColor" /> {idx > 0 ? name(ordered[idx - 1]!.member.userId) : ''}
+            </button>
+            <span className="tiny soft">geser untuk membalik halaman</span>
+            <button className="pill" disabled={idx === ordered.length - 1} onClick={() => go(idx + 1)}>
+              {idx < ordered.length - 1 ? name(ordered[idx + 1]!.member.userId) : ''} <Doodle id="ui-panah-kanan" size={16} color="currentColor" />
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <Footnotes pages={ordered.map((p) => ({ who: name(p.member.userId), items: p.items }))} />
@@ -286,4 +334,15 @@ function Footnotes({ pages }: { pages: { who: string; items: PageItem[] }[] }) {
       ))}
     </section>
   );
+}
+
+function useMedia(q: string) {
+  const [m, setM] = useState(() => matchMedia(q).matches);
+  useEffect(() => {
+    const mq = matchMedia(q);
+    const f = () => setM(mq.matches);
+    mq.addEventListener('change', f);
+    return () => mq.removeEventListener('change', f);
+  }, [q]);
+  return m;
 }

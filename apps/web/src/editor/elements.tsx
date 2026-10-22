@@ -3,6 +3,7 @@ import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { useMediaUrl } from '@/lib/media';
 import { Doodle } from '@/ui/kit';
 import type { PageItem } from './Page';
+import { StickerArt } from './stickers';
 
 export const TEXT_SIZES = { s: 30, m: 38, l: 54, xl: 76 } as const;
 
@@ -27,7 +28,7 @@ export function PageElement({
     case 'screenshot':
       return <PhotoEl item={item} scale={scale} />;
     case 'sticker':
-      return <Doodle id={p.sticker ?? 'tunas'} size="100%" color={p.color ?? 'var(--ink)'} sw={2.2} style={{ display: 'block', width: '100%', height: 'auto', aspectRatio: '1' }} />;
+      return <StickerArt id={p.sticker ?? 'tunas'} line={p.color ?? p.style?.color} fill={p.style?.fill} cut={p.style?.cut !== false} day={p.text} cityId={p.cityId} scale={scale} />;
     case 'voice':
       return <VoiceEl item={item} scale={scale} />;
     case 'song':

@@ -432,7 +432,7 @@
   position: absolute;
   top: -14px;
   left: 50%;
-  transform: translateX(-50%);
+  translate: -50% 0;
 }
 .l-garden-art {
   width: min(680px, 100%);
