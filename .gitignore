@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+.env
+.env.local
+apps/server/data/
+apps/server/uploads/
+apps/mobile/ios/
+apps/mobile/android/
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+*.tsbuildinfo
+packages/doodles/preview.html
