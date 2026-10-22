@@ -173,7 +173,7 @@ export default function DropComposer() {
         },
       });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      router.back();
+      close();
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -193,7 +193,7 @@ export default function DropComposer() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.paper }}>
       <Row style={{ justifyContent: 'space-between', paddingHorizontal: SPACE.sm, height: 52, width: '100%', maxWidth: MAX_WIDTH + 32, alignSelf: 'center' }}>
-        <IconButton icon="ui-tutup" label="tutup" onPress={() => router.back()} />
+        <IconButton icon="ui-tutup" label="tutup" onPress={() => close()} />
         <Txt v="h2" ink>
           Drop
         </Txt>
@@ -414,4 +414,9 @@ export default function DropComposer() {
       </View>
     </SafeAreaView>
   );
+}
+
+function close() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/hari-ini');
 }

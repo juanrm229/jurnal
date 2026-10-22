@@ -8,7 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect, useMemo, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SessionProvider, useSession } from '@/lib/session';
@@ -34,6 +34,9 @@ function Themed({ children }: { children: React.ReactNode }) {
 }
 
 function Root() {
+  const { status } = useSession();
+  // Semua layar mengandalkan sesi: tunggu sampai token & kunci dibaca dari perangkat.
+  if (status === 'loading') return <Themed><View style={{ flex: 1 }} /></Themed>;
   return (
     <Themed>
       <NotificationsBridge />

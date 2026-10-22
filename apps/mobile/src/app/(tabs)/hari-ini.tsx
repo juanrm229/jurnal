@@ -18,7 +18,7 @@ import {
   zoneLabel,
 } from '@sehari/core';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RefreshControl, View } from 'react-native';
 import { type CircleView, nowParts, useCircles, useCreateDrop, useLetters, useMe, useMyDay, useOnThisDay, useOpenDrops, useToday } from '@/lib/data';
 import { Avatar } from '@/ui/Avatar';
@@ -29,6 +29,11 @@ import { Button, Card, Empty, Gap, Growing, Row, Screen, Section, Txt } from '@/
 import { MoodPicker } from '@/ui/Mood';
 import { SPACE, useTheme } from '@/ui/theme';
 import { DayStrip } from '@/features/DayStrip';
+import { gardenSeedFor } from '@/features/garden';
+import { publishWidget } from '@/widget/publish';
+import { gardenDoodleFor } from '@sehari/doodles';
+import { daysInYear, eachDay } from '@sehari/core';
+import { useMyDays } from '@/lib/data';
 
 function sealLine(c: CircleView, meId: string): string {
   const others = c.others;
@@ -73,6 +78,32 @@ export default function Today() {
   const unopened = (letters.data ?? []).filter((l) => !l.openedAt).length;
   const sunset = city ? sunsetUtc(today, city.lat, city.lon) : null;
   const sunsetLabel = sunset ? new Intl.DateTimeFormat('id-ID', { timeZone: me.user.tz, hour: '2-digit', minute: '2-digit' }).format(sunset) : null;
+
+  // Widget layar utama: hanya status & doodle, tanpa isi Drop.
+  const yearDays = useMyDays(`${today.slice(0, 4)}-01-01`, today);
+  useEffect(() => {
+    if (!day.data || circlesLoading) return;
+    const year = Number(today.slice(0, 4));
+    const sealedSet = new Set((yearDays.data ?? []).filter((x) => x.sealedAt).map((x) => x.day));
+    if (day.data.sealedAt) sealedSet.add(today);
+    void publishWidget({
+      updatedAt: new Date().toISOString(),
+      day: today,
+      dayLabel: dayName(today),
+      dateLabel: formatDayShort(today),
+      dayOfYear: dayOfYear(today),
+      sealedToday: !!day.data.sealedAt,
+      doodle: gardenDoodleFor(gardenSeedFor(me.user.id, today)).id,
+      circleName: primary?.name ?? null,
+      streak: primary?.streak.current ?? 0,
+      flame: primary?.streak.flame ?? 'fog',
+      status: day.data.sealedAt ? (primary ? sealLine(primary, me.user.id) : COPY.seal.sealed) : COPY.seal.cta,
+      year,
+      sealedDays: sealedSet.size,
+      daysLeft: daysInYear(year) - dayOfYear(today),
+      garden: eachDay(`${year}-01-01`, `${year}-12-31`).map((d) => (sealedSet.has(d) ? '1' : '0')).join(''),
+    });
+  }, [day.data?.sealedAt, day.data?.drops.length, primary?.streak.current, yearDays.data?.length]);
 
   const onRefresh = async () => {
     setRefreshing(true);

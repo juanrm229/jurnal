@@ -37,7 +37,7 @@ export default function FirstInvite() {
     acceptInvite(identity, me.user.id, inv.token, inv.fragment)
       .then(async (id) => {
         await qc.invalidateQueries({ queryKey: qk.circles });
-        router.replace(`/lingkaran/${id}`);
+        router.replace(`/l/${id}`);
       })
       .catch((e) => {
         setErr((e as Error).message);

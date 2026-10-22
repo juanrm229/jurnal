@@ -55,7 +55,8 @@ export default function TabsLayout() {
       router.push(`/j/${inv.token}?k=${encodeURIComponent(inv.fragment)}`);
     }
   }, [status]);
-  if (status !== 'ready' && status !== 'loading') return <Redirect href="/" />;
+  if (status === 'loading') return <View style={{ flex: 1 }} />;
+  if (status !== 'ready') return <Redirect href="/" />;
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(p) => <TabBar state={p.state as never} go={p.navigateToTab} />}>
       {TABS.map((t) => (

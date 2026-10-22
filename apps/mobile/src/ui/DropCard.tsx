@@ -91,7 +91,7 @@ export function DropCard({
     <Pressable onLongPress={onLongPress} delayLongPress={350} testID={`drop-${w.id}`}>
       <Card tint={tint} style={{ gap: SPACE.sm, ...(silent ? { borderColor: c.inkSoft, borderStyle: 'dashed' } : {}) }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Row gap={6}>
+          <Row gap={6} style={{ flexShrink: 1, flexWrap: 'wrap' }}>
             <Doodle id={KIND_DOODLE[p.kind] ?? 'tunas'} size={20} />
             {author ? (
               <Txt v="small" ink>
@@ -100,7 +100,7 @@ export function DropCard({
             ) : null}
             <Txt v="tiny" soft>
               {formatClock(p.hour, p.minute)}
-              {city ? ` · ${city.name}` : ''}
+              {city && !compact ? ` · ${city.name}` : ''}
             </Txt>
           </Row>
           {p.mood ? (

@@ -107,6 +107,7 @@ export default function CircleDayScreen() {
         author={circle.kind !== 'duo' || view === 'list' ? name(d.wire.authorId) : undefined}
         viewerId={me.user.id}
         aged={aged}
+        compact={!!showSides}
         onReact={circle.status === 'active' || circle.status === 'memorial' ? (kind, on) => react.mutate({ dropId: d.wire.id, kind, on }) : undefined}
         onLongPress={d.wire.kind !== 'silent' ? () => setNoteFor(d.wire.id) : undefined}
       />

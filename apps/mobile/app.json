@@ -17,6 +17,11 @@
         "NSPhotoLibraryUsageDescription": "Untuk memilih foto dari hari ini.",
         "NSLocationWhenInUseUsageDescription": "Hanya untuk menebak kotamu. Koordinat tidak pernah dikirim ke server.",
         "NSMotionUsageDescription": "Untuk mencatat langkah kaki hari ini bila kamu mengizinkannya."
+      },
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.app.sehari"
+        ]
       }
     },
     "android": {
@@ -27,7 +32,9 @@
         "monochromeImage": "./assets/images/adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.ACTIVITY_RECOGNITION"]
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
+      ]
     },
     "web": {
       "output": "single",
@@ -41,14 +48,82 @@
       "expo-localization",
       [
         "expo-splash-screen",
-        { "backgroundColor": "#E6E6E8", "image": "./assets/images/splash.png", "imageWidth": 120, "dark": { "backgroundColor": "#000000", "image": "./assets/images/splash-dark.png" } }
+        {
+          "backgroundColor": "#E6E6E8",
+          "image": "./assets/images/splash.png",
+          "imageWidth": 120,
+          "dark": {
+            "backgroundColor": "#000000",
+            "image": "./assets/images/splash-dark.png"
+          }
+        }
       ],
-      ["expo-notifications", { "color": "#2A14D6" }],
-      ["expo-camera", { "cameraPermission": "Untuk memotret hari ini dan memindai kode tautan perangkat.", "recordAudioAndroid": false }],
-      ["expo-image-picker", { "photosPermission": "Untuk memilih foto dari hari ini." }],
-      ["expo-location", { "locationWhenInUsePermission": "Hanya untuk menebak kotamu. Koordinat tidak pernah dikirim ke server." }],
-      ["expo-audio", { "microphonePermission": "Untuk merekam voice note maksimal semenit." }],
-      ["expo-media-library", { "photosPermission": "Untuk menyarankan foto dari hari ini.", "savePhotosPermission": "Untuk menyimpan kartu Wrap." }]
+      [
+        "expo-notifications",
+        {
+          "color": "#2A14D6"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Untuk memotret hari ini dan memindai kode tautan perangkat.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Untuk memilih foto dari hari ini."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Hanya untuk menebak kotamu. Koordinat tidak pernah dikirim ke server."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Untuk merekam voice note maksimal semenit."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Untuk menyarankan foto dari hari ini.",
+          "savePhotosPermission": "Untuk menyimpan kartu Wrap."
+        }
+      ],
+      "@bacons/apple-targets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Sehari",
+              "label": "Sehari",
+              "description": "Api lingkaran dan doodle hari ini",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "SehariTaman",
+              "label": "Taman Sehari",
+              "description": "Taman tahun ini, satu tanaman untuk setiap hari",
+              "minWidth": "250dp",
+              "minHeight": "180dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 3,
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,

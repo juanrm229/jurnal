@@ -68,7 +68,7 @@ export default function Seal() {
   if (result) {
     const milestone = result.circles.find((x) => x.milestone);
     return (
-      <Screen footer={<Button title="Selesai" onPress={() => router.back()} testID="seal-done" />}>
+      <Screen footer={<Button title="Selesai" onPress={() => close()} testID="seal-done" />}>
         <Gap h={SPACE.xxl} />
         <View style={{ alignItems: 'center' }}>
           <Animated.View
@@ -168,4 +168,9 @@ export default function Seal() {
       ) : null}
     </Screen>
   );
+}
+
+function close() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/hari-ini');
 }
