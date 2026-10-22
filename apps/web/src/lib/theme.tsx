@@ -19,9 +19,9 @@ export const INKS = [
 ] as const;
 
 export const PAPERS = [
+  { id: 'putih', name: 'putih', color: '#F7F7F4', dark: false },
   { id: 'abu', name: 'abu kertas', color: '#E6E6E8', dark: false },
   { id: 'krem', name: 'krem', color: '#F1EBDD', dark: false },
-  { id: 'putih', name: 'putih', color: '#F7F7F4', dark: false },
   { id: 'tua', name: 'kertas tua', color: '#E9DFC8', dark: false },
   { id: 'malam', name: 'malam', color: '#0B0B0E', dark: true },
 ] as const;
@@ -43,11 +43,7 @@ export function applyTheme(t: ThemeChoice) {
 }
 
 export function currentTheme(): ThemeChoice {
-  return store.json<ThemeChoice>('theme') ?? { ink: INKS[0].id, paper: prefersDark() ? 'malam' : 'abu' };
-}
-
-function prefersDark() {
-  return typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
+  return store.json<ThemeChoice>('theme') ?? { ink: INKS[0].id, paper: 'putih' };
 }
 
 export function setTheme(t: ThemeChoice, sync = true) {

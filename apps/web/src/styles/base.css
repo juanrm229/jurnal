@@ -3,7 +3,7 @@
 
 :root {
   --ink: #2a14d6;
-  --paper: #e6e6e8;
+  --paper: #f7f7f4;
   --text: #16161a;
   --card: color-mix(in srgb, var(--paper) 55%, #ffffff);
   --card-edge: color-mix(in srgb, var(--paper) 30%, #ffffff);

@@ -1,7 +1,9 @@
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
-import { getDoodle, INK, PAPER } from '@sehari/doodles';
+import { getDoodle, INK } from '@sehari/doodles';
+
+const PAPER = '#F7F7F4';
 
 const out = path.resolve(import.meta.dirname, '../public/icons');
 const d = getDoodle('tunas');
