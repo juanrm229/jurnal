@@ -33,6 +33,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from './api';
+import { enqueue } from './outbox';
 import { useSession } from './session';
 
 // ── Kunci ───────────────────────────────────────────────────────────────────
@@ -253,9 +254,14 @@ export function useCreateDrop() {
     mutationFn: async (d: DraftDrop) => {
       if (!me || !identity) throw new Error('Belum siap');
       const id = newDropId();
+      const body = buildDropBody(d, { me, identity, circles, id });
       try {
-        return await api.post<{ id: string }>('/drops', buildDropBody(d, { me, identity, circles, id }));
+        return await api.post<{ id: string }>('/drops', body);
       } catch (e) {
+        if (e instanceof ApiError && e.status === 0 && !body.mediaIds?.length) {
+          await enqueue(body);
+          return { id, queued: true };
+        }
         // Kunci lingkaran baru saja diputar: muat ulang lalu coba sekali lagi.
         if (e instanceof ApiError && e.code === 'epoch_stale') {
           const fresh = await refetch();

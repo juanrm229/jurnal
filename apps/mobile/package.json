@@ -22,6 +22,7 @@
     "@tanstack/react-query": "^5.104.5",
     "expo": "~58.0.17",
     "expo-audio": "~58.0.10",
+    "expo-auth-session": "~58.0.14",
     "expo-blur": "~58.0.5",
     "expo-camera": "~58.0.12",
     "expo-clipboard": "~58.0.4",

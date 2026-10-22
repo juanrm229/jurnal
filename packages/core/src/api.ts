@@ -369,7 +369,7 @@ export interface LockedDrop {
   id: string;
   authorId: string;
   kind: 'locked';
-  reason: 'not_sealed' | 'time_capsule' | 'split';
+  reason: 'not_sealed' | 'time_capsule' | 'split' | 'secret_card';
   unlockOn: DayKey | null;
 }
 

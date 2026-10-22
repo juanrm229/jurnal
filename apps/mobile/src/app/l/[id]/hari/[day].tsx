@@ -168,6 +168,11 @@ export default function CircleDayScreen() {
         })}
       </Row>
 
+      {day === circle.createdDay ? (
+        <Txt v="hand" center style={{ marginTop: SPACE.sm }}>
+          Prolog — halaman pertama kitab kalian
+        </Txt>
+      ) : null}
       {aged > 0.15 ? (
         <Txt v="tiny" ink soft center style={{ marginTop: SPACE.sm }}>
           {COPY.memories.yellowing}

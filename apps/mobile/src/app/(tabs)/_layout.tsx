@@ -5,6 +5,7 @@ import { pendingInvite } from '@/lib/circles';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyMaintenance } from '@/lib/data';
+import { useOutboxFlusher } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { Doodle } from '@/ui/Doodle';
 import { FONTS, useTheme } from '@/ui/theme';
@@ -47,6 +48,7 @@ function TabBar({ state, go }: { state: { index: number; routes: { name: string;
 export default function TabsLayout() {
   const { status } = useSession();
   useKeyMaintenance();
+  useOutboxFlusher();
   // Undangan yang dibuka sebelum masuk: lanjutkan setelah sesi siap.
   useEffect(() => {
     const inv = pendingInvite.value;

@@ -218,3 +218,23 @@ describe('pembayaran, wrap publik, Kapsul Indonesia', () => {
     expect((await guest.req('GET', '/v1/me')).status).toBe(401);
   });
 });
+
+describe('kartu rahasia', () => {
+  it('jawaban terbuka hanya bila pembaca juga menjawab kartu yang sama', async () => {
+    const { DECKS } = await import('@sehari/core');
+    const secret = DECKS[0]!.cards.find((c) => c.kind === 'rahasia' && !c.rare)!;
+    env.setNow('2026-10-31T05:00:00Z');
+    const d = '2026-10-31';
+    const a = raka.dropBody(d, { kind: 'card', text: 'jawaban rahasia raka' }, { circleId: duoId });
+    await raka.ok('POST', '/v1/drops', { ...a, meta: { cardId: secret.id } });
+    await naya.ok('POST', '/v1/drops', naya.dropBody(d, { text: 'halo' }, { circleId: duoId }));
+    await naya.ok('POST', `/v1/days/${d}/seal`, { tz: naya.tz });
+    const before = await naya.ok('GET', `/v1/circles/${duoId}/days/${d}`);
+    expect(before.locked.find((l: any) => l.id === a.id)?.reason).toBe('secret_card');
+    env.setNow('2026-11-01T05:00:00Z');
+    const b = naya.dropBody('2026-11-01', { kind: 'card', text: 'jawaban naya' }, { circleId: duoId });
+    await naya.ok('POST', '/v1/drops', { ...b, meta: { cardId: secret.id } });
+    const after = await naya.ok('GET', `/v1/circles/${duoId}/days/${d}`);
+    expect(after.drops.some((x: any) => x.id === a.id)).toBe(true);
+  });
+});

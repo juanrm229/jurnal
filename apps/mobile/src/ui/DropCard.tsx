@@ -236,11 +236,13 @@ export function LockedCard({ locked, author }: { locked: LockedDrop; author: str
       ? COPY.drop.timeCapsuleUntil(locked.unlockOn ? formatDayLong(locked.unlockOn) : '…')
       : locked.reason === 'split'
         ? 'Arsip ini sudah dibekukan.'
+        : locked.reason === 'secret_card'
+          ? 'kartu rahasia · terbuka kalau kamu juga menjawab kartu yang sama'
         : 'tersegel · terbuka setelah kamu menyegel harimu';
   return (
     <View style={{ backgroundColor: c.card, borderRadius: RADIUS.md, padding: 14, borderWidth: 1, borderColor: c.cardEdge }}>
       <Row>
-        <Doodle id={locked.reason === 'time_capsule' ? 'jam-pasir' : 'segel-lilin'} size={28} />
+        <Doodle id={locked.reason === 'time_capsule' ? 'jam-pasir' : locked.reason === 'secret_card' ? 'kartu' : 'segel-lilin'} size={28} />
         <View style={{ flex: 1 }}>
           <Txt v="small" ink>
             {author}

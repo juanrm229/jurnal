@@ -3,8 +3,8 @@
  * terbuka setelah kamu menyegel kapsulmu sendiri (memberi dulu, baru menerima).
  * Server menahan ciphertext — bukan sekadar menyembunyikannya di aplikasi.
  */
-import type { LockedDrop } from '@sehari/core';
-import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
+import { findCard, type LockedDrop } from '@sehari/core';
+import { and, eq, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm';
 import type { Services, UserRow } from '../context';
 import { schema } from '../db';
 import { blockedWith, circleSettings, type CircleRow, type DropRow, userToday } from './domain';
@@ -62,9 +62,25 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
       locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'not_sealed', unlockOn: null });
       continue;
     }
+    // Kartu Rahasia: jawabanmu baru terbuka kalau temanmu juga menjawab kartu yang sama.
+    if (d.kind === 'card' && d.meta?.cardId && findCard(d.meta.cardId)?.card.kind === 'rahasia') {
+      if (!(await answeredCard(s, viewer.id, d.meta.cardId))) {
+        locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'secret_card', unlockOn: null });
+        continue;
+      }
+    }
     visible.push(d);
   }
   return { visible, locked };
+}
+
+async function answeredCard(s: Services, userId: string, cardId: string): Promise<boolean> {
+  const rows = await s.db
+    .select({ id: drops.id })
+    .from(drops)
+    .where(and(eq(drops.authorId, userId), sql`${drops.meta}->>'cardId' = ${cardId}`))
+    .limit(1);
+  return rows.length > 0;
 }
 
 /** Apakah pembaca boleh melihat satu Drop (lewat lingkaran mana pun)? */

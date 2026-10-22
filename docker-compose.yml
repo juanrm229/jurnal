@@ -1,0 +1,26 @@
+# Lingkungan mirip produksi: Postgres + server. `docker compose up`
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: sehari
+      POSTGRES_PASSWORD: sehari
+      POSTGRES_DB: sehari
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+  server:
+    build: { context: ., dockerfile: apps/server/Dockerfile }
+    depends_on: [db]
+    environment:
+      DATABASE_URL: postgres://sehari:sehari@db:5432/sehari
+      PUBLIC_URL: http://localhost:8787
+      APP_URL: http://localhost:8081
+      SERVER_SECRET: ganti-dengan-rahasia-panjang
+      UPLOADS_DIR: /data/uploads
+      DEV_AUTH: "1"
+      NODE_ENV: development
+    volumes: [uploads:/data]
+    ports: ["8787:8787"]
+volumes:
+  pgdata: {}
+  uploads: {}
