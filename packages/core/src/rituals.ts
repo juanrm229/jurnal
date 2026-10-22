@@ -7,7 +7,7 @@ import { DECKS, NIGHT_QUESTIONS } from './content';
 import type { CircleFit, DailyCard, NightQuestion, RareTrigger } from './content/types';
 import type { CircleKind } from './domain';
 import { specialTileFor, circleDayNumber } from './streak';
-import { addDays, type DayKey, diffDays, isoWeek, parseDay, type WeekKey } from './time';
+import { addDays, type DayKey, diffDays, isoWeek, monthKey, monthRange, type MonthKey, parseDay, prevMonth, type WeekKey } from './time';
 
 export function hashString(s: string): number {
   let h = 0x811c9dc5;
@@ -204,4 +204,19 @@ export function nextWeekday(day: DayKey, weekdayTarget: number): DayKey {
     d = addDays(d, 1);
   }
   return d;
+}
+
+// ── Upacara Tutup Bab ───────────────────────────────────────────────────────
+
+/** Upacara Tutup Bab terbuka 3 hari terakhir bulan sampai tanggal 7 bulan berikutnya. */
+export function ceremonyOpen(month: MonthKey, today: DayKey): boolean {
+  const { end } = monthRange(month);
+  return today >= addDays(end, -2) && today <= addDays(end, 7);
+}
+
+/** Semua bulan sejak lingkaran dibuat sampai bulan ini (urut lama → baru). */
+export function monthsSince(createdDay: DayKey, today: DayKey): MonthKey[] {
+  const out: MonthKey[] = [];
+  for (let m = monthKey(today); m >= monthKey(createdDay) && out.length < 600; m = prevMonth(m)) out.push(m);
+  return out.reverse();
 }

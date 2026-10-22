@@ -647,6 +647,9 @@ export interface OrderWire {
   /** Untuk pesanan yang masih menunggu: lanjutkan pembayaran. */
   paymentUrl: string | null;
   bookStatus: 'awaiting_file' | 'printing' | 'shipped' | null;
+  /** Untuk buku & Kapsul Momen: jilid/lingkaran yang dipesan. */
+  circleId: string | null;
+  year: number | null;
 }
 
 export const redeemBody = z.object({ code: z.string().min(6).max(32) });

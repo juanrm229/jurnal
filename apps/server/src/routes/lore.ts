@@ -18,7 +18,9 @@ import {
   isFullMoonNight,
   isIdulFitri,
   isoWeek,
+  ceremonyOpen,
   monthKey,
+  monthsSince,
   monthRange,
   motifBody,
   type MotifWire,
@@ -55,11 +57,6 @@ async function activeMembers(s: Services, circleId: string) {
     .orderBy(asc(circleMembers.joinedAt));
 }
 
-/** Upacara Tutup Bab terbuka 3 hari terakhir bulan sampai tanggal 7 bulan berikutnya. */
-export function ceremonyOpen(month: string, today: string): boolean {
-  const { end } = monthRange(month);
-  return today >= addDays(end, -2) && today <= addDays(end, 7);
-}
 
 async function closeChapterIfReady(s: Services, circleId: string, month: string, force = false) {
   const [ch] = await s.db.select().from(chapters).where(and(eq(chapters.circleId, circleId), eq(chapters.month, month)));
@@ -92,7 +89,7 @@ export function loreRoutes(s: Services) {
       s.db.select().from(chapterProposals).where(eq(chapterProposals.circleId, circle.id)),
       s.db.select().from(chapterVotes).where(eq(chapterVotes.circleId, circle.id)),
     ]);
-    const months = new Set([...chs.map((x) => x.month), ...props.map((x) => x.month), monthKey(userToday(user, s.now()))]);
+    const months = new Set([...monthsSince(circle.createdDay, userToday(user, s.now())), ...chs.map((x) => x.month), ...props.map((x) => x.month)]);
     const out: ChapterWire[] = [...months].sort().map((month) => {
       const ch = chs.find((x) => x.month === month);
       return {
@@ -389,7 +386,7 @@ export function loreRoutes(s: Services) {
   r.delete('/:id/dictionary/:did', async (c) => {
     const user = c.get('user');
     const { circle } = await requireMember(s, c.req.param('id'), user.id);
-    await s.db.delete(dictionary).where(and(eq(dictionary.id, c.req.param('did')), eq(dictionary.circleId, circle.id)));
+    await s.db.delete(dictionary).where(and(eq(dictionary.id, c.req.param('did')), eq(dictionary.circleId, circle.id), eq(dictionary.addedBy, user.id)));
     return c.json({ ok: true });
   });
 

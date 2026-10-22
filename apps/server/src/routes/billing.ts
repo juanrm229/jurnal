@@ -30,6 +30,8 @@ export async function ordersFor(s: Services, userId: string): Promise<OrderWire[
       giftRedeemed: !!gifts.find((g) => g.orderId === o.id)?.redeemedBy,
       paymentUrl: o.status === 'pending' ? o.paymentUrl : null,
       bookStatus: (books.find((b) => b.orderId === o.id)?.status as OrderWire['bookStatus']) ?? null,
+      circleId: ((o.meta as { circleId?: string }).circleId as string | undefined) ?? null,
+      year: ((o.meta as { year?: number }).year as number | undefined) ?? null,
     }));
 }
 

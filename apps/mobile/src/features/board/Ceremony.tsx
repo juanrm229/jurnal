@@ -16,15 +16,9 @@ import { Button, Card, Field, Gap, Pill, Row, Sticky, Txt } from '@/ui/kit';
 import { SPACE, useTheme } from '@/ui/theme';
 import { authoredTexts, errorText, nameIn, toWrapDrops } from './shared';
 
-/** Sama dengan aturan server: 3 hari terakhir bulan sampai tanggal 7 bulan berikutnya. */
-export function ceremonyOpen(month: string, today: string): boolean {
-  const { end } = monthRange(month);
-  const start = new Date(`${end}T00:00:00Z`);
-  start.setUTCDate(start.getUTCDate() - 2);
-  const stop = new Date(`${end}T00:00:00Z`);
-  stop.setUTCDate(stop.getUTCDate() + 7);
-  return today >= start.toISOString().slice(0, 10) && today <= stop.toISOString().slice(0, 10);
-}
+/** Aturan upacara dari core — sama persis dengan yang ditegakkan server. */
+export { ceremonyOpen } from '@sehari/core';
+import { ceremonyOpen } from '@sehari/core';
 
 export function aiAllowed(circle: CircleView): boolean {
   return circle.active.length > 0 && circle.active.every((m) => circle.aiConsent.find((a) => a.userId === m.userId)?.granted);

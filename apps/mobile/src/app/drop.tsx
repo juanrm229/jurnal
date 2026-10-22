@@ -74,8 +74,14 @@ export default function DropComposer() {
     if (rec.isRecording && rec.durationMillis >= maxVoice * 1000) void stopRecording();
   }, [rec.durationMillis, rec.isRecording]);
 
+  // Lingkaran dimuat belakangan: arahkan ke lingkaran (atau lingkaran asal tombol) sekali saja.
+  const [touched, setTouched] = useState(false);
   useEffect(() => {
-    if (!active.length && audience === 'circle') setAudience('self');
+    if (touched) return;
+    if (active.length) {
+      setAudience('circle');
+      setCircleIds(params.circleId && active.some((x) => x.id === params.circleId) ? [params.circleId] : active.map((x) => x.id));
+    } else setAudience('self');
   }, [active.length]);
 
   const people = useMemo(() => active.flatMap((x) => x.others.map((m) => ({ ...m, circleId: x.id, circleName: x.name }))), [active]);
@@ -352,21 +358,22 @@ export default function DropComposer() {
                 testID={`aud-circle-${x.id}`}
                 active={audience === 'circle' && circleIds.includes(x.id)}
                 onPress={() => {
+                  setTouched(true);
                   setAudience('circle');
                   setCircleIds((ids) => (audience !== 'circle' ? [x.id] : ids.includes(x.id) ? ids.filter((i) => i !== x.id) : [...ids, x.id]));
                 }}>
                 {x.name}
               </Pill>
             ))}
-            <Pill testID="aud-self" active={audience === 'self'} onPress={() => setAudience('self')}>
+            <Pill testID="aud-self" active={audience === 'self'} onPress={() => { setTouched(true); setAudience('self'); }}>
               {COPY.drop.audience.onlyMe}
             </Pill>
             {people.length ? (
-              <Pill active={audience === 'person'} onPress={() => { setAudience('person'); setPersonId(personId ?? people[0]!.userId); }}>
+              <Pill active={audience === 'person'} onPress={() => { setTouched(true); setAudience('person'); setPersonId(personId ?? people[0]!.userId); }}>
                 satu orang
               </Pill>
             ) : null}
-            <Pill testID="aud-capsule" active={audience === 'time_capsule'} onPress={() => setAudience('time_capsule')}>
+            <Pill testID="aud-capsule" active={audience === 'time_capsule'} onPress={() => { setTouched(true); setAudience('time_capsule'); }}>
               {COPY.drop.audience.timeCapsule}
             </Pill>
           </Row>

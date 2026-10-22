@@ -78,10 +78,15 @@ export default function PapanTahun() {
   const ahead = tiles.filter((t) => !t.past && !t.isToday).length;
   const ageToday = circleDayNumber(circle.createdDay, today);
 
+  const showNote = (t: Tile) => {
+    setPicked(t);
+    // Catatan muncul di atas papan; bawa pandangan ke sana.
+    scroll.current?.scrollTo({ y: 0, animated: true });
+  };
   const onTile = (t: Tile) => {
-    if (t.special || t.isToday) return setPicked(t);
+    if (t.special || t.isToday) return showNote(t);
     if (t.past && !t.before) router.push(`/l/${id}/hari/${t.day}`);
-    else setPicked(t);
+    else showNote(t);
   };
 
   return (
