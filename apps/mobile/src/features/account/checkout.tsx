@@ -12,7 +12,7 @@ import { useSession } from '@/lib/session';
 import { Button, Card, Gap, Row, Txt } from '@/ui/kit';
 import { Doodle } from '@/ui/Doodle';
 import { SPACE, useTheme } from '@/ui/theme';
-import { Choice, errMsg } from './kit';
+import { Choice, errMsg, TCard } from './kit';
 
 export type PayMethod = 'qris' | 'ewallet' | 'va' | 'card';
 
@@ -157,7 +157,7 @@ export function PaymentStatus({ flow, paidText }: { flow: ReturnType<typeof useC
   const { c } = useTheme();
   if (flow.phase === 'waiting') {
     return (
-      <Card style={{ gap: SPACE.sm, borderStyle: 'dashed', borderColor: c.inkSoft }} testID="payment-waiting">
+      <TCard style={{ gap: SPACE.sm, borderStyle: 'dashed', borderColor: c.inkSoft }} testID="payment-waiting">
         <Row gap={10}>
           <Doodle id="jam-pasir" size={28} />
           <View style={{ flex: 1 }}>
@@ -170,12 +170,12 @@ export function PaymentStatus({ flow, paidText }: { flow: ReturnType<typeof useC
         <Button kind="soft" title="sudah bayar? cek lagi" onPress={() => void flow.check()} testID="payment-check" />
         <Button kind="ghost" title="buka lagi halaman bayar" onPress={() => void flow.reopen()} />
         <Button kind="ghost" title="batal" onPress={flow.reset} />
-      </Card>
+      </TCard>
     );
   }
   if (flow.phase === 'paid') {
     return (
-      <Card tint={c.sticky.green} style={{ gap: 6, alignItems: 'center' }} testID="payment-paid">
+      <TCard tint={c.sticky.green} style={{ gap: 6, alignItems: 'center' }} testID="payment-paid">
         <Doodle id="segel-lilin" size={40} color={c.text} />
         <Txt center>{paidText ?? 'Pembayaran diterima. Terima kasih sudah ikut merawat Sehari.'}</Txt>
         {flow.order ? (
@@ -183,7 +183,7 @@ export function PaymentStatus({ flow, paidText }: { flow: ReturnType<typeof useC
             {formatIdr(flow.order.amountIdr)} · lunas
           </Txt>
         ) : null}
-      </Card>
+      </TCard>
     );
   }
   if (flow.phase === 'failed') {

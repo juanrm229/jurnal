@@ -4,7 +4,7 @@
  * seperti kertas, dan berjalan sama di web.
  */
 import { type Me, type UserSettings } from '@sehari/core';
-import { useState, type ReactNode } from 'react';
+import { type ComponentProps, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
@@ -201,4 +201,13 @@ export function SavedHint({ saving, error, savedAt }: { saving: boolean; error: 
   if (saving) return <Txt v="tiny" ink soft>menyimpan…</Txt>;
   if (savedAt) return <Txt v="tiny" ink soft>tersimpan</Txt>;
   return null;
+}
+
+/** `Card` dari kit hanya memasang testID bila bisa ditekan; ini selalu memasangnya. */
+export function TCard({ testID, ...props }: ComponentProps<typeof Card>) {
+  return (
+    <View testID={testID}>
+      <Card {...props} />
+    </View>
+  );
 }

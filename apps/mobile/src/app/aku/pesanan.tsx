@@ -1,10 +1,11 @@
 import { findProduct, formatIdr, type OrderStatus, type OrderWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import * as Clipboard from 'expo-clipboard';
+import * as WebBrowser from 'expo-web-browser';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { RefreshControl, View } from 'react-native';
-import { formatDate, Note } from '@/features/account/kit';
+import { formatDate, Note, TCard } from '@/features/account/kit';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { shareText } from '@/lib/share';
@@ -112,7 +113,7 @@ export default function Orders() {
           {q.data.map((o) => {
             const p = findProduct(o.product);
             return (
-              <Card key={o.id} testID={`order-${o.id}`} style={o.id === order ? { borderColor: c.ink } : undefined}>
+              <TCard key={o.id} testID={`order-${o.id}`} style={o.id === order ? { borderColor: c.ink } : undefined}>
                 <Row gap={12} style={{ alignItems: 'flex-start' }}>
                   <Doodle id={iconFor(o.product)} size={30} />
                   <View style={{ flex: 1, gap: 2 }}>
@@ -132,8 +133,16 @@ export default function Orders() {
                     </Txt>
                   </View>
                 </Row>
-                {o.giftCode ? <GiftCode code={o.giftCode} /> : null}
-              </Card>
+                {o.giftCode && !o.giftRedeemed ? <GiftCode code={o.giftCode} /> : null}
+                {o.giftCode && o.giftRedeemed ? (
+                  <Txt v="tiny" soft>
+                    kode hadiah sudah dipakai
+                  </Txt>
+                ) : null}
+                {o.status === 'pending' && o.paymentUrl ? (
+                  <Button kind="soft" title="lanjutkan bayar" onPress={() => WebBrowser.openBrowserAsync(o.paymentUrl!)} style={{ marginTop: SPACE.sm }} testID={`order-pay-${o.id}`} />
+                ) : null}
+              </TCard>
             );
           })}
           <Txt v="tiny" soft center style={{ marginTop: SPACE.sm }}>

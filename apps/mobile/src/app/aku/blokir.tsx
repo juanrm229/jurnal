@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { View } from 'react-native';
-import { formatDate, Note } from '@/features/account/kit';
+import { formatDate, Note, TCard } from '@/features/account/kit';
 import { api } from '@/lib/api';
 import { useCircles } from '@/lib/data';
 import { Avatar } from '@/ui/Avatar';
@@ -58,7 +58,7 @@ export default function Blocked() {
           {q.data.map((b) => {
             const p = who(b.userId);
             return (
-              <Card key={b.userId} testID={`blocked-${b.userId}`}>
+              <TCard key={b.userId} testID={`blocked-${b.userId}`}>
                 <Row gap={12}>
                   <Avatar doodle={p?.doodle ?? 'semak'} size={40} dim />
                   <View style={{ flex: 1 }}>
@@ -80,7 +80,7 @@ export default function Blocked() {
                     </Row>
                   </View>
                 ) : null}
-              </Card>
+              </TCard>
             );
           })}
         </View>

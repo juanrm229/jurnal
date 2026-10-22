@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { ConfirmCard, errMsg, Note } from '@/features/account/kit';
+import { ConfirmCard, errMsg, Note, TCard } from '@/features/account/kit';
 import { api } from '@/lib/api';
 import { useCircles } from '@/lib/data';
 import { Avatar } from '@/ui/Avatar';
@@ -234,7 +234,7 @@ export default function Report() {
           </Section>
 
           <Section title="persis yang akan dikirim">
-            <Card tint={c.paper} style={{ gap: 6, borderStyle: 'dashed', borderColor: c.inkSoft }} testID="report-preview">
+            <TCard tint={c.paper} style={{ gap: 6, borderStyle: 'dashed', borderColor: c.inkSoft }} testID="report-preview">
               <Txt v="tiny" soft>
                 tentang
               </Txt>
@@ -258,7 +258,7 @@ export default function Report() {
                   ditambah penanda Drop yang dilaporkan (tanpa isinya)
                 </Txt>
               ) : null}
-            </Card>
+            </TCard>
           </Section>
           {err ? (
             <Txt v="small" style={{ marginTop: SPACE.sm, color: c.danger }}>

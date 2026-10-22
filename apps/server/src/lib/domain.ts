@@ -182,6 +182,7 @@ export async function circleSummaries(s: Services, viewer: UserRow, circleIds: s
         birthday: u.birthday,
         cityId: u.cityId,
         tz: u.tz,
+        memorialVotes: m.memorialVotes ?? [],
       }));
       const streakMembers = toStreakMembers(ms, sealed, frozen);
       const streak = streakSummary(streakMembers, c.kind as CircleKind, today);

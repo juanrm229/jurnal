@@ -150,7 +150,7 @@ export function Card({
   testID?: string;
 }) {
   const { c } = useTheme();
-  const body = <View style={[styles.card, { backgroundColor: tint ?? c.card, borderColor: c.cardEdge }, style]}>{children}</View>;
+  const body = <View testID={onPress ? undefined : testID} style={[styles.card, { backgroundColor: tint ?? c.card, borderColor: c.cardEdge }, style]}>{children}</View>;
   if (!onPress) return body;
   return (
     <Pressable onPress={onPress} testID={testID} style={({ pressed }) => pressed && { opacity: 0.8, transform: [{ scale: 0.99 }] }}>
@@ -288,7 +288,7 @@ export function Field({ label, hint, style, ...props }: TextInputProps & { label
 export function Toggle({ label, value, onChange, hint, testID }: { label: string; value: boolean; onChange: (v: boolean) => void; hint?: string; testID?: string }) {
   const { c } = useTheme();
   return (
-    <Pressable onPress={() => onChange(!value)} testID={testID} accessibilityRole="switch" accessibilityState={{ checked: value }} style={{ paddingVertical: 10 }}>
+    <Pressable onPress={() => onChange(!value)} testID={testID} accessibilityRole="switch" accessibilityState={{ checked: value }} aria-checked={value} style={{ paddingVertical: 10 }}>
       <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View style={{ flex: 1, paddingRight: 12 }}>
           <Txt>{label}</Txt>

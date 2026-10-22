@@ -14,7 +14,7 @@ import { useSession } from '@/lib/session';
 import { Avatar } from '@/ui/Avatar';
 import { Button, Card, Field, Row, Txt } from '@/ui/kit';
 import { SPACE, useTheme } from '@/ui/theme';
-import { ConfirmCard, errMsg } from './kit';
+import { ConfirmCard, errMsg, formatDate, TCard } from './kit';
 
 const ROLE: Record<string, string> = { owner: 'pembuka lingkaran', member: 'anggota', guest: 'tamu' };
 
@@ -103,7 +103,7 @@ function MemberRow({
   };
 
   return (
-    <Card testID={`member-${member.userId}`} style={{ gap: SPACE.sm }}>
+    <TCard testID={`member-${member.userId}`} style={{ gap: SPACE.sm }}>
       <Row gap={12}>
         <Avatar doodle={member.doodle} size={44} dim={member.state === 'remembered'} />
         <View style={{ flex: 1 }}>
@@ -112,7 +112,7 @@ function MemberRow({
             {isMe ? ' (kamu)' : ''}
           </Txt>
           <Txt v="tiny" soft>
-            {member.state === 'remembered' ? 'dikenang' : ROLE[member.role] ?? member.role} · sejak {member.joinedDay}
+            {member.state === 'remembered' ? 'dikenang' : ROLE[member.role] ?? member.role} · sejak {formatDate(member.joinedAt)}
           </Txt>
         </View>
       </Row>
@@ -145,7 +145,7 @@ function MemberRow({
       {!isMe && member.state !== 'left' && !frozen ? (
         <View style={{ gap: 6 }}>
           <Field
-            label={`julukan tokoh darimu untuk ${member.penName}`}
+            label="julukan tokoh darimu"
             value={nick}
             onChangeText={(v) => {
               setNick(v);
@@ -210,7 +210,7 @@ function MemberRow({
         </>
       ) : null}
       {err ? <Txt v="small" style={{ color: c.danger }}>{err}</Txt> : null}
-    </Card>
+    </TCard>
   );
 }
 

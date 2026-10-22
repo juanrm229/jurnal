@@ -235,6 +235,8 @@ export interface CircleMember {
   birthday: string | null;
   cityId: string | null;
   tz: string;
+  /** Anggota yang sudah mengonfirmasi Mode Kenangan untuk orang ini. */
+  memorialVotes: string[];
 }
 
 export interface CircleKeyEnvelope {
@@ -641,6 +643,9 @@ export interface OrderWire {
   createdAt: string;
   paidAt: string | null;
   giftCode: string | null;
+  giftRedeemed: boolean;
+  /** Untuk pesanan yang masih menunggu: lanjutkan pembayaran. */
+  paymentUrl: string | null;
   bookStatus: 'awaiting_file' | 'printing' | 'shipped' | null;
 }
 

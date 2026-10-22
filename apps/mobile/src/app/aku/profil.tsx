@@ -106,7 +106,7 @@ export default function EditProfile() {
             setTz(x.tz);
           }}
         />
-        {city ? (
+        {city && tz !== u.tz ? (
           <Txt v="tiny" soft style={{ marginTop: 6 }}>
             zona waktu ikut berubah: {zoneLabel(tz)}
           </Txt>

@@ -27,6 +27,8 @@ export async function ordersFor(s: Services, userId: string): Promise<OrderWire[
       createdAt: o.createdAt.toISOString(),
       paidAt: o.paidAt?.toISOString() ?? null,
       giftCode: gifts.find((g) => g.orderId === o.id)?.code ?? null,
+      giftRedeemed: !!gifts.find((g) => g.orderId === o.id)?.redeemedBy,
+      paymentUrl: o.status === 'pending' ? o.paymentUrl : null,
       bookStatus: (books.find((b) => b.orderId === o.id)?.status as OrderWire['bookStatus']) ?? null,
     }));
 }

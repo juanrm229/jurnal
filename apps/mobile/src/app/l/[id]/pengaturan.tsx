@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { MethodPicker, type PayMethod, PaymentStatus, useCheckout } from '@/features/account/checkout';
 import { CircleMembers } from '@/features/account/CircleMembers';
-import { Bullets, Choice, ConfirmCard, errMsg, Note } from '@/features/account/kit';
+import { Bullets, Choice, ConfirmCard, errMsg, Note, TCard } from '@/features/account/kit';
 import { api } from '@/lib/api';
 import { type CircleView, sealCircleText, useCircle } from '@/lib/data';
 import { useSession } from '@/lib/session';
@@ -163,7 +163,7 @@ function MomentTierCard({ circle }: { circle: CircleView }) {
   const guests = circle.members.filter((m) => m.state !== 'left').length;
   return (
     <View style={{ gap: SPACE.sm }}>
-      <Card style={{ gap: 4 }} testID="moment-tier">
+      <TCard style={{ gap: 4 }} testID="moment-tier">
         <Row style={{ justifyContent: 'space-between' }}>
           <Txt ink>Paket {MOMENT_TIERS[tier].label}</Txt>
           <Txt v="tiny" soft>
@@ -175,7 +175,7 @@ function MomentTierCard({ circle }: { circle: CircleView }) {
             acara {circle.moment.startsOn} sampai {circle.moment.endsOn}
           </Txt>
         ) : null}
-      </Card>
+      </TCard>
       {higher.length && flow.phase !== 'paid' ? (
         <>
           <Txt v="small">Butuh ruang untuk lebih banyak tamu? Termasuk Wrap acara dan QR untuk tamu.</Txt>
@@ -303,7 +303,7 @@ function MemorialMode({ circle, onDone }: { circle: CircleView; onDone: () => Pr
           <Txt v="tiny" soft>
             untuk siapa?
           </Txt>
-          <Choice options={circle.others.map((m) => ({ value: m.userId, label: m.penName }))} value={who ?? ''} onChange={setWho} testID="memorial-who" />
+          <Choice options={circle.others.map((m) => ({ value: m.userId, label: m.memorialVotes?.length ? `${m.penName} · ${m.memorialVotes.length} konfirmasi` : m.penName }))} value={who ?? ''} onChange={setWho} testID="memorial-who" />
           {circle.kind !== 'duo' ? (
             <Txt v="tiny" soft>
               Di lingkaran, dua anggota perlu mengonfirmasi. Orang yang ditandai keliru bisa membatalkannya sendiri.
@@ -473,7 +473,7 @@ export default function CircleSettingsScreen() {
           {circle.status === 'split' ? COPY.modes.split.done : circle.status === 'memorial' ? COPY.modes.memorial.body : 'Acara ini sudah selesai. Arsipnya tetap bisa dibuka kapan saja.'}
         </Note>
       ) : null}
-      {circle.me?.state === 'remembered' ? <RememberedUndo circle={circle} onDone={refresh} /> : null}
+      {circle.me?.state === 'remembered' || (circle.me?.memorialVotes?.length ?? 0) > 0 ? <RememberedUndo circle={circle} onDone={refresh} /> : null}
       {err ? (
         <>
           <Gap h={SPACE.sm} />

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { MethodPicker, type PayMethod, PaymentStatus, useCheckout, WEB_PAY_NOTE } from '@/features/account/checkout';
-import { formatDate, Note } from '@/features/account/kit';
+import { formatDate, Note, TCard } from '@/features/account/kit';
 import { useCircles, useMe } from '@/lib/data';
 import { Avatar } from '@/ui/Avatar';
 import { Doodle } from '@/ui/Doodle';
@@ -19,7 +19,7 @@ const seconds = (n: number) => (n === 0 ? '—' : n < 120 ? `${n} detik` : `${Ma
 const yesNo = (b: boolean) => (b ? 'ya' : '—');
 
 const ROWS: { label: string; get: (l: PlanLimits) => string }[] = [
-  { label: 'lingkaran', get: (l) => (l.maxCircles >= 50 ? 'tanpa batas' : String(l.maxCircles)) },
+  { label: 'lingkaran', get: (l) => (l.maxCircles >= 50 ? 'bebas' : String(l.maxCircles)) },
   { label: 'voice note', get: (l) => seconds(l.voiceSeconds) },
   { label: 'video', get: (l) => seconds(l.videoSeconds) },
   { label: 'foto per Drop', get: (l) => String(l.photosPerDrop) },
@@ -159,13 +159,13 @@ export default function PlusPaywall() {
       {current !== 'free' ? (
         <>
           <Gap />
-          <Card tint={c.sticky.green} style={{ gap: 4 }} testID="plan-current">
+          <TCard tint={c.sticky.green} style={{ gap: 4 }} testID="plan-current">
             <Txt ink>Paketmu sekarang: {PLAN_NAME[current]}</Txt>
             <Txt v="small">{me.user.planUntil ? `aktif sampai ${formatDate(me.user.planUntil)}` : 'aktif'}. Terima kasih sudah ikut merawat Sehari.</Txt>
             <Txt v="tiny" soft>
               Membayar lagi akan memperpanjang dari tanggal itu, bukan menimpanya.
             </Txt>
-          </Card>
+          </TCard>
         </>
       ) : null}
 
@@ -223,7 +223,7 @@ export default function PlusPaywall() {
         </Section>
       ) : null}
 
-      <Section title="bayar">
+      <Section title="pembayaran">
         {flow.phase === 'idle' || flow.phase === 'opening' ? (
           <View style={{ gap: SPACE.md }}>
             <MethodPicker value={method} onChange={setMethod} />

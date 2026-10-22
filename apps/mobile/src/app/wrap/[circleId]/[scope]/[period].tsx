@@ -60,7 +60,8 @@ export default function WrapScreen() {
     let cards: StoryCard[] = wrap.cards;
     if (quiet) {
       const text = COPY.wraps.quietWeek.replace('Minggu ini', QUIET_PREFIX[s]);
-      cards = [wrap.cards[0]!, ...wrap.cards.filter((x) => x.type === 'streak'), { type: 'quiet', text }, wrap.cards[wrap.cards.length - 1]!];
+      const cover = wrap.cards[0]!;
+      cards = [cover.type === 'cover' ? { ...cover, subtitle: 'Halaman yang tenang.' } : cover, ...wrap.cards.filter((x) => x.type === 'streak'), { type: 'quiet', text }, wrap.cards[wrap.cards.length - 1]!];
     }
     const base = slow ? Math.min(9000, Math.max(6500, Math.round(60_000 / cards.length))) : 6000;
     const durationFor = (card: StoryCard) => {

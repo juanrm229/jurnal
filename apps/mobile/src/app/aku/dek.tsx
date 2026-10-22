@@ -2,6 +2,7 @@ import { type Deck, DECKS, formatIdr } from '@sehari/core';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MethodPicker, type PayMethod, PaymentStatus, useCheckout, WEB_PAY_NOTE } from '@/features/account/checkout';
+import { TCard } from '@/features/account/kit';
 import { useMe } from '@/lib/data';
 import { Doodle } from '@/ui/Doodle';
 import { Button, Card, Gap, Header, Row, Screen, Sticky, Txt } from '@/ui/kit';
@@ -13,7 +14,7 @@ const COLORS = ['yellow', 'peach', 'green', 'blue'] as const;
 function Samples({ deck }: { deck: Deck }) {
   const cards = deck.cards.filter((x) => !x.rare).slice(0, 3);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 8, paddingHorizontal: 2 }}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingTop: 6, paddingBottom: 18, paddingHorizontal: 4 }}>
       {cards.map((card, i) => (
         <Sticky key={card.id} color={COLORS[i % COLORS.length]} tilt={i % 2 ? 1.5 : -1.5} pin={false} style={{ width: 200 }}>
           <Txt v="tiny" soft>
@@ -39,7 +40,7 @@ function DeckCard({ deck, owned }: { deck: Deck; owned: boolean }) {
   const free = deck.priceIdr === 0;
   const has = owned || free || flow.phase === 'paid';
   return (
-    <Card testID={`deck-${deck.id}`} style={{ gap: SPACE.sm }}>
+    <TCard testID={`deck-${deck.id}`} style={{ gap: SPACE.sm }}>
       <Row gap={12} style={{ alignItems: 'flex-start' }}>
         <Doodle id={deck.doodle} size={36} />
         <View style={{ flex: 1 }}>
@@ -82,7 +83,7 @@ function DeckCard({ deck, owned }: { deck: Deck; owned: boolean }) {
           <Button kind="soft" title="ambil dek ini" onPress={() => setOpen(true)} testID={`deck-buy-${deck.id}`} />
         )
       ) : null}
-    </Card>
+    </TCard>
   );
 }
 
