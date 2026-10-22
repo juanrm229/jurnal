@@ -89,7 +89,7 @@ p{line-height:1.6}.soft{color:var(--soft)}
 export function webRoutes(s: Services) {
   const r = new Hono();
 
-  r.get('/', (c) =>
+  if (!s.cfg.webDist) r.get('/', (c) =>
     c.html(page('Sehari', `<h1>sehari</h1><p>kapsul waktu harian, diisi bersama orang yang kamu pilih.</p><p class="soft">hari ini cuma terjadi sekali. simpan bareng dia.</p><a class="btn" href="${s.cfg.appUrl}">buka aplikasi</a>`)),
   );
 
@@ -130,7 +130,7 @@ export function webRoutes(s: Services) {
   });
 
   /** Tautan undangan: rahasia ada di fragmen (#...), yang tidak pernah sampai ke server. */
-  r.get('/j/:token', (c) =>
+  if (!s.cfg.webDist) r.get('/j/:token', (c) =>
     c.html(
       page(
         'Undangan Sehari',
@@ -144,6 +144,13 @@ location.replace('sehari://j/'+t+'?k='+encodeURIComponent(f.slice(1)));setTimeou
       ),
     ),
   );
+
+  /** Pemicu cron dari luar (cron-job.org dsb.) — sekaligus membangunkan server gratisan. */
+  r.all('/cron', async (c) => {
+    if (!s.cfg.cronToken || c.req.query('token') !== s.cfg.cronToken) return c.json({ ok: false }, 401);
+    await runJobs(s);
+    return c.json({ ok: true, time: s.now().toISOString() });
+  });
 
   // Mode pengembangan: jalankan penjadwal sekarang & antar surat tanpa menunggu.
   if (s.cfg.devAuth) {

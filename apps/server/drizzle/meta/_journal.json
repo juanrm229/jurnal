@@ -8,6 +8,13 @@
       "when": 1792644630640,
       "tag": "0000_black_kid_colt",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792665564040,
+      "tag": "0001_fast_the_professor",
+      "breakpoints": true
     }
   ]
 }

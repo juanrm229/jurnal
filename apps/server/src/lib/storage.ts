@@ -1,6 +1,8 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { AwsClient } from 'aws4fetch';
+import { eq } from 'drizzle-orm';
+import { type Db, schema } from '../db';
 import type { Config } from './config';
 
 /** Penyimpanan blob. Isi selalu ciphertext — server tidak bisa melihat foto/suara. */
@@ -69,7 +71,22 @@ export class S3BlobStore implements BlobStore {
   }
 }
 
-export function createBlobStore(cfg: Config): BlobStore {
+export class DbBlobStore implements BlobStore {
+  constructor(private db: Db) {}
+  async put(key: string, data: Uint8Array) {
+    await this.db.insert(schema.blobs).values({ key, data }).onConflictDoUpdate({ target: schema.blobs.key, set: { data } });
+  }
+  async get(key: string) {
+    const [row] = await this.db.select().from(schema.blobs).where(eq(schema.blobs.key, key));
+    return row?.data ?? null;
+  }
+  async delete(key: string) {
+    await this.db.delete(schema.blobs).where(eq(schema.blobs.key, key));
+  }
+}
+
+export function createBlobStore(cfg: Config, db?: Db): BlobStore {
+  if (cfg.storage.provider === 'db' && db) return new DbBlobStore(db);
   if (cfg.storage.provider === 's3' && cfg.storage.s3) return new S3BlobStore(cfg.storage.s3);
   return new LocalBlobStore(cfg.uploadsDir);
 }

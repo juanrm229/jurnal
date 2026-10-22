@@ -1,0 +1,17 @@
+{
+  "name": "Sehari — kapsul hari bersama",
+  "short_name": "Sehari",
+  "description": "Kapsul waktu harian yang diisi bersama orang terdekat.",
+  "start_url": "/hari",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#E6E6E8",
+  "theme_color": "#E6E6E8",
+  "lang": "id",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

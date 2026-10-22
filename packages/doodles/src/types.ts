@@ -11,7 +11,11 @@ export type DoodleCategory =
   | 'cuaca'
   | 'token' // Token Kenangan di Lemari Benda
   | 'musim' // ketupat, lentera, bendera, kembang api
-  | 'ui'; // ikon antarmuka bergaya tangan
+  | 'ui' // ikon antarmuka bergaya tangan
+  | 'makanan' // makanan & minuman sehari-hari
+  | 'perjalanan' // kendaraan & perlengkapan jalan-jalan
+  | 'perasaan' // hati, wajah sederhana, pelukan
+  | 'stiker'; // hiasan scrapbook: panah, selotip, kilau, bingkai
 
 export interface Doodle {
   /** id stabil kebab-case, mis. 'bunga-matahari'. Jangan diubah setelah rilis. */

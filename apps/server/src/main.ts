@@ -4,9 +4,11 @@ import { createApp } from './app';
 import { startScheduler } from './jobs/scheduler';
 import { loadConfig } from './lib/config';
 import { createServices } from './services';
+import { setFreeAll } from './lib/domain';
 
 const cfg = loadConfig();
 if (!cfg.databaseUrl && cfg.dataDir !== 'memory') mkdirSync(cfg.dataDir, { recursive: true });
+setFreeAll(cfg.freeAll);
 const services = await createServices(cfg);
 const app = createApp(services);
 const stop = startScheduler(services);

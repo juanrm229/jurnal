@@ -101,7 +101,8 @@ export type DropKind =
   | 'auto' // jejak otomatis: cuaca, kota, langkah, lagu
   | 'blackout' // Puisi Temuan
   | 'prologue'
-  | 'epilogue';
+  | 'epilogue'
+  | 'sticker'; // stiker doodle di halaman jurnal
 
 /**
  * Audiens selalu terlihat di samping tombol Drop.
@@ -167,6 +168,26 @@ export interface DropPayload {
   autoSource?: 'weather' | 'city' | 'steps' | 'top_song' | 'gallery';
   /** Teks pertanyaan/kartu yang dijawab, disimpan agar arsip mandiri. */
   prompt?: string;
+  /**
+   * Posisi di halaman jurnal (web). Satuan halaman: lebar 1000, tinggi bebas.
+   * Ikut terenkripsi — server tidak tahu tata letak halamanmu.
+   */
+  layout?: PageLayout;
+  /** Gaya teks di halaman. */
+  style?: { font?: 'mono' | 'hand'; size?: number; color?: string; align?: 'left' | 'center' };
+  /** Untuk kind 'sticker': id doodle & warnanya. */
+  sticker?: string;
+  color?: string;
+}
+
+export interface PageLayout {
+  x: number;
+  y: number;
+  /** Lebar elemen (satuan halaman). */
+  w: number;
+  /** Rotasi derajat. */
+  rot: number;
+  z: number;
 }
 
 /** Metadata yang memang terlihat server (tidak sensitif) untuk aturan & hitungan. */

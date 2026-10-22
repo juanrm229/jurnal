@@ -7,6 +7,7 @@
 
 import {
   boolean,
+  customType,
   date,
   index,
   integer,
@@ -542,3 +543,16 @@ export const rateLimits = pgTable('rate_limits', {
   resetAt: ts('reset_at').notNull(),
 });
 
+
+const bytea = customType<{ data: Uint8Array; driverData: Buffer | Uint8Array }>({
+  dataType: () => 'bytea',
+  toDriver: (v) => Buffer.from(v),
+  fromDriver: (v) => new Uint8Array(v),
+});
+
+/** Penyimpanan media di database (BLOB_STORE=db) — cukup untuk pemakaian pribadi. Isinya tetap ciphertext. */
+export const blobs = pgTable('blobs', {
+  key: text('key').primaryKey(),
+  data: bytea('data').notNull(),
+  createdAt: ts('created_at').notNull().defaultNow(),
+});

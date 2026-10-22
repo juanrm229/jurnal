@@ -31,7 +31,15 @@ export type CircleRow = typeof circles.$inferSelect;
 export type MemberRow = typeof circleMembers.$inferSelect;
 export type DropRow = typeof schema.drops.$inferSelect;
 
+let FREE_ALL = false;
+/** Pemakaian pribadi: semua orang mendapat fitur Plus tanpa membayar. */
+export function setFreeAll(v: boolean) {
+  FREE_ALL = v;
+}
+export const isFreeAll = () => FREE_ALL;
+
 export function effectivePlan(u: Pick<UserRow, 'plan' | 'planUntil'>, now: Date): PlanCode {
+  if (FREE_ALL) return u.plan === 'plus_duo' ? 'plus_duo' : 'plus';
   if (u.plan === 'free') return 'free';
   if (u.planUntil && u.planUntil.getTime() < now.getTime()) return 'free';
   return u.plan as PlanCode;

@@ -4,39 +4,14 @@
  */
 import type { Doodle, DoodleCategory } from './types';
 import { fnv1a } from './hash';
-import { tanaman } from './data/tanaman';
-import { bunga } from './data/bunga';
-import { buah } from './data/buah';
-import { makhluk } from './data/makhluk';
-import { benda } from './data/benda';
-import { cuaca } from './data/cuaca';
-import { token } from './data/token';
-import { musim } from './data/musim';
-import { ui } from './data/ui';
+import { INK, STROKE_WIDTH, DOODLES, DOODLE_BY_ID } from './catalog';
 
 export type { Doodle, DoodleCategory } from './types';
 export { fnv1a } from './hash';
+export { transformPath, placeMatrix, pathBBox, type Affine } from './path';
+export { SCENES, SCENE_BY_ID, getScene, sceneToSvg, type Scene, type SceneSvgOptions } from './scenes';
 
-/** Warna tinta & kertas resmi. */
-export const INK = '#2A14D6';
-export const PAPER = '#E6E6E8';
-export const STROKE_WIDTH = 2.4;
-
-export const DOODLES: Doodle[] = [
-  ...tanaman,
-  ...bunga,
-  ...buah,
-  ...makhluk,
-  ...benda,
-  ...cuaca,
-  ...token,
-  ...musim,
-  ...ui,
-];
-
-export const DOODLE_BY_ID: Record<string, Doodle> = Object.fromEntries(
-  DOODLES.map((d) => [d.id, d]),
-);
+export { INK, PAPER, STROKE_WIDTH, DOODLES, DOODLE_BY_ID } from './catalog';
 
 const FALLBACK_ID = 'tunas';
 

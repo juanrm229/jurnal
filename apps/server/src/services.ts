@@ -13,7 +13,7 @@ export async function createServices(cfg: Config, overrides: Partial<Services> =
   return {
     db,
     cfg,
-    blobs: overrides.blobs ?? createBlobStore(cfg),
+    blobs: overrides.blobs ?? createBlobStore(cfg, db),
     mailer: overrides.mailer ?? createMailer(cfg),
     pusher: overrides.pusher ?? createPusher(cfg),
     payments: overrides.payments ?? createPayments(cfg),

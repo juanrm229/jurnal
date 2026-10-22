@@ -5,6 +5,7 @@ import {
   type CircleKind,
   COPY,
   createDropBody,
+  updateDropBody,
   diffDays,
   footnoteBody,
   footnotePrintBody,
@@ -51,7 +52,7 @@ type DropInput = z.infer<typeof createDropBody>;
 const LATE_KINDS = new Set(['blackout', 'prologue', 'epilogue']);
 
 /** Validasi & simpan satu Drop. Dipakai oleh POST /drops dan saat menyegel. */
-export async function createDrop(s: Services, user: UserRow, input: DropInput, opts: { sealing?: boolean } = {}) {
+export async function createDrop(s: Services, user: UserRow, input: DropInput, opts: { sealing?: boolean; replace?: boolean } = {}) {
   const now = s.now();
   const today = userToday(user, now);
   const allowedDays = sealableDays(user.tz, now);
@@ -61,7 +62,7 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
   if (cap?.sealedAt && !opts.sealing && !LATE_KINDS.has(input.kind)) throw conflict('sealed', 'Hari ini sudah disegel. Sampai jumpa besok.');
 
   const [exists] = await s.db.select({ id: drops.id }).from(drops).where(eq(drops.id, input.id));
-  if (exists) return input.id; // idempoten: kiriman ulang dari antrean offline
+  if (exists && !opts.replace) return input.id; // idempoten: kiriman ulang dari antrean offline
 
   const plan = effectivePlan(user, now);
   const limits = limitsFor(plan);
@@ -128,6 +129,15 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
     if (owned.length !== new Set(input.mediaIds).size) throw forbidden('Media tidak ditemukan.');
   }
 
+  if (opts.replace) {
+    // Edit sebelum segel: perbarui di tempat supaya reaksi & catatan kaki tetap ada.
+    await s.db
+      .update(drops)
+      .set({ audience: input.audience, personId: input.personId ?? null, unlockOn: input.unlockOn ?? null, ciphertext: input.envelope.ciphertext, mediaIds: input.mediaIds })
+      .where(eq(drops.id, input.id));
+    await s.db.delete(dropRecipients).where(eq(dropRecipients.dropId, input.id));
+    await s.db.delete(dropCircles).where(eq(dropCircles.dropId, input.id));
+  } else
   await s.db.insert(drops).values({
     id: input.id,
     authorId: user.id,
@@ -177,6 +187,34 @@ export function dayRoutes(s: Services) {
     const input = await body(c, createDropBody);
     const id = await createDrop(s, c.get('user'), input);
     return c.json({ id }, 201);
+  });
+
+  r.put('/drops/:id', async (c) => {
+    const patch = await body(c, updateDropBody);
+    const user = c.get('user');
+    const [d] = await s.db.select().from(drops).where(and(eq(drops.id, c.req.param('id')), eq(drops.authorId, user.id)));
+    if (!d) throw notFound();
+    const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, d.day)));
+    if (cap?.sealedAt) throw conflict('sealed', 'Halaman yang sudah tersegel tidak bisa diubah.');
+    const circlesOf = await s.db.select().from(dropCircles).where(eq(dropCircles.dropId, d.id));
+    await createDrop(
+      s,
+      user,
+      createDropBody.parse({
+        id: d.id,
+        day: d.day,
+        kind: d.kind,
+        audience: patch.audience ?? d.audience,
+        circleIds: patch.circleIds ?? circlesOf.map((x) => x.circleId),
+        personId: patch.audience ? patch.personId : (d.personId ?? undefined),
+        unlockOn: patch.audience ? patch.unlockOn : (d.unlockOn ?? undefined),
+        envelope: patch.envelope,
+        mediaIds: patch.mediaIds ?? d.mediaIds,
+        meta: d.meta,
+      }),
+      { replace: true },
+    );
+    return c.json({ id: d.id });
   });
 
   r.delete('/drops/:id', async (c) => {

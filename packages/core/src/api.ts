@@ -72,6 +72,9 @@ export interface UserSettings {
   /** Kapsul Indonesia: sumbang warna mood anonim per provinsi. */
   moodPulse: boolean;
   theme: 'system' | 'light' | 'dark';
+  /** Warna tinta doodle & kertas (web). */
+  ink?: string;
+  paper?: string;
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -137,6 +140,8 @@ export const updateMeBody = z.object({
       gallerySuggestions: z.boolean(),
       moodPulse: z.boolean(),
       theme: z.enum(['system', 'light', 'dark']),
+      ink: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+      paper: z.string().max(20),
     })
     .partial()
     .optional(),
@@ -162,7 +167,7 @@ export interface KeyBackupResponse {
   keyBackup: KeyBackup;
 }
 
-export const pushTokenBody = z.object({ token: z.string().max(300), platform: z.enum(['ios', 'android', 'web']) });
+export const pushTokenBody = z.object({ token: z.string().max(4000), platform: z.enum(['ios', 'android', 'web']) });
 
 export interface SessionInfo {
   id: string;
@@ -318,7 +323,7 @@ export const createDropBody = z.object({
   day: dayKey,
   kind: z.enum([
     'text', 'photo', 'video', 'voice', 'song', 'idea', 'screenshot', 'word', 'mood', 'answer', 'card',
-    'expedition', 'last_line', 'silent', 'auto', 'blackout', 'prologue', 'epilogue',
+    'expedition', 'last_line', 'silent', 'auto', 'blackout', 'prologue', 'epilogue', 'sticker',
   ]),
   audience: z.enum(['self', 'circle', 'person', 'time_capsule']),
   circleIds: z.array(id).max(50).default([]),
@@ -339,6 +344,15 @@ export const createDropBody = z.object({
 });
 
 export type CreateDropBody = z.input<typeof createDropBody>;
+
+/** Ubah Drop sebelum hari disegel (isi, tata letak, audiens). */
+export const updateDropBody = createDropBody.pick({ envelope: true, mediaIds: true, audience: true, circleIds: true, personId: true, unlockOn: true }).partial({ mediaIds: true, audience: true, circleIds: true, personId: true, unlockOn: true });
+
+export interface PublicConfig {
+  freeAll: boolean;
+  devAuth: boolean;
+  vapidPublicKey: string | null;
+}
 
 export interface DropWire {
   id: string;

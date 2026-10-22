@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { ZodError } from 'zod';
@@ -29,6 +32,7 @@ export function createApp(s: Services) {
   });
 
   const v1 = new Hono<AppEnv>();
+  v1.get('/config', (c) => c.json({ freeAll: s.cfg.freeAll, devAuth: s.cfg.devAuth, vapidPublicKey: s.cfg.vapid?.publicKey ?? null }));
   v1.route('/auth', authRoutes(s));
   v1.route('/invites', inviteRoutes(s, auth));
   v1.route('/billing/webhook', webhookRoutes(s) as never);
@@ -49,5 +53,18 @@ export function createApp(s: Services) {
   app.route('/v1', v1);
   app.route('/admin', adminRoutes(s) as never);
   app.route('/', webRoutes(s) as never);
+
+  // Web app (PWA) disajikan dari server yang sama: satu alamat, tanpa CORS.
+  if (s.cfg.webDist) {
+    const root = s.cfg.webDist;
+    app.use('/*', serveStatic({ root, onFound: (path, c) => {
+      c.header('cache-control', /\/assets\//.test(path) ? 'public, max-age=31536000, immutable' : 'no-cache');
+    } }));
+    app.get('*', async (c, next) => {
+      if (c.req.path.startsWith('/v1/') || c.req.path.startsWith('/admin')) return next();
+      const html = await readFile(path.join(root, 'index.html'), 'utf8').catch(() => null);
+      return html ? c.html(html) : next();
+    });
+  }
   return app;
 }

@@ -45,6 +45,37 @@ export class MemoryPusher implements Pusher {
   }
 }
 
+/**
+ * Web Push (PWA). Langganan browser disimpan sebagai JSON di kolom push_token
+ * dengan awalan "webpush:". Isi notifikasi tetap kabar ringan, tanpa isi jurnal.
+ */
+export class CompositePusher implements Pusher {
+  private webpush?: Promise<typeof import('web-push')>;
+  constructor(private expo: Pusher, vapid?: NonNullable<Config['vapid']>) {
+    if (vapid) {
+      this.webpush = import('web-push').then((m) => {
+        const wp = (m as unknown as { default?: typeof import('web-push') }).default ?? m;
+        wp.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
+        return wp;
+      });
+    }
+  }
+  async send(messages: PushMessage[]) {
+    const web = messages.filter((m) => m.to.startsWith('webpush:'));
+    await this.expo.send(messages.filter((m) => !m.to.startsWith('webpush:')));
+    if (!this.webpush || !web.length) return;
+    const wp = await this.webpush;
+    await Promise.all(
+      web.map((m) =>
+        wp
+          .sendNotification(JSON.parse(m.to.slice(8)), JSON.stringify({ title: m.title ?? 'Sehari', body: m.body, data: m.data ?? {} }), { TTL: 60 * 60 * 24 })
+          .catch(() => {}),
+      ),
+    );
+  }
+}
+
 export function createPusher(cfg: Config): Pusher {
-  return cfg.push.enabled ? new ExpoPusher(cfg.push.expoAccessToken) : new MemoryPusher();
+  const expo = cfg.push.enabled ? new ExpoPusher(cfg.push.expoAccessToken) : new MemoryPusher();
+  return cfg.vapid ? new CompositePusher(expo, cfg.vapid) : expo;
 }
