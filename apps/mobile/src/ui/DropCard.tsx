@@ -57,6 +57,7 @@ export function DropCard({
   onReact,
   aged = 0,
   compact,
+  narrow,
   onLongPress,
 }: {
   drop: OpenDrop;
@@ -66,6 +67,8 @@ export function DropCard({
   onReact?: (kind: ReactionKind, on: boolean) => void;
   aged?: number;
   compact?: boolean;
+  /** Kolom sempit (Dua Sisi): teks utuh, reaksi berupa ikon. */
+  narrow?: boolean;
   onLongPress?: () => void;
 }) {
   const { c } = useTheme();
@@ -100,13 +103,13 @@ export function DropCard({
             ) : null}
             <Txt v="tiny" soft>
               {formatClock(p.hour, p.minute)}
-              {city && !compact ? ` · ${city.name}` : ''}
+              {city && !compact && !narrow ? ` · ${city.name}` : ''}
             </Txt>
           </Row>
           {p.mood ? (
             <Row gap={4}>
               <MoodDot mood={p.mood} />
-              {!compact ? (
+              {!compact && !narrow ? (
                 <Txt v="tiny" soft>
                   {MOODS[p.mood]?.label}
                 </Txt>
@@ -189,13 +192,13 @@ export function DropCard({
           </Txt>
         ) : null}
 
-        {onReact ? <Reactions drop={drop} viewerId={viewerId} onReact={onReact} /> : null}
+        {onReact ? <Reactions drop={drop} viewerId={viewerId} onReact={onReact} iconsOnly={narrow} /> : null}
       </Card>
     </Pressable>
   );
 }
 
-function Reactions({ drop, viewerId, onReact }: { drop: OpenDrop; viewerId?: string; onReact: (kind: ReactionKind, on: boolean) => void }) {
+function Reactions({ drop, viewerId, onReact, iconsOnly }: { drop: OpenDrop; viewerId?: string; onReact: (kind: ReactionKind, on: boolean) => void; iconsOnly?: boolean }) {
   const { c } = useTheme();
   const own = drop.wire.authorId === viewerId;
   const kinds = allowedReactions(drop.wire.kind);
@@ -213,13 +216,16 @@ function Reactions({ drop, viewerId, onReact }: { drop: OpenDrop; viewerId?: str
             onPress={() => onReact(k, !mine)}
             accessibilityRole="button"
             accessibilityState={{ selected: mine }}
-            style={{ borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: mine ? c.ink : c.pill }}>
+            accessibilityLabel={REACTION_LABEL[k].label}
+            style={{ borderRadius: 999, paddingHorizontal: iconsOnly ? 8 : 10, paddingVertical: 5, backgroundColor: mine ? c.ink : c.pill }}>
             <Row gap={4}>
               <Doodle id={REACTION_LABEL[k].doodle} size={16} color={mine ? c.onInk : c.ink} />
-              <Txt v="tiny" style={{ color: mine ? c.onInk : c.ink }}>
-                {REACTION_LABEL[k].label}
-                {by.length > 1 ? ` ${by.length}` : ''}
-              </Txt>
+              {!iconsOnly || by.length > 1 ? (
+                <Txt v="tiny" style={{ color: mine ? c.onInk : c.ink }}>
+                  {iconsOnly ? '' : REACTION_LABEL[k].label}
+                  {by.length > 1 ? ` ${by.length}` : ''}
+                </Txt>
+              ) : null}
             </Row>
           </Pressable>
         );

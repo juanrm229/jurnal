@@ -118,6 +118,7 @@ export default function DropComposer() {
   }
 
   const kindFor = (): DropKind => {
+    if ((params.kind === 'prologue' || params.kind === 'epilogue') && mode === 'text') return params.kind;
     if (params.questionId) return 'answer';
     if (params.cardId) return mode === 'photo' ? 'photo' : 'card';
     if (params.expeditionId) return mode === 'photo' ? 'photo' : 'expedition';

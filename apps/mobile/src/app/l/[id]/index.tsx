@@ -1,9 +1,9 @@
-import { CIRCLE_KIND_LABEL, COPY, isoWeek, monthKey, nightQuestionFor, penHolderFor, prevMonth, type SceneWire } from '@sehari/core';
+import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthKey, nightQuestionFor, penHolderFor, prevMonth, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { api } from '@/lib/api';
-import { useCircle, useMe, useToday } from '@/lib/data';
+import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
 import { Avatar } from '@/ui/Avatar';
 import { Doodle } from '@/ui/Doodle';
 import { Flame } from '@/ui/Flame';
@@ -34,6 +34,9 @@ export default function CircleHome() {
   const week = isoWeek(today);
   const holderId = scenes.data?.find((s) => s.week === week)?.penHolderId ?? penHolderFor(circle.active.map((m) => m.userId), week, circle.id);
   const holder = circle.members.find((m) => m.userId === holderId);
+  const scene = scenes.data?.find((s) => s.week === week);
+  const sharedCard = scene?.cardId ? findCard(scene.cardId)?.card : undefined;
+  const sceneTitle = scene?.titleEnc ? openCircleText(circle, scene.titleEnc, '') : '';
   const q = circle.settings.nightQuestion && circle.kind !== 'moment' ? nightQuestionFor(circle.id, today, circle.kind) : null;
   const frozen = circle.status !== 'active';
 
@@ -109,6 +112,27 @@ export default function CircleHome() {
               </View>
             </Row>
           </Card>
+          {sceneTitle ? (
+            <Txt v="hand" center style={{ marginTop: SPACE.sm }}>
+              Adegan minggu ini: {sceneTitle}
+            </Txt>
+          ) : null}
+          {sharedCard ? (
+            <Card
+              tint={c.sticky.yellow}
+              style={{ marginTop: SPACE.sm }}
+              onPress={() => router.push({ pathname: '/drop', params: { prompt: sharedCard.body, cardId: sharedCard.id, kind: sharedCard.kind === 'tantangan' ? 'photo' : 'card', circleId: circle.id } })}>
+              <Row style={{ alignItems: 'flex-start' }}>
+                <Doodle id={sharedCard.doodle ?? 'kartu'} size={30} />
+                <View style={{ flex: 1 }}>
+                  <Txt v="label" ink soft>
+                    kartu bersama · {sharedCard.title}
+                  </Txt>
+                  <Txt v="small">{sharedCard.body}</Txt>
+                </View>
+              </Row>
+            </Card>
+          ) : null}
           {q ? (
             <Card style={{ marginTop: SPACE.sm }} onPress={() => router.push({ pathname: '/drop', params: { prompt: q.text, questionId: q.id, kind: 'answer', circleId: circle.id } })}>
               <Row>
