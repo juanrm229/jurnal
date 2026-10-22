@@ -37,6 +37,7 @@ import {
   pushTo,
   requireMember,
   userToday,
+  isFreeAll,
 } from '../lib/domain';
 import { ApiError, bad, conflict, forbidden, notFound, paymentRequired } from '../lib/errors';
 import { newId, newToken, safeEqual } from '../lib/ids';
@@ -44,7 +45,7 @@ import { newId, newToken, safeEqual } from '../lib/ids';
 const { circles, circleMembers, circleKeys, invites, nicknames, capsules, freezes, dropCircles, users } = schema;
 
 export function maxMembers(kind: CircleKind, tier: string | null): number {
-  if (kind === 'moment') return MOMENT_TIERS[(tier ?? 'coba') as MomentTier]?.maxGuests ?? 8;
+  if (kind === 'moment') return isFreeAll() ? MOMENT_TIERS.besar.maxGuests : (MOMENT_TIERS[(tier ?? 'coba') as MomentTier]?.maxGuests ?? 8);
   return CIRCLE_LIMITS[kind].max;
 }
 
@@ -92,7 +93,7 @@ export function circleRoutes(s: Services) {
       momentStartsOn: input.moment?.startsOn,
       momentEndsOn: input.moment?.endsOn,
       // Tier berbayar baru aktif setelah pembayaran; mulai dari 'coba'.
-      momentTier: input.kind === 'moment' ? 'coba' : null,
+      momentTier: input.kind === 'moment' ? (isFreeAll() ? 'besar' : 'coba') : null,
     });
     await s.db.insert(circleMembers).values({ circleId: id, userId: user.id, role: 'owner', joinedDay: today });
     await s.db.insert(circleKeys).values({ circleId: id, epoch: 1, userId: user.id, wk: input.keyEnvelope, createdBy: user.id });

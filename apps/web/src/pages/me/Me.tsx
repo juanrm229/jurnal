@@ -1,0 +1,85 @@
+import { getCity, zoneLabel } from '@sehari/core';
+import { useEffect, useState } from 'react';
+import { useMe } from '@/lib/data';
+import { navigate } from '@/lib/router';
+import { useSession } from '@/lib/session';
+import { currentTheme, INKS, PAPERS } from '@/lib/theme';
+import { Avatar, Doodle, ListLink, useToast } from '@/ui/kit';
+import { pushState, subscribePush } from '@/lib/push';
+
+export default function Me() {
+  const me = useMe();
+  const { signOut } = useSession();
+  const toast = useToast();
+  const city = getCity(me.user.cityId);
+  const t = currentTheme();
+  const [push, setPush] = useState<'on' | 'off' | 'unsupported' | 'denied'>('off');
+  useEffect(() => void pushState().then(setPush), []);
+
+  return (
+    <main className="screen">
+      <h1 className="display ink mt" style={{ margin: '12px 0 12px' }}>aku</h1>
+      <button className="card row" style={{ width: '100%', textAlign: 'left', gap: 14 }} onClick={() => navigate('/aku/profil')}>
+        <Avatar doodle={me.user.doodle} size={58} sealed />
+        <span className="grow">
+          <span className="title ink" style={{ display: 'block' }}>{me.user.penName}</span>
+          <span className="tiny soft">{city ? `${city.name} · ` : ''}{zoneLabel(me.user.tz)}</span>
+        </span>
+        <Doodle id="ui-panah-kanan" size={16} />
+      </button>
+
+      <button className="card row mt" style={{ width: '100%', textAlign: 'left', gap: 14 }} onClick={() => navigate('/aku/tema')}>
+        <span className="row" style={{ gap: 4 }}>
+          <span style={{ width: 26, height: 26, borderRadius: '50%', background: t.ink, border: '2px solid var(--card)' }} />
+          <span style={{ width: 26, height: 26, borderRadius: '50%', background: PAPERS.find((p) => p.id === t.paper)?.color, border: '1.5px solid var(--ink-soft)', marginLeft: -10 }} />
+        </span>
+        <span className="grow">
+          <span className="ink" style={{ display: 'block' }}>tema tinta & kertas</span>
+          <span className="tiny soft">{INKS.find((i) => i.id === t.ink)?.name ?? 'tinta'} di {PAPERS.find((p) => p.id === t.paper)?.name}</span>
+        </span>
+        <Doodle id="ui-palet" size={26} />
+      </button>
+
+      <section className="section">
+        <span className="label">pengaturan</span>
+        <ListLink icon="ui-jam" title="pengingat menyegel" sub={me.user.settings.sunsetSeal ? 'saat senja di kotamu' : `pukul ${me.user.settings.sealHour}.00`} onClick={() => navigate('/aku/pengaturan')} />
+        <ListLink
+          icon="bunga-lonceng"
+          title="notifikasi di perangkat ini"
+          sub={push === 'on' ? 'aktif' : push === 'denied' ? 'diblokir di pengaturan peramban' : push === 'unsupported' ? 'tidak didukung peramban ini (di iPhone: pasang ke layar utama dulu)' : 'mati — ketuk untuk menyalakan'}
+          onClick={async () => {
+            if (push === 'on' || push === 'unsupported') return;
+            try {
+              await subscribePush();
+              setPush('on');
+              toast('Notifikasi menyala.');
+            } catch (e) {
+              toast((e as Error).message);
+              setPush(await pushState());
+            }
+          }}
+          right={<span className={`pill ${push === 'on' ? 'active' : ''}`}>{push === 'on' ? 'nyala' : 'mati'}</span>}
+        />
+        <ListLink icon="matahari" title="jejak otomatis" sub="cuaca, kota — semua opsional" onClick={() => navigate('/aku/jejak')} />
+        <ListLink icon="ui-gembok" title="keamanan & perangkat" sub="kode pemulihan, tautkan perangkat baru" onClick={() => navigate('/aku/keamanan')} />
+        <ListLink icon="kunci" title="privasi & data" sub="E2EE, AI, ekspor, hapus akun" onClick={() => navigate('/aku/privasi')} />
+      </section>
+      <section className="section">
+        <span className="label">lainnya</span>
+        <ListLink icon="kartu" title="dek kartu tematik" sub="Rindu, Perantau, Ramadan, …" onClick={() => navigate('/aku/dek')} />
+        <ListLink icon="lilin" title="bantuan & dukungan" sub="kalau hari terasa terlalu berat" onClick={() => navigate('/bantuan')} />
+        <ListLink icon="ui-bendera-lapor" title="diblokir" onClick={() => navigate('/aku/blokir')} />
+        <ListLink icon="tunas" title="tentang sehari" sub="halaman depan" onClick={() => navigate('/')} />
+      </section>
+      <button
+        className="btn ghost mt-lg"
+        onClick={async () => {
+          await signOut();
+          navigate('/', { replace: true });
+        }}>
+        keluar
+      </button>
+      <p className="tiny soft center mt">sehari · semua fitur gratis untuk kita</p>
+    </main>
+  );
+}

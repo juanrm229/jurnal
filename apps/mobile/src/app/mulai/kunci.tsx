@@ -1,7 +1,7 @@
 import { COPY } from '@sehari/core';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { useSession } from '@/lib/session';
 import { Doodle } from '@/ui/Doodle';
@@ -13,7 +13,7 @@ export default function Keys() {
   const { draftKeys, commitKeys } = useSession();
   const { c } = useTheme();
   const t = COPY.onboarding.recoveryCode;
-  const draft = useMemo(() => draftKeys(), [draftKeys]);
+  const [draft] = useState(draftKeys);
   const [step, setStep] = useState<'show' | 'check'>('show');
   const [check, setCheck] = useState('');
   const [busy, setBusy] = useState(false);

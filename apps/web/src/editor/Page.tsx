@@ -5,6 +5,7 @@
  */
 import { type Audience, type DropPayload, MOODS, type PageLayout, type ReactionKind } from '@sehari/core';
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Doodle } from '@/ui/kit';
 import { PageElement } from './elements';
 
@@ -49,13 +50,15 @@ export const defaultWidth = (kind: string) => DEFAULT_W[kind] ?? 520;
 
 /** Elemen tanpa posisi (dibuat dari aplikasi lain) disusun rapi ke bawah. */
 export function withLayouts(items: PageItem[]): (PageItem & { layout: PageLayout })[] {
-  let y = 230;
+  // Elemen tanpa posisi menyusul di bawah elemen yang sudah diletakkan.
+  const placedBottom = items.reduce((m, it) => (it.payload.layout ? Math.max(m, it.payload.layout.y + (it.payload.kind === 'photo' ? it.payload.layout.w * 1.1 : 200)) : m), 0);
+  let y = Math.max(230, placedBottom + 60);
   let i = 0;
   return items.map((it) => {
     if (it.payload.layout) return { ...it, layout: it.payload.layout };
     const w = defaultWidth(it.payload.kind);
     const side = i++ % 2 === 0;
-    const x = it.payload.kind === 'sticker' ? (side ? 760 : 90) : it.payload.kind === 'photo' ? (side ? 90 : 450) : 90;
+    const x = it.payload.kind === 'sticker' ? (side ? 760 : 90) : it.payload.kind === 'photo' ? (side ? 90 : 450) : it.payload.kind === 'last_line' ? 110 : 90;
     const layout: PageLayout = { x, y, w, rot: it.payload.kind === 'photo' ? (side ? -3 : 2.5) : 0, z: i };
     y += it.payload.kind === 'photo' ? 420 : it.payload.kind === 'sticker' ? 120 : it.payload.kind === 'last_line' ? 140 : 200;
     return { ...it, layout };
@@ -93,6 +96,8 @@ export function Page(props: PageProps) {
   const [scale, setScale] = useState(0.4);
   const [dragOver, setDragOver] = useState(false);
   const [live, setLive] = useState<Record<string, PageLayout>>({});
+  // Ketukan yang hanya melepas pilihan/penyuntingan tidak membuat tulisan baru.
+  const dismissed = useRef(false);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -121,12 +126,13 @@ export function Page(props: PageProps) {
       className={['page lined', dragOver ? 'drag-over' : '', props.sealed ? 'sealed' : '', props.className].filter(Boolean).join(' ')}
       style={{ height: height * scale, '--s': scale, '--page-wash': moodColor ?? 'transparent', filter: aged ? `sepia(${aged * 0.55}) saturate(${1 - aged * 0.2})` : undefined } as CSSProperties}
       onPointerDown={(e) => {
+        dismissed.current = !!(selectedId || props.editingId);
         if (e.target === ref.current || (e.target as HTMLElement).dataset.paper) onSelect?.(null);
       }}
       onClick={(e) => {
         if (!editable || !props.onCreateAt) return;
         if (e.target !== ref.current && !(e.target as HTMLElement).dataset.paper) return;
-        if (selectedId) return onSelect?.(null);
+        if (dismissed.current) return;
         const p = toPage(e.clientX, e.clientY);
         props.onCreateAt(Math.max(40, Math.min(p.x - 20, PAGE_W - 400)), Math.max(180, p.y - 20));
       }}
@@ -305,7 +311,7 @@ function Movable({
         if (editable) onEdit();
       }}>
       <div className="el-body">{children}</div>
-      {tools ? <div className="el-toolbar" onPointerDown={(e) => e.stopPropagation()}>{tools}</div> : null}
+      {tools ? createPortal(<div className="el-toolbar" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>{tools}</div>, document.body) : null}
       {selected && editable && !editing ? (
         <span className="handle" aria-label="putar & ubah ukuran" onPointerDown={(e) => begin(e, 'turn')} onPointerMove={move} onPointerUp={end} onPointerCancel={end}>
           <Doodle id="ui-panah-kanan" size={14} color="currentColor" sw={3} />

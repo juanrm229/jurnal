@@ -2,7 +2,7 @@
   "name": "sehari",
   "private": true,
   "version": "0.1.0",
-  "description": "Sehari — kapsul waktu harian yang diisi bersama orang terdekat.",
+  "description": "Sehari \u2014 kapsul waktu harian yang diisi bersama orang terdekat.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -10,11 +10,14 @@
   "scripts": {
     "dev:server": "npm run dev -w @sehari/server",
     "dev:mobile": "npm run start -w @sehari/mobile",
-    "web": "npm run web -w @sehari/mobile",
+    "web": "npm run dev -w @sehari/web",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "e2e": "node e2e/flow.mjs",
-    "seed": "npx tsx apps/server/scripts/seed.ts"
+    "seed": "npx tsx apps/server/scripts/seed.ts",
+    "dev:web": "npm run dev -w @sehari/web",
+    "build:web": "npm run build -w @sehari/web",
+    "web:mobile": "npm run web -w @sehari/mobile"
   },
   "engines": {
     "node": ">=22"

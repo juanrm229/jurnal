@@ -31,7 +31,7 @@ import { TEXT_SIZES } from '@/editor/elements';
 import { api } from '@/lib/api';
 import { buildDropBody, type CircleView, type DraftDrop, newDropId, nowParts, openDrop, qk, updateDrop, useCircles, useKeyring, useMe, useMyDay, useToday } from '@/lib/data';
 import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
-import { Link, navigate, useParams } from '@/lib/router';
+import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { store } from '@/lib/storage';
 import { Avatar, Doodle, Growing, Sheet, useToast } from '@/ui/kit';
@@ -220,6 +220,18 @@ export default function Today() {
     }
   };
 
+  // Datang dari kartu bersama / pertanyaan malam: ?prompt=…&kind=…
+  const { search } = usePath();
+  useEffect(() => {
+    const prompt = search.get('prompt');
+    if (!editable || !prompt || q.isLoading || !ring) return;
+    const kind = (search.get('kind') as DropKind) || 'card';
+    const c = viewCenter(480);
+    if (kind === 'photo') fileInput.current?.click();
+    else addText(c.x, c.y, { kind, prompt, layout: { x: c.x, y: c.y, w: 480, rot: -1.5, z: nextZ() } }, { cardId: search.get('cardId') ?? undefined, questionId: search.get('questionId') ?? undefined, expeditionId: search.get('expeditionId') ?? undefined, expeditionDay: search.get('expeditionDay') ? Number(search.get('expeditionDay')) : undefined });
+    navigate('/hari', { replace: true });
+  }, [search.get('prompt'), editable, q.isLoading, !!ring]);
+
   // Tempel gambar dari papan klip.
   useEffect(() => {
     if (!editable) return;
@@ -385,8 +397,8 @@ export default function Today() {
             </button>
             <span className="tiny soft">{items.filter((x) => !x.draft).length} hal di kapsul</span>
           </div>
-          <div className="mt" style={{ paddingBottom: 90 }}>
-            <button className="btn" disabled={!items.some((x) => !x.draft)} onClick={() => setSealing(true)}>
+          <div className="mt" style={{ paddingBottom: 150 }}>
+            <button className="btn" disabled={!items.some((x) => !x.draft)} onClick={() => { if (editing) endEdit(editing); setSelected(null); setSealing(true); }}>
               <Doodle id="segel-lilin" size={22} color="currentColor" /> {COPY.seal.cta}
             </button>
             <p className="tiny soft center">{items.length ? COPY.seal.ctaSub : COPY.seal.nothingYet}</p>
@@ -536,6 +548,7 @@ export default function Today() {
 
 function TogetherChip({ c, meId, day }: { c: CircleView; meId: string; day: string }) {
   const others = c.others;
+  if (!others.length) return null;
   return (
     <Link to={`/l/${c.id}/hari/${day}`} className="row card flat" style={{ padding: '4px 10px 4px 4px', borderRadius: 999, gap: 4 }} title={c.name}>
       {others.slice(0, 3).map((m) => (

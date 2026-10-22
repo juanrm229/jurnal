@@ -2,6 +2,7 @@
  * Kueri & aturan bersama yang dipakai banyak rute.
  */
 import {
+  DECKS,
   type CircleKind,
   type CircleMember,
   type CircleSettings,
@@ -229,6 +230,7 @@ export async function blockedWith(s: Services, userId: string): Promise<Set<stri
 }
 
 export async function ownedDecks(s: Services, userId: string): Promise<string[]> {
+  if (isFreeAll()) return DECKS.map((d) => d.id);
   const rows = await s.db.select().from(entitlements).where(eq(entitlements.userId, userId));
   return rows.filter((r) => r.code.startsWith('deck_')).map((r) => r.code.slice(5));
 }

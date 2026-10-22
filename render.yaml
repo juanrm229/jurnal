@@ -1,0 +1,45 @@
+# Blueprint Render: satu layanan web gratis (API + web app).
+# Database: Postgres gratis dari Neon (isi DATABASE_URL). Lihat docs/deploy-gratis.md.
+services:
+  - type: web
+    name: sehari
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /v1/config
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: SERVER_SECRET
+        generateValue: true
+      - key: CRON_TOKEN
+        generateValue: true
+      - key: FREE_ALL
+        value: "1"
+      - key: BLOB_STORE
+        value: db
+      - key: DEV_AUTH
+        value: "0"
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: PUSH_DISABLED
+        value: "1"

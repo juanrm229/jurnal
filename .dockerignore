@@ -1,0 +1,7 @@
+**/node_modules
+**/dist
+apps/mobile
+apps/server/data
+apps/server/uploads
+.git
+e2e

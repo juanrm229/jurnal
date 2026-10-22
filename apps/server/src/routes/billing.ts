@@ -7,7 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { type AppEnv, body, type Services } from '../context';
 import { schema } from '../db';
-import { getUser, membership, requireMember } from '../lib/domain';
+import { getUser, isFreeAll, membership, requireMember } from '../lib/domain';
 import { ApiError, bad, conflict, forbidden, notFound } from '../lib/errors';
 import { giftCode, newId } from '../lib/ids';
 
@@ -121,6 +121,13 @@ export function billingRoutes(s: Services) {
       meta.partnerUserId = input.partnerUserId;
     }
     const id = newId();
+    if (isFreeAll()) {
+      // Pemakaian pribadi: tanpa pembayaran, pesanan langsung terpenuhi.
+      await s.db.insert(orders).values({ id, userId: user.id, product: product.code, amountIdr: 0, provider: 'free', providerRef: null, paymentUrl: null, meta });
+      await fulfillOrder(s, id);
+      const out: CheckoutResult = { orderId: id, paymentUrl: '', status: 'paid' };
+      return c.json(out, 201);
+    }
     const pay = await s.payments.create({
       orderId: id,
       amountIdr: product.priceIdr,

@@ -1,5 +1,6 @@
 import { type ComponentType, lazy, Suspense, useEffect } from 'react';
 import { useKeyMaintenance } from './lib/data';
+import { refreshPushToken } from './lib/push';
 import { match, navigate, ParamsProvider, usePath } from './lib/router';
 import { useSession } from './lib/session';
 import { useThemeSync } from './lib/theme';
@@ -7,41 +8,50 @@ import { Growing } from './ui/kit';
 import { TabBar } from './ui/TabBar';
 import Landing from './pages/Landing';
 
-const page = (f: () => Promise<{ default: ComponentType }>) => lazy(f);
+const PAGES = import.meta.glob<{ default: ComponentType }>('./pages/**/*.tsx');
+const Missing = () => <Growing label="halaman ini belum ada" />;
+const page = (name: string) => lazy(() => PAGES[`./pages/${name}.tsx`]?.() ?? Promise.resolve({ default: Missing }));
 
 /** [pola, komponen, butuh sesi siap?, tampilkan tab bar?] */
 const ROUTES: [string, ComponentType, boolean, boolean][] = [
-  ['/masuk', page(() => import('./pages/auth/Masuk')), false, false],
-  ['/mulai/profil', page(() => import('./pages/auth/Profil')), false, false],
-  ['/mulai/kunci', page(() => import('./pages/auth/Kunci')), false, false],
-  ['/mulai/pulihkan', page(() => import('./pages/auth/Pulihkan')), false, false],
-  ['/mulai/undang', page(() => import('./pages/auth/Undang')), true, false],
-  ['/j/:token', page(() => import('./pages/Join')), false, false],
-  ['/hari', page(() => import('./pages/Today')), true, true],
-  ['/hari/:day', page(() => import('./pages/Today')), true, false],
-  ['/lingkaran', page(() => import('./pages/circles/Circles')), true, true],
-  ['/l/baru', page(() => import('./pages/circles/NewCircle')), true, false],
-  ['/l/:id', page(() => import('./pages/circles/CircleHome')), true, false],
-  ['/l/:id/hari/:day', page(() => import('./pages/circles/Together')), true, false],
-  ['/l/:id/undang', page(() => import('./pages/circles/Invite')), true, false],
-  ['/l/:id/atur', page(() => import('./pages/circles/CircleSettings')), true, false],
-  ['/l/:id/papan', page(() => import('./pages/lore/Papan')), true, false],
-  ['/l/:id/kitab', page(() => import('./pages/lore/Kitab')), true, false],
-  ['/l/:id/langit', page(() => import('./pages/lore/Langit')), true, false],
-  ['/l/:id/lemari', page(() => import('./pages/lore/Lemari')), true, false],
-  ['/l/:id/dadu', page(() => import('./pages/lore/Dadu')), true, false],
-  ['/l/:id/ekspedisi', page(() => import('./pages/lore/Ekspedisi')), true, false],
-  ['/l/:id/kamus', page(() => import('./pages/lore/Kamus')), true, false],
-  ['/l/:id/puisi', page(() => import('./pages/lore/Puisi')), true, false],
-  ['/kenangan', page(() => import('./pages/Kenangan')), true, true],
-  ['/wrap/:circleId/:scope/:period', page(() => import('./pages/Wrap')), true, false],
-  ['/surat', page(() => import('./pages/letters/Letters')), true, false],
-  ['/surat/tulis', page(() => import('./pages/letters/Write')), true, false],
-  ['/surat/:id', page(() => import('./pages/letters/Read')), true, false],
-  ['/aku', page(() => import('./pages/me/Me')), true, true],
-  ['/aku/tema', page(() => import('./pages/me/Tema')), false, false],
-  ['/aku/keamanan', page(() => import('./pages/me/Keamanan')), true, false],
-  ['/bantuan', page(() => import('./pages/Bantuan')), false, false],
+  ['/masuk', page('auth/Masuk'), false, false],
+  ['/mulai/profil', page('auth/Profil'), false, false],
+  ['/mulai/kunci', page('auth/Kunci'), false, false],
+  ['/mulai/pulihkan', page('auth/Pulihkan'), false, false],
+  ['/mulai/undang', page('auth/Undang'), true, false],
+  ['/j/:token', page('Join'), false, false],
+  ['/hari', page('Today'), true, true],
+  ['/hari/:day', page('Today'), true, false],
+  ['/lingkaran', page('circles/Circles'), true, true],
+  ['/l/baru', page('circles/NewCircle'), true, false],
+  ['/l/:id', page('circles/CircleHome'), true, false],
+  ['/l/:id/hari/:day', page('circles/Together'), true, false],
+  ['/l/:id/undang', page('circles/Invite'), true, false],
+  ['/l/:id/atur', page('circles/CircleSettings'), true, false],
+  ['/l/:id/papan', page('lore/Papan'), true, false],
+  ['/l/:id/kitab', page('lore/Kitab'), true, false],
+  ['/l/:id/langit', page('lore/Langit'), true, false],
+  ['/l/:id/lemari', page('lore/Lemari'), true, false],
+  ['/l/:id/dadu', page('lore/Dadu'), true, false],
+  ['/l/:id/ekspedisi', page('lore/Ekspedisi'), true, false],
+  ['/l/:id/kamus', page('lore/Kamus'), true, false],
+  ['/l/:id/puisi', page('lore/Puisi'), true, false],
+  ['/kenangan', page('Kenangan'), true, true],
+  ['/wrap/:circleId/:scope/:period', page('Wrap'), true, false],
+  ['/surat', page('letters/Letters'), true, false],
+  ['/surat/tulis', page('letters/Write'), true, false],
+  ['/surat/:id', page('letters/Read'), true, false],
+  ['/aku', page('me/Me'), true, true],
+  ['/aku/tema', page('me/Tema'), false, false],
+  ['/aku/keamanan', page('me/Keamanan'), true, false],
+  ['/aku/profil', page('me/Profil'), true, false],
+  ['/aku/privasi', page('me/Privasi'), true, false],
+  ['/aku/jejak', page('me/Jejak'), true, false],
+  ['/aku/blokir', page('me/Blokir'), true, false],
+  ['/aku/pengaturan', page('me/Pengaturan'), true, false],
+  ['/aku/dek', page('me/Dek'), true, false],
+  ['/lapor', page('me/Lapor'), true, false],
+  ['/bantuan', page('Bantuan'), false, false],
 ];
 
 function Guard({ children }: { children: React.ReactNode }) {
@@ -58,6 +68,7 @@ function Guard({ children }: { children: React.ReactNode }) {
 
 function Ready({ children }: { children: React.ReactNode }) {
   useKeyMaintenance();
+  useEffect(() => void refreshPushToken(), []);
   return <>{children}</>;
 }
 

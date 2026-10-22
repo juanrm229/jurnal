@@ -4,6 +4,8 @@ import '@fontsource/caveat/500.css';
 import '@fontsource/caveat/700.css';
 import './styles/base.css';
 import './styles/page.css';
+import './styles/lore.css';
+import './styles/story.css';
 import './styles/landing.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
