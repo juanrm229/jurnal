@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Sehari",
+    "slug": "sehari",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "sehari",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#E6E6E8",
+    "ios": {
+      "bundleIdentifier": "app.sehari",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Untuk memotret hari ini dan memindai kode tautan perangkat.",
+        "NSMicrophoneUsageDescription": "Untuk merekam voice note maksimal semenit.",
+        "NSPhotoLibraryUsageDescription": "Untuk memilih foto dari hari ini.",
+        "NSLocationWhenInUseUsageDescription": "Hanya untuk menebak kotamu. Koordinat tidak pernah dikirim ke server.",
+        "NSMotionUsageDescription": "Untuk mencatat langkah kaki hari ini bila kamu mengizinkannya."
+      }
+    },
+    "android": {
+      "package": "app.sehari",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6E6E8",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/adaptive-icon.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["android.permission.ACTIVITY_RECOGNITION"]
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        { "backgroundColor": "#E6E6E8", "image": "./assets/images/splash.png", "imageWidth": 120, "dark": { "backgroundColor": "#000000", "image": "./assets/images/splash-dark.png" } }
+      ],
+      ["expo-notifications", { "color": "#2A14D6" }],
+      ["expo-camera", { "cameraPermission": "Untuk memotret hari ini dan memindai kode tautan perangkat.", "recordAudioAndroid": false }],
+      ["expo-image-picker", { "photosPermission": "Untuk memilih foto dari hari ini." }],
+      ["expo-location", { "locationWhenInUsePermission": "Hanya untuk menebak kotamu. Koordinat tidak pernah dikirim ke server." }],
+      ["expo-audio", { "microphonePermission": "Untuk merekam voice note maksimal semenit." }],
+      ["expo-media-library", { "photosPermission": "Untuk menyarankan foto dari hari ini.", "savePhotosPermission": "Untuk menyimpan kartu Wrap." }]
+    ],
+    "experiments": {
+      "typedRoutes": false,
+      "reactCompiler": true
+    },
+    "extra": {
+      "apiUrl": "http://localhost:8787"
+    }
+  }
+}

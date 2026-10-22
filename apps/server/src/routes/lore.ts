@@ -317,6 +317,11 @@ export function loreRoutes(s: Services) {
       .where(and(eq(capsules.userId, user.id), isNotNull(capsules.sealedAt)));
     const sealed = new Set(sealedRows.map((x) => x.day));
     if (!sealed.has(input.day) && input.code !== 'kompas' && input.code !== 'perangko') throw conflict('not_sealed', 'Token didapat dari hari yang tersegel.');
+    // Kunci hanya sekali: hari pertama yang tersegel bersama.
+    if (input.code === 'kunci') {
+      const [had] = await s.db.select().from(tokens).where(and(eq(tokens.circleId, circle.id), eq(tokens.userId, user.id), eq(tokens.code, 'kunci')));
+      if (had) return c.json({ awarded: false });
+    }
     const ok = await validateToken(s, circle, user.id, input.code, input.day, sealed);
     if (!ok) throw forbidden('Belum memenuhi syarat token ini.');
     const id = newId();

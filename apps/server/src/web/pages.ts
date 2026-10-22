@@ -138,7 +138,7 @@ export function webRoutes(s: Services) {
 var t=${JSON.stringify(c.req.param('token'))};var f=location.hash;
 var app=${JSON.stringify(s.cfg.appUrl)}+'/j/'+t+f;
 document.getElementById('go').href=app;
-location.replace('sehari://j/'+t+f);setTimeout(function(){location.replace(app)},900);
+location.replace('sehari://j/'+t+'?k='+encodeURIComponent(f.slice(1)));setTimeout(function(){location.replace(app)},900);
 </script>`,
       ),
     ),
