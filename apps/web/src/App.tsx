@@ -8,7 +8,7 @@ import { Growing } from './ui/kit';
 import { TabBar } from './ui/TabBar';
 import Landing from './pages/Landing';
 
-const PAGES = import.meta.glob<{ default: ComponentType }>('./pages/**/*.tsx');
+const PAGES = import.meta.glob<{ default: ComponentType }>(['./pages/**/*.tsx', '!./pages/Landing.tsx']);
 const Missing = () => <Growing label="halaman ini belum ada" />;
 const page = (name: string) => lazy(() => PAGES[`./pages/${name}.tsx`]?.() ?? Promise.resolve({ default: Missing }));
 

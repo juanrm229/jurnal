@@ -6,17 +6,32 @@
 
 Isi lingkaran **dienkripsi end-to-end** di perangkat. Server hanya menyimpan ciphertext, daftar penerima kunci, dan status segel.
 
+## Web app (PWA) — versi yang dipakai sekarang
+
+`apps/web` adalah versi web penuh fitur yang bisa dipasang di layar utama HP: halaman jurnal bebas (ketuk di mana saja untuk menulis, seret & putar foto dan stiker di atas tulisan, tempel foto langsung dari galeri/papan klip), upacara segel dengan amplop & lilin, buka bersama berdampingan seperti buku, lingkaran, kenangan, surat, Wrap, papan & kitab, serta tema warna tinta doodle & kertas.
+
+```bash
+npm install
+npm run dev:server   # API :8787
+npm run dev:web      # web app :5173
+```
+
+Deploy gratis untuk pemakaian pribadi (Render + Neon + Gmail SMTP, semua fitur terbuka): lihat [docs/deploy-gratis.md](docs/deploy-gratis.md). Uji: `npm run e2e:web` (butuh dua perintah di atas berjalan).
+
+Aplikasi Expo (`apps/mobile`) disimpan untuk dikembangkan nanti; keduanya memakai server dan paket yang sama.
+
 ## Isi repo
 
 ```
 apps/
-  mobile/    Aplikasi Expo SDK 58 (iOS, Android, web) + widget layar utama
+  web/       Web app PWA (Vite + React) — versi utama saat ini
+  mobile/    Aplikasi Expo SDK 58 (iOS, Android, web) + widget layar utama (disimpan)
   server/    API Hono + Drizzle (Postgres / PGlite), penjadwal, halaman Wrap publik
 packages/
   core/      Kontrak API, E2EE, hari & zona waktu, Hijriah/senja, streak, ritual, Wrap, konten
-  doodles/   150 doodle tinta tangan (data SVG)
+  doodles/   234 doodle tinta tangan + 10 ilustrasi besar (data SVG)
 docs/        arsitektur, keamanan & privasi, konvensi mobile, katalog fitur
-e2e/         uji ujung-ke-ujung (Playwright) di Expo web
+e2e/         uji ujung-ke-ujung (Playwright): web.mjs untuk web app, flow.mjs untuk Expo web
 ```
 
 ## Menjalankan

@@ -17,7 +17,8 @@
     "seed": "npx tsx apps/server/scripts/seed.ts",
     "dev:web": "npm run dev -w @sehari/web",
     "build:web": "npm run build -w @sehari/web",
-    "web:mobile": "npm run web -w @sehari/mobile"
+    "web:mobile": "npm run web -w @sehari/mobile",
+    "e2e:web": "node e2e/web.mjs"
   },
   "engines": {
     "node": ">=22"

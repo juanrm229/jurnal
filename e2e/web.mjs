@@ -2,7 +2,7 @@
 // menempel foto & stiker, menyegel, lalu membuka hari bersama.
 // Jalankan server (:8787) dan `npm run dev:web` (:5173) dulu.
 import { chromium } from 'playwright-core';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 const APP = process.env.APP_URL || 'http://localhost:5173';
 mkdirSync('e2e/out', { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium' });
@@ -40,7 +40,13 @@ async function onboard(p, name, email, city) {
   await p.goto(`${APP}/masuk`);
   await p.fill('input[type=email]', email);
   await p.click('button:has-text("kirim kode")');
-  const code = (await p.locator('text=/kode: \\d{6}/').textContent()).match(/\d{6}/)[0];
+  // Mode produksi tidak mengembalikan kode; baca dari log email konsol (CODE_LOG).
+  let code;
+  if (process.env.CODE_LOG) {
+    await p.waitForSelector('input[autocomplete=one-time-code]');
+    const log = readFileSync(process.env.CODE_LOG, 'utf8');
+    code = log.slice(log.lastIndexOf(email)).match(/(\d{6})/)[1];
+  } else code = (await p.locator('text=/kode: \\d{6}/').textContent()).match(/\d{6}/)[0];
   await p.fill('input[autocomplete=one-time-code]', code);
   await p.waitForURL(/mulai\/profil/);
   await p.fill('input[placeholder^="misalnya"]', name);

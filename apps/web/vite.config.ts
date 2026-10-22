@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   server: {
     port: 5173,
-    proxy: { '/v1': 'http://localhost:8787', '/w': 'http://localhost:8787', '/dev': 'http://localhost:8787' },
+    proxy: { '/v1': 'http://localhost:8787', '^/w/': 'http://localhost:8787', '/cron': 'http://localhost:8787', '/dev': 'http://localhost:8787' },
   },
   build: { target: 'es2022', sourcemap: false, chunkSizeWarningLimit: 1200 },
 });
