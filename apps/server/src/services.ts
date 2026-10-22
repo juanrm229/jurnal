@@ -4,12 +4,14 @@ import type { Config } from './lib/config';
 import { createMailer } from './lib/email';
 import { createPayments } from './lib/payments';
 import { createPusher } from './lib/push';
+import { ensureSecrets } from './lib/secrets';
 import { createBlobStore } from './lib/storage';
 
 export async function createServices(cfg: Config, overrides: Partial<Services> = {}): Promise<Services & { close: () => Promise<void> }> {
   const { db, close } = overrides.db
     ? { db: overrides.db, close: async () => {} }
     : await openDb({ url: cfg.databaseUrl, dataDir: cfg.dataDir === 'memory' ? undefined : cfg.dataDir });
+  if (cfg.autoSecrets && !overrides.db) await ensureSecrets(db, cfg);
   return {
     db,
     cfg,

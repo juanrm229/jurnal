@@ -24,6 +24,23 @@ export class ResendMailer implements Mailer {
   }
 }
 
+/** Brevo (HTTP API): gratis 300 email/hari, cukup verifikasi satu alamat pengirim — tanpa domain sendiri. */
+export class BrevoMailer implements Mailer {
+  private sender: { name: string; email: string };
+  constructor(private apiKey: string, from: string) {
+    const m = /^\s*(.*?)\s*<([^>]+)>\s*$/.exec(from);
+    this.sender = m ? { name: m[1] || 'Sehari', email: m[2]! } : { name: 'Sehari', email: from.trim() };
+  }
+  async send(to: string, subject: string, text: string) {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': this.apiKey, 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ sender: this.sender, to: [{ email: to }], subject, textContent: text }),
+    });
+    if (!res.ok) throw new Error(`Gagal mengirim email: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  }
+}
+
 /** SMTP biasa — mis. Gmail dengan App Password (gratis, ±500 email/hari). */
 export class SmtpMailer implements Mailer {
   private transport: Promise<import('nodemailer').Transporter>;
@@ -38,6 +55,7 @@ export class SmtpMailer implements Mailer {
 }
 
 export function createMailer(cfg: Config): Mailer {
+  if (cfg.email.provider === 'brevo' && cfg.email.brevoApiKey) return new BrevoMailer(cfg.email.brevoApiKey, cfg.email.from);
   if (cfg.email.provider === 'smtp' && cfg.smtp) return new SmtpMailer(cfg.smtp, cfg.email.from);
   return cfg.email.provider === 'resend' && cfg.email.resendApiKey
     ? new ResendMailer(cfg.email.resendApiKey, cfg.email.from)

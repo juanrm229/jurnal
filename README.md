@@ -16,7 +16,7 @@ npm run dev:server   # API :8787
 npm run dev:web      # web app :5173
 ```
 
-Deploy gratis untuk pemakaian pribadi (Render + Neon + Gmail SMTP, semua fitur terbuka): lihat [docs/deploy-gratis.md](docs/deploy-gratis.md). Uji: `npm run e2e:web` (butuh dua perintah di atas berjalan).
+Deploy untuk pemakaian pribadi (semua fitur terbuka): **Railway** — [docs/deploy-railway.md](docs/deploy-railway.md), atau gratis total di Render + Neon — [docs/deploy-gratis.md](docs/deploy-gratis.md). Uji: `npm run e2e:web` (butuh dua perintah di atas berjalan).
 
 Aplikasi Expo (`apps/mobile`) disimpan untuk dikembangkan nanti; keduanya memakai server dan paket yang sama.
 

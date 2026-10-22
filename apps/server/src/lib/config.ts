@@ -9,7 +9,7 @@ export interface Config {
   /** Rahasia server untuk HMAC (kode, dedupe Kapsul Indonesia). */
   secret: string;
   adminToken?: string;
-  email: { provider: 'console' | 'resend' | 'smtp'; resendApiKey?: string; from: string };
+  email: { provider: 'console' | 'resend' | 'smtp' | 'brevo'; resendApiKey?: string; brevoApiKey?: string; from: string };
   payments: { provider: 'dev' | 'xendit'; xenditSecretKey?: string; xenditCallbackToken?: string };
   storage: { provider: 'local' | 's3' | 'db'; s3?: { endpoint: string; bucket: string; accessKeyId: string; secretAccessKey: string; region: string } };
   push: { expoAccessToken?: string; enabled: boolean };
@@ -23,22 +23,27 @@ export interface Config {
   vapid?: { publicKey: string; privateKey: string; subject: string };
   /** Token untuk pemicu cron dari luar (mis. cron-job.org) — juga menjaga server tetap bangun. */
   cronToken?: string;
+  /** Produksi tanpa SERVER_SECRET/VAPID di env: buat sekali, simpan di database. */
+  autoSecrets: boolean;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const port = Number(env.PORT ?? 8787);
+  // Railway mengisi RAILWAY_PUBLIC_DOMAIN sendiri; web & API satu alamat.
+  const railway = env.RAILWAY_PUBLIC_DOMAIN ? `https://${env.RAILWAY_PUBLIC_DOMAIN}` : undefined;
   return {
     port,
-    publicUrl: env.PUBLIC_URL ?? `http://localhost:${port}`,
-    appUrl: env.APP_URL ?? 'http://localhost:8081',
+    publicUrl: env.PUBLIC_URL ?? railway ?? `http://localhost:${port}`,
+    appUrl: env.APP_URL ?? railway ?? 'http://localhost:8081',
     databaseUrl: env.DATABASE_URL || undefined,
     dataDir: env.DATA_DIR ?? './data/pglite',
     uploadsDir: env.UPLOADS_DIR ?? './uploads',
     secret: env.SERVER_SECRET ?? 'dev-secret-ganti-di-produksi',
     adminToken: env.ADMIN_TOKEN || undefined,
     email: {
-      provider: env.SMTP_HOST ? 'smtp' : env.RESEND_API_KEY ? 'resend' : 'console',
+      provider: env.BREVO_API_KEY ? 'brevo' : env.SMTP_HOST ? 'smtp' : env.RESEND_API_KEY ? 'resend' : 'console',
       resendApiKey: env.RESEND_API_KEY,
+      brevoApiKey: env.BREVO_API_KEY,
       from: env.EMAIL_FROM ?? 'Sehari <halo@sehari.app>',
     },
     payments: {
@@ -68,5 +73,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     webDist: env.WEB_DIST || undefined,
     vapid: env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY ? { publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT ?? 'mailto:halo@sehari.app' } : undefined,
     cronToken: env.CRON_TOKEN || undefined,
+    autoSecrets: env.NODE_ENV === 'production' && (!env.SERVER_SECRET || !env.VAPID_PUBLIC_KEY),
   };
 }

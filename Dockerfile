@@ -15,7 +15,8 @@ RUN npm run build -w @sehari/web
 
 FROM node:22-slim
 WORKDIR /app
-ENV NODE_ENV=production PORT=8787 WEB_DIST=/app/apps/web/dist
+# Pemakaian pribadi: semua fitur terbuka, media terenkripsi disimpan di Postgres.
+ENV NODE_ENV=production PORT=8787 WEB_DIST=/app/apps/web/dist FREE_ALL=1 BLOB_STORE=db PUSH_DISABLED=1
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 COPY --from=build /app/packages ./packages
