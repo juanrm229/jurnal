@@ -1,5 +1,8 @@
 # Deploy ke Railway (± 10 menit)
 
+> Sudah berjalan: **https://sehari-production.up.railway.app** (project `sehari`, auto-deploy dari branch `claude/funny-fermi-hqxbaj`).
+> Uji di server sungguhan: `NODE_USE_ENV_PROXY=1 APP_URL=https://sehari-production.up.railway.app MAILTM=1 npm run e2e:web -- flow` (memakai kotak surat sekali pakai, akun uji dihapus lagi di akhir).
+
 Satu layanan berisi web app + API, plus satu database Postgres. Semua fitur terbuka (`FREE_ALL=1` sudah diatur di `Dockerfile`). Kunci rahasia server dan kunci notifikasi dibuat otomatis saat pertama menyala dan disimpan di database — tidak perlu diisi.
 
 Yang perlu kamu isi hanya **2 variabel**: database dan email.

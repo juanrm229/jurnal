@@ -5,13 +5,14 @@ import { chromium } from 'playwright-core';
 import { mkdirSync, readFileSync } from 'node:fs';
 const APP = process.env.APP_URL || 'http://localhost:5173';
 mkdirSync('e2e/out', { recursive: true });
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium' });
+const proxy = process.env.E2E_PROXY ? { server: process.env.E2E_PROXY } : undefined;
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium', proxy });
 const tag = Date.now().toString(36);
 const errors = [];
 const only = process.argv[2];
 
 async function ctx(w = 400, h = 860) {
-  const c = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1.5, permissions: ['clipboard-read', 'clipboard-write'] });
+  const c = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1.5, permissions: ['clipboard-read', 'clipboard-write'], ignoreHTTPSErrors: !!proxy });
   const p = await c.newPage();
   p.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
   p.on('console', (m) => m.type() === 'error' && !/favicon|401/.test(m.text()) && errors.push(`console: ${m.text().slice(0, 240)}`));
@@ -36,13 +37,37 @@ async function landing() {
   await shot(m, '03-landing-play');
 }
 
+// MAILTM=1: pakai kotak surat sekali pakai (api.mail.tm) untuk menguji email kode sungguhan.
+const MT = 'https://api.mail.tm';
+async function mailtmAddress(name) {
+  const dom = (await (await fetch(`${MT}/domains`)).json())['hydra:member'][0].domain;
+  const address = `${name.toLowerCase()}${tag}@${dom}`;
+  await fetch(`${MT}/accounts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ address, password: 'Sehari-uji-123' }) });
+  return address;
+}
+async function mailtmCode(address) {
+  const { token } = await (await fetch(`${MT}/token`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ address, password: 'Sehari-uji-123' }) })).json();
+  for (let i = 0; i < 40; i++) {
+    const list = (await (await fetch(`${MT}/messages`, { headers: { authorization: `Bearer ${token}` } })).json())['hydra:member'] ?? [];
+    if (list.length) {
+      const m = await (await fetch(`${MT}/messages/${list[0].id}`, { headers: { authorization: `Bearer ${token}` } })).json();
+      console.log(`  ✉️  email diterima dari ${m.from?.address} — "${m.subject}"`);
+      return (m.text || m.intro).match(/(\d{6})/)[1];
+    }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  throw new Error('email kode tidak sampai dalam 2 menit');
+}
+
 async function onboard(p, name, email, city) {
+  if (process.env.MAILTM) email = await mailtmAddress(name);
   await p.goto(`${APP}/masuk`);
   await p.fill('input[type=email]', email);
   await p.click('button:has-text("kirim kode")');
   // Mode produksi tidak mengembalikan kode; baca dari log email konsol (CODE_LOG).
   let code;
-  if (process.env.CODE_LOG) {
+  if (process.env.MAILTM) code = await mailtmCode(email);
+  else if (process.env.CODE_LOG) {
     await p.waitForSelector('input[autocomplete=one-time-code]');
     const log = readFileSync(process.env.CODE_LOG, 'utf8');
     code = log.slice(log.lastIndexOf(email)).match(/(\d{6})/)[1];
@@ -171,8 +196,17 @@ async function flow() {
     await a.waitForTimeout(1500);
     await shot(a, `50-${n}`);
   }
-  const cid = (await b.url()).match(/\/l\/([^/]+)/)?.[1];
-  void cid;
+  // Di server sungguhan (MAILTM), hapus lagi akun uji supaya tidak tertinggal.
+  if (process.env.MAILTM) {
+    for (const p of [a, b]) {
+      const st = await p.evaluate(async () => {
+        const t = localStorage.getItem('sehari.token');
+        const r = await fetch('/v1/me?confirm=HAPUS', { method: 'DELETE', headers: { authorization: `Bearer ${t}` } });
+        return r.status;
+      });
+      console.log(`  🧹 akun uji dihapus (${st})`);
+    }
+  }
 }
 
 if (!only || only === 'landing') await landing();
