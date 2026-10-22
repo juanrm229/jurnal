@@ -1,0 +1,6 @@
+apps/mobile
+e2e
+**/node_modules
+**/dist
+apps/server/data
+apps/server/uploads
