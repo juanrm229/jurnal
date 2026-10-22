@@ -4,17 +4,37 @@
 // Data tersimpan di apps/server/data (tidak hilang saat dimatikan).
 // Opsional: buat file .env di folder ini berisi BREVO_API_KEY & EMAIL_FROM supaya kode masuk dikirim lewat email.
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 
+const [major, minor] = process.versions.node.split('.').map(Number);
+if (major < 20 || (major === 20 && minor < 11)) {
+  console.error(`Node.js ${process.versions.node} terlalu lama. Pasang Node.js 22 LTS dari https://nodejs.org lalu coba lagi.`);
+  process.exit(1);
+}
 const root = path.resolve(import.meta.dirname, '..');
 const dist = path.join(root, 'apps/web/dist');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
-if (!existsSync(path.join(root, 'node_modules'))) {
-  console.log('📦 memasang paket (sekali saja)…');
-  if (spawnSync(npm, ['install', '--no-audit', '--no-fund'], { cwd: root, stdio: 'inherit', shell: process.platform === 'win32' }).status !== 0) process.exit(1);
+// Hanya paket web app + server (aplikasi Expo tidak ikut — jauh lebih kecil & cepat).
+const stamp = path.join(root, 'node_modules/.sehari-lokal');
+const lockTime = existsSync(stamp) ? readFileSync(stamp, 'utf8') : '';
+const lock = readFileSync(path.join(root, 'package-lock.json'), 'utf8').length.toString();
+if (lockTime !== lock) {
+  console.log('📦 memasang paket (sekali saja, butuh internet)…');
+  const args = ['install', '--workspace', '@sehari/server', '--workspace', '@sehari/web', '--include-workspace-root', '--no-audit', '--no-fund'];
+  const npmEnv = { ...process.env, npm_config_fetch_retries: '6', npm_config_fetch_retry_mintimeout: '5000', npm_config_fetch_retry_maxtimeout: '120000' };
+  let ok = false;
+  for (let attempt = 1; attempt <= 3 && !ok; attempt++) {
+    if (attempt > 1) console.log(`\n🔁 koneksi terputus, mencoba lagi (${attempt}/3)…`);
+    ok = spawnSync(npm, args, { cwd: root, stdio: 'inherit', env: npmEnv, shell: process.platform === 'win32' }).status === 0;
+  }
+  if (!ok) {
+    console.error('\nGagal memasang paket. Biasanya karena internet putus-putus — jalankan `npm run lokal` sekali lagi.');
+    process.exit(1);
+  }
+  writeFileSync(stamp, lock);
 }
 if (process.argv.includes('--build') || !existsSync(path.join(dist, 'index.html'))) {
   console.log('🛠  membangun web app…');
