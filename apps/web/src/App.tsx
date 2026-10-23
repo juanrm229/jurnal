@@ -45,6 +45,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/janji/acak', page('janji/Acak'), true, false],
   ['/janji/:id/ubah', page('janji/Form'), true, false],
   ['/janji/:id', page('janji/Detail'), true, false],
+  ['/kartu', page('Kartu'), false, false],
   ['/kenangan', page('Kenangan'), true, true],
   ['/wrap/:circleId/:scope/:period', page('Wrap'), true, false],
   ['/surat', page('letters/Letters'), true, false],
