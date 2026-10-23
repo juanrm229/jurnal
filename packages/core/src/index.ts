@@ -24,5 +24,6 @@ export {
   MOOD_CODES,
   suggestChapterTitles,
 } from './content';
+export { WORK_KINDS, WRITING_PROMPTS, randomWritingPrompt, writingPromptFor, type WorkKind, type WorkKindInfo, type WritingPrompt } from './content/writingPrompts';
 export type * from './content/types';
 export type { ChapterFeatures } from './content/chapterTitles';

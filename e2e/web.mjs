@@ -142,6 +142,15 @@ async function flow() {
   await a.waitForTimeout(400);
   await shot(a, '13b-lainnya');
   await a.keyboard.press('Escape');
+  await a.click('.dock button:has-text("lainnya")');
+  await a.click('.tile:has-text("kartu & pertanyaan")');
+  await a.waitForTimeout(700);
+  await shot(a, '14-kartu');
+  await a.click('.sheet button:has-text("tarik kartu lain")');
+  await a.locator('.sheet .pill:has-text("Renungan")').click();
+  await a.waitForTimeout(600);
+  await shot(a, '14b-kartu-dek');
+  await a.keyboard.press('Escape');
 
   // B bergabung
   const b = await ctx();
@@ -192,7 +201,7 @@ async function flow() {
   await a.fill('.write-sub', 'esai kecil tentang rumah');
   await a.click('.write-body');
   await a.keyboard.type('Setiap kali pindah, aku selalu membawa benda yang sama: sebuah sendok yang tidak pernah kupakai.\n\nIbu menyelipkannya di koper pertama, katanya supaya aku ingat makan.\n\n> rumah adalah tempat seseorang menunggumu pulang.\n\n❦\n\nSudah tiga kos, dua kota — sendok itu masih di sana.');
-  await a.waitForSelector('text=✓ tersimpan', { timeout: 15000 });
+  await a.waitForSelector('.write-status:has-text("✓")', { timeout: 15000 });
   await shot(a, '62-karya-tulis');
   await a.click('.write-top button:has-text("terbitkan")');
   await a.waitForTimeout(400);

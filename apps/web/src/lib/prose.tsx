@@ -64,13 +64,28 @@ export function inline(text: string): ReactNode {
   ));
 }
 
+/** Ornamen pemisah: tiga belah ketupat kecil dengan sulur tipis. */
+export function Ornament({ className = 'ornament' }: { className?: string }) {
+  return (
+    <div className={className} aria-hidden>
+      <svg viewBox="0 0 120 16" width="96" height="13" fill="currentColor">
+        <path d="M2 8 H40" stroke="currentColor" strokeWidth="0.8" opacity=".5" />
+        <path d="M80 8 H118" stroke="currentColor" strokeWidth="0.8" opacity=".5" />
+        <path d="M48 8 l4 -4 l4 4 l-4 4 z" />
+        <path d="M56 8 l4 -6 l4 6 l-4 6 z" />
+        <path d="M64 8 l4 -4 l4 4 l-4 4 z" />
+      </svg>
+    </div>
+  );
+}
+
 export function Prose({ body, verse, dropCap = true }: { body: string; verse?: boolean; dropCap?: boolean }) {
   const blocks = parseBlocks(body);
   let firstP = true;
   return (
     <div className={`prose ${verse ? 'verse' : ''}`}>
       {blocks.map((b, i) => {
-        if (b.t === 'hr') return <div key={i} className="ornament" aria-hidden>❦</div>;
+        if (b.t === 'hr') return <Ornament key={i} />;
         if (b.t === 'h2') return <h2 key={i}>{inline(b.text)}</h2>;
         if (b.t === 'h3') return <h3 key={i}>{inline(b.text)}</h3>;
         if (b.t === 'quote') return <blockquote key={i}>{inline(b.text)}</blockquote>;

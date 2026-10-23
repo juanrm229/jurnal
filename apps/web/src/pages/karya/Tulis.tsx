@@ -9,7 +9,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useKeyboardInset } from '@/editor/dock';
 import { api } from '@/lib/api';
 import { useCircles } from '@/lib/data';
-import { Prose } from '@/lib/prose';
+import { Ornament, Prose } from '@/lib/prose';
 import { back, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { store } from '@/lib/storage';
@@ -180,10 +180,10 @@ export default function Tulis() {
           <Doodle id="ui-kembali" size={22} />
         </button>
         <button className="pill sm" onClick={() => setSheet('kind')}>
-          <Doodle id={info.doodle} size={16} color="currentColor" /> {info.name}
+          <Doodle id={info.doodle} size={16} color="currentColor" /> <span className="hide-xs">{info.name}</span>
         </button>
         <span className="write-status tiny">
-          {saved === 'saving' ? 'menyimpan…' : saved === 'saved' ? '✓ tersimpan' : saved === 'error' ? 'belum tersimpan' : ''}
+          {saved === 'saving' ? 'menyimpan…' : saved === 'saved' ? <>✓<span className="hide-xs"> tersimpan</span></> : saved === 'error' ? 'belum tersimpan' : ''}
         </span>
         <span className="grow" />
         <button className="icon-btn" aria-label={mode === 'write' ? 'baca' : 'tulis'} onClick={() => setMode(mode === 'write' ? 'read' : 'write')} title={mode === 'write' ? 'pratinjau baca' : 'kembali menulis'}>
@@ -227,15 +227,14 @@ export default function Tulis() {
           {work.epigraph !== undefined ? (
             <textarea className="write-epigraph" rows={2} value={work.epigraph} placeholder="epigraf — kutipan pembuka, dan dari siapa" maxLength={400} onChange={(e) => update((w) => ({ ...w, epigraph: e.target.value }))} />
           ) : null}
-          <div className="write-orn" aria-hidden>
-            ❦
-          </div>
+          <Ornament className="write-orn" />
           <textarea
             ref={body}
             className={`write-body ${info.prose ? '' : 'verse'}`}
             value={work.body}
             placeholder={PLACEHOLDER[work.kind]}
-            spellCheck
+            spellCheck={false}
+            lang="id"
             autoFocus={!params.id}
             onChange={(e) => update((w) => ({ ...w, body: e.target.value }))}
             onKeyDown={(e) => {
@@ -410,9 +409,7 @@ export function ReadHead({ work, author, words, date }: { work: WorkPayload; aut
         {date ? ` · ${date}` : ''} · {readingMinutes(words)} menit membaca
       </p>
       {work.epigraph ? <blockquote className="epigraph">{work.epigraph}</blockquote> : null}
-      <div className="ornament" aria-hidden>
-        ❦
-      </div>
+      <Ornament />
     </header>
   );
 }

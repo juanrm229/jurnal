@@ -778,3 +778,27 @@
 .prompt-card {
   font-family: var(--serif);
 }
+.ornament svg,
+.write-orn svg {
+  display: inline-block;
+}
+.write-orn {
+  display: flex;
+  justify-content: center;
+}
+.ornament {
+  display: flex;
+  justify-content: center;
+  letter-spacing: 0;
+  padding-left: 0;
+}
+@media (max-width: 420px) {
+  .hide-xs {
+    display: none;
+  }
+  .write-top {
+    gap: 2px;
+    padding-left: 6px;
+    padding-right: 8px;
+  }
+}

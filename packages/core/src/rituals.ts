@@ -117,7 +117,8 @@ export function dailyCardFor(opts: {
   rare?: RareContext;
 }): CardDraw {
   const seed = hashString(`card:${opts.userId}:${opts.day}`);
-  const owned = new Set(['dasar', ...(opts.ownedDecks ?? [])]);
+  // Dek gratis selalu ikut dikocok; dek berbayar hanya bila dimiliki.
+  const owned = new Set(['dasar', ...DECKS.filter((d) => d.priceIdr === 0).map((d) => d.id), ...(opts.ownedDecks ?? [])]);
   const decks = DECKS.filter((d) => owned.has(d.id));
   const triggers = rareTriggersFor(opts.day, opts.rare);
 
