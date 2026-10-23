@@ -34,7 +34,7 @@ export default function Panduan() {
                   <path d="M8 5v14l11-7z" fill="currentColor" />
                 </svg>
               </span>
-              <span className="pd-start-label">putar semua bab · ±12 menit</span>
+              <span className="pd-start-label">putar semua bab · ±13 menit</span>
             </button>
           ) : (
             <video
