@@ -255,6 +255,8 @@ export const COPY = {
     lostLetterArrived: 'Ada Surat Tersesat yang baru sampai. Entah sudah berapa lama ia di jalan.',
     inviteAccepted: (name: string) => `${name} menerima undanganmu. Halaman pertama kalian menunggu.`,
     timeCapsuleOpened: 'Kapsul Waktu yang dulu kalian kunci, hari ini terbuka.',
+    whenLetterArrived: (name: string) => `${name} menitipkan surat “buka kalau…” untukmu. Bukalah saat momennya tiba.`,
+    whenLetterOpened: (name: string) => `${name} baru saja membuka suratmu. Mungkin hari ini ia membutuhkannya.`,
     chapterCeremony: 'Bulan ini selesai. Saatnya memberi judul bab bersama.',
   },
 };

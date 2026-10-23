@@ -1,7 +1,8 @@
 /**
  * Menulis surat: Surat Tersesat (sampai di waktu acak), Surat Wasiat Kecil /
  * kapsul waktu (dibuka di tanggal pilihan), dan surat petak istimewa
- * (dibuka saat lingkaran mencapai hari ke-7/30/100/365).
+ * (dibuka saat lingkaran mencapai hari ke-7/30/100/365), dan Surat "Buka
+ * Kalau…" (langsung sampai, dibuka penerima saat momennya tiba).
  * Isi dienkripsi di perangkat untuk penerima dan untukku sendiri.
  */
 import {
@@ -25,7 +26,7 @@ import { uploadPhoto } from '@/lib/media';
 import { back, navigate, usePath } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { Doodle, Header, Screen, Section, Sticky } from '@/ui/kit';
-import { KIND_DOODLE, milestoneDay, newLetterId } from '../story/letters';
+import { KIND_DOODLE, milestoneDay, newLetterId, WHEN_MOMENTS } from '../story/letters';
 
 const MILESTONE_DOODLE: Record<number, string> = { 7: 'rumah', 30: 'peta', 100: 'lampu', 365: 'surat-botol' };
 
@@ -37,6 +38,10 @@ const INTRO: Record<LetterKind, { title: string; body: string }> = {
   future: {
     title: 'Surat Wasiat Kecil',
     body: 'Kapsul waktu untuk dibuka di masa depan: untuk dirimu setahun lagi, untuk anak di umur tujuh belas, atau untuk seseorang di hari yang kamu pilih. Sampai hari itu, tidak ada yang bisa membacanya, termasuk kami.',
+  },
+  when: {
+    title: 'Surat Buka Kalau…',
+    body: 'Amplop yang langsung sampai, tapi baru dibuka saat momennya tiba: kalau dia sedih, kangen, tidak bisa tidur, atau habis bertengkar. Kamu akan tahu ketika amplopnya dibuka.',
   },
   milestone: {
     title: 'Surat Petak Istimewa',
@@ -82,7 +87,7 @@ export default function Write() {
   const { circles } = useCircles();
   const usable = circles.filter((x) => (x.status === 'active' || x.status === 'memorial') && x.me?.state === 'active');
 
-  const initialKind = (['lost', 'future', 'milestone'] as const).find((k) => k === params.kind) ?? null;
+  const initialKind = (['lost', 'future', 'milestone', 'when'] as const).find((k) => k === params.kind) ?? null;
   const [kind, setKind] = useState<LetterKind | null>(initialKind);
   const [circleId, setCircleId] = useState<string | undefined>(params.circleId ?? (params.self === '1' ? undefined : usable[0]?.id));
   const circle = usable.find((x) => x.id === circleId);
@@ -129,13 +134,13 @@ export default function Write() {
   const deliverOn = kind === 'future' ? (chosen?.day ?? null) : null;
   const overLimit = !!deliverOn && deliverOn > maxDay;
   const lostOff = kind === 'lost' && circle && !circle.settings.lostLetters;
-  const needsCircle = kind === 'lost' || kind === 'milestone' || (kind === 'future' && target !== 'self');
+  const needsCircle = kind === 'lost' || kind === 'milestone' || ((kind === 'future' || kind === 'when') && target !== 'self');
 
   const targets: { key: Target; label: string }[] = [];
-  if (kind === 'future') targets.push({ key: 'self', label: 'diriku sendiri' });
+  if (kind === 'future' || kind === 'when') targets.push({ key: 'self', label: 'diriku sendiri' });
   if (circle) {
     for (const m of circle.others) if (m.publicKey) targets.push({ key: m.userId, label: m.penName });
-    if (circle.kind !== 'duo' || kind === 'milestone') targets.push({ key: 'circle', label: `seluruh ${circle.name}` });
+    if ((circle.kind !== 'duo' || kind === 'milestone') && kind !== 'when') targets.push({ key: 'circle', label: `seluruh ${circle.name}` });
   }
 
   // Lingkaran baru selesai dimuat: pilih lingkaran & penerima yang masuk akal.
@@ -155,6 +160,7 @@ export default function Write() {
     !lostOff &&
     (kind !== 'future' || (!!deliverOn && !overLimit)) &&
     (kind !== 'milestone' || !!milestone) &&
+    (kind !== 'when' || note.trim().length > 0) &&
     targets.some((t) => t.key === target);
 
   const pickPhoto = (f: File | undefined) => {
@@ -217,17 +223,23 @@ export default function Write() {
             <Doodle id="segel-lilin" size={76} color="var(--on-ink)" sw={3} draw={0.5} />
           </div>
           <h1 className="title rise" style={{ animationDelay: '.6s' }}>
-            {sent.kind === 'lost' ? 'dalam perjalanan' : 'terkunci rapat'}
+            {sent.kind === 'lost' ? 'dalam perjalanan' : sent.kind === 'when' ? 'sudah dititipkan' : 'terkunci rapat'}
           </h1>
           <p className="hand rise" style={{ fontSize: 28, color: 'var(--text)', margin: 0, animationDelay: '.8s' }}>
             {sent.kind === 'lost'
               ? 'Suratmu sudah dilepas ke laut. Entah kapan ia ditemukan.'
-              : sent.kind === 'milestone'
+              : sent.kind === 'when'
+                ? 'Amplopnya sudah di kotak surat, menunggu momennya.'
+                : sent.kind === 'milestone'
                 ? `Menunggu di petak ${ms?.name ?? ''}${sent.deliverOn ? `, sekitar ${formatDayLong(sent.deliverOn)}` : ''}.`
                 : `Terbuka ${sent.deliverOn ? formatDayLong(sent.deliverOn) : 'nanti'}.`}
           </p>
           <p className="small soft rise" style={{ margin: 0, maxWidth: 380, animationDelay: '1s' }}>
-            {sent.kind === 'lost' ? 'Kamu tidak akan diberi tahu kapan sampainya. Itu bagian dari rahasianya.' : 'Sampai hari itu, isinya hanya bisa dibuka oleh perangkat penerima.'}
+            {sent.kind === 'lost'
+              ? 'Kamu tidak akan diberi tahu kapan sampainya. Itu bagian dari rahasianya.'
+              : sent.kind === 'when'
+                ? 'Kamu akan melihat tanda “sudah dibuka” di kotak surat terkirim saat ia membukanya.'
+                : 'Sampai hari itu, isinya hanya bisa dibuka oleh perangkat penerima.'}
           </p>
           <div className="col mt-lg" style={{ width: '100%', maxWidth: 380 }}>
             <button className="btn" onClick={() => navigate('/surat', { replace: true })} data-testid="letter-sent-mailbox">
@@ -249,9 +261,9 @@ export default function Write() {
       <Screen>
         <Header title="tulis surat" backTo="/surat" />
         <div className="col" style={{ gap: 26, marginTop: 20 }}>
-          {(['lost', 'future', 'milestone'] as const).map((k, i) => (
+          {(['when', 'lost', 'future', 'milestone'] as const).map((k, i) => (
             <button key={k} className="letter-note rise" style={{ animationDelay: `${i * 0.08}s` }} onClick={() => setKind(k)} data-testid={`kind-${k}`}>
-              <Sticky color={(['blue', 'yellow', 'green'] as const)[i]!} tilt={[-1.5, 1, -0.8][i]!}>
+              <Sticky color={(['peach', 'blue', 'yellow', 'green'] as const)[i]!} tilt={[1.2, -1.5, 1, -0.8][i]!}>
                 <div className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
                   <Doodle id={KIND_DOODLE[k]} size={40} />
                   <div className="col grow" style={{ gap: 4 }}>
@@ -303,7 +315,7 @@ export default function Write() {
                 {t.label}
               </button>
             ))}
-            {kind === 'future' && !circle && usable.length ? (
+            {(kind === 'future' || kind === 'when') && !circle && usable.length ? (
               <button className="pill" onClick={() => setCircleId(usable[0]!.id)}>
                 orang di lingkaranku…
               </button>
@@ -384,6 +396,20 @@ export default function Write() {
         </Section>
       ) : null}
 
+      {kind === 'when' ? (
+        <Section title="buka kalau…">
+          <div className="row wrap" style={{ gap: 6 }}>
+            {WHEN_MOMENTS.map((w) => (
+              <button key={w} className={`pill sm${note === w ? ' active' : ''}`} onClick={() => setNote(w)}>
+                {w.replace('buka kalau ', '… ')}
+              </button>
+            ))}
+          </div>
+          <input className="field hand mt" style={{ fontSize: 24, paddingTop: 8, paddingBottom: 8 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder="buka kalau…" maxLength={60} data-testid="when-note" />
+          <span className="tiny soft" style={{ display: 'block', marginTop: 6 }}>Tertulis di amplop. Penerima memutuskan sendiri kapan momennya tiba.</span>
+        </Section>
+      ) : null}
+
       <Section title="suratnya">
         <div className="letter-paper writing" style={{ '--lp': 'var(--sticky-yellow)' } as CSSProperties}>
           <div className="letter-paper-head">
@@ -394,7 +420,7 @@ export default function Write() {
             className="letter-text"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={kind === 'lost' ? 'untukmu, kapan pun surat ini sampai…' : 'hai, kamu yang di masa depan…'}
+            placeholder={kind === 'lost' ? 'untukmu, kapan pun surat ini sampai…' : kind === 'when' ? 'kalau kamu membaca ini, berarti…' : 'hai, kamu yang di masa depan…'}
             maxLength={8000}
             data-testid="letter-text"
           />
@@ -402,10 +428,10 @@ export default function Write() {
         </div>
       </Section>
 
-      <Section title="tulisan di amplop (opsional)">
+      {kind !== 'when' ? <Section title="tulisan di amplop (opsional)">
         <input className="field hand" style={{ fontSize: 24, paddingTop: 8, paddingBottom: 8 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder="misalnya: buka saat hujan" maxLength={60} data-testid="envelope-note" />
         <span className="tiny soft" style={{ display: 'block', marginTop: 6 }}>Terlihat penerima sebelum amplop dibuka. Tetap terenkripsi.</span>
-      </Section>
+      </Section> : null}
 
       <Section title="foto (opsional)">
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => pickPhoto(e.target.files?.[0])} />
@@ -436,7 +462,7 @@ export default function Write() {
       <div className="letter-send-bar">
         <button className="btn" onClick={send} disabled={!ready || busy} data-testid="letter-send">
           <Doodle id="segel-lilin" size={22} color="currentColor" />
-          {busy ? 'menyegel…' : kind === 'lost' ? 'lepaskan surat' : 'kunci surat'}
+          {busy ? 'menyegel…' : kind === 'lost' ? 'lepaskan surat' : kind === 'when' ? 'titipkan amplop' : 'kunci surat'}
         </button>
       </div>
     </Screen>

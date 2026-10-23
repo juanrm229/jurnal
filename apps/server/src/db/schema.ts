@@ -649,3 +649,31 @@ export const meetEntries = pgTable(
   },
   (t) => [index('meet_entries_meet_idx').on(t.meetId)],
 );
+
+// ── Daftar Mimpi Bersama ────────────────────────────────────────────────────
+
+export const dreams = pgTable(
+  'dreams',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    /** Janji temu yang mewujudkan mimpi ini, bila ada. */
+    meetId: text('meet_id').references(() => meets.id, { onDelete: 'set null' }),
+    doneAt: ts('done_at'),
+    doneBy: text('done_by'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('dreams_circle_idx').on(t.circleId)],
+);
+
+/** "Aku juga mau": siapa saja yang ikut memimpikannya. */
+export const dreamLikes = pgTable(
+  'dream_likes',
+  {
+    dreamId: text('dream_id').notNull().references(() => dreams.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.dreamId, t.userId] })],
+);

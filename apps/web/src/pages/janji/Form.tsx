@@ -1,7 +1,9 @@
 /** Buat atau ubah janji temu. Setiap kolom bisa diacak kalau sedang buntu. */
 import { DATE_ACTIVITIES, DATE_CHALLENGES, DATE_DRESSCODES, DATE_FOODS, DATE_PLACES, DATE_QUESTIONS, type DateIdea } from '@sehari/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useCircles } from '@/lib/data';
+import { dk, linkDreamMeet } from '@/lib/dreams';
 import { createMeet, type MeetPayload, newMeetId, updateMeet, useMeet, useRefreshMeets } from '@/lib/meets';
 import { navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
@@ -31,6 +33,7 @@ export default function JanjiForm() {
   const { circles } = useCircles();
   const toast = useToast();
   const refresh = useRefreshMeets();
+  const qc = useQueryClient();
   const params = useParams<{ id?: string }>();
   const { search } = usePath();
   const editing = useMeet(params.id ?? '');
@@ -91,6 +94,12 @@ export default function JanjiForm() {
       } else {
         const id = newMeetId();
         await createMeet(id, circle, startsAt, p, meId);
+        // Dari Daftar Mimpi: sambungkan mimpinya ke janji ini.
+        const dream = search.get('mimpi');
+        if (dream) {
+          await linkDreamMeet(dream, id).catch(() => {});
+          await qc.invalidateQueries({ queryKey: dk.circle(circle.id) });
+        }
         sound.play('chime');
         navigate(`/janji/${id}?baru=1`, { replace: true });
       }

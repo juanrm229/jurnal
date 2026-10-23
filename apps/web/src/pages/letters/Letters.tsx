@@ -4,11 +4,11 @@
  */
 import { COPY, formatClock, formatDayLong, getCity, type LetterWire, MOODS } from '@sehari/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 import { api } from '@/lib/api';
 import { memberName, type OpenDrop, qk, useCircles, useInbox, useMe, useOpenDrops } from '@/lib/data';
 import { navigate } from '@/lib/router';
-import { Doodle, Empty, ErrorNote, Growing, Header, MoodDot, Screen, Section, Sticky } from '@/ui/kit';
+import { Doodle, Empty, ErrorNote, Growing, Header, MoodDot, Screen, Section, Sheet, Sticky } from '@/ui/kit';
 import { openSong, Photo } from '../story/cards';
 import { Envelope } from '../story/Envelope';
 import { formatWhen, KIND_DOODLE, KIND_LABEL, milestoneName, stickyColorFor, tiltFor, useAllLetters } from '../story/letters';
@@ -23,6 +23,7 @@ export default function Letters() {
   const capsules = useInbox();
   const capsuleDrops = useOpenDrops(capsules.data?.drops);
   const [tab, setTab] = useState<Tab>('inbox');
+  const [ask, setAsk] = useState<LetterWire | null>(null);
 
   const name = (id: string) => memberName(circles, id, me.user.id);
   const circleName = (id: string | null) => circles.find((x) => x.id === id)?.name ?? 'lingkaran';
@@ -40,7 +41,9 @@ export default function Letters() {
   };
 
   const list = tab === 'inbox' ? inbox : outbox;
-  const letters = list.data ?? [];
+  // Amplop "buka kalau…" yang belum dibuka disimpan di rak tersendiri, menunggu momennya.
+  const waiting = tab === 'inbox' ? (list.data ?? []).filter((l) => l.kind === 'when' && !l.openedAt) : [];
+  const letters = (list.data ?? []).filter((l) => !waiting.includes(l));
   const unopened = (inbox.data ?? []).filter((l) => !l.openedAt).length;
 
   return (
@@ -64,7 +67,7 @@ export default function Letters() {
         <Growing />
       ) : list.error ? (
         <ErrorNote error={list.error} onRetry={() => void list.refetch()} />
-      ) : letters.length === 0 ? (
+      ) : letters.length === 0 && waiting.length === 0 ? (
         tab === 'inbox' ? (
           <Empty doodle="surat-botol" title="Belum ada surat yang sampai." body="Surat Tersesat datang di waktu yang tidak bisa ditebak. Mungkin justru saat paling dibutuhkan." />
         ) : (
@@ -77,14 +80,22 @@ export default function Letters() {
             if (tab === 'inbox' && !l.openedAt) {
               return (
                 <div key={l.id} className="rise" style={{ animationDelay: `${i * 0.06}s` }}>
-                  <Envelope testID={`envelope-${l.id}`} note={p?.envelopeNote} from={from(l)} doodle={KIND_DOODLE[l.kind]} tilt={tiltFor(l.id) * 0.5} onOpen={() => openLetter(l)} />
+                  <Envelope testID={`envelope-${l.id}`} note={p?.envelopeNote} from={from(l)} doodle={KIND_DOODLE[l.kind]} tilt={tiltFor(l.id) * 0.5} onOpen={() => (l.kind === 'when' ? setAsk(l) : openLetter(l))} />
                 </div>
               );
             }
             const status =
               tab === 'inbox'
                 ? `dari ${from(l)}`
-                : l.deliveredAt
+                : l.kind === 'when'
+                  ? l.toUserId === me.user.id
+                    ? l.openedAt
+                      ? `sudah kamu buka · ${formatWhen(l.openedAt, me.user.tz)}`
+                      : 'menunggu momennya'
+                    : l.openedAt
+                      ? `sudah dibuka · ${formatWhen(l.openedAt, me.user.tz)}`
+                      : 'belum dibuka · menunggu momennya'
+                  : l.deliveredAt
                   ? `sudah sampai${l.kind === 'lost' ? '' : ` · ${formatWhen(l.deliveredAt, me.user.tz)}`}`
                   : l.kind === 'lost'
                     ? 'dalam perjalanan'
@@ -126,6 +137,51 @@ export default function Letters() {
           })}
         </div>
       )}
+
+      {waiting.length ? (
+        <Section title="buka kalau…">
+          <p className="tiny soft" style={{ marginTop: -4 }}>Amplop-amplop ini menunggu momennya. Buka hanya saat kamu benar-benar membutuhkannya.</p>
+          <div className="when-shelf">
+            {waiting.map((l, i) => (
+              <button key={l.id} className="when-env rise" style={{ animationDelay: `${i * 0.05}s`, '--tilt': `${tiltFor(l.id) * 0.6}deg` } as CSSProperties} onClick={() => setAsk(l)} data-testid={`when-${l.id}`}>
+                <span className="when-flap" />
+                <span className="hand when-note">{open.get(l.id)?.envelopeNote ?? 'buka kalau…'}</span>
+                <span className="tiny">dari {from(l)}</span>
+                <span className="when-seal">
+                  <Doodle id="hati-kecil" size={16} color="var(--on-ink)" />
+                </span>
+              </button>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      <Sheet open={!!ask} onClose={() => setAsk(null)} title="sudah waktunya?">
+        {ask ? (
+          <div className="col" style={{ alignItems: 'center', textAlign: 'center', gap: 12 }}>
+            <Doodle id="amplop" size={56} className="breathe" />
+            <p className="hand" style={{ fontSize: 30, margin: 0, color: 'var(--text)' }}>{open.get(ask.id)?.envelopeNote ?? 'buka kalau…'}</p>
+            <p className="small soft" style={{ margin: 0 }}>
+              {ask.fromUserId === me.user.id ? 'Surat dari dirimu sendiri.' : `${from(ask)} akan tahu amplop ini sudah dibuka.`}
+            </p>
+            <div className="row" style={{ gap: 8, width: '100%' }}>
+              <button className="btn ghost grow" onClick={() => setAsk(null)}>
+                nanti saja
+              </button>
+              <button
+                className="btn grow"
+                onClick={() => {
+                  const l = ask;
+                  setAsk(null);
+                  void openLetter(l);
+                }}
+                data-testid="when-open">
+                buka sekarang
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Sheet>
 
       {tab === 'inbox' && (capsules.data?.locked.length || capsuleDrops.length) ? (
         <Section title="kapsul waktu untukku">

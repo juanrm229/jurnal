@@ -82,7 +82,7 @@ export function useRefreshMeets() {
   return () => qc.invalidateQueries({ queryKey: mk.all });
 }
 
-function circleSeal(value: unknown, circle: CircleView, me: { id: string; publicKey: Uint8Array }) {
+export function circleSeal(value: unknown, circle: CircleView, me: { id: string; publicKey: Uint8Array }) {
   const key = circle.keys.get(circle.currentEpoch);
   if (!key) throw new Error('Kunci lingkaran belum tersedia di perangkat ini.');
   const env = sealEnvelope(value, [

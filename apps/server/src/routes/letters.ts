@@ -1,5 +1,7 @@
 /**
- * Surat Tersesat, Surat Wasiat Kecil / Kapsul Waktu, dan surat milestone.
+ * Surat Tersesat, Surat Wasiat Kecil / Kapsul Waktu, surat milestone, dan
+ * Surat "Buka Kalau…" (langsung sampai; penerima memilih sendiri kapan
+ * membukanya, pengirim diberi tahu saat amplopnya dibuka).
  * Server menahan ciphertext sampai waktunya — penerima bahkan tidak tahu
  * Surat Tersesat sedang dalam perjalanan.
  */
@@ -90,7 +92,7 @@ export function letterRoutes(s: Services) {
         if (target <= today) throw bad('milestone_passed', 'Petak itu sudah dilewati.');
         deliverOn = target;
       }
-    } else if (input.kind !== 'future') {
+    } else if (input.kind !== 'future' && input.kind !== 'when') {
       throw bad('circle_required', 'Surat ini butuh lingkaran.');
     }
     if (input.toUserId && input.toUserId !== user.id) {
@@ -124,7 +126,14 @@ export function letterRoutes(s: Services) {
       mediaIds: input.mediaIds,
       deliverOn,
       milestoneDays: milestone,
+      deliveredAt: input.kind === 'when' ? s.now() : null,
+      notifiedAt: input.kind === 'when' ? s.now() : null,
     });
+    if (input.kind === 'when') {
+      const to = input.toUserId ?? user.id;
+      if (to !== user.id) await pushTo(s, [to], { body: say(COPY.notifications.whenLetterArrived, user.penName ?? 'Seseorang'), data: { type: 'letter', letterId: input.id } }, 'notifyLetters');
+      return c.json({ id: input.id, status: 'sudah sampai' }, 201);
+    }
     return c.json({ id: input.id, status: 'dalam perjalanan' }, 201);
   });
 
@@ -133,7 +142,12 @@ export function letterRoutes(s: Services) {
     const [l] = await s.db.select().from(letters).where(eq(letters.id, c.req.param('id')));
     if (!l || !l.deliveredAt) throw notFound();
     if (l.toUserId === user.id) {
-      if (!l.openedAt) await s.db.update(letters).set({ openedAt: s.now() }).where(eq(letters.id, l.id));
+      if (!l.openedAt) {
+        await s.db.update(letters).set({ openedAt: s.now() }).where(eq(letters.id, l.id));
+        if (l.kind === 'when' && l.fromUserId !== user.id) {
+          await pushTo(s, [l.fromUserId], { body: say(COPY.notifications.whenLetterOpened, user.penName ?? 'Penerimanya'), data: { type: 'letter', letterId: l.id } }, 'notifyLetters');
+        }
+      }
     } else if (!l.toUserId && l.circleId && (await membership(s, l.circleId, user.id))?.state === 'active') {
       await s.db.insert(letterOpens).values({ letterId: l.id, userId: user.id }).onConflictDoNothing();
     } else throw notFound();

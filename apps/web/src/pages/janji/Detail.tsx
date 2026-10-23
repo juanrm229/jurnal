@@ -6,6 +6,7 @@ import type { MeetRsvp } from '@sehari/core';
 import { useEffect, useState } from 'react';
 import { memberName, useCircles, useMe } from '@/lib/data';
 import { uploadPhoto, useMediaUrl } from '@/lib/media';
+import { setDreamDone, useDreams } from '@/lib/dreams';
 import { addMeetEntry, arriveMeet, countdown, download, type EntryPayload, fmtWhen, icsFor, mapUrl, metMeet, rsvpMeet, updateMeet, useMeet, useRefreshMeets } from '@/lib/meets';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
@@ -42,6 +43,8 @@ export default function JanjiDetail() {
   }, []);
 
   const m = q.meet;
+  const dreamQ = useDreams(m?.wire.circleId);
+  const dream = dreamQ.dreams.find((d) => d.wire.meetId === id);
   if (q.isLoading || !m) return <Growing label="membuka janji…" />;
   if (!m.plan) return <main className="screen"><p className="center">Janji ini tidak bisa dibuka di perangkat ini.</p></main>;
   const circle = circles.find((c) => c.id === m.wire.circleId);
@@ -265,6 +268,33 @@ export default function JanjiDetail() {
             }}>
             <Doodle id="gelembung-kata" size={18} color="currentColor" /> taruh HP di meja: main Tentang Kita
           </button>
+        </section>
+      ) : null}
+
+      {/* Mimpi yang diwujudkan janji ini */}
+      {dream?.data ? (
+        <section className="section">
+          <div className={`card row mimpi-link ${dream.wire.doneAt ? 'done' : ''}`} style={{ gap: 12 }}>
+            <Doodle id={dream.wire.doneAt ? 'bintang' : 'kompas'} size={32} className="breathe" />
+            <span className="grow" style={{ minWidth: 0 }}>
+              <span className="tiny ink-soft" style={{ display: 'block' }}>{dream.wire.doneAt ? 'mimpi yang terwujud di janji ini' : 'janji ini mewujudkan mimpi'}</span>
+              <span className="h2 ink">{dream.data.title}</span>
+            </span>
+            {!dream.wire.doneAt && phase !== 'nanti' && phase !== 'batal' ? (
+              <button
+                className="btn sm auto"
+                onClick={() =>
+                  void act(async () => {
+                    await setDreamDone(dream.wire.id, true);
+                    await dreamQ.refetch();
+                    setCelebrate(true);
+                    setTimeout(() => setCelebrate(false), 2600);
+                  }, 'seal')
+                }>
+                terwujud ✦
+              </button>
+            ) : null}
+          </div>
         </section>
       ) : null}
 

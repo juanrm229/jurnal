@@ -205,7 +205,8 @@ export interface DropMeta {
  * - future: Surat Wasiat Kecil / Kapsul Waktu, dibuka di tanggal tertentu
  * - milestone: dibuka saat lingkaran mencapai petak istimewa
  */
-export type LetterKind = 'lost' | 'future' | 'milestone';
+/** `when` = Surat "Buka Kalau…": langsung sampai, dibuka penerima saat momennya tiba. */
+export type LetterKind = 'lost' | 'future' | 'milestone' | 'when';
 
 export interface LetterPayload {
   v: 1;

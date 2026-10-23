@@ -440,7 +440,7 @@ export const giftFreezeBody = z.object({ toUserId: id, note: z.string().max(140)
 
 export const createLetterBody = z.object({
   id,
-  kind: z.enum(['lost', 'future', 'milestone']),
+  kind: z.enum(['lost', 'future', 'milestone', 'when']),
   circleId: id.optional(),
   /** Kosong = untuk seluruh lingkaran (atau diri sendiri bila tanpa lingkaran). */
   toUserId: id.optional(),
@@ -790,5 +790,26 @@ export interface MeetWire {
   revealed: boolean;
   /** Ada harapan dari orang lain yang masih tersegel. */
   hiddenWishes: number;
+  createdAt: string;
+}
+
+// ── Daftar Mimpi Bersama ────────────────────────────────────────────────────
+
+export const dreamBody = z.object({ id, envelope: envelopeSchema });
+export const dreamUpdateBody = z.object({
+  envelope: envelopeSchema.optional(),
+  done: z.boolean().optional(),
+  meetId: id.nullable().optional(),
+});
+export interface DreamWire {
+  id: string;
+  circleId: string;
+  authorId: string;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  meetId: string | null;
+  doneAt: string | null;
+  doneBy: string | null;
+  /** Anggota yang menandai "aku juga mau" (pembuat otomatis termasuk). */
+  likes: string[];
   createdAt: string;
 }

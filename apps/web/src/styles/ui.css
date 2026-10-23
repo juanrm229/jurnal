@@ -370,3 +370,186 @@ a,
     padding: 6px;
   }
 }
+
+/* Rak surat "buka kalau…" */
+.when-shelf {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.when-env {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  min-height: 150px;
+  padding: 64px 12px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--card-edge);
+  background: linear-gradient(160deg, var(--sticky-peach), color-mix(in srgb, var(--sticky-peach) 70%, #fff));
+  color: var(--text);
+  text-align: left;
+  rotate: var(--tilt, 0deg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.when-env:active {
+  transform: scale(0.97);
+}
+.when-flap {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 50px;
+  background: color-mix(in srgb, #000 6%, transparent);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.when-note {
+  position: relative;
+  font-size: 21px;
+  line-height: 1.05;
+}
+.when-seal {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #c2453b;
+  box-shadow: 0 2px 6px rgba(120, 30, 20, 0.35);
+}
+
+/* Daftar Mimpi Bersama */
+.mimpi-hero {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  border-radius: 24px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--ink) 9%, var(--card)), var(--card));
+  border: 1px solid var(--card-edge);
+}
+.mimpi-jar {
+  position: relative;
+  width: 100px;
+  height: 128px;
+  border-radius: 26px 26px 30px 30px;
+  border: 2.5px solid color-mix(in srgb, var(--ink) 55%, transparent);
+  background: color-mix(in srgb, #fff 55%, transparent);
+  overflow: hidden;
+}
+.mimpi-jar-lid {
+  position: absolute;
+  top: -2px;
+  left: 18%;
+  right: 18%;
+  height: 12px;
+  border-radius: 0 0 6px 6px;
+  background: color-mix(in srgb, var(--ink) 70%, #000);
+  z-index: 2;
+}
+.mimpi-jar-fill {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: var(--fill, 6%);
+  background: linear-gradient(to top, #ffd56b, #ffe9a8);
+  transition: height 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.mimpi-star {
+  position: absolute;
+  z-index: 1;
+  color: #e0a100;
+  font-size: 15px;
+  animation: breathe 3s ease-in-out infinite;
+}
+.mimpi-count {
+  font-family: var(--serif-display);
+  font-size: 22px;
+  color: var(--text);
+}
+.mimpi-count b {
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mimpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+.mimpi-item {
+  border-radius: 20px;
+  border: 1px solid var(--card-edge);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.mimpi-item.done {
+  background: linear-gradient(140deg, #fff8dc, var(--card));
+}
+.mimpi-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px 8px;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+}
+.mimpi-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.mimpi-item.done .mimpi-icon {
+  background: #ffe7a1;
+}
+.mimpi-title {
+  display: block;
+  font-family: var(--serif-display);
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--text);
+}
+.mimpi-title.big {
+  font-size: 24px;
+  margin: 0;
+}
+.mimpi-item.done .mimpi-title {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, #e0a100 70%, transparent);
+  text-decoration-thickness: 2px;
+}
+.mimpi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 16px 12px 72px;
+}
+.mimpi-likes {
+  display: flex;
+}
+.mimpi-likes > * + * {
+  margin-left: -6px;
+}
+.mimpi-link.done {
+  background: linear-gradient(140deg, #fff8dc, var(--card));
+}
+
+.mimpi-hero .btn {
+  white-space: nowrap;
+}

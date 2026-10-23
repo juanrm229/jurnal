@@ -2,6 +2,7 @@ import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthKey, nightQuestionFor,
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
+import { useDreams } from '@/lib/dreams';
 import { Link, useParams } from '@/lib/router';
 import { memberName, useCircles } from '@/lib/data';
 import { excerpt, useCircleWorks } from '@/lib/works';
@@ -134,6 +135,7 @@ export default function CircleHome() {
       ) : null}
 
       <CircleMeets circleId={id} />
+      <CircleDreams circleId={id} />
       <CircleWorks circleId={id} />
 
       <section className="section">
@@ -224,6 +226,27 @@ function CircleMeets({ circleId }: { circleId: string }) {
         </div>
       )}
       {done ? <p className="tiny soft">{done} kali bertemu · <Link to="/janji">lihat semua</Link></p> : null}
+    </section>
+  );
+}
+
+function CircleDreams({ circleId }: { circleId: string }) {
+  const { dreams } = useDreams(circleId);
+  const done = dreams.filter((d) => d.wire.doneAt).length;
+  const top = dreams.filter((d) => !d.wire.doneAt).sort((a, b) => b.wire.likes.length - a.wire.likes.length)[0];
+  return (
+    <section className="section">
+      <div className="row between">
+        <span className="label">daftar mimpi bersama</span>
+        <Link to={`/l/${circleId}/mimpi`} className="pill sm">{dreams.length ? `${done}/${dreams.length} terwujud` : '+ mimpi'}</Link>
+      </div>
+      <Link to={`/l/${circleId}/mimpi`} className="card row" style={{ gap: 14 }}>
+        <Doodle id={top ? 'kompas' : 'bintang'} size={34} className="breathe" />
+        <span className="grow" style={{ minWidth: 0 }}>
+          <span className="h2 ink" style={{ display: 'block' }}>{top?.data?.title ?? 'Hal-hal yang ingin kita lakukan bersama'}</span>
+          <span className="tiny soft">{top ? `${top.wire.likes.length} orang ingin mewujudkannya` : 'bucket list kalian: tulis, jadikan janji, wujudkan'}</span>
+        </span>
+      </Link>
     </section>
   );
 }

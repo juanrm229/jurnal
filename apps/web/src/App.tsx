@@ -36,6 +36,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/l/:id/ekspedisi', page('lore/Ekspedisi'), true, false],
   ['/l/:id/kamus', page('lore/Kamus'), true, false],
   ['/l/:id/puisi', page('lore/Puisi'), true, false],
+  ['/l/:id/mimpi', page('circles/Mimpi'), true, false],
   ['/karya', page('karya/Karya'), true, true],
   ['/karya/tulis', page('karya/Tulis'), true, false],
   ['/karya/:id/tulis', page('karya/Tulis'), true, false],

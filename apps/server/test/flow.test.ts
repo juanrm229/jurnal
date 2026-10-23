@@ -137,6 +137,43 @@ describe('duo & segel timbal balik', () => {
     void key;
     env.setNow('2026-10-24T03:00:00Z');
   });
+
+  it('Surat Buka Kalau langsung sampai, tetap tersegel, dan pengirim tahu saat dibuka', async () => {
+    const body = raka.dropBody('2026-10-24', { text: 'aku di sini, selalu' }, { circleId: duoId });
+    const lid = id();
+    const res = await raka.ok('POST', '/v1/letters', { id: lid, kind: 'when', circleId: duoId, toUserId: naya.userId, envelope: body.envelope });
+    expect(res.status).toBe('sudah sampai');
+    const inbox = await naya.ok('GET', '/v1/letters');
+    const got = inbox.find((l: any) => l.id === lid);
+    expect(got.kind).toBe('when');
+    expect(got.openedAt).toBeNull();
+    let out = (await raka.ok('GET', '/v1/letters?box=outbox')).find((l: any) => l.id === lid);
+    expect(out.openedAt).toBeNull();
+    await naya.ok('POST', `/v1/letters/${lid}/open`);
+    out = (await raka.ok('GET', '/v1/letters?box=outbox')).find((l: any) => l.id === lid);
+    expect(out.openedAt).not.toBeNull();
+    // Untuk diri sendiri juga boleh, tanpa lingkaran.
+    const self = raka.dropBody('2026-10-24', { text: 'kamu sudah sejauh ini' });
+    await raka.ok('POST', '/v1/letters', { id: id(), kind: 'when', toUserId: raka.userId, envelope: self.envelope });
+  });
+
+  it('Daftar Mimpi Bersama: tambah, ikut mau, wujudkan lewat janji', async () => {
+    const env1 = raka.dropBody('2026-10-24', { text: 'naik gunung pertama' }, { circleId: duoId });
+    const did = id();
+    const d = await raka.ok('POST', `/v1/circles/${duoId}/dreams`, { id: did, envelope: env1.envelope });
+    expect(d.likes).toEqual([raka.userId]);
+    const list = await naya.ok('GET', `/v1/circles/${duoId}/dreams`);
+    expect(list).toHaveLength(1);
+    expect(naya.open(list[0]).text).toBe('naik gunung pertama');
+    const liked = await naya.ok('POST', `/v1/dreams/${did}/like`);
+    expect(liked.likes.sort()).toEqual([raka.userId, naya.userId].sort());
+    const done = await naya.ok('PATCH', `/v1/dreams/${did}`, { done: true });
+    expect(done.doneBy).toBe(naya.userId);
+    expect(done.doneAt).not.toBeNull();
+    await naya.req('DELETE', `/v1/dreams/${did}`).then((r: any) => expect(r.status).toBe(403));
+    await raka.ok('DELETE', `/v1/dreams/${did}`);
+    expect(await raka.ok('GET', `/v1/circles/${duoId}/dreams`)).toHaveLength(0);
+  });
 });
 
 describe('lingkaran, rotasi kunci, batas paket', () => {

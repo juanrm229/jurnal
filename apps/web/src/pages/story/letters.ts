@@ -34,9 +34,26 @@ export const KIND_LABEL: Record<LetterWire['kind'], string> = {
   lost: 'Surat Tersesat',
   future: 'Surat untuk Nanti',
   milestone: 'Surat Petak Istimewa',
+  when: 'Surat Buka Kalau…',
 };
 
-export const KIND_DOODLE: Record<LetterWire['kind'], string> = { lost: 'surat-botol', future: 'jam-pasir', milestone: 'kunci' };
+export const KIND_DOODLE: Record<LetterWire['kind'], string> = { lost: 'surat-botol', future: 'jam-pasir', milestone: 'kunci', when: 'amplop' };
+
+/** Momen siap pakai untuk Surat "Buka Kalau…". */
+export const WHEN_MOMENTS = [
+  'buka kalau kamu sedih',
+  'buka kalau kamu kangen aku',
+  'buka kalau kamu tidak bisa tidur',
+  'buka kalau kita habis bertengkar',
+  'buka kalau kamu ragu sama dirimu',
+  'buka kalau kamu merasa sendirian',
+  'buka kalau kamu sedang bahagia',
+  'buka kalau kamu capek sekali',
+  'buka kalau hari ini ulang tahunmu',
+  'buka kalau kamu baru saja gagal',
+  'buka kalau kamu butuh tertawa',
+  'buka kalau kamu lupa kenapa kita bersama',
+];
 
 export function milestoneName(days: number | null | undefined): string | undefined {
   return MILESTONES.find((m) => m.days === days)?.name;

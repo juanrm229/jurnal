@@ -4,7 +4,7 @@
  */
 import { getCity } from '@sehari/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { type CSSProperties, useEffect, useRef } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { memberName, qk, useCircles, useMe } from '@/lib/data';
 import { navigate, useParams } from '@/lib/router';
@@ -21,16 +21,19 @@ export default function Read() {
   const letter = inbox.data?.find((l) => l.id === id) ?? outbox.data?.find((l) => l.id === id);
   const p = letter ? open.get(letter.id) : undefined;
   const marked = useRef(false);
+  // Surat "buka kalau…": penerima memutuskan sendiri kapan membukanya.
+  const [sure, setSure] = useState(false);
+  const waiting = !!letter && letter.kind === 'when' && !letter.openedAt && letter.toUserId === me.user.id && !sure;
 
   // Datang langsung dari notifikasi: tandai terbuka sekali.
   useEffect(() => {
-    if (!letter || letter.openedAt || !letter.deliveredAt || letter.fromUserId === me.user.id || marked.current) return;
+    if (!letter || letter.openedAt || !letter.deliveredAt || (letter.fromUserId === me.user.id && letter.kind !== 'when') || waiting || marked.current) return;
     marked.current = true;
     api
       .post(`/letters/${letter.id}/open`)
       .then(() => qc.invalidateQueries({ queryKey: qk.letters('inbox') }))
       .catch(() => {});
-  }, [letter, me.user.id, qc]);
+  }, [letter, me.user.id, qc, waiting]);
 
   if (inbox.isLoading || outbox.isLoading) {
     return (
@@ -70,7 +73,21 @@ export default function Read() {
     <Screen>
       <Header title={KIND_LABEL[letter.kind].toLowerCase()} sub={mine ? `untuk ${recipient}` : `dari ${sender}`} backTo="/surat" />
       <div style={{ height: 16 }} />
-      {!p ? (
+      {waiting ? (
+        <div className="card col" style={{ alignItems: 'center', textAlign: 'center', gap: 12 }}>
+          <Doodle id="amplop" size={56} className="breathe" />
+          <p className="hand" style={{ fontSize: 30, margin: 0, color: 'var(--text)' }}>{p?.envelopeNote ?? 'buka kalau…'}</p>
+          <p className="small soft" style={{ margin: 0 }}>Sudah waktunya? {mine ? 'Ini surat dari dirimu sendiri.' : `${sender} akan tahu amplop ini sudah dibuka.`}</p>
+          <div className="row" style={{ gap: 8, width: '100%' }}>
+            <button className="btn ghost grow" onClick={() => navigate('/surat')}>
+              nanti saja
+            </button>
+            <button className="btn grow" onClick={() => setSure(true)}>
+              buka sekarang
+            </button>
+          </div>
+        </div>
+      ) : !p ? (
         <div className="card col" style={{ alignItems: 'center', textAlign: 'center' }}>
           <Doodle id="ui-gembok" size={36} />
           <span className="soft">{letter.envelope ? 'Surat ini tidak bisa dibuka dengan kunci di perangkat ini.' : 'Surat ini masih di perjalanan.'}</span>
