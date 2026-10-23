@@ -38,6 +38,7 @@ import { useReady } from '@/lib/session';
 import { store } from '@/lib/storage';
 import { Avatar, Doodle, Growing, MusicToggle, Sheet, useToast } from '@/ui/kit';
 import { sound } from '@/lib/sound';
+import { countdown, fmtWhen, useMeets } from '@/lib/meets';
 
 type Item = PageItem & { draft?: boolean };
 
@@ -403,6 +404,8 @@ export default function Today() {
         </div>
       ) : null}
 
+      <MeetBanner />
+
       {editable ? (
         <button className="for-chip" onClick={() => setSheet('audience')}>
           <span className="tiny ink-soft">untuk</span>
@@ -624,6 +627,26 @@ function TogetherChip({ c, meId, day }: { c: CircleView; meId: string; day: stri
         <Avatar key={m.userId} doodle={m.doodle} size={26} sealed={c.todaySealed[m.userId]} title={`${m.penName}${c.todaySealed[m.userId] ? ' · tersegel' : ''}`} />
       ))}
       <span className="tiny ink">{c.todaySealed[meId] ? '✓' : c.streak.current || ''}</span>
+    </Link>
+  );
+}
+
+/** Janji temu dalam 2 hari ke depan muncul di atas halaman. */
+function MeetBanner() {
+  const { meets } = useMeets();
+  const now = Date.now();
+  const m = meets
+    .filter((x) => x.plan && x.wire.status === 'planned' && new Date(x.wire.startsAt).getTime() > now - 8 * 3600_000 && new Date(x.wire.startsAt).getTime() < now + 2 * 86_400_000)
+    .sort((a, b) => a.wire.startsAt.localeCompare(b.wire.startsAt))[0];
+  if (!m) return null;
+  return (
+    <Link to={`/janji/${m.wire.id}`} className="meet-banner">
+      <Doodle id="tangan-bergandeng" size={28} className="breathe" />
+      <span className="grow" style={{ minWidth: 0 }}>
+        <span className="small ink" style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.plan!.title}</span>
+        <span className="tiny soft">{fmtWhen(m.wire.startsAt, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {m.plan!.place.name}</span>
+      </span>
+      <span className="badge pub">{countdown(m.wire.startsAt, now)}</span>
     </Link>
   );
 }

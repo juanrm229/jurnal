@@ -604,3 +604,48 @@ export const workNotes = pgTable(
   },
   (t) => [index('work_notes_work_idx').on(t.workId)],
 );
+
+// ── Janji temu ──────────────────────────────────────────────────────────────
+
+export const meets = pgTable(
+  'meets',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    creatorId: text('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    startsAt: ts('starts_at').notNull(),
+    status: text('status').notNull().default('planned'),
+    envelope: jsonb('envelope').notNull(),
+    remindedDay: boolean('reminded_day').notNull().default(false),
+    remindedSoon: boolean('reminded_soon').notNull().default(false),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('meets_circle_idx').on(t.circleId), index('meets_starts_idx').on(t.startsAt)],
+);
+
+export const meetMembers = pgTable(
+  'meet_members',
+  {
+    meetId: text('meet_id').notNull().references(() => meets.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    rsvp: text('rsvp'),
+    arrivedAt: ts('arrived_at'),
+    metAt: ts('met_at'),
+  },
+  (t) => [primaryKey({ columns: [t.meetId, t.userId] })],
+);
+
+export const meetEntries = pgTable(
+  'meet_entries',
+  {
+    id: text('id').primaryKey(),
+    meetId: text('meet_id').notNull().references(() => meets.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    envelope: jsonb('envelope').notNull(),
+    mediaIds: jsonb('media_ids').$type<string[]>().notNull().default([]),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('meet_entries_meet_idx').on(t.meetId)],
+);

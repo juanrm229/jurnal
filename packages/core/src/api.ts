@@ -732,3 +732,63 @@ export interface WorkNoteWire {
   envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
   createdAt: string;
 }
+
+// ── Janji temu ──────────────────────────────────────────────────────────────
+// Isi janji (tempat, kegiatan, makanan, catatan) terenkripsi. Server hanya tahu
+// lingkaran, waktu mulai (untuk pengingat), dan siapa ikut / sudah sampai.
+
+export const meetRsvp = z.enum(['yes', 'maybe', 'no']);
+export type MeetRsvp = z.infer<typeof meetRsvp>;
+export const meetStatus = z.enum(['planned', 'done', 'cancelled']);
+export type MeetStatus = z.infer<typeof meetStatus>;
+
+export const meetBody = z.object({
+  id,
+  circleId: id,
+  startsAt: z.string().datetime({ offset: true }),
+  envelope: envelopeSchema,
+});
+export const meetUpdateBody = z.object({
+  startsAt: z.string().datetime({ offset: true }).optional(),
+  envelope: envelopeSchema.optional(),
+  status: meetStatus.optional(),
+});
+export const meetRsvpBody = z.object({ rsvp: meetRsvp });
+export const meetEntryKind = z.enum(['story', 'note', 'wish', 'photo']);
+export type MeetEntryKind = z.infer<typeof meetEntryKind>;
+export const meetEntryBody = z.object({
+  id,
+  kind: meetEntryKind,
+  envelope: envelopeSchema,
+  mediaIds: z.array(id).max(30).default([]),
+});
+
+export interface MeetMemberWire {
+  userId: string;
+  rsvp: MeetRsvp | null;
+  arrivedAt: string | null;
+  metAt: string | null;
+}
+export interface MeetEntryWire {
+  id: string;
+  authorId: string;
+  kind: MeetEntryKind;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  mediaIds: string[];
+  createdAt: string;
+}
+export interface MeetWire {
+  id: string;
+  circleId: string;
+  creatorId: string;
+  startsAt: string;
+  status: MeetStatus;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  members: MeetMemberWire[];
+  entries: MeetEntryWire[];
+  /** Harapan rahasia terbuka setelah ≥2 orang menandai "ketemu" atau 12 jam lewat. */
+  revealed: boolean;
+  /** Ada harapan dari orang lain yang masih tersegel. */
+  hiddenWishes: number;
+  createdAt: string;
+}

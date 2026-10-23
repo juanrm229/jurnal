@@ -321,3 +321,41 @@ describe('karya', () => {
     expect((await luar.req('POST', '/v1/works', { id: id(), status: 'published', circleIds: [duoId], envelope: env1(luar.userId) })).status).toBe(403);
   });
 });
+
+describe('janji temu', () => {
+  const env1 = (userId: string) => ({ ciphertext: 'c2VoYXJp', recipients: [{ t: 'user', userId, wk: 'eA==' }] });
+  it('janji, rsvp, harapan rahasia, saling tandai ketemu, foto, pengingat', async () => {
+    const mid = id();
+    const startsAt = new Date(env.services.now().getTime() + 20 * 3600_000).toISOString();
+    const m = await raka.ok('POST', '/v1/meets', { id: mid, circleId: duoId, startsAt, envelope: env1(raka.userId) });
+    expect(m.members.length).toBe(2);
+    await naya.ok('PUT', `/v1/meets/${mid}/rsvp`, { rsvp: 'yes' });
+    // Harapan Naya tersembunyi dari Raka sampai bertemu.
+    await naya.ok('POST', `/v1/meets/${mid}/entries`, { id: id(), kind: 'wish', envelope: env1(naya.userId) });
+    let seen = await raka.ok('GET', `/v1/meets/${mid}`);
+    expect(seen.entries.length).toBe(0);
+    expect(seen.hiddenWishes).toBe(1);
+    // Pengingat sehari sebelumnya.
+    await runJobs(env.services);
+    expect(env.pusher.sent.some((p: any) => p.body.includes('Besok ada janji temu'))).toBe(true);
+    // Sampai, lalu saling menandai ketemu.
+    await raka.ok('POST', `/v1/meets/${mid}/arrive`);
+    await raka.ok('POST', `/v1/meets/${mid}/met`);
+    seen = await raka.ok('GET', `/v1/meets/${mid}`);
+    expect(seen.revealed).toBe(false);
+    await naya.ok('POST', `/v1/meets/${mid}/met`);
+    seen = await raka.ok('GET', `/v1/meets/${mid}`);
+    expect(seen.revealed).toBe(true);
+    expect(seen.status).toBe('done');
+    expect(seen.entries.some((e: any) => e.kind === 'wish')).toBe(true);
+    // Foto dari Naya bisa diunduh Raka lewat cerita janji.
+    const up = await naya.req('POST', '/v1/media', undefined, new Uint8Array([1, 2, 3, 4]));
+    const mediaId = up.json.id;
+    await naya.ok('POST', `/v1/meets/${mid}/entries`, { id: id(), kind: 'photo', envelope: env1(naya.userId), mediaIds: [mediaId] });
+    expect((await raka.req('GET', `/v1/media/${mediaId}`)).status).toBe(200);
+    // Orang luar tidak bisa melihat janji.
+    const luar = await new Client(env.app, 'luar2@contoh.id').signup('Luar Dua');
+    expect((await luar.req('GET', `/v1/meets/${mid}`)).status).toBe(404);
+    expect((await luar.req('GET', `/v1/media/${mediaId}`)).status).toBe(404);
+  });
+});

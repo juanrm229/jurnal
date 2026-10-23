@@ -25,5 +25,26 @@ export {
   suggestChapterTitles,
 } from './content';
 export { WORK_KINDS, WRITING_PROMPTS, randomWritingPrompt, writingPromptFor, type WorkKind, type WorkKindInfo, type WritingPrompt } from './content/writingPrompts';
+export {
+  DATE_PLACES,
+  DATE_ACTIVITIES,
+  DATE_FOODS,
+  DATE_CHALLENGES,
+  DATE_QUESTIONS,
+  DATE_DRESSCODES,
+  DATE_VIBE_LABEL,
+  DATE_BUDGET_LABEL,
+  DATE_TIME_LABEL,
+  rollDate,
+  rerollPart,
+  type DateBudget,
+  type DateVibe,
+  type DateTime,
+  type DateSetting,
+  type DateFit,
+  type DateIdea,
+  type DateFilters,
+  type DateRoll,
+} from './content/dateIdeas';
 export type * from './content/types';
 export type { ChapterFeatures } from './content/chapterTitles';

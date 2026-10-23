@@ -44,6 +44,7 @@ import {
 import { ApiError, bad, conflict, forbidden, notFound, paymentRequired } from '../lib/errors';
 import { newId } from '../lib/ids';
 import { canSeeDrop, dropsInCircle, filterForCircle } from '../lib/visibility';
+import { canSeeMeetMedia } from './meets';
 
 const { drops, dropRecipients, dropCircles, capsules, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users } = schema;
 
@@ -575,6 +576,7 @@ async function canSeeMedia(s: Services, user: UserRow, mediaId: string): Promise
     .from(drops)
     .where(sql`${drops.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
   for (const h of holders) if (await canSeeDrop(s, user, h.id)) return true;
+  if (await canSeeMeetMedia(s, user.id, mediaId)) return true;
   const letterHolders = await s.db
     .select()
     .from(letters)

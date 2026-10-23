@@ -16,10 +16,12 @@ async function once(s: Services, key: string): Promise<boolean> {
   const rows = await s.db.insert(schema.notificationLog).values({ key }).onConflictDoNothing().returning();
   return rows.length > 0;
 }
+import { remindMeets } from '../routes/meets';
 
 export async function runJobs(s: Services): Promise<void> {
   const now = s.now();
   await deliverDueLetters(s);
+  await remindMeets(s);
 
   // Kapsul waktu yang terbuka hari ini.
   const capsules = await s.db

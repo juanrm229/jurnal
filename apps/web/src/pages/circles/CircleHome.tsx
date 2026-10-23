@@ -5,6 +5,7 @@ import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
 import { Link, useParams } from '@/lib/router';
 import { memberName, useCircles } from '@/lib/data';
 import { excerpt, useCircleWorks } from '@/lib/works';
+import { countdown, fmtWhen, useCircleMeets } from '@/lib/meets';
 import { Cover } from '@/pages/karya/Cover';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
@@ -132,6 +133,7 @@ export default function CircleHome() {
         </section>
       ) : null}
 
+      <CircleMeets circleId={id} />
       <CircleWorks circleId={id} />
 
       <section className="section">
@@ -191,6 +193,37 @@ function CircleWorks({ circleId }: { circleId: string }) {
           ))}
         </div>
       )}
+    </section>
+  );
+}
+
+function CircleMeets({ circleId }: { circleId: string }) {
+  const { meets } = useCircleMeets(circleId);
+  const now = Date.now();
+  const next = meets.filter((m) => m.plan && m.wire.status === 'planned' && new Date(m.wire.startsAt).getTime() > now - 6 * 3600_000).sort((a, b) => a.wire.startsAt.localeCompare(b.wire.startsAt))[0];
+  const done = meets.filter((m) => m.wire.members.filter((x) => x.metAt).length >= 2).length;
+  return (
+    <section className="section">
+      <div className="row between">
+        <span className="label">janji temu</span>
+        <Link to={`/janji/baru?circleId=${circleId}`} className="pill sm">+ janjian</Link>
+      </div>
+      {next ? (
+        <Link to={`/janji/${next.wire.id}`} className="card row" style={{ gap: 14 }}>
+          <Doodle id="tangan-bergandeng" size={34} className="breathe" />
+          <span className="grow" style={{ minWidth: 0 }}>
+            <span className="h2 ink" style={{ display: 'block' }}>{next.plan!.title}</span>
+            <span className="tiny soft">{fmtWhen(next.wire.startsAt, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {next.plan!.place.name}</span>
+          </span>
+          <span className="badge pub">{countdown(next.wire.startsAt, now)}</span>
+        </Link>
+      ) : (
+        <div className="row" style={{ gap: 8 }}>
+          <Link to={`/janji/baru?circleId=${circleId}`} className="btn soft grow">buat janji</Link>
+          <Link to="/janji/acak" className="btn soft grow"><Doodle id="ui-dadu" size={18} color="currentColor" /> acak</Link>
+        </div>
+      )}
+      {done ? <p className="tiny soft">{done} kali bertemu · <Link to="/janji">lihat semua</Link></p> : null}
     </section>
   );
 }

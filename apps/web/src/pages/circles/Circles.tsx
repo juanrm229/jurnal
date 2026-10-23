@@ -64,7 +64,14 @@ export default function Circles() {
           </div>
         </section>
       ) : null}
-      <Link to="/l/baru?kind=moment" className="sticky row mt-lg" style={{ background: 'var(--sticky-green)', gap: 12 }}>
+      <Link to="/janji" className="sticky row mt-lg" style={{ background: 'var(--sticky-peach)', gap: 12 }}>
+        <Doodle id="tangan-bergandeng" size={36} />
+        <span>
+          <span className="h2" style={{ display: 'block' }}>janji temu</span>
+          <span className="tiny">Atur kencan atau kumpul, tandai “kita ketemu”, lalu tulis ceritanya. Bingung mau ke mana? Ada mesin acaknya.</span>
+        </span>
+      </Link>
+      <Link to="/l/baru?kind=moment" className="sticky row mt" style={{ background: 'var(--sticky-green)', gap: 12 }}>
         <Doodle id="kado" size={36} />
         <span>
           <span className="h2" style={{ display: 'block' }}>kapsul momen</span>

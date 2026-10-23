@@ -1,5 +1,5 @@
 /* Sehari service worker: cangkang aplikasi luring + notifikasi push. */
-const CACHE = 'sehari-v1';
+const CACHE = 'sehari-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -60,6 +60,8 @@ function routeFor(d) {
       return d.circleId && d.day ? `/l/${d.circleId}/hari/${d.day}` : '/hari';
     case 'invite_accepted':
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
+    case 'meet':
+      return d.meetId ? `/janji/${d.meetId}` : '/janji';
     case 'letter':
       return d.letterId ? `/surat/${d.letterId}` : '/surat';
     case 'time_capsule':
