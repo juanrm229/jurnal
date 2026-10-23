@@ -662,6 +662,28 @@ export default function CircleSettingsPage() {
         </ListCard>
       </Section>
 
+      {!isMoment && meActive ? (
+        <Section title="halamanku untuk lingkaran ini">
+          <ListCard>
+            <Toggle
+              label="halaman sendiri"
+              hint={
+                circle.me?.ownPage
+                  ? 'Lingkaran ini punya halaman harian khusus darimu, dan tidak melihat halaman utamamu.'
+                  : 'Lingkaran ini menerima halaman utamamu. Nyalakan kalau ingin menulis hal yang berbeda untuk mereka (misalnya sahabat, bukan pasangan).'
+              }
+              value={!!circle.me?.ownPage}
+              onChange={(v) =>
+                void api
+                  .put(`/circles/${circle.id}/own-page`, { ownPage: v })
+                  .then(() => refresh())
+                  .catch((e) => setErr(errMsg(e)))
+              }
+            />
+          </ListCard>
+        </Section>
+      ) : null}
+
       <Section title="cara kapsul terbuka">
         <div className="col" role="radiogroup" style={{ gap: 8 }}>
           {(

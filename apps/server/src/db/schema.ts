@@ -111,6 +111,8 @@ export const circleMembers = pgTable(
     aiConsent: boolean('ai_consent').notNull().default(false),
     /** Anggota yang mengonfirmasi Mode Kenangan untuk orang ini. */
     memorialVotes: jsonb('memorial_votes').$type<string[]>().notNull().default([]),
+    /** Lingkaran ini mendapat halaman harian tersendiri dari anggota ini. */
+    ownPage: boolean('own_page').notNull().default(false),
   },
   (t) => [primaryKey({ columns: [t.circleId, t.userId] }), index('members_user_idx').on(t.userId)],
 );
@@ -159,9 +161,24 @@ export const capsules = pgTable(
     userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     day: day('day').notNull(),
     tz: text('tz').notNull(),
+    /** Segel halaman utama. */
     sealedAt: ts('sealed_at'),
+    /** true = segel ini dicatat per lingkaran di circle_seals; false = data lama (berlaku untuk semua lingkaran). */
+    scoped: boolean('scoped').notNull().default(false),
   },
   (t) => [primaryKey({ columns: [t.userId, t.day] })],
+);
+
+/** Segel per lingkaran: halaman utama mencatat semua lingkaran yang ia jangkau; halaman terpisah mencatat lingkarannya. */
+export const circleSeals = pgTable(
+  'circle_seals',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    day: day('day').notNull(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    sealedAt: ts('sealed_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day, t.circleId] }), index('circle_seals_circle_idx').on(t.circleId, t.day)],
 );
 
 export const drops = pgTable(
@@ -172,6 +189,8 @@ export const drops = pgTable(
     day: day('day').notNull(),
     kind: text('kind').notNull(),
     audience: text('audience').notNull(),
+    /** Halaman terpisah untuk satu lingkaran; null = halaman utama. */
+    pageCircleId: text('page_circle_id'),
     personId: text('person_id'),
     unlockOn: day('unlock_on'),
     ciphertext: text('ciphertext').notNull(),

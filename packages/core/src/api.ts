@@ -242,6 +242,8 @@ export interface CircleMember {
   tz: string;
   /** Anggota yang sudah mengonfirmasi Mode Kenangan untuk orang ini. */
   memorialVotes: string[];
+  /** Lingkaran ini punya halaman harian sendiri dari anggota ini (tidak menerima halaman utamanya). */
+  ownPage: boolean;
 }
 
 export interface CircleKeyEnvelope {
@@ -327,6 +329,8 @@ export const createDropBody = z.object({
   ]),
   audience: z.enum(['self', 'circle', 'person', 'time_capsule']),
   circleIds: z.array(id).max(50).default([]),
+  /** Kosong = halaman utama; diisi = halaman terpisah untuk satu lingkaran. */
+  pageCircleId: id.optional(),
   personId: id.optional(),
   unlockOn: dayKey.optional(),
   envelope: envelopeSchema,
@@ -361,6 +365,8 @@ export interface DropWire {
   kind: DropKind;
   audience: Audience;
   circleIds: string[];
+  /** Halaman tempat Drop ini ditempel: null = halaman utama. */
+  pageCircleId: string | null;
   personId: string | null;
   unlockOn: DayKey | null;
   createdAt: string;
@@ -391,8 +397,11 @@ export interface LockedDrop {
 
 export interface MyDay {
   day: DayKey;
+  /** Segel halaman utama. */
   sealedAt: string | null;
   sealable: boolean;
+  /** Lingkaran yang halamannya hari ini sudah tersegel (lewat halaman utama atau halamannya sendiri). */
+  sealedCircles: string[];
   drops: DropWire[];
   frozen: boolean;
 }
@@ -401,7 +410,10 @@ export const sealBody = z.object({
   /** Kalimat Terakhir & warna mood — dikirim sebagai Drop biasa bersamaan. */
   lastLine: createDropBody.optional(),
   tz: z.string().max(64),
+  /** Segel halaman terpisah untuk satu lingkaran; kosong = halaman utama. */
+  circleId: id.optional(),
 });
+export const ownPageBody = z.object({ ownPage: z.boolean() });
 
 export interface SealResult {
   day: DayKey;

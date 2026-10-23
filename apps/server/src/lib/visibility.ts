@@ -4,25 +4,24 @@
  * Server menahan ciphertext — bukan sekadar menyembunyikannya di aplikasi.
  */
 import { findCard, type LockedDrop } from '@sehari/core';
-import { and, eq, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import type { Services, UserRow } from '../context';
 import { schema } from '../db';
-import { blockedWith, circleSettings, type CircleRow, type DropRow, userToday } from './domain';
+import { blockedWith, circleSettings, type CircleRow, type DropRow, sealedInCircles, userToday } from './domain';
 
-const { capsules, dropRecipients, dropCircles, drops, circleMembers, circles } = schema;
+const { dropRecipients, dropCircles, drops, circleMembers, circles } = schema;
 
 export interface VisibilityResult {
   visible: DropRow[];
   locked: LockedDrop[];
 }
 
-export async function viewerSealed(s: Services, userId: string, days: string[]): Promise<Set<string>> {
+/** Hari-hari yang sudah kamu segel untuk lingkaran ini (memberi dulu, baru menerima). */
+export async function viewerSealed(s: Services, userId: string, circleId: string, days: string[]): Promise<Set<string>> {
   if (!days.length) return new Set();
-  const rows = await s.db
-    .select({ day: capsules.day })
-    .from(capsules)
-    .where(and(eq(capsules.userId, userId), inArray(capsules.day, [...new Set(days)]), isNotNull(capsules.sealedAt)));
-  return new Set(rows.map((r) => r.day));
+  const sorted = [...new Set(days)].sort();
+  const m = await sealedInCircles(s, [circleId], [userId], { from: sorted[0], to: sorted[sorted.length - 1] });
+  return m.get(circleId)!.get(userId)!;
 }
 
 /** Saring Drop di satu lingkaran untuk satu pembaca. */
@@ -31,7 +30,7 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
   const today = userToday(viewer, s.now());
   const settings = circleSettings(circle);
   const blocked = await blockedWith(s, viewer.id);
-  const sealed = await viewerSealed(s, viewer.id, rows.map((r) => r.day));
+  const sealed = await viewerSealed(s, viewer.id, circle.id, rows.map((r) => r.day));
   const recips = await s.db
     .select()
     .from(dropRecipients)

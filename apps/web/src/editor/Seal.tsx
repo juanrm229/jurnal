@@ -18,7 +18,7 @@ const MILESTONE: Record<string, { name: string; line: string; doodle: string }> 
 
 const HOLD_MS = 1200;
 
-export function SealCeremony({ day, circles, onClose, onSealed, onOpen }: { day: string; circles: CircleView[]; onClose: () => void; onSealed: () => void; onOpen: (circleId: string) => void }) {
+export function SealCeremony({ day, circles, pageCircleId, onClose, onSealed, onOpen }: { day: string; circles: CircleView[]; pageCircleId?: string; onClose: () => void; onSealed: () => void; onOpen: (circleId: string) => void }) {
   const { me } = useReady();
   const seal = useSeal();
   const [line, setLine] = useState('');
@@ -42,11 +42,13 @@ export function SealCeremony({ day, circles, onClose, onSealed, onOpen }: { day:
       const [res] = await Promise.all([
         seal.mutateAsync({
           day,
+          circleId: pageCircleId,
           lastLine: has
             ? {
                 day,
                 audience: priv || !circles.length ? 'self' : 'circle',
                 circleIds: priv ? [] : circles.map((c) => c.id),
+                pageCircleId,
                 payload: { v: 1, kind: 'last_line', text: line.trim() || undefined, mood, ...t, tz: me.user.tz, cityId: me.user.cityId ?? undefined },
               }
             : undefined,

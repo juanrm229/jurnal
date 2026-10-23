@@ -2,6 +2,7 @@ import {
   acceptInviteBody,
   type AcceptInviteResult,
   aiConsentBody,
+  ownPageBody,
   CIRCLE_LIMITS,
   type CircleCalendarDay,
   type CircleKind,
@@ -36,6 +37,7 @@ import {
   membership,
   pushTo,
   requireMember,
+  sealedInCircles,
   userToday,
   isFreeAll,
 } from '../lib/domain';
@@ -337,6 +339,18 @@ export function circleRoutes(s: Services) {
     return c.json({ ok: true });
   });
 
+  /** Halaman sendiri: lingkaran ini tidak lagi menerima halaman utamaku, tapi halamannya sendiri. */
+  r.put('/:id/own-page', async (c) => {
+    const input = await body(c, ownPageBody);
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    await s.db
+      .update(circleMembers)
+      .set({ ownPage: input.ownPage })
+      .where(and(eq(circleMembers.circleId, circle.id), eq(circleMembers.userId, user.id)));
+    return c.json({ ok: true, ownPage: input.ownPage });
+  });
+
   // ── Kalender segel (Papan Tahun, Langit, streak) ──────────────────────────
 
   r.get('/:id/calendar', async (c) => {
@@ -348,10 +362,7 @@ export function circleRoutes(s: Services) {
     const members = await s.db.select().from(circleMembers).where(eq(circleMembers.circleId, circle.id));
     const ids = members.map((m) => m.userId);
     const [seals, frz, counts] = await Promise.all([
-      s.db
-        .select({ userId: capsules.userId, day: capsules.day })
-        .from(capsules)
-        .where(and(inArray(capsules.userId, ids), isNotNull(capsules.sealedAt), gte(capsules.day, from), lte(capsules.day, to))),
+      sealedInCircles(s, [circle.id], ids, { from, to }).then((m) => [...m.get(circle.id)!.entries()].flatMap(([userId, days]) => [...days].map((day) => ({ userId, day })))),
       s.db
         .select({ userId: freezes.userId, day: freezes.day })
         .from(freezes)

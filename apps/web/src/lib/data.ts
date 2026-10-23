@@ -192,6 +192,8 @@ export interface DraftDrop {
   payload: DropPayload;
   audience: Audience;
   circleIds?: string[];
+  /** Halaman terpisah untuk satu lingkaran; kosong = halaman utama. */
+  pageCircleId?: string;
   personId?: string;
   unlockOn?: string;
   mediaIds?: string[];
@@ -226,6 +228,7 @@ export function buildDropBody(d: DraftDrop, ctx: { me: Me; identity: { publicKey
     kind: d.payload.kind,
     audience: d.audience,
     circleIds,
+    pageCircleId: d.pageCircleId,
     personId: d.personId,
     unlockOn: d.unlockOn,
     envelope: { ciphertext: env.ciphertext, recipients: env.recipients },
@@ -304,10 +307,11 @@ export function useSeal() {
   const { me, identity } = useSession();
   const { circles } = useCircles();
   return useMutation({
-    mutationFn: async (args: { day: string; lastLine?: DraftDrop }) => {
+    mutationFn: async (args: { day: string; lastLine?: DraftDrop; circleId?: string }) => {
       if (!me || !identity) throw new Error('Belum siap');
       return api.post<SealResult>(`/days/${args.day}/seal`, {
         tz: me.user.tz,
+        circleId: args.circleId,
         lastLine: args.lastLine ? buildDropBody(args.lastLine, { me, identity, circles }) : undefined,
       });
     },

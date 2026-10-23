@@ -40,7 +40,7 @@ import { and, asc, eq, gte, isNotNull, lte, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { type AppEnv, body, type Services } from '../context';
 import { schema } from '../db';
-import { circleSummaries, type CircleRow, requireMember, userToday } from '../lib/domain';
+import { circleSummaries, type CircleRow, requireMember, sealedInCircles, userToday } from '../lib/domain';
 import { bad, conflict, forbidden, notFound, paymentRequired } from '../lib/errors';
 import { newId, randomUnit } from '../lib/ids';
 
@@ -308,11 +308,7 @@ export function loreRoutes(s: Services) {
     const input = await body(c, claimTokenBody);
     const user = c.get('user');
     const { circle } = await requireMember(s, c.req.param('id'), user.id);
-    const sealedRows = await s.db
-      .select({ day: capsules.day })
-      .from(capsules)
-      .where(and(eq(capsules.userId, user.id), isNotNull(capsules.sealedAt)));
-    const sealed = new Set(sealedRows.map((x) => x.day));
+    const sealed = (await sealedInCircles(s, [circle.id], [user.id])).get(circle.id)!.get(user.id)!;
     if (!sealed.has(input.day) && input.code !== 'kompas' && input.code !== 'perangko') throw conflict('not_sealed', 'Token didapat dari hari yang tersegel.');
     // Kunci hanya sekali: hari pertama yang tersegel bersama.
     if (input.code === 'kunci') {
@@ -453,12 +449,9 @@ async function validateToken(s: Services, circle: CircleRow, userId: string, cod
   switch (code) {
     case 'kunci': {
       // Hari pertama yang tersegel bersama: anggota lain juga menyegel hari itu.
-      const others = await s.db
-        .select()
-        .from(capsules)
-        .innerJoin(circleMembers, and(eq(circleMembers.userId, capsules.userId), eq(circleMembers.circleId, circle.id)))
-        .where(and(eq(capsules.day, day), isNotNull(capsules.sealedAt), sql`${capsules.userId} <> ${userId}`));
-      return others.length > 0;
+      const ms = await s.db.select().from(circleMembers).where(and(eq(circleMembers.circleId, circle.id), sql`${circleMembers.userId} <> ${userId}`));
+      const byDay = (await sealedInCircles(s, [circle.id], ms.map((m) => m.userId), { from: day, to: day })).get(circle.id)!;
+      return [...byDay.values()].some((d) => d.has(day));
     }
     case 'bendera':
       return mmdd === '08-17';

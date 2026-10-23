@@ -19,14 +19,14 @@ import {
   todayIn,
   type UserSettings,
 } from '@sehari/core';
-import { and, eq, inArray, isNotNull, or } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNotNull, lte, or } from 'drizzle-orm';
 import type { Services, UserRow } from '../context';
 import { iso } from '../context';
 import { schema } from '../db';
 import { forbidden, notFound } from './errors';
 import type { PushMessage } from './push';
 
-const { users, circles, circleMembers, circleKeys, capsules, freezes, blocks, sessions, entitlements, reactions, footnotes, dropRecipients, dropCircles } = schema;
+const { users, circles, circleMembers, circleKeys, capsules, circleSeals, freezes, blocks, sessions, entitlements, reactions, footnotes, dropRecipients, dropCircles } = schema;
 
 export type CircleRow = typeof circles.$inferSelect;
 export type MemberRow = typeof circleMembers.$inferSelect;
@@ -114,15 +114,35 @@ export async function activeCircleIds(s: Services, userId: string): Promise<stri
   return rows.map((r) => r.id);
 }
 
-export async function sealedDays(s: Services, userIds: string[]): Promise<Map<string, Set<string>>> {
-  const out = new Map<string, Set<string>>(userIds.map((u) => [u, new Set()]));
-  if (!userIds.length) return out;
-  const rows = await s.db
-    .select({ userId: capsules.userId, day: capsules.day })
-    .from(capsules)
-    .where(and(inArray(capsules.userId, userIds), isNotNull(capsules.sealedAt)));
-  for (const r of rows) out.get(r.userId)?.add(r.day);
+/**
+ * Hari tersegel per lingkaran per anggota. Segel baru dicatat di circle_seals
+ * (halaman utama mencatat lingkaran yang ia jangkau; halaman terpisah mencatat
+ * lingkarannya). Segel lama (capsules.scoped = false) berlaku untuk semua lingkaran.
+ */
+export async function sealedInCircles(
+  s: Services,
+  circleIds: string[],
+  userIds: string[],
+  range: { from?: string; to?: string } = {},
+): Promise<Map<string, Map<string, Set<string>>>> {
+  const out = new Map<string, Map<string, Set<string>>>(circleIds.map((c) => [c, new Map(userIds.map((u) => [u, new Set<string>()]))]));
+  if (!circleIds.length || !userIds.length) return out;
+  const csConds = [inArray(circleSeals.circleId, circleIds), inArray(circleSeals.userId, userIds)];
+  const capConds = [inArray(capsules.userId, userIds), isNotNull(capsules.sealedAt), eq(capsules.scoped, false)];
+  if (range.from) csConds.push(gte(circleSeals.day, range.from)), capConds.push(gte(capsules.day, range.from));
+  if (range.to) csConds.push(lte(circleSeals.day, range.to)), capConds.push(lte(capsules.day, range.to));
+  const [rows, legacy] = await Promise.all([
+    s.db.select({ userId: circleSeals.userId, day: circleSeals.day, circleId: circleSeals.circleId }).from(circleSeals).where(and(...csConds)),
+    s.db.select({ userId: capsules.userId, day: capsules.day }).from(capsules).where(and(...capConds)),
+  ]);
+  for (const r of rows) out.get(r.circleId)?.get(r.userId)?.add(r.day);
+  for (const r of legacy) for (const c of circleIds) out.get(c)?.get(r.userId)?.add(r.day);
   return out;
+}
+
+/** Apakah satu orang sudah menyegel halamannya untuk lingkaran ini pada hari itu? */
+export async function sealedFor(s: Services, userId: string, circleId: string, day: string): Promise<boolean> {
+  return (await sealedInCircles(s, [circleId], [userId], { from: day, to: day })).get(circleId)!.get(userId)!.has(day);
 }
 
 export async function frozenDays(s: Services, userIds: string[]): Promise<Map<string, Set<string>>> {
@@ -168,7 +188,7 @@ export async function circleSummaries(s: Services, viewer: UserRow, circleIds: s
   const circleRows = await s.db.select().from(circles).where(inArray(circles.id, circleIds));
   const memberRows = await circleMembersWithUsers(s, circleIds);
   const allUserIds = [...new Set(memberRows.map((r) => r.m.userId))];
-  const [sealed, frozen] = await Promise.all([sealedDays(s, allUserIds), frozenDays(s, allUserIds)]);
+  const [sealedBy, frozen] = await Promise.all([sealedInCircles(s, circleIds, allUserIds), frozenDays(s, allUserIds)]);
   const keys = await s.db
     .select()
     .from(circleKeys)
@@ -192,7 +212,9 @@ export async function circleSummaries(s: Services, viewer: UserRow, circleIds: s
         cityId: u.cityId,
         tz: u.tz,
         memorialVotes: m.memorialVotes ?? [],
+        ownPage: m.ownPage,
       }));
+      const sealed = sealedBy.get(c.id)!;
       const streakMembers = toStreakMembers(ms, sealed, frozen);
       const streak = streakSummary(streakMembers, c.kind as CircleKind, today);
       const todaySealed: Record<string, boolean> = {};
@@ -287,6 +309,7 @@ export async function hydrateDrops(
     kind: d.kind as DropWire['kind'],
     audience: d.audience as DropWire['audience'],
     circleIds: circlesOf.filter((x) => x.dropId === d.id && visibleCircle(d, x.circleId)).map((x) => x.circleId),
+    pageCircleId: d.authorId === viewerId ? d.pageCircleId : null,
     personId: d.personId,
     unlockOn: d.unlockOn,
     createdAt: d.createdAt.toISOString(),

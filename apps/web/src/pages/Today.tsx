@@ -36,11 +36,11 @@ import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { store } from '@/lib/storage';
-import { Avatar, Doodle, Growing, MusicToggle, Sheet, useToast } from '@/ui/kit';
+import { Avatar, Doodle, Growing, MusicToggle, Sheet, Toggle, useToast } from '@/ui/kit';
 import { sound } from '@/lib/sound';
 import { countdown, fmtWhen, useMeets } from '@/lib/meets';
 
-type Item = PageItem & { draft?: boolean };
+type Item = PageItem & { draft?: boolean; pageCircleId?: string | null };
 
 export default function Today() {
   const { me, identity } = useReady();
@@ -54,7 +54,17 @@ export default function Today() {
   const { circles } = useCircles();
   const ring = useKeyring();
   const active = useMemo(() => circles.filter((c) => c.status === 'active' && c.me?.state === 'active'), [circles]);
-  const sealed = !!q.data?.sealedAt;
+  const mainSealed = !!q.data?.sealedAt;
+  const sealedCircles = q.data?.sealedCircles ?? [];
+  // Halaman terpisah: lingkaran yang memilih "halaman sendiri", lingkaran yang
+  // belum terjangkau halaman utama yang sudah tersegel (susulan), dan yang sudah punya isi.
+  const ownPageIds = new Set(active.filter((c) => c.me?.ownPage).map((c) => c.id));
+  const withPage = new Set((q.data?.drops ?? []).map((d) => d.pageCircleId).filter((x): x is string => !!x));
+  const sepCircles = active.filter((c) => ownPageIds.has(c.id) || withPage.has(c.id) || (mainSealed && !sealedCircles.includes(c.id)));
+  const [pageSel, setPageSel] = useState<string>('main');
+  const page = pageSel !== 'main' && sepCircles.some((c) => c.id === pageSel) ? pageSel : 'main';
+  const pageCircle = page === 'main' ? null : active.find((c) => c.id === page)!;
+  const sealed = page === 'main' ? mainSealed : sealedCircles.includes(page);
   const editable = !sealed && sealableDays(me.user.tz).includes(day);
 
   // Audiens halaman: semua lingkaran aktif, kecuali pernah diatur sendiri.
@@ -62,10 +72,11 @@ export default function Today() {
   // itu ditawarkan dulu (tidak pernah ikut dibagikan diam-diam, tidak pula hilang).
   const [pageCircles, setPageCircles] = useState<string[] | null>(() => store.json<string[]>('pageCircles'));
   const [seenCircles, setSeenCircles] = useState<string[]>(() => store.json<string[]>('pageCirclesSeen') ?? store.json<string[]>('pageCircles') ?? []);
-  const activeIds = active.map((c) => c.id);
-  const circleIds = (pageCircles ?? activeIds).filter((id) => activeIds.includes(id));
+  const activeIds = active.filter((c) => !ownPageIds.has(c.id)).map((c) => c.id);
+  const mainCircleIds = (pageCircles ?? activeIds).filter((id) => activeIds.includes(id));
+  const circleIds = page === 'main' ? mainCircleIds : [page];
   const defaultAudience: Audience = circleIds.length ? 'circle' : 'self';
-  const newCircles = pageCircles === null ? [] : active.filter((c) => !seenCircles.includes(c.id) && !pageCircles.includes(c.id));
+  const newCircles = pageCircles === null || page !== 'main' ? [] : active.filter((c) => activeIds.includes(c.id) && !seenCircles.includes(c.id) && !pageCircles.includes(c.id));
   const choosePage = (next: string[], seen: string[] = activeIds) => {
     setPageCircles(next);
     store.set('pageCircles', JSON.stringify(next));
@@ -78,8 +89,9 @@ export default function Today() {
   const loaded = useRef<string | null>(null);
   useEffect(() => {
     if (!q.data || !ring) return;
-    if (loaded.current === `${day}:${q.data.sealedAt ?? ''}`) return;
-    loaded.current = `${day}:${q.data.sealedAt ?? ''}`;
+    const key = `${day}:${q.data.sealedAt ?? ''}:${(q.data.sealedCircles ?? []).join(',')}`;
+    if (loaded.current === key) return;
+    loaded.current = key;
     setItems(
       q.data.drops
         .map((w) => ({ w, o: openDrop(w, ring) }))
@@ -90,6 +102,7 @@ export default function Today() {
           payload: o.payload!,
           audience: w.audience,
           circleIds: w.circleIds,
+          pageCircleId: w.pageCircleId,
           mediaIds: w.mediaIds,
           reactions: w.reactions,
           footnotes: [],
@@ -114,6 +127,7 @@ export default function Today() {
     payload: { ...it.payload, kind: kind ?? it.payload.kind },
     audience: it.audience,
     circleIds: it.audience === 'self' ? [] : it.circleIds,
+    pageCircleId: it.pageCircleId ?? undefined,
     mediaIds: it.mediaIds,
   });
 
@@ -132,18 +146,19 @@ export default function Today() {
 
   // Semua yang "bersama" di halaman ini mengikuti audiens halaman: kalau ada
   // lingkaran baru (atau dilepas), isi yang sudah ada disegel ulang untuk mereka.
-  const pageKey = [...circleIds].sort().join(',');
+  const pageKey = [...mainCircleIds].sort().join(',');
   useEffect(() => {
-    if (!editable || !ring || !circleIds.length || circleIds.some((id) => !active.find((c) => c.id === id)?.keys.get(active.find((c) => c.id === id)!.currentEpoch))) return;
+    if (mainSealed || !sealableDays(me.user.tz).includes(day) || !ring || !mainCircleIds.length) return;
+    if (mainCircleIds.some((id) => !active.find((c) => c.id === id)?.keys.get(active.find((c) => c.id === id)!.currentEpoch))) return;
     for (const it of items) {
-      if (it.audience !== 'circle' || it.draft || it.pending || it.authorId !== me.user.id) continue;
+      if (it.pageCircleId || it.audience !== 'circle' || it.draft || it.pending || it.authorId !== me.user.id) continue;
       if ([...it.circleIds].sort().join(',') === pageKey) continue;
-      const next = { ...it, circleIds };
+      const next = { ...it, circleIds: mainCircleIds };
       patch(it.id, () => next);
       save(next, 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageKey, items, editable, ring]);
+  }, [pageKey, items, mainSealed, ring]);
 
   const create = async (payload: DropPayload, extra: { mediaIds?: string[]; meta?: DraftDrop['meta']; localUrl?: string; draft?: boolean } = {}) => {
     const id = newDropId();
@@ -153,6 +168,7 @@ export default function Today() {
       payload,
       audience: defaultAudience,
       circleIds,
+      pageCircleId: pageCircle?.id ?? null,
       mediaIds: extra.mediaIds ?? [],
       reactions: [],
       footnotes: [],
@@ -200,7 +216,7 @@ export default function Today() {
   const addText = (x: number, y: number, extra: Partial<DropPayload> = {}, meta?: DraftDrop['meta']) => {
     const id = newDropId();
     const payload = { ...base((extra.kind as DropKind) ?? 'text', { x, y }), ...extra };
-    const it: Item = { id, authorId: me.user.id, payload, audience: defaultAudience, circleIds, mediaIds: [], reactions: [], footnotes: [], draft: true };
+    const it: Item = { id, authorId: me.user.id, payload, audience: defaultAudience, circleIds, pageCircleId: pageCircle?.id ?? null, mediaIds: [], reactions: [], footnotes: [], draft: true };
     pendingMeta.current[id] = meta;
     setItems((xs) => [...xs, it]);
     setSelected(id);
@@ -234,7 +250,7 @@ export default function Today() {
       const localUrl = URL.createObjectURL(f);
       const id = newDropId();
       const payload = base('photo', { ...pos, rot: Math.round((Math.random() - 0.5) * 8) });
-      const it: Item = { id, authorId: me.user.id, payload, audience: defaultAudience, circleIds, mediaIds: [], reactions: [], footnotes: [], pending: true, localUrl };
+      const it: Item = { id, authorId: me.user.id, payload, audience: defaultAudience, circleIds, pageCircleId: pageCircle?.id ?? null, mediaIds: [], reactions: [], footnotes: [], pending: true, localUrl };
       setItems((xs) => [...xs, it]);
       sound.play('pop');
       try {
@@ -260,13 +276,17 @@ export default function Today() {
   const { search } = usePath();
   useEffect(() => {
     const prompt = search.get('prompt');
-    if (!editable || !prompt || q.isLoading || !ring) return;
+    if (!prompt || q.isLoading || !ring) return;
+    // Pertanyaan dari lingkaran yang punya halaman sendiri: tempel di halamannya.
+    const target = search.get('circleId');
+    if (target && ownPageIds.has(target) && page !== target) return setPageSel(target);
+    if (!editable) return;
     const kind = (search.get('kind') as DropKind) || 'card';
     const c = viewCenter(480);
     if (kind === 'photo') fileInput.current?.click();
     else addText(c.x, c.y, { kind, prompt, layout: { x: c.x, y: c.y, w: 480, rot: -1.5, z: nextZ() } }, { cardId: search.get('cardId') ?? undefined, questionId: search.get('questionId') ?? undefined, expeditionId: search.get('expeditionId') ?? undefined, expeditionDay: search.get('expeditionDay') ? Number(search.get('expeditionDay')) : undefined });
     navigate('/hari', { replace: true });
-  }, [search.get('prompt'), editable, q.isLoading, !!ring]);
+  }, [search.get('prompt'), editable, q.isLoading, !!ring, page, ownPageIds.size]);
 
   // Tempel gambar dari papan klip.
   useEffect(() => {
@@ -317,7 +337,9 @@ export default function Today() {
   const city = getCity(me.user.cityId);
   const sunset = city ? sunsetUtc(day, city.lat, city.lon) : null;
   const sunsetLabel = sunset ? new Intl.DateTimeFormat('id-ID', { timeZone: me.user.tz, hour: '2-digit', minute: '2-digit' }).format(sunset) : null;
-  const mood = items.find((x) => x.payload.mood)?.payload.mood;
+  // Isi halaman yang sedang dibuka (utama, atau halaman terpisah satu lingkaran).
+  const pageItems = items.filter((x) => (x.pageCircleId ?? null) === (pageCircle?.id ?? null));
+  const mood = pageItems.find((x) => x.payload.mood)?.payload.mood;
 
   if (q.isLoading || !ring) return <Growing label="membuka halaman…" />;
 
@@ -396,6 +418,17 @@ export default function Today() {
 
   const tools = selectedItem && !selectedItem.draft && !selectedItem.pending ? toolsFor(selectedItem) : null;
   const names = active.filter((c) => circleIds.includes(c.id)).map((c) => c.name).join(' · ');
+  const susulan = mainSealed ? sepCircles.filter((c) => !ownPageIds.has(c.id) && !sealedCircles.includes(c.id)) : [];
+  const toggleOwnPage = async (c: CircleView, on: boolean) => {
+    try {
+      await api.put(`/circles/${c.id}/own-page`, { ownPage: on });
+      await qc.invalidateQueries({ queryKey: qk.circles });
+      if (on) setPageSel(c.id);
+      sound.play('pop');
+    } catch (e) {
+      toast((e as Error).message);
+    }
+  };
 
   return (
     <main className="screen today" style={{ maxWidth: 760 }}>
@@ -452,17 +485,45 @@ export default function Today() {
         </div>
       ) : null}
 
+      {sepCircles.length ? (
+        <div className="page-tabs" role="tablist" aria-label="halaman">
+          <button role="tab" aria-selected={page === 'main'} className={page === 'main' ? 'on' : ''} onClick={() => setPageSel('main')}>
+            <Doodle id={mainSealed ? 'segel-lilin' : 'buku'} size={16} color="currentColor" /> halaman utama
+          </button>
+          {sepCircles.map((c) => (
+            <button key={c.id} role="tab" aria-selected={page === c.id} className={page === c.id ? 'on' : ''} onClick={() => setPageSel(c.id)} data-testid={`page-tab-${c.id}`}>
+              <Doodle id={sealedCircles.includes(c.id) ? 'segel-lilin' : c.doodle} size={16} color="currentColor" /> {c.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {page === 'main' && susulan.length && sealableDays(me.user.tz).includes(day) ? (
+        <div className="sticky row" style={{ background: 'var(--sticky-green)', gap: 10, marginBottom: 10, alignItems: 'flex-start' }} data-testid="susulan-prompt">
+          <Doodle id="amplop" size={26} />
+          <div className="col grow" style={{ gap: 8 }}>
+            <span className="small">
+              <b>{susulan.map((c) => c.name).join(', ')}</b> belum menerima halamanmu hari ini. Tulis halaman susulan khusus untuk mereka?
+            </span>
+            <button className="btn sm auto" onClick={() => setPageSel(susulan[0]!.id)}>
+              tulis halaman susulan
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {editable ? (
         <button className="for-chip" onClick={() => setSheet('audience')}>
-          <span className="tiny ink-soft">untuk</span>
-          <span className="small ink">{defaultAudience === 'self' ? '🔒 hanya aku' : names}</span>
-          <span className="tiny soft">· {items.filter((x) => !x.draft).length} hal di kapsul</span>
+          <span className="tiny ink-soft">{pageCircle ? 'halaman khusus' : 'untuk'}</span>
+          <span className="small ink">{pageCircle ? pageCircle.name : defaultAudience === 'self' ? '🔒 hanya aku' : names}</span>
+          <span className="tiny soft">· {pageItems.filter((x) => !x.draft).length} hal di kapsul</span>
         </button>
       ) : null}
 
       <div ref={pageBox}>
         <Page
-          items={items}
+          key={page}
+          items={pageItems}
           editable={editable}
           viewerId={me.user.id}
           selectedId={selected}
@@ -484,7 +545,7 @@ export default function Today() {
           head={head}
           sealed={sealed}
           mood={mood}
-          margins={`${me.user.id}:${day}`}
+          margins={`${me.user.id}:${day}:${page}`}
           empty={<EmptyPage />}
           foot={
             sealed ? (
@@ -525,7 +586,7 @@ export default function Today() {
                 <DockBtn icon="kilau" label="stiker" onClick={() => setSheet('sticker')} />
                 <DockBtn icon="ui-tambah" label="lainnya" onClick={() => setSheet('more')} />
                 <span className="grow" />
-                <button className="dock-seal" disabled={!items.some((x) => !x.draft)} onClick={() => { setSelected(null); setSealing(true); }} aria-label={COPY.seal.cta}>
+                <button className="dock-seal" disabled={!pageItems.some((x) => !x.draft)} onClick={() => { setSelected(null); setSealing(true); }} aria-label={COPY.seal.cta}>
                   <span className="wax-mini">
                     <Doodle id="tunas" size={24} color="var(--on-ink)" sw={3} />
                   </span>
@@ -539,7 +600,7 @@ export default function Today() {
       ) : (
         <div className="mt-lg col" style={{ paddingBottom: 100 }}>
           {sealed
-            ? active.map((c) => (
+            ? active.filter((c) => (pageCircle ? c.id === pageCircle.id : sealedCircles.includes(c.id) && !ownPageIds.has(c.id) && !withPage.has(c.id))).map((c) => (
                 <Link key={c.id} to={`/l/${c.id}/hari/${day}`} className="btn soft">
                   <Doodle id="buku-terbuka" size={22} /> buka bersama {c.name}
                 </Link>
@@ -629,9 +690,14 @@ export default function Today() {
           void create({ ...base('silent', { ...viewCenter(320) }), mood: m, text: text || undefined });
         }}
       />
-      <Sheet open={sheet === 'audience'} onClose={() => setSheet(null)} title="halaman ini untuk">
+      <Sheet open={sheet === 'audience'} onClose={() => setSheet(null)} title={pageCircle ? `halaman khusus ${pageCircle.name}` : 'halaman ini untuk'}>
         <div className="col">
-          {active.map((c) => {
+          {pageCircle ? (
+            <p className="small" style={{ margin: 0 }}>
+              Halaman ini hanya untuk <b>{pageCircle.name}</b>. Lingkaranmu yang lain tidak pernah melihatnya, dan halaman ini disegel sendiri.
+            </p>
+          ) : null}
+          {!pageCircle && active.filter((c) => !ownPageIds.has(c.id)).map((c) => {
             const on = circleIds.includes(c.id);
             return (
               <button key={c.id} className={`pill ${on ? 'active' : ''}`} style={{ justifyContent: 'flex-start', padding: '12px 16px' }} onClick={() => {
@@ -641,17 +707,31 @@ export default function Today() {
               </button>
             );
           })}
-          <button className={`pill ${circleIds.length === 0 ? 'active' : ''}`} style={{ justifyContent: 'flex-start', padding: '12px 16px' }} onClick={() => choosePage([])}>
-            🔒 hanya aku
-          </button>
-          <p className="tiny soft">Berlaku untuk semua yang “bersama” di halaman ini, termasuk yang sudah ditempel. Yang kamu kunci “hanya aku” tetap hanya untukmu.</p>
+          {!pageCircle ? (
+            <button className={`pill ${circleIds.length === 0 ? 'active' : ''}`} style={{ justifyContent: 'flex-start', padding: '12px 16px' }} onClick={() => choosePage([])}>
+              🔒 hanya aku
+            </button>
+          ) : null}
+          {!pageCircle ? <p className="tiny soft">Berlaku untuk semua yang “bersama” di halaman utama, termasuk yang sudah ditempel. Yang kamu kunci “hanya aku” tetap hanya untukmu.</p> : null}
+          {active.length > 1 || pageCircle ? (
+            <>
+              <span className="label mt">halaman sendiri</span>
+              <p className="tiny soft" style={{ marginTop: 0 }}>
+                Lingkaran dengan halaman sendiri tidak melihat halaman utamamu. Kamu menulis dan menyegel halaman khusus untuk mereka. Cocok untuk sahabat atau keluarga.
+              </p>
+              {active.map((c) => (
+                <Toggle key={c.id} label={c.name} hint={ownPageIds.has(c.id) ? 'punya halaman sendiri' : 'menerima halaman utama'} value={ownPageIds.has(c.id)} onChange={(v) => void toggleOwnPage(c, v)} />
+              ))}
+            </>
+          ) : null}
         </div>
       </Sheet>
 
       {sealing ? (
         <SealCeremony
           day={day}
-          circles={active}
+          circles={pageCircle ? [pageCircle] : active.filter((c) => mainCircleIds.includes(c.id))}
+          pageCircleId={pageCircle?.id}
           onClose={() => setSealing(false)}
           onSealed={() => {
             loaded.current = null;

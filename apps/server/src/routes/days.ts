@@ -22,7 +22,7 @@ import {
   type SealResult,
   useFreezeBody,
 } from '@sehari/core';
-import { and, eq, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { z } from 'zod';
 import { type AppEnv, body, say, type Services, type UserRow } from '../context';
@@ -39,6 +39,7 @@ import {
   membership,
   pushTo,
   requireMember,
+  sealedInCircles,
   userToday,
 } from '../lib/domain';
 import { ApiError, bad, conflict, forbidden, notFound, paymentRequired } from '../lib/errors';
@@ -46,11 +47,24 @@ import { newId } from '../lib/ids';
 import { canSeeDrop, dropsInCircle, filterForCircle } from '../lib/visibility';
 import { canSeeMeetMedia } from './meets';
 
-const { drops, dropRecipients, dropCircles, capsules, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users } = schema;
+const { drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users } = schema;
 
 type DropInput = z.infer<typeof createDropBody>;
 
 const LATE_KINDS = new Set(['blackout', 'prologue', 'epilogue']);
+
+/** Lingkaran yang halamannya hari itu sudah tersegel oleh orang ini (lewat circle_seals). */
+async function sealedPages(s: Services, userId: string, day: string): Promise<Set<string>> {
+  const rows = await s.db.select({ c: circleSeals.circleId }).from(circleSeals).where(and(eq(circleSeals.userId, userId), eq(circleSeals.day, day)));
+  return new Set(rows.map((r) => r.c));
+}
+
+/** Apakah halaman tempat Drop ini berada sudah tersegel? */
+async function pageLocked(s: Services, userId: string, day: string, pageCircleId: string | null | undefined): Promise<boolean> {
+  if (pageCircleId) return (await sealedPages(s, userId, day)).has(pageCircleId);
+  const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, userId), eq(capsules.day, day)));
+  return !!cap?.sealedAt;
+}
 
 /** Validasi & simpan satu Drop. Dipakai oleh POST /drops dan saat menyegel. */
 export async function createDrop(s: Services, user: UserRow, input: DropInput, opts: { sealing?: boolean; replace?: boolean } = {}) {
@@ -59,8 +73,9 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
   const allowedDays = sealableDays(user.tz, now);
   if (!allowedDays.includes(input.day)) throw bad('day_closed', 'Hari itu sudah lewat. Drop hanya untuk hari ini.');
 
-  const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, input.day)));
-  if (cap?.sealedAt && !opts.sealing && !LATE_KINDS.has(input.kind)) throw conflict('sealed', 'Hari ini sudah disegel. Sampai jumpa besok.');
+  if (!opts.sealing && !LATE_KINDS.has(input.kind) && (await pageLocked(s, user.id, input.day, input.pageCircleId))) {
+    throw conflict('sealed', 'Halaman ini sudah disegel. Sampai jumpa besok.');
+  }
 
   const [exists] = await s.db.select({ id: drops.id }).from(drops).where(eq(drops.id, input.id));
   if (exists && !opts.replace) return input.id; // idempoten: kiriman ulang dari antrean offline
@@ -78,6 +93,20 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
 
   // Audiens
   const circleIds = [...new Set(input.circleIds)];
+  if (input.pageCircleId) {
+    // Halaman terpisah hanya untuk lingkarannya sendiri.
+    const m = await membership(s, input.pageCircleId, user.id);
+    if (!m || m.state !== 'active') throw forbidden('Kamu bukan anggota lingkaran ini.');
+    if (circleIds.some((c) => c !== input.pageCircleId)) throw bad('page_scope', 'Halaman ini hanya untuk satu lingkaran.');
+  } else if (circleIds.length && !LATE_KINDS.has(input.kind)) {
+    // Halaman utama tidak boleh sampai ke lingkaran yang punya halaman sendiri,
+    // atau yang halamannya hari ini sudah tersegel terpisah.
+    const own = await s.db.select().from(circleMembers).where(and(eq(circleMembers.userId, user.id), inArray(circleMembers.circleId, circleIds)));
+    const sealedSep = opts.sealing ? new Set<string>() : await sealedPages(s, user.id, input.day);
+    if (own.some((m) => m.ownPage) || circleIds.some((c) => sealedSep.has(c))) {
+      throw conflict('own_page', 'Lingkaran itu punya halaman sendiri hari ini. Muat ulang halaman, ya.');
+    }
+  }
   const recips = input.envelope.recipients;
   if (!recips.some((r) => r.t === 'user' && r.userId === user.id)) {
     throw bad('self_copy', 'Drop harus selalu bisa dibuka oleh penulisnya sendiri.');
@@ -145,6 +174,7 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
     day: input.day,
     kind: input.kind,
     audience: input.audience,
+    pageCircleId: input.pageCircleId ?? null,
     personId: input.personId,
     unlockOn: input.unlockOn,
     ciphertext: input.envelope.ciphertext,
@@ -172,10 +202,13 @@ async function myDay(s: Services, user: UserRow, day: string): Promise<MyDay> {
   const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, day)));
   const rows = await s.db.select().from(drops).where(and(eq(drops.authorId, user.id), eq(drops.day, day)));
   const [frz] = await s.db.select().from(freezes).where(and(eq(freezes.userId, user.id), eq(freezes.kind, 'used'), eq(freezes.day, day)));
+  const circleIds = await activeCircleIds(s, user.id);
+  const sealedBy = await sealedInCircles(s, circleIds, [user.id], { from: day, to: day });
   return {
     day,
     sealedAt: cap?.sealedAt?.toISOString() ?? null,
     sealable: !cap?.sealedAt && sealableDays(user.tz, s.now()).includes(day),
+    sealedCircles: circleIds.filter((c) => sealedBy.get(c)!.get(user.id)!.has(day)),
     drops: await hydrateDrops(s, rows.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1)), user.id),
     frozen: !!frz,
   };
@@ -195,8 +228,7 @@ export function dayRoutes(s: Services) {
     const user = c.get('user');
     const [d] = await s.db.select().from(drops).where(and(eq(drops.id, c.req.param('id')), eq(drops.authorId, user.id)));
     if (!d) throw notFound();
-    const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, d.day)));
-    if (cap?.sealedAt) throw conflict('sealed', 'Halaman yang sudah tersegel tidak bisa diubah.');
+    if (await pageLocked(s, user.id, d.day, d.pageCircleId)) throw conflict('sealed', 'Halaman yang sudah tersegel tidak bisa diubah.');
     const circlesOf = await s.db.select().from(dropCircles).where(eq(dropCircles.dropId, d.id));
     await createDrop(
       s,
@@ -207,6 +239,7 @@ export function dayRoutes(s: Services) {
         kind: d.kind,
         audience: patch.audience ?? d.audience,
         circleIds: patch.circleIds ?? circlesOf.map((x) => x.circleId),
+        pageCircleId: d.pageCircleId ?? undefined,
         personId: patch.audience ? patch.personId : (d.personId ?? undefined),
         unlockOn: patch.audience ? patch.unlockOn : (d.unlockOn ?? undefined),
         envelope: patch.envelope,
@@ -222,8 +255,7 @@ export function dayRoutes(s: Services) {
     const user = c.get('user');
     const [d] = await s.db.select().from(drops).where(and(eq(drops.id, c.req.param('id')), eq(drops.authorId, user.id)));
     if (!d) throw notFound();
-    const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, d.day)));
-    if (cap?.sealedAt) throw conflict('sealed', 'Drop yang sudah tersegel tidak bisa dihapus.');
+    if (await pageLocked(s, user.id, d.day, d.pageCircleId)) throw conflict('sealed', 'Drop yang sudah tersegel tidak bisa dihapus.');
     await s.db.delete(drops).where(eq(drops.id, d.id));
     return c.json({ ok: true });
   });
@@ -234,40 +266,73 @@ export function dayRoutes(s: Services) {
     return c.json(await myDay(s, c.get('user'), day));
   });
 
-  /** Segel harimu: kapsul teman terbuka setelah kapsulmu sendiri tersegel. */
+  /**
+   * Segel halaman: kapsul teman terbuka setelah kapsulmu sendiri tersegel.
+   * Tanpa circleId = halaman utama (menjangkau semua lingkaran yang tidak punya
+   * halaman sendiri); dengan circleId = halaman terpisah untuk lingkaran itu.
+   */
   r.post('/days/:day/seal', async (c) => {
     const input = await body(c, sealBody);
     const user = c.get('user');
     const day = c.req.param('day');
     const now = s.now();
     if (!sealableDays(user.tz, now).includes(day)) throw bad('day_closed', 'Hari itu sudah tidak bisa disegel.');
-    const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, day)));
-    if (!cap?.sealedAt) {
-      if (input.lastLine) {
-        if (input.lastLine.day !== day || input.lastLine.kind !== 'last_line') throw bad('last_line', 'Kalimat Terakhir tidak sesuai.');
-        await createDrop(s, user, input.lastLine, { sealing: true });
-      }
-      const [{ n }] = (await s.db
+    const target = input.circleId ?? null;
+    if (input.lastLine) {
+      if (input.lastLine.day !== day || input.lastLine.kind !== 'last_line') throw bad('last_line', 'Kalimat Terakhir tidak sesuai.');
+      if ((input.lastLine.pageCircleId ?? null) !== target) throw bad('last_line', 'Kalimat Terakhir untuk halaman lain.');
+    }
+    const pageDrops = async () =>
+      ((await s.db
         .select({ n: sql<number>`count(*)::int` })
         .from(drops)
-        .where(and(eq(drops.authorId, user.id), eq(drops.day, day)))) as [{ n: number }];
-      if (n === 0) throw bad('empty', 'Jatuhkan satu hal dulu. Satu warna juga cukup.');
-      await s.db
-        .insert(capsules)
-        .values({ userId: user.id, day, tz: input.tz, sealedAt: now })
-        .onConflictDoUpdate({ target: [capsules.userId, capsules.day], set: { sealedAt: now, tz: input.tz } });
+        .where(and(eq(drops.authorId, user.id), eq(drops.day, day), target ? eq(drops.pageCircleId, target) : isNull(drops.pageCircleId)))) as [{ n: number }])[0].n;
+
+    let covered: string[];
+    let wasSealed: boolean;
+    let sealedAt: Date;
+    const mine = await s.db.select().from(circleMembers).where(and(eq(circleMembers.userId, user.id), eq(circleMembers.state, 'active')));
+    const already = await sealedPages(s, user.id, day);
+    if (target) {
+      if (!mine.some((m) => m.circleId === target)) throw forbidden('Kamu bukan anggota lingkaran ini.');
+      wasSealed = already.has(target);
+      if (!wasSealed) {
+        if (input.lastLine) await createDrop(s, user, input.lastLine, { sealing: true });
+        if ((await pageDrops()) === 0) throw bad('empty', 'Jatuhkan satu hal dulu. Satu warna juga cukup.');
+        await s.db.insert(capsules).values({ userId: user.id, day, tz: input.tz }).onConflictDoNothing();
+        await s.db.insert(circleSeals).values({ userId: user.id, day, circleId: target, sealedAt: now }).onConflictDoNothing();
+      }
+      covered = [target];
+      const [row] = await s.db.select().from(circleSeals).where(and(eq(circleSeals.userId, user.id), eq(circleSeals.day, day), eq(circleSeals.circleId, target)));
+      sealedAt = row?.sealedAt ?? now;
+    } else {
+      const [cap] = await s.db.select().from(capsules).where(and(eq(capsules.userId, user.id), eq(capsules.day, day)));
+      wasSealed = !!cap?.sealedAt;
+      // Halaman utama menjangkau lingkaran tanpa halaman sendiri yang belum tersegel terpisah.
+      const reach = mine.filter((m) => !m.ownPage && (!already.has(m.circleId) || wasSealed)).map((m) => m.circleId);
+      if (!wasSealed) {
+        if (input.lastLine) await createDrop(s, user, input.lastLine, { sealing: true });
+        if ((await pageDrops()) === 0) throw bad('empty', 'Jatuhkan satu hal dulu. Satu warna juga cukup.');
+        await s.db
+          .insert(capsules)
+          .values({ userId: user.id, day, tz: input.tz, sealedAt: now, scoped: true })
+          .onConflictDoUpdate({ target: [capsules.userId, capsules.day], set: { sealedAt: now, tz: input.tz, scoped: true } });
+        const fresh = reach.filter((cid) => !already.has(cid));
+        if (fresh.length) await s.db.insert(circleSeals).values(fresh.map((circleId) => ({ userId: user.id, day, circleId, sealedAt: now }))).onConflictDoNothing();
+      }
+      covered = cap?.scoped === false && wasSealed ? mine.map((m) => m.circleId) : reach;
+      sealedAt = cap?.sealedAt ?? now;
     }
 
-    const circleIds = await activeCircleIds(s, user.id);
-    const summaries = await circleSummaries(s, user, circleIds);
-    const result: SealResult = { day, sealedAt: (cap?.sealedAt ?? now).toISOString(), circles: [] };
+    const summaries = await circleSummaries(s, user, covered);
+    const result: SealResult = { day, sealedAt: sealedAt.toISOString(), circles: [] };
     for (const sum of summaries) {
       if (sum.status !== 'active') continue;
       const active = sum.members.filter((m) => m.state === 'active');
       const allSealed = active.every((m) => sum.todaySealed[m.userId] || m.userId === user.id);
       const milestone = sum.streak.today.counts ? milestoneReachedOn(sum.streak.current) : undefined;
       result.circles.push({ circleId: sum.id, allSealed, streak: sum.streak, milestone: milestone?.code });
-      if (cap?.sealedAt) continue;
+      if (wasSealed) continue;
       const others = active.filter((m) => m.userId !== user.id).map((m) => m.userId);
       if (allSealed) {
         await pushTo(s, others, { body: say(COPY.notifications.capsulesOpen), data: { type: 'capsules_open', circleId: sum.id, day } }, 'notifyPartnerSealed');
@@ -302,11 +367,16 @@ export function dayRoutes(s: Services) {
       .select({ day: freezes.day })
       .from(freezes)
       .where(and(eq(freezes.userId, user.id), eq(freezes.kind, 'used'), gte(freezes.day, from), lte(freezes.day, to)));
+    // Hari yang hanya halaman terpisahnya disegel tetap terhitung tersegel.
+    const pageSeals = await s.db
+      .select({ day: circleSeals.day, at: circleSeals.sealedAt })
+      .from(circleSeals)
+      .where(and(eq(circleSeals.userId, user.id), gte(circleSeals.day, from), lte(circleSeals.day, to)));
     return c.json(
       caps
         .map((x) => ({
           day: x.day,
-          sealedAt: x.sealedAt?.toISOString() ?? null,
+          sealedAt: (x.sealedAt ?? pageSeals.find((p) => p.day === x.day)?.at)?.toISOString() ?? null,
           dropCount: counts.find((k) => k.day === x.day)?.n ?? 0,
           frozen: frz.some((f) => f.day === x.day),
         }))
@@ -354,9 +424,8 @@ export function dayRoutes(s: Services) {
     const { circle } = await requireMember(s, c.req.param('id'), user.id);
     const members = await s.db.select().from(circleMembers).where(eq(circleMembers.circleId, circle.id));
     const ids = members.filter((m) => day >= m.joinedDay && (!m.leftDay || day <= m.leftDay)).map((m) => m.userId);
-    const caps = ids.length
-      ? await s.db.select().from(capsules).where(and(inArray(capsules.userId, ids), eq(capsules.day, day), isNotNull(capsules.sealedAt)))
-      : [];
+    const sealedBy = (await sealedInCircles(s, [circle.id], ids, { from: day, to: day })).get(circle.id)!;
+    const caps = ids.filter((id) => sealedBy.get(id)?.has(day)).map((userId) => ({ userId }));
     const frz = ids.length
       ? await s.db.select().from(freezes).where(and(inArray(freezes.userId, ids), eq(freezes.kind, 'used'), eq(freezes.day, day)))
       : [];
