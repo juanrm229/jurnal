@@ -6,7 +6,8 @@ import { COPY, type MoodCode, MOODS, type SealResult } from '@sehari/core';
 import { useEffect, useRef, useState } from 'react';
 import { type CircleView, nowParts, useSeal } from '@/lib/data';
 import { useReady } from '@/lib/session';
-import { Doodle, MoodPicker, Toggle } from '@/ui/kit';
+import { sound } from '@/lib/sound';
+import { Confetti, Doodle, MoodPicker, Toggle } from '@/ui/kit';
 
 const MILESTONE: Record<string, { name: string; line: string; doodle: string }> = {
   gerbang: { ...COPY.streak.milestone7, doodle: 'rumah' },
@@ -54,6 +55,7 @@ export function SealCeremony({ day, circles, onClose, onSealed, onOpen }: { day:
       ]);
       setResult(res);
       setPhase('done');
+      sound.play('seal');
       navigator.vibrate?.([20, 60, 40]);
       onSealed();
     } catch (e) {
@@ -153,6 +155,7 @@ export function SealCeremony({ day, circles, onClose, onSealed, onOpen }: { day:
 
         {phase === 'closing' ? <div className="center hand ink fade" style={{ fontSize: 30 }}>menutup amplop…</div> : null}
 
+        {phase === 'done' && result ? <Confetti /> : null}
         {phase === 'done' && result ? (
           <div className="col gap-lg rise">
             <div className="center">

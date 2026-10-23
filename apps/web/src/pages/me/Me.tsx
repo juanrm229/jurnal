@@ -4,7 +4,8 @@ import { useMe } from '@/lib/data';
 import { navigate } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { currentTheme, INKS, PAPERS } from '@/lib/theme';
-import { Avatar, Doodle, ListLink, useToast } from '@/ui/kit';
+import { Avatar, Doodle, ListLink, Toggle, useToast } from '@/ui/kit';
+import { sound, useSoundPrefs } from '@/lib/sound';
 import { pushState, subscribePush } from '@/lib/push';
 
 export default function Me() {
@@ -39,6 +40,8 @@ export default function Me() {
         </span>
         <Doodle id="ui-palet" size={26} />
       </button>
+
+      <SoundSettings />
 
       <section className="section">
         <span className="label">pengaturan</span>
@@ -81,5 +84,23 @@ export default function Me() {
       </button>
       <p className="tiny soft center mt">sehari · semua fitur gratis untuk kita</p>
     </main>
+  );
+}
+
+function SoundSettings() {
+  const p = useSoundPrefs();
+  return (
+    <section className="section">
+      <span className="label">suara</span>
+      <div className="card" style={{ padding: '6px 16px' }}>
+        <Toggle label="musik latar" hint="piano & pad pelan yang dibangkitkan di perangkatmu — tidak ada yang diunduh" value={p.music} onChange={(v) => sound.set({ music: v })} />
+        <Toggle label="efek suara" hint="ketukan, desir kertas, cap lilin — tipis sekali" value={p.sfx} onChange={(v) => { sound.set({ sfx: v }); if (v) sound.play('chime'); }} />
+        <Toggle label="suara mengetik" hint="detak halus seperti mesin tik saat menulis" value={p.typing} onChange={(v) => sound.set({ typing: v })} />
+        <label className="row" style={{ padding: '10px 0', gap: 12 }}>
+          <span className="small" style={{ minWidth: 64 }}>volume</span>
+          <input type="range" min={0} max={1} step={0.05} value={p.volume} onChange={(e) => sound.set({ volume: Number(e.target.value) })} onPointerUp={() => sound.play('soft')} style={{ flex: 1, accentColor: 'var(--ink)' }} aria-label="volume" />
+        </label>
+      </div>
+    </section>
   );
 }

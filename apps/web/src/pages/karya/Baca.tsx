@@ -105,7 +105,7 @@ export default function Baca() {
                 const on = myReacts.includes(r.kind);
                 const n = wire.reactions.filter((x) => x.kind === r.kind).length;
                 return (
-                  <button key={r.kind} className={on ? 'on' : ''} onClick={() => react.mutate({ kind: r.kind, on: !on })}>
+                  <button key={r.kind} data-sound="pop" className={on ? 'on' : ''} onClick={() => react.mutate({ kind: r.kind, on: !on })}>
                     <Doodle id={r.doodle} size={22} color="currentColor" />
                     <span>{r.label}</span>
                     {n ? <i>{n}</i> : null}

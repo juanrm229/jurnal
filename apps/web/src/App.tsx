@@ -88,7 +88,9 @@ export function App() {
     const body = (
       <ParamsProvider value={params}>
         <Suspense fallback={<Growing />}>
-          <Comp />
+          <div key={pattern} className="route-in">
+            <Comp />
+          </div>
         </Suspense>
         {tabs && status === 'ready' ? <TabBar path={path} /> : null}
       </ParamsProvider>

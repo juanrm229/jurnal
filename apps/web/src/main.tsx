@@ -14,15 +14,18 @@ import './styles/story.css';
 import './styles/landing.css';
 import './styles/ui.css';
 import './styles/karya.css';
+import './styles/motion.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { installGlobalSounds } from './lib/sound';
 import { applyTheme, currentTheme } from './lib/theme';
 import { SessionProvider } from './lib/session';
 import { ToastHost } from './ui/kit';
 
 applyTheme(currentTheme());
+installGlobalSounds();
 
 const qc = new QueryClient({
   defaultOptions: { queries: { staleTime: 20_000, refetchOnWindowFocus: true, retry: (n, e) => n < 2 && ![401, 403, 404].includes((e as { status?: number }).status ?? 0) } },

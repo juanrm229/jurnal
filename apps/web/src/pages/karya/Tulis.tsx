@@ -12,9 +12,10 @@ import { useCircles } from '@/lib/data';
 import { Ornament, Prose } from '@/lib/prose';
 import { back, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
+import { sound } from '@/lib/sound';
 import { store } from '@/lib/storage';
 import { countWords, COVERS, KIND_INFO, KINDS, newWorkId, readingMinutes, saveWork, useWork, wk, type WorkKind, type WorkPayload } from '@/lib/works';
-import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
+import { Doodle, Growing, MusicToggle, Sheet, useToast } from '@/ui/kit';
 import { Cover, TONES } from './Cover';
 
 const PLACEHOLDER: Record<WorkKind, string> = {
@@ -158,6 +159,7 @@ export default function Tulis() {
     setStatus(st);
     if (await persist(work, st, circleIds)) {
       setSheet(null);
+      sound.play('chime');
       toast(st === 'published' ? (circleIds.length ? 'Karya terbit di lingkaranmu.' : 'Tersimpan di rak pribadimu.') : 'Disimpan sebagai draf.');
       if (st === 'published') navigate(`/karya/${id}`, { replace: true });
     }
@@ -189,6 +191,7 @@ export default function Tulis() {
         <button className="icon-btn" aria-label={mode === 'write' ? 'baca' : 'tulis'} onClick={() => setMode(mode === 'write' ? 'read' : 'write')} title={mode === 'write' ? 'pratinjau baca' : 'kembali menulis'}>
           <Doodle id={mode === 'write' ? 'buku-terbuka' : 'pena'} size={22} />
         </button>
+        <MusicToggle />
         <button className="icon-btn" aria-label="menu" onClick={() => setSheet('menu')}>
           <Doodle id="ui-titik-tiga" size={22} />
         </button>
@@ -236,7 +239,10 @@ export default function Tulis() {
             spellCheck={false}
             lang="id"
             autoFocus={!params.id}
-            onChange={(e) => update((w) => ({ ...w, body: e.target.value }))}
+            onChange={(e) => {
+              update((w) => ({ ...w, body: e.target.value }));
+              sound.play('type');
+            }}
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
                 e.preventDefault();

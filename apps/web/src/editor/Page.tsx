@@ -103,6 +103,15 @@ export function Page(props: PageProps) {
   const [live, setLive] = useState<Record<string, PageLayout>>({});
   // Ketukan yang hanya melepas pilihan/penyuntingan tidak membuat tulisan baru.
   const dismissed = useRef(false);
+  // Elemen yang muncul setelah halaman dimuat ditempel dengan sedikit pantulan.
+  const initial = useRef<Set<string> | null>(null);
+  if (initial.current === null && items.length) initial.current = new Set(items.map((i) => i.id));
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      if (initial.current === null) initial.current = new Set();
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, []);
   // Dua jari: cubit untuk memperbesar, putar untuk memutar elemen terpilih.
   const pts = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef(false);
@@ -243,6 +252,7 @@ export function Page(props: PageProps) {
             onTap={(at) => props.onItemTap?.(it.id, at)}
             onEdit={() => props.onEdit?.(it.id)}
             gesture={gesture}
+            fresh={!!initial.current && !initial.current.has(it.id)}
             tools={selectedId === it.id && editable ? props.renderTools?.(it) : null}>
             <PageElement
               item={it}
@@ -281,9 +291,11 @@ function Movable({
   onTap,
   onEdit,
   gesture,
+  fresh,
   tools,
   children,
 }: {
+  fresh?: boolean;
   gesture: React.RefObject<boolean>;
   item: PageItem & { layout: PageLayout };
   scale: number;
@@ -369,7 +381,7 @@ function Movable({
   return (
     <div
       ref={box}
-      className={['el', editable ? '' : 'readonly', selected ? 'selected' : '', dragging ? 'dragging' : '', item.audience === 'self' ? 'private' : ''].filter(Boolean).join(' ')}
+      className={['el', fresh ? 'el-new' : '', editable ? '' : 'readonly', selected ? 'selected' : '', dragging ? 'dragging' : '', item.audience === 'self' ? 'private' : ''].filter(Boolean).join(' ')}
       style={{
         left: L.x * scale,
         top: L.y * scale,

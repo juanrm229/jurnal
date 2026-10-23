@@ -10,7 +10,7 @@ import { Link, navigate } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { applyTheme, currentTheme, INKS, PAPERS, setTheme } from '@/lib/theme';
 import { Scene } from '@/ui/art';
-import { Doodle } from '@/ui/kit';
+import { Doodle, MusicToggle } from '@/ui/kit';
 import { Cover } from './karya/Cover';
 
 const localDay = () => {
@@ -110,6 +110,7 @@ export default function Landing() {
         <div className="row">
           <a href="#coba" className="pill hide-sm">coba</a>
           <a href="#tinta" className="pill hide-sm">tinta</a>
+          <MusicToggle />
           <button className="pill active" onClick={start}>{signedIn ? 'jurnalku' : 'masuk'}</button>
         </div>
       </nav>

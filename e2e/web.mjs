@@ -223,6 +223,15 @@ async function flow() {
   await b.click('.notes button:has-text("kirim")');
   await b.waitForSelector('.note:has-text("sendoknya")', { timeout: 10000 });
   await shot(b, '66-karya-catatan');
+  // Suara: nyalakan musik & efek dari halaman aku, pastikan tidak ada galat.
+  await a.goto(`${APP}/aku`);
+  await a.waitForTimeout(800);
+  await a.locator('label:has-text("musik latar") [role=switch]').click();
+  await a.locator('label:has-text("suara mengetik") [role=switch]').click();
+  await a.waitForTimeout(2500);
+  console.log('  🎵 musik:', await a.evaluate(() => JSON.parse(localStorage.getItem('sehari.sound') || '{}').music));
+  await shot(a, '55-suara');
+  await a.locator('label:has-text("musik latar") [role=switch]').click();
   await a.goto(`${APP}/aku/profil`);
   await a.waitForTimeout(1200);
   await a.locator('.avatar-grid button').nth(5).click();

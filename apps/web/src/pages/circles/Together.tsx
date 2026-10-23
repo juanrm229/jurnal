@@ -12,6 +12,7 @@ import { Link, navigate, useParams } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { claimTokens, tokenCandidates } from '@/lib/tokens';
 import { Scene } from '@/ui/art';
+import { sound } from '@/lib/sound';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
 
 const REACTIONS: { kind: ReactionKind; label: string; doodle: string }[] = [
@@ -104,6 +105,7 @@ export default function Together() {
     const n = Math.max(0, Math.min(ordered.length - 1, i));
     if (n === idx) return;
     setDir(n > idx ? 'next' : 'prev');
+    sound.play('turn');
     setIdx(n);
     setTap(null);
   };
@@ -290,7 +292,7 @@ function ReactBar({ x, y, mine, onReact, onNote }: { x: number; y: number; mine:
   return (
     <div className="react-bar" style={{ position: 'fixed', left: Math.max(150, Math.min(window.innerWidth - 150, x)), top: Math.max(70, y) }} onClick={(e) => e.stopPropagation()}>
       {REACTIONS.map((r) => (
-        <button key={r.kind} className={mine.includes(r.kind) ? 'on' : ''} onClick={() => onReact(r.kind, !mine.includes(r.kind))}>
+        <button key={r.kind} data-sound="pop" className={mine.includes(r.kind) ? 'on' : ''} onClick={() => onReact(r.kind, !mine.includes(r.kind))}>
           <Doodle id={r.doodle} size={16} color="currentColor" sw={2.6} /> {r.label}
         </button>
       ))}

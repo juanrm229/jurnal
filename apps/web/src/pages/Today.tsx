@@ -36,7 +36,8 @@ import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { store } from '@/lib/storage';
-import { Avatar, Doodle, Growing, Sheet, useToast } from '@/ui/kit';
+import { Avatar, Doodle, Growing, MusicToggle, Sheet, useToast } from '@/ui/kit';
+import { sound } from '@/lib/sound';
 
 type Item = PageItem & { draft?: boolean };
 
@@ -131,6 +132,7 @@ export default function Today() {
       localUrl: extra.localUrl,
     };
     setItems((xs) => [...xs, it]);
+    sound.play('pop');
     if (!extra.draft) await post(it, extra.meta);
     return it;
   };
@@ -206,6 +208,7 @@ export default function Today() {
       const payload = base('photo', { ...pos, rot: Math.round((Math.random() - 0.5) * 8) });
       const it: Item = { id, authorId: me.user.id, payload, audience: defaultAudience, circleIds, mediaIds: [], reactions: [], footnotes: [], pending: true, localUrl };
       setItems((xs) => [...xs, it]);
+      sound.play('pop');
       try {
         const ref = await uploadPhoto(f);
         primeMedia(ref.id, localUrl);
@@ -380,6 +383,7 @@ export default function Today() {
           <Link to="/lingkaran" className="icon-btn" aria-label="lingkaran">
             <Doodle id="ui-lingkaran" size={22} />
           </Link>
+          <MusicToggle />
           <Link to="/karya" className="icon-btn" aria-label="karya">
             <Doodle id="pena" size={22} />
           </Link>

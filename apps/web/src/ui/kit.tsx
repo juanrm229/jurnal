@@ -3,6 +3,7 @@ import { getDoodle } from '@sehari/doodles';
 import { type CSSProperties, type ReactNode, createContext, memo, useCallback, useContext, useEffect, useState } from 'react';
 import { API_URL } from '@/lib/api';
 import { back } from '@/lib/router';
+import { sound, useSoundPrefs } from '@/lib/sound';
 
 // ── Doodle ──────────────────────────────────────────────────────────────────
 
@@ -149,10 +150,14 @@ export function ListLink({ icon, title, sub, onClick, right }: { icon?: string; 
 export function Sheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: ReactNode; title?: string }) {
   useEffect(() => {
     if (!open) return;
+    sound.play('open');
     const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', k);
-    return () => window.removeEventListener('keydown', k);
-  }, [open, onClose]);
+    return () => {
+      window.removeEventListener('keydown', k);
+      sound.play('close');
+    };
+  }, [open]);
   if (!open) return null;
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -280,6 +285,48 @@ export function Sticky({ children, color = 'yellow', tilt = 0, style, onClick }:
         <Doodle id="pin-papan" size={26} color="currentColor" />
       </span>
       {children}
+    </div>
+  );
+}
+
+/** Tombol kecil musik latar: nyala/mati. */
+export function MusicToggle({ className = 'icon-btn' }: { className?: string }) {
+  const p = useSoundPrefs();
+  return (
+    <button type="button" className={`${className} music-toggle ${p.music ? 'on' : ''}`} data-sound="soft" aria-pressed={p.music} aria-label={p.music ? 'matikan musik' : 'nyalakan musik'} title={p.music ? 'musik: nyala' : 'musik: mati'} onClick={() => sound.set({ music: !p.music })}>
+      <Doodle id="not-balok" size={22} color="currentColor" />
+      {p.music ? (
+        <span className="eq" aria-hidden>
+          <i />
+          <i />
+          <i />
+        </span>
+      ) : (
+        <span className="slash" aria-hidden />
+      )}
+    </button>
+  );
+}
+
+/** Hujan kelopak & bintang kecil sekali saja (mis. setelah menyegel). */
+export function Confetti({ count = 22 }: { count?: number }) {
+  const [pieces] = useState(() =>
+    Array.from({ length: count }, (_, i) => ({
+      id: ['kilau', 'bintang-kecil', 'hati-kecil', 'bunga-kecil', 'daun-kering', 'bintang'][i % 6]!,
+      x: (Math.random() - 0.5) * 360,
+      y: -(120 + Math.random() * 260),
+      r: (Math.random() - 0.5) * 540,
+      d: Math.random() * 0.25,
+      s: 14 + Math.random() * 16,
+    })),
+  );
+  return (
+    <div className="confetti" aria-hidden>
+      {pieces.map((p, i) => (
+        <span key={i} style={{ '--x': `${p.x}px`, '--y': `${p.y}px`, '--r': `${p.r}deg`, animationDelay: `${p.d}s` } as CSSProperties}>
+          <Doodle id={p.id} size={p.s} />
+        </span>
+      ))}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useMediaUrl } from '@/lib/media';
 import { Doodle } from '@/ui/kit';
 import type { PageItem } from './Page';
 import { StickerArt } from './stickers';
+import { sound } from '@/lib/sound';
 
 export const TEXT_SIZES = { s: 30, m: 38, l: 54, xl: 76 } as const;
 
@@ -157,6 +158,7 @@ function TextBody({
         onChange={(e) => {
           setDraft(e.target.value);
           onText(e.target.value);
+          sound.play('type');
         }}
         onBlur={onEndEdit}
         onKeyDown={(e) => {
