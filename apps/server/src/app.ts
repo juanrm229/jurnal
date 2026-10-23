@@ -16,6 +16,7 @@ import { dayRoutes } from './routes/days';
 import { letterRoutes } from './routes/letters';
 import { loreRoutes } from './routes/lore';
 import { meRoutes, userRoutes } from './routes/me';
+import { workRoutes } from './routes/works';
 import { webRoutes } from './web/pages';
 
 export function createApp(s: Services) {
@@ -57,6 +58,7 @@ export function createApp(s: Services) {
   authed.route('/billing', billingRoutes(s));
   authed.route('/', dayRoutes(s));
   authed.route('/', communityRoutes(s));
+  authed.route('/', workRoutes(s));
   v1.route('/', authed);
 
   app.route('/v1', v1);

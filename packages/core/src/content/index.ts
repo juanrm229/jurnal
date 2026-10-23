@@ -9,3 +9,4 @@ export * from './seasons';
 export * from './chapterTitles';
 export * from './help';
 export * from './microcopy';
+export * from './writingPrompts';

@@ -130,6 +130,11 @@
   word-break: break-word;
   line-height: 1.45;
 }
+.t-text.serif,
+.t-edit.serif {
+  font-family: var(--serif);
+  line-height: 1.6;
+}
 .t-text.hand {
   font-family: var(--hand);
   line-height: 1.12;

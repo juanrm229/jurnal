@@ -294,3 +294,30 @@ describe('mode pisah, kenangan, blokir', () => {
     expect(v.drops.every((x: any) => x.authorId !== q.userId)).toBe(true);
   });
 });
+
+describe('karya', () => {
+  const env1 = (userId: string) => ({ ciphertext: 'c2VoYXJp', recipients: [{ t: 'user', userId, wk: 'eA==' }] });
+  it('draf hanya terlihat penulis; terbit ke lingkaran bisa dibaca anggota', async () => {
+    const wid = id();
+    await raka.ok('POST', '/v1/works', { id: wid, status: 'draft', circleIds: [], envelope: env1(raka.userId) });
+    expect((await naya.req('GET', `/v1/works/${wid}`)).status).toBe(404);
+    expect((await raka.ok('GET', '/v1/works')).some((w: any) => w.id === wid)).toBe(true);
+
+    await raka.ok('PUT', `/v1/works/${wid}`, { id: wid, status: 'published', circleIds: [duoId], envelope: env1(raka.userId) });
+    const feed = await naya.ok('GET', '/v1/works/feed');
+    expect(feed.map((w: any) => w.id)).toContain(wid);
+    const w = await naya.ok('GET', `/v1/works/${wid}`);
+    expect(w.publishedAt).toBeTruthy();
+    await naya.ok('PUT', `/v1/works/${wid}/reactions/hug`);
+    await naya.ok('POST', `/v1/works/${wid}/notes`, { id: id(), envelope: env1(naya.userId) });
+    const again = await raka.ok('GET', `/v1/circles/${duoId}/works`);
+    expect(again[0].reactions.length).toBe(1);
+    expect(again[0].noteCount).toBe(1);
+    // Hanya penulis yang boleh mengubah.
+    expect((await naya.req('PUT', `/v1/works/${wid}`, { id: wid, status: 'draft', circleIds: [], envelope: env1(naya.userId) })).status).toBe(404);
+    // Orang luar tidak bisa membaca.
+    const luar = await new Client(env.app, 'luar@contoh.id').signup('Luar');
+    expect((await luar.req('GET', `/v1/works/${wid}`)).status).toBe(404);
+    expect((await luar.req('POST', '/v1/works', { id: id(), status: 'published', circleIds: [duoId], envelope: env1(luar.userId) })).status).toBe(403);
+  });
+});

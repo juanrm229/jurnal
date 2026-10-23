@@ -694,3 +694,41 @@ export interface ExportBundle {
 export interface ApiErrorBody {
   error: { code: string; message: string };
 }
+
+// ── Karya (esai, cerpen, puisi, …) ─────────────────────────────────────────
+// Isi karya (judul, jenis, teks) selalu terenkripsi; server hanya tahu
+// penulis, status, lingkaran tujuan, dan waktu.
+
+export const workStatus = z.enum(['draft', 'published']);
+export type WorkStatus = z.infer<typeof workStatus>;
+
+export const workBody = z.object({
+  id,
+  status: workStatus,
+  circleIds: z.array(id).max(20).default([]),
+  envelope: envelopeSchema,
+});
+export type WorkBody = z.infer<typeof workBody>;
+
+export const workNoteBody = z.object({ id, envelope: envelopeSchema });
+
+export interface WorkWire {
+  id: string;
+  authorId: string;
+  status: WorkStatus;
+  circleIds: string[];
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  reactions: { kind: ReactionKind; userId: string }[];
+  noteCount: number;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+}
+
+export interface WorkNoteWire {
+  id: string;
+  workId: string;
+  authorId: string;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  createdAt: string;
+}

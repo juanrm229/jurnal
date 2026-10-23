@@ -117,6 +117,7 @@ function TextBody({
 }) {
   const p = item.payload;
   const isHand = hand || p.style?.font === 'hand';
+  const isSerif = !hand && p.style?.font === 'serif';
   const size = (sizeOverride ?? p.style?.size ?? TEXT_SIZES.m) * scale * (isHand ? 1.25 : 1);
   const style: CSSProperties = {
     fontSize: Math.max(10, size),
@@ -147,7 +148,7 @@ function TextBody({
     return (
       <textarea
         ref={ta}
-        className={`t-edit ${isHand ? 'hand' : ''}`}
+        className={`t-edit ${isHand ? 'hand' : isSerif ? 'serif' : ''}`}
         style={style}
         value={draft}
         placeholder={placeholder}
@@ -165,7 +166,7 @@ function TextBody({
     );
   }
   return (
-    <div className={`t-text ${isHand ? 'hand' : ''}`} style={style}>
+    <div className={`t-text ${isHand ? 'hand' : isSerif ? 'serif' : ''}`} style={style}>
       {p.text ? p.text : <span className="t-placeholder">{placeholder}</span>}
     </div>
   );

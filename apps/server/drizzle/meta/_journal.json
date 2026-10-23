@@ -15,6 +15,13 @@
       "when": 1792665564040,
       "tag": "0001_fast_the_professor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792719085243,
+      "tag": "0002_unusual_anita_blake",
+      "breakpoints": true
     }
   ]
 }

@@ -385,6 +385,238 @@ const ORTU_CARDS: DailyCard[] = [
   o('sudut-rumah', 'kenangan', 'Sudut yang diingat', 'Potret satu sudut rumah hari ini yang kelak ingin kamu ingat.', 'nostalgia', { doodle: 'jendela' }),
 ];
 
+/** Bungkus `deckCard` supaya semua kartu di satu dek memakai `fit` yang sama. */
+const withFit =
+  (make: ReturnType<typeof deckCard>, fit: CircleFit[]) =>
+  (slug: string, kind: CardKind, title: string, body: string, tone: Tone, opts: CardOpts = {}): DailyCard =>
+    make(slug, kind, title, body, tone, { fit, ...opts });
+
+// ─────────────────────────── Dek Renungan Dalam ───────────────────────────
+// Pertanyaan yang bikin orang berhenti sebentar. Bukan kata mutiara, bukan
+// sesi konseling: cukup satu pertanyaan jujur yang tidak bisa dijawab asal.
+
+const rn = deckCard('renung');
+
+const RENUNG_CARDS: DailyCard[] = [
+  rn('sepuluh-tahun-lalu', 'pertanyaan', 'Sepuluh tahun lalu', 'Kamu sepuluh tahun lalu akan kaget melihat apa dari hidupmu sekarang? Kaget senang atau kaget sedih?', 'dalam', { doodle: 'jam-pasir' }),
+  rn('belum-dimaafkan', 'rahasia', 'Belum dimaafkan', 'Satu hal yang belum bisa kamu maafkan. Dari orang lain, atau dari dirimu sendiri?', 'dalam', { doodle: 'segel-lilin' }),
+  rn('pelan-berubah', 'pertanyaan', 'Pelan-pelan berubah', 'Pendapat yang dulu kamu pegang erat, lalu berubah tanpa kamu sadari kapan persisnya?', 'dalam'),
+  rn('ke-mana-jamnya', 'pertanyaan', 'Ke mana jamnya pergi', 'Kalau jam-jammu minggu ini dihitung, paling banyak ke mana perginya? Kamu setuju dengan pilihan itu?', 'dalam', { doodle: 'jam-pasir' }),
+  rn('takut-sebenarnya', 'rahasia', 'Takut yang sebenarnya', 'Di balik takut yang sering kamu sebut, biasanya ada takut lain yang lebih jujur. Apa itu?', 'dalam'),
+  rn('pujian-meleset', 'pertanyaan', 'Pujian yang meleset', 'Pujian yang sering kamu terima, tapi rasanya kurang tepat. Di mana melesetnya?', 'dalam'),
+  rn('sedang-menjadi', 'pertanyaan', 'Sedang menjadi', 'Pelan-pelan, kamu sedang menjadi orang seperti apa? Satu sifat saja.', 'mimpi', { doodle: 'tunas' }),
+  rn('warisan-kecil', 'pertanyaan', 'Warisan kecil', 'Kebiasaan kecil orang tua atau pengasuhmu yang ternyata ikut kamu bawa, mau tidak mau?', 'nostalgia'),
+  rn('tak-ada-yang-lihat', 'pertanyaan', 'Tak ada yang melihat', 'Kalau tidak ada yang akan pernah tahu, apa yang akan kamu kerjakan dengan tahun ini?', 'mimpi'),
+  rn('debat-kepala', 'pertanyaan', 'Debat dalam kepala', 'Debat apa yang paling sering terjadi di kepalamu belakangan ini? Siapa yang biasanya menang?', 'dalam'),
+  rn('rasa-cukup', 'pertanyaan', 'Seperti apa cukup', 'Untuk satu hal yang terus kamu kejar: seperti apa rasanya "cukup"? Pernah kamu bayangkan?', 'dalam'),
+  rn('hilang-tanpa-pamit', 'kenangan', 'Hilang tanpa pamit', 'Teman, hobi, atau tempat yang hilang dari hidupmu tanpa pamit. Kapan kamu sadar ia sudah tidak ada?', 'nostalgia', { doodle: 'daun-kering' }),
+  rn('diingat-karena', 'pertanyaan', 'Diingat karena', 'Bukan prestasi, tapi kebiasaan: kamu ingin diingat orang karena kebiasaan apa?', 'dalam', { doodle: 'lilin' }),
+  rn('tidak-menyesal', 'pertanyaan', 'Tidak menyesal', 'Keputusan yang dulu dianggap salah oleh orang lain, tapi sampai sekarang tidak kamu sesali?', 'syukur'),
+  rn('hari-biasa', 'kenangan', 'Hari biasa terbaik', 'Hari biasa, tanpa acara apa-apa, yang entah kenapa masih kamu ingat sampai sekarang?', 'nostalgia'),
+  rn('mengalah-menyerah', 'pertanyaan', 'Mengalah atau menyerah', 'Hal terakhir yang kamu lepaskan: itu mengalah atau menyerah? Apa bedanya buatmu?', 'dalam'),
+  rn('pertanyaan-lima-tahun', 'tantangan', 'Satu pertanyaan saja', 'Tulis satu pertanyaan untuk dirimu lima tahun lagi. Jangan dijawab dulu. Kunci di kapsul.', 'mimpi', { doodle: 'pena' }),
+  rn('tiga-menit-diam', 'tantangan', 'Tiga menit diam', 'Duduk diam tiga menit tanpa HP, tanpa musik. Tulis satu pikiran yang paling keras muncul.', 'dalam', { doodle: 'jam-pasir' }),
+  rn('satu-benda', 'tantangan', 'Kalau harus pergi', 'Kalau harus pergi hanya dengan satu benda dari kamarmu, benda apa? Potret dia.', 'dalam', { doodle: 'kunci' }),
+  rn('marah-layak', 'pertanyaan', 'Marah yang layak', 'Hal yang membuatmu marah, dan kamu rasa memang pantas dimarahi?', 'dalam'),
+  rn('orang-asing-baik', 'kenangan', 'Orang asing yang baik', 'Kebaikan dari orang asing yang tidak pernah bisa kamu balas. Masih ingat wajahnya?', 'syukur'),
+  rn('nanti-kalau-sudah', 'pertanyaan', 'Nanti kalau sudah…', 'Kalimat "nanti kalau sudah…" apa yang terlalu sering kamu ucapkan ke dirimu sendiri?', 'dalam'),
+  rn('yang-membentuk', 'rahasia', 'Yang membentukmu', 'Satu kejadian kecil yang membentukmu, tapi tidak pernah masuk cerita perkenalanmu?', 'dalam'),
+  rn('bahagia-dulu-kini', 'pertanyaan', 'Bahagia dulu dan kini', 'Arti bahagia buatmu waktu SMA, dan sekarang. Mana yang lebih jujur?', 'nostalgia'),
+  rn('salah-paham', 'rahasia', 'Malas meluruskan', 'Hal yang sering disalahpahami orang tentang kamu, dan kamu sudah malas meluruskannya?', 'dalam'),
+  rn('masih-percaya', 'pertanyaan', 'Masih percaya', 'Sesuatu yang masih kamu percayai, padahal banyak orang sudah berhenti percaya?', 'syukur'),
+  rn('pulang-ke-siapa', 'pertanyaan', 'Pulang ke siapa', 'Saat semuanya kacau, kamu pulang ke siapa, atau ke mana? Mereka tahu itu?', 'dalam', { doodle: 'rumah' }),
+  rn('pertanyaan-tahun-ini', 'pertanyaan', 'Pertanyaan tahun ini', 'Pertanyaan yang paling sering kamu tanyakan ke dirimu tahun ini? Sudah ketemu jawabannya?', 'dalam'),
+  rn('langka-di-bawah-purnama', 'rahasia', 'Di bawah purnama', 'Bulan penuh malam ini. Satu hal yang ingin kamu akui, cukup di bawah cahayanya saja.', 'dalam', { doodle: 'bulan', rare: 'purnama' }),
+];
+
+// ──────────────────────────── Dek Seru & Receh ────────────────────────────
+// Receh di permukaan, tapi jawabannya sering membuka banyak hal.
+
+const rc = deckCard('receh');
+
+const RECEH_CARDS: DailyCard[] = [
+  rc('isi-tas', 'tantangan', 'Isi tas paling random', 'Potret benda paling random di tasmu sekarang. Jelaskan kenapa dia ada di sana.', 'lucu', { doodle: 'kamera' }),
+  rc('ranking-gorengan', 'pertanyaan', 'Ranking gorengan', 'Urutkan dari yang terbaik: bakwan, tahu isi, pisang goreng, mendoan, cireng. Tidak ada jawaban salah. Ada, sih.', 'lucu'),
+  rc('pendapat-panas', 'pertanyaan', 'Pendapat panas', 'Satu pendapat kontroversialmu soal makanan. Bubur diaduk? Nasi pakai mi? Silakan, kami siap.', 'lucu'),
+  rc('benda-rumah', 'pertanyaan', 'Kalau kamu benda', 'Kamu benda apa di rumah: remote yang selalu hilang, kipas berisik, atau kaleng biskuit isi rengginang?', 'lucu', { doodle: 'rumah' }),
+  rc('nama-wifi', 'pertanyaan', 'Nama wifi jujur', 'Kalau nama wifi rumahmu harus diganti jadi satu kalimat jujur tentang hidupmu, isinya apa?', 'lucu'),
+  rc('tangkapan-terakhir', 'tantangan', 'Tangkapan layar terakhir', 'Bagikan tangkapan layar terakhir di galerimu. Terlalu memalukan? Ceritakan saja isinya.', 'lucu'),
+  rc('stiker-hidup', 'pertanyaan', 'Stiker hidupmu', 'Stiker WA yang paling mewakili minggumu? Jelaskan dengan kata-kata, sedetail mungkin.', 'lucu'),
+  rc('kekuatan-tak-berguna', 'pertanyaan', 'Kekuatan tak berguna', 'Kekuatan super paling tak berguna yang ingin kamu punya? Misal: selalu tahu kapan angkot berikutnya lewat.', 'lucu'),
+  rc('tim-mi-instan', 'pertanyaan', 'Tim mana kamu', 'Mi instan: bumbu ditaruh di mangkuk dulu, atau dituang belakangan? Bela pendirianmu dalam satu kalimat.', 'lucu'),
+  rc('pose-patung', 'tantangan', 'Jadi patung kota', 'Berpose seperti patung di bundaran kotamu, lalu minta tolong difoto. Swafoto juga sah.', 'lucu', { doodle: 'kamera' }),
+  rc('tebak-bunyi', 'tantangan', 'Tebak bunyinya', 'Rekam lima detik bunyi benda di dekatmu. Yang lain harus menebak itu apa.', 'lucu'),
+  rc('judul-film', 'pertanyaan', 'Judul film hari ini', 'Kalau hari ini dijadikan film, judulnya apa? Gaya sinetron azab juga boleh.', 'lucu'),
+  rc('terlalu-dipuji', 'pertanyaan', 'Terlalu dipuji', 'Makanan yang menurutmu terlalu dipuji orang-orang? Sebut, lalu kabur.', 'lucu'),
+  rc('salah-lirik', 'rahasia', 'Salah dengar lirik', 'Lirik lagu yang bertahun-tahun kamu nyanyikan dengan salah, dan kapan akhirnya kamu sadar?', 'lucu', { doodle: 'gitar' }),
+  rc('teori-aneh', 'pertanyaan', 'Teori tanpa bukti', 'Teori aneh yang kamu yakini tanpa bukti. Contoh: hujan pasti turun begitu motor selesai dicuci.', 'lucu', { doodle: 'hujan' }),
+  rc('jelek-tapi-sayang', 'tantangan', 'Jelek tapi sayang', 'Potret benda paling jelek yang tidak akan pernah kamu buang.', 'lucu'),
+  rc('potret-satu-menit', 'tantangan', 'Potret satu menit', 'Gambar wajah salah satu dari kami dalam satu menit, dari ingatan. Kirim tanpa revisi.', 'lucu', { doodle: 'pena' }),
+  rc('lomba-andalan', 'pertanyaan', 'Lomba andalan', 'Lomba tujuh belasan yang pasti kamu menangkan: makan kerupuk, balap karung, atau kelereng di sendok?', 'lucu', { doodle: 'bendera' }),
+  rc('bakat-terpendam', 'rahasia', 'Bakat terpendam', 'Bakat tak berguna yang diam-diam kamu banggakan? Siul keras, hafal plat nomor, lipat baju kilat?', 'lucu'),
+  rc('juara-sarapan', 'pertanyaan', 'Juara sarapan', 'Juara sarapan sejati: nasi uduk, bubur ayam, lontong sayur, atau roti bakar? Pilih satu, sisanya pulang.', 'lucu'),
+  rc('kalimat-orang-rumah', 'pertanyaan', 'Kalimat legendaris', 'Kalimat legendaris orang rumahmu yang selalu keluar di situasi yang sama? "Coba cari dulu yang bener…"', 'nostalgia'),
+  rc('ekspresi-email', 'tantangan', 'Ekspresi jujur', 'Swafoto dengan ekspresi persis seperti saat membaca pesan "ada waktu sebentar?" dari atasan.', 'lucu'),
+  rc('peliharaan-khayalan', 'pertanyaan', 'Peliharaan khayalan', 'Boleh pelihara hewan apa saja tanpa repot. Kamu pilih apa, dan namanya siapa?', 'mimpi', { doodle: 'kucing' }),
+  rc('belanja-jam-dua', 'rahasia', 'Belanja jam dua pagi', 'Barang paling aneh yang pernah kamu beli online lewat tengah malam? Masih dipakai?', 'lucu'),
+  rc('nama-band', 'pertanyaan', 'Nama band kita', 'Kalau kita bikin band, namanya apa, dan lagu hit pertamanya tentang apa?', 'lucu', { doodle: 'gitar' }),
+  rc('ketiduran-di-mana', 'pertanyaan', 'Rekor ketiduran', 'Tempat paling aneh kamu pernah ketiduran? Angkot, ruang tunggu, atau rapat daring?', 'lucu'),
+  rc('ulasan-hari-ini', 'tantangan', 'Ulasan bintang lima', 'Beri hari ini bintang satu sampai lima, lalu tulis ulasannya gaya ulasan ojek daring.', 'lucu', { doodle: 'bintang' }),
+  rc('foto-profil-lama', 'kenangan', 'Foto profil zaman dulu', 'Cari foto profil lamamu yang paling alay. Bagikan, atau minimal ceritakan pose dan tulisannya.', 'nostalgia', { doodle: 'kamera' }),
+  rc('tukar-hidup', 'pertanyaan', 'Tukar hidup sehari', 'Tukar hidup sehari dengan salah satu dari kami: siapa, dan apa yang pertama kamu lakukan?', 'lucu'),
+  rc('langka-jemuran', 'pertanyaan', 'Jemuran, oh jemuran', 'Hujan pertama musim ini. Jujur: kamu sempat angkat jemuran, atau sudah terlambat?', 'lucu', { doodle: 'hujan', rare: 'hujan_pertama' }),
+];
+
+// ───────────────────────────── Dek Berdua Saja ─────────────────────────────
+// Untuk dua orang. Dekat tanpa harus vulgar: awal mula, ritual kecil, hal yang
+// belum diucapkan, rencana, dan cek kabar yang jujur.
+
+const bd = withFit(deckCard('berdua'), DUO);
+
+const BERDUA_CARDS: DailyCard[] = [
+  bd('pertama-melihat', 'kenangan', 'Pertama melihatku', 'Ingat pertama kali melihatku? Aku sedang pakai apa, sedang apa, dan kamu berpikir apa?', 'nostalgia'),
+  bd('kapan-tahu', 'rahasia', 'Kapan kamu tahu', 'Kapan persisnya kamu tahu bahwa ini bukan sekadar kenalan biasa?', 'dalam', { doodle: 'kunci' }),
+  bd('ritual-kecil', 'pertanyaan', 'Ritual kecil kita', 'Ritual kecil kita yang paling kamu sayang, yang mungkin aku bahkan tidak sadar itu ritual?', 'syukur'),
+  bd('kagum-diam', 'rahasia', 'Belum pernah kubilang', 'Satu hal yang kamu kagumi dariku, tapi belum pernah kamu bilang langsung.', 'syukur', { doodle: 'segel-lilin' }),
+  bd('cek-didengar', 'pertanyaan', 'Cek jujur', 'Minggu ini, kamu merasa cukup kudengar? Jawab jujur. Angka satu sampai lima juga boleh.', 'dalam'),
+  bd('sedikit-lebih', 'pertanyaan', 'Sedikit lebih banyak', 'Satu hal yang ingin kamu dapat sedikit lebih banyak dariku bulan ini?', 'dalam'),
+  bd('sedikit-kurang', 'rahasia', 'Sedikit dikurangi', 'Satu kebiasaanku yang ingin kamu kurangi sedikit. Sampaikan baik-baik, aku janji tidak ngambek.', 'lucu'),
+  bd('rumah-nanti', 'pertanyaan', 'Rumah kita nanti', 'Satu detail di rumah kita nanti yang tidak bisa ditawar. Rak buku? Dapur luas? Jendela menghadap timur?', 'mimpi', { doodle: 'rumah' }),
+  bd('tujuh-puluh', 'pertanyaan', 'Waktu kita tua', 'Bayangkan kita umur tujuh puluh. Sore itu kita sedang apa?', 'mimpi', { doodle: 'senja' }),
+  bd('lagu-kita', 'pertanyaan', 'Lagu kita', 'Lagu yang jadi "lagu kita" tanpa pernah kita sepakati?', 'nostalgia', { doodle: 'gitar' }),
+  bd('tangan-kita', 'tantangan', 'Tangan kita', 'Potret tangan kita berdua hari ini. Berjauhan? Potret tanganmu memegang sesuatu dariku.', 'syukur'),
+  bd('catatan-selipan', 'tantangan', 'Catatan selipan', 'Tulis catatan kecil di kertas, selipkan di tempat yang akan kutemukan. Berjauhan? Potret saja dulu.', 'syukur', { doodle: 'amplop' }),
+  bd('debat-konyol', 'kenangan', 'Debat paling konyol', 'Pertengkaran kita yang paling konyol. Masih ingat siapa yang menang? Versimu, ya.', 'lucu'),
+  bd('belajar-darimu', 'pertanyaan', 'Ketularan', 'Kebiasaanku yang ketularan ke kamu dan sekarang sudah jadi milikmu sendiri?', 'syukur'),
+  bd('paling-dekat', 'pertanyaan', 'Paling dekat', 'Kapan minggu ini kamu merasa paling dekat denganku? Bisa jadi saat kita diam saja.', 'dalam'),
+  bd('jauh-walau-dekat', 'rahasia', 'Jauh walau dekat', 'Pernah merasa jauh dariku padahal kita duduk bersebelahan? Kapan itu?', 'dalam'),
+  bd('kencan-dua-puluh', 'pertanyaan', 'Kencan dua puluh ribu', 'Rencanakan kencan dengan modal dua puluh ribu rupiah. Kita ke mana, makan apa?', 'lucu'),
+  bd('asal-panggilan', 'kenangan', 'Asal panggilan', 'Dari mana asal panggilan sayang kita? Siapa yang mulai, dan kenapa itu yang menempel?', 'nostalgia'),
+  bd('lima-tahun-lagi', 'pertanyaan', 'Lima tahun lagi', 'Satu hal yang ingin sudah kita lakukan bersama lima tahun dari sekarang?', 'mimpi', { doodle: 'peta' }),
+  bd('air-mata-pertama', 'rahasia', 'Air mata pertama', 'Pertama kali kamu menangis di depanku, atau karena aku. Masih ingat rasanya?', 'dalam'),
+  bd('terima-kasih-kecil', 'pertanyaan', 'Terima kasih kecil', 'Hal kecil yang kulakukan minggu ini, yang ingin kamu ucapkan terima kasih untuknya?', 'syukur'),
+  bd('bau-aku', 'pertanyaan', 'Bau yang mengingatkan', 'Bau apa yang langsung membuatmu ingat aku? Sabun, parfum, atau bau hujan di jaketku?', 'nostalgia'),
+  bd('khawatir-kecil', 'rahasia', 'Khawatir tentang kita', 'Satu kekhawatiran kecil tentang kita yang belum kamu ucapkan. Kecil saja, kita bahas pelan-pelan.', 'dalam'),
+  bd('foto-pertama', 'kenangan', 'Foto pertama kita', 'Cari foto pertama kita berdua. Apa yang terjadi lima menit sebelum foto itu diambil?', 'nostalgia', { doodle: 'kamera' }),
+  bd('minggu-kosong', 'pertanyaan', 'Minggu tanpa rencana', 'Minggu tanpa rencana: kita bangun jam berapa, sarapan apa, dan sengaja tidak melakukan apa?', 'ringan', { doodle: 'cangkir' }),
+  bd('janji-kecil', 'tantangan', 'Janji kecil', 'Buat satu janji kecil untukku minggu ini, yang pasti bisa kamu tepati. Tulis di sini.', 'syukur', { doodle: 'pita' }),
+  bd('tiga-kata', 'pertanyaan', 'Aku dalam tiga kata', 'Gambarkan aku dalam tiga kata, tapi tidak boleh pakai kata yang biasa kamu pakai.', 'ringan'),
+  bd('saat-aku-tidur', 'rahasia', 'Saat aku tidur', 'Apa yang kamu pikirkan saat melihatku tidur? Jujur, walau isinya "kok mangap".', 'lucu', { doodle: 'bulan' }),
+  bd('langka-setahun-lagi', 'rahasia', 'Bertambah satu tahun', 'Hari jadi kita. Satu hal tentangku yang kamu sayangi sekarang, tapi belum kamu sadari setahun lalu?', 'syukur', { doodle: 'pita', rare: 'hari_jadi' }),
+];
+
+// ─────────────────────────── Dek Lingkaran Sahabat ───────────────────────────
+// Untuk lingkaran bertiga atau lebih: peran, lelucon internal, dan terima kasih
+// yang jarang diucapkan. Menyebut nama boleh, menjatuhkan jangan.
+
+const sb = withFit(deckCard('sahabat'), GRUP);
+
+const SAHABAT_CARDS: DailyCard[] = [
+  sb('paling-telat', 'pertanyaan', 'Pasti datang telat', 'Siapa di antara kita yang pasti datang paling telat, dan apa alasan andalannya?', 'lucu', { doodle: 'jam-pasir' }),
+  sb('kru-film', 'pertanyaan', 'Peranmu di sini', 'Kalau lingkaran ini kru film, kamu jadi apa? Sutradara, juru masak, atau yang pegang payung?', 'lucu'),
+  sb('asal-lelucon', 'kenangan', 'Asal lelucon', 'Lelucon internal kita yang paling awet. Masih ingat dari mana asalnya?', 'nostalgia'),
+  sb('pertama-ketemu', 'kenangan', 'Pertama ketemu', 'Ceritakan pertama kali kamu ketemu salah satu dari kami. Versimu, bukan versi dia.', 'nostalgia'),
+  sb('diam-diam-menolong', 'pertanyaan', 'Diam-diam menolong', 'Sebut satu orang di sini dan satu hal yang dia lakukan tahun ini, yang diam-diam menolongmu.', 'syukur'),
+  sb('paling-tersesat', 'pertanyaan', 'Paling mungkin tersesat', 'Siapa yang paling mungkin tersesat padahal sudah pakai peta di HP? Sebut nama, tanpa dendam.', 'lucu', { doodle: 'peta' }),
+  sb('tidur-duluan', 'pertanyaan', 'Tidur duluan', 'Kalau kita menginap bareng, siapa yang paling kuat begadang, dan siapa yang tidur duluan?', 'lucu', { doodle: 'bulan' }),
+  sb('serangan-zombi', 'pertanyaan', 'Kalau ada zombi', 'Kota diserang zombi. Siapa dari kita yang bertahan paling lama, dan siapa yang tumbang duluan?', 'lucu'),
+  sb('foto-kacau', 'kenangan', 'Foto paling kacau', 'Unggah foto bareng kita yang paling kacau. Mata merem, setengah wajah, semua sah.', 'lucu', { doodle: 'kamera' }),
+  sb('kebiasaan-kumpul', 'pertanyaan', 'Hanya kita yang paham', 'Kebiasaan kita kalau kumpul yang tidak akan dipahami orang luar?', 'nostalgia'),
+  sb('belum-pernah', 'pertanyaan', 'Belum pernah bareng', 'Satu hal yang belum pernah kita lakukan bareng dan harus terjadi tahun ini?', 'mimpi', { doodle: 'tiket' }),
+  sb('tetapkan-tanggal', 'tantangan', 'Tetapkan tanggal', 'Usulkan satu tanggal kumpul sungguhan, lengkap dengan tempatnya. Yang pertama setuju, bawa camilan.', 'ringan'),
+  sb('tanpa-kalian', 'rahasia', 'Kalau tak kenal kalian', 'Seperti apa hidupmu kalau tidak pernah kenal kami? Jujur, satu kalimat.', 'dalam'),
+  sb('salah-sangka', 'rahasia', 'Salah sangka', 'Kesan pertamamu tentang salah satu dari kami yang ternyata salah besar.', 'lucu'),
+  sb('nasihat-menempel', 'pertanyaan', 'Nasihat yang menempel', 'Nasihat dari salah satu dari kami yang masih kamu pakai sampai sekarang?', 'syukur'),
+  sb('penghidup-grup', 'pertanyaan', 'Penghidup grup', 'Siapa yang biasanya menghidupkan lagi grup yang sudah sepi berhari-hari? Kasih dia tepuk tangan.', 'syukur'),
+  sb('lagu-karaoke', 'pertanyaan', 'Lagu wajib karaoke', 'Lagu wajib kita kalau karaoke, dan siapa yang selalu rebutan mik?', 'lucu', { doodle: 'gitar' }),
+  sb('perjalanan-legendaris', 'kenangan', 'Perjalanan legendaris', 'Perjalanan bareng yang paling sering diceritakan ulang. Detail apa yang makin lama makin dilebih-lebihkan?', 'nostalgia', { doodle: 'peta' }),
+  sb('julukan-baru', 'pertanyaan', 'Julukan minggu ini', 'Beri julukan baru untuk satu orang di sini, berdasarkan kelakuannya minggu ini.', 'lucu'),
+  sb('paling-dirindukan', 'rahasia', 'Paling dirindukan', 'Siapa di sini yang paling kamu rindukan belakangan ini? Dia tidak perlu tahu. Atau perlu.', 'dalam'),
+  sb('jam-tujuh', 'tantangan', 'Jam tujuh malam', 'Tepat jam tujuh malam ini, semua potret apa yang ada di depan mata. Lihat nanti kita sedang di mana saja.', 'ringan', { doodle: 'jam-pasir' }),
+  sb('pesanan-andalan', 'pertanyaan', 'Tebak pesanannya', 'Tebak pesanan andalan satu orang di sini kalau kita makan di warung pecel lele.', 'lucu'),
+  sb('waktu-itu-ada', 'kenangan', 'Waktu itu kamu ada', 'Masa sulit saat salah satu dari kami datang tanpa diminta. Ceritakan, biar dia tahu itu berarti.', 'syukur'),
+  sb('kita-berubah', 'pertanyaan', 'Kita yang berubah', 'Apa yang paling berubah dari lingkaran ini sejak awal? Lebih baik, lebih aneh, atau dua-duanya?', 'dalam'),
+  sb('ramalan-sepuluh-tahun', 'tantangan', 'Kita sepuluh tahun lagi', 'Tulis satu ramalan untuk kita sepuluh tahun lagi. Kunci di kapsul, buka nanti.', 'mimpi', { doodle: 'surat-botol' }),
+  sb('paling-membela', 'pertanyaan', 'Paling cepat membela', 'Siapa yang paling cepat membelamu di depan orang lain, bahkan saat kamu salah?', 'syukur'),
+  sb('aturan-tak-tertulis', 'pertanyaan', 'Aturan tak tertulis', 'Satu aturan tak tertulis di lingkaran ini yang dipatuhi semua orang?', 'lucu'),
+  sb('pujian-beruntun', 'tantangan', 'Pujian beruntun', 'Puji tiga orang di sini, masing-masing satu kalimat, tanpa memakai kata "baik" atau "seru".', 'syukur'),
+  sb('langka-piala-tahunan', 'pertanyaan', 'Piala akhir tahun', 'Malam tahun baru. Bagikan piala khayalan: paling berjasa, paling kocak, paling banyak drama tahun ini?', 'lucu', { doodle: 'kembang-api', rare: 'malam_tahun_baru' }),
+];
+
+// ──────────────────────────── Dek Ruang Menulis ────────────────────────────
+// Ajakan menulis sekecil satu kalimat. Cocok untuk yang suka menulis maupun
+// yang baru mau mulai.
+
+const tl = deckCard('tulis');
+
+const TULIS_CARDS: DailyCard[] = [
+  tl('bau-masa-kecil', 'tantangan', 'Bau masa kecil', 'Gambarkan satu bau dari masa kecilmu dalam tiga kalimat, tanpa menyebut nama bendanya.', 'nostalgia', { doodle: 'pena' }),
+  tl('akhir-novel', 'tantangan', 'Akhir sebuah novel', 'Tulis kalimat terakhir sebuah novel tentang hari ini.', 'dalam', { doodle: 'buku' }),
+  tl('lima-puluh-kata', 'tantangan', 'Cerita lima puluh kata', 'Tulis cerita utuh tepat lima puluh kata. Ada awal, ada belokan, ada akhir.', 'ringan', { doodle: 'pena' }),
+  tl('surat-orang-asing', 'tantangan', 'Untuk orang asing', 'Tulis surat pendek untuk orang asing yang kamu lihat hari ini. Dia tidak akan pernah membacanya.', 'dalam', { doodle: 'amplop' }),
+  tl('dongeng-hari-ini', 'tantangan', 'Pada zaman dahulu', 'Tulis ulang hari ini sebagai dongeng. Mulai dengan "Pada zaman dahulu kala…" dan jadikan tenggat kerja seekor naga.', 'lucu', { doodle: 'buku' }),
+  tl('haiku-perjalanan', 'tantangan', 'Haiku perjalanan', 'Tulis haiku 5-7-5 tentang perjalananmu hari ini. Angkot, motor, atau dari kasur ke dapur.', 'ringan', { doodle: 'sepeda' }),
+  tl('pantun-untuk-kami', 'tantangan', 'Pantun untuk kami', 'Buat satu pantun empat baris untuk salah satu dari kami. Sampiran boleh asal, isi harus kena.', 'lucu'),
+  tl('puisi-daftar', 'tantangan', 'Puisi daftar', 'Tulis puisi berupa daftar tujuh benda di sekitarmu, masing-masing dengan satu kata sifat yang tak terduga.', 'ringan'),
+  tl('percakapan-curian', 'tantangan', 'Percakapan curian', 'Tulis tiga baris percakapan yang kamu dengar hari ini, persis aslinya. Biarkan tanpa penjelasan.', 'ringan'),
+  tl('mata-kucing', 'tantangan', 'Dari mata kucing', 'Ceritakan pagimu dari sudut pandang kucing, cicak, atau tanaman di jendelamu.', 'lucu', { doodle: 'kucing' }),
+  tl('warna-tanpa-nama', 'tantangan', 'Warna tanpa nama', 'Gambarkan warna langit sore ini tanpa menyebut nama warna apa pun.', 'dalam', { doodle: 'senja' }),
+  tl('enam-kata', 'tantangan', 'Kisah enam kata', 'Ceritakan minggumu dalam enam kata. Hanya enam.', 'dalam'),
+  tl('surat-untuk-benda', 'tantangan', 'Surat untuk benda', 'Tulis surat terima kasih untuk satu benda yang setia menemanimu. Helm, kasur, atau termos.', 'syukur', { doodle: 'amplop' }),
+  tl('ingatan-pertama', 'kenangan', 'Ingatan paling awal', 'Tulis ingatan paling awal yang kamu punya, sebagai kalimat pembuka sebuah cerita.', 'nostalgia'),
+  tl('pintu-rumah-lama', 'kenangan', 'Di balik pintu', 'Masuki rumah masa kecilmu dalam ingatan. Tulis apa yang ada di balik pintu pertama.', 'nostalgia', { doodle: 'rumah' }),
+  tl('tanpa-aku', 'tantangan', 'Tanpa kata aku', 'Ceritakan hari ini dalam empat kalimat tanpa memakai kata "aku" atau "saya".', 'ringan'),
+  tl('resep-perasaan', 'tantangan', 'Resep perasaan', 'Tulis resep untuk satu perasaanmu hari ini: bahan, takaran, cara memasak, lama dihidangkan.', 'lucu'),
+  tl('cuaca-kepala', 'tantangan', 'Laporan cuaca batin', 'Tulis laporan cuaca untuk isi kepalamu, gaya penyiar berita jam enam pagi.', 'lucu', { doodle: 'awan' }),
+  tl('benda-hilang', 'pertanyaan', 'Ke mana ia pergi', 'Satu benda yang hilang dan tak pernah ketemu. Tulis ke mana ia pergi, dan sedang apa ia sekarang.', 'mimpi'),
+  tl('pesan-dalam-botol', 'rahasia', 'Pesan dalam botol', 'Tulis tiga baris untuk dimasukkan ke botol dan dilempar ke laut. Untuk siapa pun yang menemukannya.', 'mimpi', { doodle: 'surat-botol' }),
+  tl('lima-indra', 'tantangan', 'Detik ini, lima indra', 'Tulis apa yang kamu lihat, dengar, cium, kecap, dan raba detik ini. Satu kalimat untuk tiap indra.', 'ringan'),
+  tl('judul-bab', 'pertanyaan', 'Judul bab ini', 'Kalau hidupmu sebuah buku, bab yang sedang berjalan sekarang judulnya apa?', 'dalam', { doodle: 'buku' }),
+  tl('tokoh-pinggir-jalan', 'tantangan', 'Tokoh pinggir jalan', 'Pilih satu orang yang kamu lihat hari ini: tukang parkir, penjual cilok, satpam. Karang rahasia hidupnya.', 'mimpi'),
+  tl('untuk-umur-tujuh', 'tantangan', 'Untuk kamu umur tujuh', 'Tulis tiga kalimat untuk dirimu yang berumur tujuh tahun, pakai bahasa yang bisa dia pahami.', 'dalam', { doodle: 'surat-botol' }),
+  tl('ciptakan-kata', 'tantangan', 'Ciptakan kata', 'Ciptakan satu kata baru untuk perasaan yang belum punya nama. Tulis artinya seperti di kamus.', 'lucu', { doodle: 'buku' }),
+  tl('akhir-lain', 'tantangan', 'Akhir yang lain', 'Ambil satu kejadian kecil hari ini, lalu tulis akhir lain yang jauh lebih aneh.', 'mimpi'),
+  tl('mulai-dari-lalu', 'tantangan', 'Mulai dari "lalu"', 'Tulis satu paragraf yang dimulai dengan kata "Lalu…", seolah ceritanya sudah berjalan sejak tadi.', 'ringan', { doodle: 'pena' }),
+  tl('hujan-tanpa-hujan', 'tantangan', 'Hujan tanpa kata hujan', 'Tulis satu paragraf tentang hujan tanpa memakai kata "hujan", "air", atau "basah".', 'nostalgia', { doodle: 'hujan' }),
+];
+
+// ──────────────────────────── Dek Tubuh & Rasa ────────────────────────────
+// Mendengarkan badan pelan-pelan. Hangat, tidak klinis, tidak menggurui.
+// Tidak pernah menanyakan berat badan, angka, atau diagnosis.
+
+const tb = deckCard('tubuh');
+
+const TUBUH_CARDS: DailyCard[] = [
+  tb('hari-di-badan', 'pertanyaan', 'Hari ini menetap di', 'Kalau hari ini menetap di satu bagian tubuhmu, di mana? Bahu, perut, tenggorokan, atau dada?', 'dalam'),
+  tb('makanan-penghibur', 'pertanyaan', 'Makanan penghibur', 'Makanan yang menghiburmu minggu ini? Mi rebus jam sebelas malam juga dihitung.', 'syukur', { doodle: 'cangkir' }),
+  tb('tidur-semalam', 'pertanyaan', 'Tidur semalam', 'Tidurmu semalam mirip apa: batu, ombak, atau sinyal yang putus-putus?', 'lucu', { doodle: 'bulan' }),
+  tb('menang-kecil', 'pertanyaan', 'Menang kecil', 'Satu kemenangan kecil hari ini. Bangun tanpa menunda alarm juga kemenangan.', 'syukur', { doodle: 'bintang' }),
+  tb('butuh-besok', 'pertanyaan', 'Bekal untuk besok', 'Apa yang kamu butuhkan besok supaya harinya sedikit lebih ringan?', 'dalam', { doodle: 'matahari' }),
+  tb('regang-sebentar', 'tantangan', 'Regangkan sebentar', 'Berdiri, angkat tangan setinggi mungkin, tahan lima napas. Bagian mana yang paling berterima kasih?', 'ringan'),
+  tb('empat-napas', 'tantangan', 'Empat napas', 'Tarik napas empat hitungan, buang enam hitungan. Ulangi empat kali, lalu tulis satu kata.', 'dalam'),
+  tb('botol-minum', 'tantangan', 'Botol minummu', 'Potret botol atau gelas minummu. Sudah berapa kali diisi ulang hari ini?', 'ringan', { doodle: 'cangkir' }),
+  tb('kata-perut', 'pertanyaan', 'Kata perutmu', 'Kalau perutmu bisa bicara hari ini, dia bilang apa? "Lapar", "kenyang", atau "kenapa pedas lagi"?', 'lucu'),
+  tb('rasa-tanpa-nama', 'pertanyaan', 'Rasa tanpa nama', 'Perasaan hari ini yang belum ketemu namanya. Gambarkan saja: warnanya, beratnya, suhunya.', 'dalam'),
+  tb('pelukan-lama', 'pertanyaan', 'Pelukan terakhir', 'Kapan terakhir kamu dipeluk lama, lebih dari tiga detik? Dari siapa?', 'dalam'),
+  tb('yang-lembut', 'tantangan', 'Yang paling lembut', 'Cari benda paling lembut di dekatmu, pegang sebentar. Potret, lalu ceritakan rasanya di tangan.', 'ringan'),
+  tb('jalan-setengah', 'tantangan', 'Jalan lebih pelan', 'Jalan seratus langkah dengan kecepatan setengah dari biasanya. Apa yang tiba-tiba kelihatan?', 'dalam', { doodle: 'peta' }),
+  tb('capek-jenis', 'pertanyaan', 'Capek jenis apa', 'Capekmu hari ini capek badan, capek kepala, atau capek hati? Masing-masing butuh obat yang beda.', 'dalam'),
+  tb('lima-menit-matahari', 'tantangan', 'Lima menit matahari', 'Berdiri lima menit di bawah matahari pagi atau sore. Potret bayanganmu sebagai bukti.', 'ringan', { doodle: 'matahari' }),
+  tb('sinyal-diabaikan', 'pertanyaan', 'Sinyal dari badan', 'Sinyal kecil dari badanmu belakangan ini yang sering kamu abaikan? Pegal, haus, atau mata yang perih?', 'dalam'),
+  tb('paling-segar', 'pertanyaan', 'Paling segar', 'Momen paling segar hari ini: mandi, cuci muka, atau tegukan pertama es teh?', 'ringan'),
+  tb('terakhir-menangis', 'rahasia', 'Terakhir menangis', 'Kapan terakhir kamu menangis, dan apakah sesudahnya terasa lebih lega?', 'dalam'),
+  tb('tidur-siang', 'pertanyaan', 'Soal tidur siang', 'Tidur siang buatmu: kemewahan, kebutuhan, atau kenangan masa kecil yang tak pernah kembali?', 'lucu'),
+  tb('masakan-saat-sakit', 'kenangan', 'Masakan saat sakit', 'Makanan yang dibuatkan untukmu waktu kecil saat sedang sakit. Siapa yang membuatnya?', 'nostalgia', { doodle: 'labu' }),
+  tb('tangan-seharian', 'tantangan', 'Tangan seharian', 'Potret tanganmu di ujung hari. Satu hal yang sudah mereka kerjakan untukmu hari ini?', 'syukur'),
+  tb('bagian-disukai', 'rahasia', 'Bagian yang disukai', 'Satu bagian tubuhmu yang diam-diam kamu sukai. Boleh sesederhana alis atau jempol kaki.', 'syukur'),
+  tb('berani-menolak', 'pertanyaan', 'Berani menolak', 'Satu hal yang hari ini berani kamu tolak, supaya badanmu bisa istirahat?', 'dalam'),
+  tb('suhu-hati', 'pertanyaan', 'Suhu hatimu', 'Suhu hatimu hari ini: hangat kuku, mendidih, atau dingin kulkas?', 'lucu'),
+  tb('sepuluh-menit-tanpa-hp', 'tantangan', 'Sebelum tidur', 'Malam ini, taruh HP sepuluh menit sebelum tidur. Besok ceritakan bedanya.', 'ringan', { doodle: 'lampu' }),
+  tb('rawat-diri', 'pertanyaan', 'Cara merawat diri', 'Cara paling sederhana kamu merawat diri, yang hampir selalu berhasil?', 'syukur', { doodle: 'penyiram' }),
+  tb('turunkan-bahu', 'tantangan', 'Turunkan bahu', 'Cek bahumu sekarang. Naik ke telinga? Turunkan pelan-pelan, lalu tulis apa yang membuatnya naik.', 'ringan'),
+  tb('rasa-hari-ini', 'pertanyaan', 'Rasa di lidah', 'Rasa paling kuat yang mampir di lidahmu hari ini? Pahit kopi, asam mangga muda, atau manis teh warung?', 'ringan', { doodle: 'stroberi' }),
+];
+
 export const DECKS: Deck[] = [
   {
     id: 'dasar',
@@ -433,5 +665,53 @@ export const DECKS: Deck[] = [
     priceIdr: 25000,
     doodle: 'rumah',
     cards: ORTU_CARDS,
+  },
+  {
+    id: 'renungan-dalam',
+    name: 'Renungan Dalam',
+    description: 'Pertanyaan yang bikin berhenti sebentar: tentang waktu, takut, maaf, dan orang yang sedang kamu jadi.',
+    priceIdr: 0,
+    doodle: 'lilin',
+    cards: RENUNG_CARDS,
+  },
+  {
+    id: 'seru-receh',
+    name: 'Seru & Receh',
+    description: 'Ranking gorengan, pendapat panas, dan isi tas paling random. Receh, tapi diam-diam membuka banyak hal.',
+    priceIdr: 0,
+    doodle: 'dadu',
+    cards: RECEH_CARDS,
+  },
+  {
+    id: 'berdua-saja',
+    name: 'Berdua Saja',
+    description: 'Untuk dua orang. Awal mula, ritual kecil, hal yang belum sempat diucapkan, dan rencana yang disusun pelan-pelan.',
+    priceIdr: 0,
+    doodle: 'kunci',
+    cards: BERDUA_CARDS,
+  },
+  {
+    id: 'lingkaran-sahabat',
+    name: 'Lingkaran Sahabat',
+    description: 'Siapa yang paling telat, lelucon yang tak bisa dijelaskan ke orang luar, dan terima kasih yang jarang diucapkan.',
+    priceIdr: 0,
+    doodle: 'cangkir',
+    cards: SAHABAT_CARDS,
+  },
+  {
+    id: 'ruang-menulis',
+    name: 'Ruang Menulis',
+    description: 'Ajakan menulis sekecil satu kalimat: bau masa kecil, haiku perjalanan, dan dongeng tentang hari ini.',
+    priceIdr: 0,
+    doodle: 'pena',
+    cards: TULIS_CARDS,
+  },
+  {
+    id: 'tubuh-rasa',
+    name: 'Tubuh & Rasa',
+    description: 'Mendengarkan badan pelan-pelan: tidur, makanan yang menghibur, napas panjang, dan kemenangan kecil.',
+    priceIdr: 0,
+    doodle: 'tunas',
+    cards: TUBUH_CARDS,
   },
 ];

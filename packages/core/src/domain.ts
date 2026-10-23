@@ -174,7 +174,7 @@ export interface DropPayload {
    */
   layout?: PageLayout;
   /** Gaya teks di halaman. */
-  style?: { font?: 'mono' | 'hand'; size?: number; color?: string; align?: 'left' | 'center'; /** Stiker: warna isi pastel. */ fill?: string; /** Stiker: tepi putih seperti stiker vinyl (bawaan nyala). */ cut?: boolean };
+  style?: { font?: 'mono' | 'hand' | 'serif'; size?: number; color?: string; align?: 'left' | 'center'; /** Stiker: warna isi pastel. */ fill?: string; /** Stiker: tepi putih seperti stiker vinyl (bawaan nyala). */ cut?: boolean };
   /** Untuk kind 'sticker': id doodle & warnanya. */
   sticker?: string;
   color?: string;

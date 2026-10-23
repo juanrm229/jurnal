@@ -4,6 +4,7 @@ import { Doodle } from './kit';
 const TABS = [
   { to: '/hari', label: 'hari ini', icon: 'ui-hari-ini' },
   { to: '/lingkaran', label: 'lingkaran', icon: 'ui-lingkaran' },
+  { to: '/karya', label: 'karya', icon: 'pena' },
   { to: '/kenangan', label: 'kenangan', icon: 'ui-kenangan' },
   { to: '/aku', label: 'aku', icon: 'ui-aku' },
 ];

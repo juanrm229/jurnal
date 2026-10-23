@@ -361,3 +361,12 @@ a,
     transform: rotateY(35deg) translateX(-30%);
   }
 }
+@media (max-width: 400px) {
+  .today-top .h2 {
+    display: none;
+  }
+  .today-top .icon-btn {
+    min-width: 40px;
+    padding: 6px;
+  }
+}

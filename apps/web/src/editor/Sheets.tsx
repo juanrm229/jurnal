@@ -1,4 +1,4 @@
-import { COPY, type DailyCard, HELP_RESOURCES, type MoodCode, type NightQuestion, type SongRef } from '@sehari/core';
+import { COPY, type DailyCard, DECKS, HELP_RESOURCES, type MoodCode, type NightQuestion, type SongRef } from '@sehari/core';
 import { DOODLES } from '@sehari/doodles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchSongMeta, parseSongUrl } from '@/lib/songs';
@@ -157,31 +157,70 @@ export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolea
   );
 }
 
-export function PromptSheet({ open, onClose, card, question, onPick }: { open: boolean; onClose: () => void; card: DailyCard; question: NightQuestion | null; onPick: (p: { prompt: string; cardId?: string; questionId?: string; kind: 'card' | 'answer' }) => void }) {
+const KIND_LABEL: Record<string, string> = { pertanyaan: 'pertanyaan', tantangan: 'tantangan', kenangan: 'kenangan', rahasia: 'rahasia' };
+const KIND_TINT: Record<string, string> = { pertanyaan: 'var(--sticky-yellow)', tantangan: 'var(--sticky-green)', kenangan: 'var(--sticky-peach)', rahasia: 'var(--sticky-blue)' };
+
+function CardFace({ card, label, onClick, big }: { card: DailyCard; label?: string; onClick: () => void; big?: boolean }) {
   return (
-    <Sheet open={open} onClose={onClose} title="kartu & pertanyaan">
+    <button className={`card-face ${big ? 'big' : ''}`} style={{ '--tint': KIND_TINT[card.kind] } as React.CSSProperties} onClick={onClick}>
+      <span className="card-face-top">
+        <span>{label ?? KIND_LABEL[card.kind]}</span>
+        <Doodle id={card.doodle ?? 'kartu'} size={big ? 34 : 24} color="currentColor" />
+      </span>
+      <span className="card-face-title">{card.title}</span>
+      <span className="card-face-body">{card.body}</span>
+      <span className="card-face-foot">{card.kind === 'rahasia' ? 'terbuka setelah kalian berdua menjawab' : 'ketuk untuk menjawab di halaman'}</span>
+    </button>
+  );
+}
+
+export function PromptSheet({ open, onClose, card, question, onPick }: { open: boolean; onClose: () => void; card: DailyCard; question: NightQuestion | null; onPick: (p: { prompt: string; cardId?: string; questionId?: string; kind: 'card' | 'answer' }) => void }) {
+  const [drawn, setDrawn] = useState<DailyCard | null>(null);
+  const [deck, setDeck] = useState<string | null>(null);
+  const [flip, setFlip] = useState(0);
+  const all = useMemo(() => DECKS.flatMap((d) => d.cards.filter((c) => !c.rare)), []);
+  const pick = (c: DailyCard) => onPick({ prompt: c.body, cardId: c.id, kind: 'card' });
+  const shown = drawn ?? card;
+  const deckCards = deck ? (DECKS.find((d) => d.id === deck)?.cards ?? []).filter((c) => !c.rare) : [];
+  return (
+    <Sheet open={open} onClose={onClose} title="kartu">
       <div className="col gap-lg">
-        <button className="card press" style={{ background: 'var(--sticky-yellow)', color: '#16161a' }} onClick={() => onPick({ prompt: card.body, cardId: card.id, kind: 'card' })}>
-          <div className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
-            <Doodle id={card.doodle ?? 'kartu'} size={44} />
-            <div className="grow">
-              <div className="label" style={{ color: '#5a5470' }}>{card.rare ? 'kartu langka' : 'kartu pagi'} · {card.title}</div>
-              <div>{card.body}</div>
-            </div>
-          </div>
+        <div key={flip} className="card-flip">
+          <CardFace big card={shown} label={drawn ? `${KIND_LABEL[shown.kind]} · ${DECKS.find((d) => d.cards.includes(shown))?.name.replace(/^Dek /, '') ?? ''}` : card.rare ? 'kartu langka hari ini' : 'kartu hari ini'} onClick={() => pick(shown)} />
+        </div>
+        <button className="btn soft" onClick={() => { setDrawn(all[Math.floor(Math.random() * all.length)]!); setFlip((n) => n + 1); }}>
+          <Doodle id="ui-dadu" size={20} color="currentColor" /> tarik kartu lain
         </button>
         {question ? (
-          <button className="card press" style={{ background: 'var(--sticky-blue)', color: '#16161a' }} onClick={() => onPick({ prompt: question.text, questionId: question.id, kind: 'answer' })}>
-            <div className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
-              <Doodle id="bulan" size={44} />
-              <div className="grow">
-                <div className="label" style={{ color: '#5a5470' }}>pertanyaan malam</div>
-                <div>{question.text}</div>
-                <div className="tiny" style={{ opacity: 0.7, marginTop: 4 }}>Jawaban semua orang terbuka bersamaan saat disegel.</div>
-              </div>
-            </div>
+          <button className="card-face night" onClick={() => onPick({ prompt: question.text, questionId: question.id, kind: 'answer' })}>
+            <span className="card-face-top">
+              <span>pertanyaan malam</span>
+              <Doodle id="bulan" size={24} color="currentColor" />
+            </span>
+            <span className="card-face-body">{question.text}</span>
+            <span className="card-face-foot">jawaban semua orang terbuka bersamaan saat disegel</span>
           </button>
         ) : null}
+        <div>
+          <span className="label">jelajahi dek</span>
+          <div className="chip-row mt">
+            {DECKS.map((d) => (
+              <button key={d.id} className={`pill sm ${deck === d.id ? 'active' : ''}`} onClick={() => setDeck(deck === d.id ? null : d.id)}>
+                <Doodle id={d.doodle} size={14} color="currentColor" /> {d.name.replace(/^Dek /, '')} <span style={{ opacity: 0.6 }}>{d.cards.length}</span>
+              </button>
+            ))}
+          </div>
+          {deck ? (
+            <>
+              <p className="tiny soft">{DECKS.find((d) => d.id === deck)?.description}</p>
+              <div className="card-list">
+                {deckCards.map((c) => (
+                  <CardFace key={c.id} card={c} onClick={() => pick(c)} />
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     </Sheet>
   );

@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
 import { Link, useParams } from '@/lib/router';
+import { memberName, useCircles } from '@/lib/data';
+import { excerpt, useCircleWorks } from '@/lib/works';
+import { Cover } from '@/pages/karya/Cover';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
 
@@ -129,6 +132,8 @@ export default function CircleHome() {
         </section>
       ) : null}
 
+      <CircleWorks circleId={id} />
+
       <section className="section">
         <span className="label">cerita kita</span>
         <div className="row wrap">
@@ -160,5 +165,32 @@ export default function CircleHome() {
         </div>
       </section>
     </main>
+  );
+}
+
+function CircleWorks({ circleId }: { circleId: string }) {
+  const me = useMe();
+  const { circles } = useCircles();
+  const { works } = useCircleWorks(circleId);
+  const list = works.filter((w) => w.work);
+  return (
+    <section className="section">
+      <div className="row between">
+        <span className="label">karya di lingkaran ini</span>
+        <Link to="/karya/tulis?jenis=esai" className="pill sm">+ tulis</Link>
+      </div>
+      {list.length === 0 ? (
+        <p className="tiny soft">Belum ada esai, cerpen, atau puisi yang diterbitkan di sini.</p>
+      ) : (
+        <div className="mini-shelf">
+          {list.slice(0, 12).map((w) => (
+            <Link key={w.wire.id} to={`/karya/${w.wire.id}`} className="mini-book" title={w.work!.title}>
+              <Cover work={w.work} author={w.wire.authorId === me.user.id ? 'kamu' : memberName(circles, w.wire.authorId, me.user.id)} size="sm" />
+              <span className="tiny soft">{excerpt(w.work!.body, 50)}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

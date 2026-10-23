@@ -11,6 +11,7 @@ import { useSession } from '@/lib/session';
 import { applyTheme, currentTheme, INKS, PAPERS, setTheme } from '@/lib/theme';
 import { Scene } from '@/ui/art';
 import { Doodle } from '@/ui/kit';
+import { Cover } from './karya/Cover';
 
 const localDay = () => {
   const d = new Date();
@@ -219,6 +220,27 @@ export default function Landing() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* 6b — Karya */}
+      <section className="l-sec">
+        <Reveal className="l-head">
+          <span className="label">ruang menulis</span>
+          <h2 className="l-h2">
+            dan untuk yang lebih panjang: <span className="ink">karya.</span>
+          </h2>
+          <p className="soft">Esai pribadi, cerpen, puisi, catatan panjang, surat yang tidak pernah dikirim. Satu rak untuk semua tulisanmu — simpan sendiri, atau terbitkan hanya untuk lingkaranmu.</p>
+        </Reveal>
+        <Reveal>
+          <div className="l-works">
+            <Cover work={{ v: 1, kind: 'esai', title: 'Tentang Pindah Kos untuk Ketiga Kalinya', body: '', cover: { tone: 'krem', doodle: 'kunci-rumah' } }} author="naya" />
+            <Cover work={{ v: 1, kind: 'cerpen', title: 'Kereta Terakhir ke Bogor', subtitle: 'sebuah cerita pendek', body: '', cover: { tone: 'merah-bata', doodle: 'kereta' } }} author="bima" />
+            <Cover work={{ v: 1, kind: 'puisi', title: 'Hujan, dan Hal-hal yang Tidak Kita Bicarakan', body: '', cover: { tone: 'malam', doodle: 'bulan' } }} author="sari" />
+          </div>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <p className="l-excerpt">Setiap kali pindah, aku selalu membawa benda yang sama: sebuah sendok yang tidak pernah kupakai. Ibu menyelipkannya di koper pertama, katanya supaya aku ingat makan. Sudah tiga kos, dua kota, dan satu patah hati — sendok itu masih di sana.</p>
+        </Reveal>
       </section>
 
       {/* 7 — Privasi */}

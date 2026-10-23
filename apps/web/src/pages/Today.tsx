@@ -320,7 +320,7 @@ export default function Today() {
       return (
         <>
           <DockBtn icon="pena" label="ubah" onClick={() => setEditing(it.id)} />
-          <DockBtn icon="ui-teks" label={p.style?.font === 'hand' ? 'mesin tik' : 'tulisan tangan'} onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, font: x.style?.font === 'hand' ? 'mono' : 'hand' } }))} />
+          <DockBtn icon="ui-teks" label={p.style?.font === 'hand' ? 'tangan' : p.style?.font === 'serif' ? 'sastra' : 'mesin tik'} onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, font: cycle(['mono', 'hand', 'serif'] as const, x.style?.font ?? 'mono') } }))} />
           <DockBtn icon="ui-cari" label="ukuran" onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, size: cycle([TEXT_SIZES.s, TEXT_SIZES.m, TEXT_SIZES.l, TEXT_SIZES.xl], (x.style?.size ?? TEXT_SIZES.m) as 38) } }))} />
           <DockBtn swatch={p.style?.color ?? 'var(--text)'} label="warna" onClick={() => restyle(it.id, (x) => ({ ...x, style: { ...x.style, color: cycle(['var(--text)', ...LINES] as const, (x.style?.color ?? 'var(--text)') as 'var(--text)') } }))} />
           {common}
@@ -379,6 +379,9 @@ export default function Today() {
           ))}
           <Link to="/lingkaran" className="icon-btn" aria-label="lingkaran">
             <Doodle id="ui-lingkaran" size={22} />
+          </Link>
+          <Link to="/karya" className="icon-btn" aria-label="karya">
+            <Doodle id="pena" size={22} />
           </Link>
           <Link to="/kenangan" className="icon-btn" aria-label="kenangan">
             <Doodle id="ui-kenangan" size={22} />

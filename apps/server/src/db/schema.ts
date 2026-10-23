@@ -556,3 +556,51 @@ export const blobs = pgTable('blobs', {
   data: bytea('data').notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
 });
+
+// ── Karya ───────────────────────────────────────────────────────────────────
+
+export const works = pgTable(
+  'works',
+  {
+    id: text('id').primaryKey(),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('draft'),
+    envelope: jsonb('envelope').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+    publishedAt: ts('published_at'),
+  },
+  (t) => [index('works_author_idx').on(t.authorId)],
+);
+
+export const workCircles = pgTable(
+  'work_circles',
+  {
+    workId: text('work_id').notNull().references(() => works.id, { onDelete: 'cascade' }),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.workId, t.circleId] }), index('work_circles_circle_idx').on(t.circleId)],
+);
+
+export const workReactions = pgTable(
+  'work_reactions',
+  {
+    workId: text('work_id').notNull().references(() => works.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.workId, t.userId, t.kind] })],
+);
+
+export const workNotes = pgTable(
+  'work_notes',
+  {
+    id: text('id').primaryKey(),
+    workId: text('work_id').notNull().references(() => works.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('work_notes_work_idx').on(t.workId)],
+);
