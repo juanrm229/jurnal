@@ -11,3 +11,4 @@ export * from './help';
 export * from './microcopy';
 export * from './writingPrompts';
 export * from './dateIdeas';
+export * from './tentangKita';

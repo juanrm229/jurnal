@@ -1,0 +1,504 @@
+/* Tentang Kita — permainan kartu ngobrol. */
+
+.tk {
+  --tk-night: #161b3d;
+  --tk-night-2: #2c2a5c;
+  --tk-moon: #f1e6c4;
+}
+
+.tk-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 18px;
+}
+.tk-title {
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(38px, 11vw, 52px);
+  line-height: 1;
+  margin: 6px 0 0;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.tk-fan {
+  position: relative;
+  height: 112px;
+  width: 190px;
+}
+.tk-mini {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 74px;
+  height: 100px;
+  margin-left: -37px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-lift);
+  border: 1px solid var(--card-edge);
+  transform-origin: 50% 120%;
+  animation: tk-fan-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.tk-mini:nth-child(1) {
+  rotate: -16deg;
+  translate: -34px 6px;
+}
+.tk-mini:nth-child(2) {
+  rotate: 14deg;
+  translate: 34px 6px;
+  animation-delay: 0.08s;
+}
+.tk-mini:nth-child(3) {
+  animation-delay: 0.16s;
+}
+@keyframes tk-fan-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.9);
+  }
+}
+
+/* Warna per jenis kartu */
+.k-tanya {
+  --tk-bg: var(--card);
+  --tk-fg: var(--text);
+  --tk-accent: var(--ink);
+}
+.k-cermin {
+  --tk-bg: var(--sticky-peach);
+  --tk-fg: #3a2a24;
+  --tk-accent: #b0563c;
+}
+.k-tebak {
+  --tk-bg: var(--sticky-green);
+  --tk-fg: #1f3326;
+  --tk-accent: #2f7a4b;
+}
+.k-dilema {
+  --tk-bg: var(--sticky-blue);
+  --tk-fg: #1d2540;
+  --tk-accent: #2a3fb0;
+}
+.k-liar {
+  --tk-bg: var(--sticky-yellow);
+  --tk-fg: #3a3220;
+  --tk-accent: #a56a00;
+}
+.k-renung {
+  --tk-bg: radial-gradient(1.5px 1.5px at 18% 22%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 72% 14%, #fff8 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 86% 64%, #fff7 50%, transparent 51%), radial-gradient(1px 1px at 34% 78%, #fff6 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 56% 42%, #fff5 50%, transparent 51%), linear-gradient(160deg, var(--tk-night-2, #2c2a5c), var(--tk-night, #161b3d));
+  --tk-fg: #f4eedc;
+  --tk-accent: #e9d9a8;
+}
+.tk-mini,
+.tk-card,
+.tk-fav-card {
+  background: var(--tk-bg);
+  color: var(--tk-accent);
+}
+
+/* Atur */
+.tk-invite {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.tk-rels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.tk-rel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1.5px solid var(--card-edge);
+  color: var(--text);
+  text-align: left;
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+}
+.tk-rel b {
+  font-family: var(--serif-display);
+  font-weight: 500;
+  font-size: 18px;
+}
+.tk-rel.on {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, var(--card));
+  transform: translateY(-2px);
+}
+.tk-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+}
+.tk-player input {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  width: 9ch;
+  min-width: 0;
+  outline: none;
+}
+.tk-player button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.6;
+}
+.tk-player.add {
+  border-style: dashed;
+  opacity: 0.85;
+}
+.tk-levels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tk-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border-radius: 16px;
+  border: 1.5px solid var(--card-edge);
+  background: var(--card);
+  color: var(--text);
+  opacity: 0.6;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+.tk-level.on {
+  opacity: 1;
+  border-color: var(--ink);
+}
+.tk-dots::before {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--tk-accent, var(--ink));
+}
+.tk-dots[data-lv='1']::before {
+  content: '●○○';
+}
+.tk-dots[data-lv='2']::before {
+  content: '●●○';
+}
+.tk-dots[data-lv='3']::before {
+  content: '●●●';
+}
+.tk-kinds {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 560px) {
+  .tk-kinds {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.tk-kind {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid transparent;
+  background: var(--tk-bg);
+  color: var(--tk-fg);
+  text-align: left;
+  opacity: 0.45;
+  filter: saturate(0.6);
+  transition: opacity 0.2s, filter 0.2s, border-color 0.2s;
+}
+.tk-kind > span {
+  display: flex;
+  flex-direction: column;
+}
+.tk-kind svg {
+  color: var(--tk-accent);
+  flex: none;
+}
+.tk-kind.on {
+  opacity: 1;
+  filter: none;
+  border-color: color-mix(in srgb, var(--tk-accent) 45%, transparent);
+}
+.tk-start {
+  width: 100%;
+  min-height: 56px;
+  font-size: 18px;
+  margin-top: 8px;
+}
+
+/* Main */
+.tk-play {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.tk-top {
+  gap: 8px;
+  min-height: 52px;
+}
+.tk-progress {
+  width: min(220px, 60vw);
+  height: 5px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  overflow: hidden;
+}
+.tk-progress span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+.tk-turn {
+  margin: 6px 0 10px;
+  font-size: 15px;
+  color: var(--text-soft);
+}
+.tk-turn b {
+  color: var(--ink);
+  font-family: var(--hand);
+  font-size: 24px;
+  font-weight: 700;
+}
+.tk-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: min(56vh, 420px);
+  padding: 22px 22px 18px;
+  border-radius: 28px;
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--shadow-lift);
+  animation: tk-deal 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  overflow: hidden;
+}
+.tk-card::after {
+  /* garis tipis seperti tepi kartu cetak */
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--tk-accent) 22%, transparent);
+  pointer-events: none;
+}
+@keyframes tk-deal {
+  from {
+    opacity: 0;
+    transform: translateY(36px) rotate(-3deg) scale(0.96);
+  }
+}
+.tk-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tk-kind-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tk-q {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-family: var(--serif-display);
+  font-weight: 450;
+  font-size: clamp(24px, 6.6vw, 32px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--tk-fg);
+  text-wrap: pretty;
+}
+.tk-q.long {
+  font-size: clamp(21px, 5.6vw, 27px);
+}
+.tk-deeper {
+  margin: 0;
+  padding-left: 14px;
+  border-left: 2px solid var(--tk-accent);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--tk-fg);
+  animation: rise 0.35s ease both;
+}
+.tk-hint {
+  margin: 0;
+  opacity: 0.75;
+  color: var(--tk-fg);
+}
+.tk-dilema {
+  display: grid;
+  gap: 8px;
+}
+.tk-side {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid color-mix(in srgb, var(--tk-accent) 30%, transparent);
+  background: color-mix(in srgb, #fff 55%, transparent);
+  color: var(--tk-fg);
+  font-family: var(--serif);
+  font-size: 16px;
+  text-align: left;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s;
+}
+.tk-side.on {
+  border-color: var(--tk-accent);
+  background: #fff;
+  transform: scale(1.02);
+}
+.tk-side-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--tk-accent);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.tk-tebak,
+.tk-renung {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  animation: rise 0.4s 0.1s ease both;
+}
+.tk-secret {
+  color: transparent;
+  text-shadow: 0 0 9px color-mix(in srgb, var(--text) 70%, transparent);
+}
+.tk-timer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tk-clock {
+  font-family: var(--mono);
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.tk-clock[data-done='1'] {
+  animation: pulse-dot 1s ease infinite;
+}
+.tk-extra {
+  gap: 6px;
+  justify-content: center;
+  margin: 14px 0 6px;
+}
+.tk-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+}
+.tk .btn {
+  white-space: nowrap;
+}
+.tk-bar .btn {
+  min-height: 52px;
+  font-size: 15px;
+}
+.tk-bar .btn.soft {
+  flex: none;
+  padding-inline: 16px;
+}
+.tk-renung .btn {
+  font-size: 15px;
+}
+.tk-fav {
+  color: var(--text-soft);
+  transition: color 0.2s, transform 0.2s;
+}
+.tk-fav.on {
+  color: #d64561;
+  transform: scale(1.12);
+}
+
+/* Selesai */
+.tk-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tk-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  text-align: center;
+}
+.tk-stats b {
+  font-family: var(--serif-display);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.tk-fav-card {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--card-edge);
+}
+.tk-fav-card span {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tk-fav-card p {
+  margin: 4px 0 0;
+  font-family: var(--serif-display);
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--tk-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-card,
+  .tk-mini,
+  .tk-deeper,
+  .tk-tebak,
+  .tk-renung {
+    animation: none;
+  }
+}

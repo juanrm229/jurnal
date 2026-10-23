@@ -513,6 +513,7 @@ export default function Today() {
           <Tile icon="kartu" label="kartu & pertanyaan" sub="kalau bingung mau menulis apa" onClick={() => setSheet('prompt')} />
           <Tile icon="stempel" label="cap tanggal" sub="cap pos hari ini" onClick={() => { setSheet(null); addSticker('cap:pos'); }} />
           <Tile icon="selotip" label="selotip washi" sub="tempel di sudut foto" onClick={() => { setSheet(null); addSticker('washi:garis'); }} />
+          <Tile icon="gelembung-kata" label="tentang kita" sub="kartu ngobrol yang dalam, 580+ kartu" onClick={() => navigate('/tentang-kita')} />
           <Tile icon="amplop" label="kartu ucapan" sub="tulis, hias, kirim ke WhatsApp" onClick={() => navigate('/kartu')} />
           <Tile icon="lilin" label="ruang hening" sub="hari berat boleh cuma lilin" onClick={() => setSheet('silent')} />
           <Tile icon="ui-lingkaran" label="untuk siapa" sub={defaultAudience === 'self' ? 'hanya aku' : names} onClick={() => setSheet('audience')} />

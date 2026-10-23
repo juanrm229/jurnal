@@ -257,6 +257,14 @@ export default function JanjiDetail() {
             </button>
           </div>
           {metCount === 1 && !mine?.metAt ? <p className="tiny ink center">{name(m.wire.members.find((x) => x.metAt)!.userId)} sudah menandai. Giliranmu.</p> : null}
+          <button
+            className="btn ghost mt"
+            onClick={() => {
+              const players = going.map((x) => (x.userId === me.user.id ? me.user.penName : name(x.userId)));
+              navigate(`/tentang-kita?r=${circle?.kind === 'duo' ? 'pasangan' : 'sahabat'}&p=${encodeURIComponent(players.join(','))}`);
+            }}>
+            <Doodle id="gelembung-kata" size={18} color="currentColor" /> taruh HP di meja: main Tentang Kita
+          </button>
         </section>
       ) : null}
 

@@ -97,7 +97,7 @@ export default function Write() {
   const [custom, setCustom] = useState('');
   const [born, setBorn] = useState('');
   const [milestone, setMilestone] = useState<number | null>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(() => search.get('text') ?? '');
   const [note, setNote] = useState('');
   const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null);
   const [busy, setBusy] = useState(false);

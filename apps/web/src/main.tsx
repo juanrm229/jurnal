@@ -16,6 +16,7 @@ import './styles/ui.css';
 import './styles/karya.css';
 import './styles/motion.css';
 import './styles/janji.css';
+import './styles/tentang.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

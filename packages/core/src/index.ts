@@ -46,5 +46,19 @@ export {
   type DateFilters,
   type DateRoll,
 } from './content/dateIdeas';
+export {
+  TK_CARDS,
+  TK_KIND_LABEL,
+  TK_LEVEL_LABEL,
+  TK_RELATION_LABEL,
+  buildTkDeck,
+  tkPool,
+  tkRandom,
+  type TkCard,
+  type TkDeckOptions,
+  type TkKind,
+  type TkLevel,
+  type TkRelation,
+} from './content/tentangKita';
 export type * from './content/types';
 export type { ChapterFeatures } from './content/chapterTitles';
