@@ -57,10 +57,22 @@ export default function Today() {
   const sealed = !!q.data?.sealedAt;
   const editable = !sealed && sealableDays(me.user.tz).includes(day);
 
-  // Audiens bawaan halaman: semua lingkaran aktif (bisa diubah).
+  // Audiens halaman: semua lingkaran aktif, kecuali pernah diatur sendiri.
+  // `seen` = lingkaran yang sudah pernah kamu putuskan; lingkaran baru di luar
+  // itu ditawarkan dulu (tidak pernah ikut dibagikan diam-diam, tidak pula hilang).
   const [pageCircles, setPageCircles] = useState<string[] | null>(() => store.json<string[]>('pageCircles'));
-  const circleIds = (pageCircles ?? active.map((c) => c.id)).filter((id) => active.some((c) => c.id === id));
+  const [seenCircles, setSeenCircles] = useState<string[]>(() => store.json<string[]>('pageCirclesSeen') ?? store.json<string[]>('pageCircles') ?? []);
+  const activeIds = active.map((c) => c.id);
+  const circleIds = (pageCircles ?? activeIds).filter((id) => activeIds.includes(id));
   const defaultAudience: Audience = circleIds.length ? 'circle' : 'self';
+  const newCircles = pageCircles === null ? [] : active.filter((c) => !seenCircles.includes(c.id) && !pageCircles.includes(c.id));
+  const choosePage = (next: string[], seen: string[] = activeIds) => {
+    setPageCircles(next);
+    store.set('pageCircles', JSON.stringify(next));
+    const s2 = [...new Set([...seenCircles, ...seen])];
+    setSeenCircles(s2);
+    store.set('pageCirclesSeen', JSON.stringify(s2));
+  };
 
   const [items, setItems] = useState<Item[]>([]);
   const loaded = useRef<string | null>(null);
@@ -117,6 +129,21 @@ export default function Today() {
     },
     [ctx],
   );
+
+  // Semua yang "bersama" di halaman ini mengikuti audiens halaman: kalau ada
+  // lingkaran baru (atau dilepas), isi yang sudah ada disegel ulang untuk mereka.
+  const pageKey = [...circleIds].sort().join(',');
+  useEffect(() => {
+    if (!editable || !ring || !circleIds.length || circleIds.some((id) => !active.find((c) => c.id === id)?.keys.get(active.find((c) => c.id === id)!.currentEpoch))) return;
+    for (const it of items) {
+      if (it.audience !== 'circle' || it.draft || it.pending || it.authorId !== me.user.id) continue;
+      if ([...it.circleIds].sort().join(',') === pageKey) continue;
+      const next = { ...it, circleIds };
+      patch(it.id, () => next);
+      save(next, 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageKey, items, editable, ring]);
 
   const create = async (payload: DropPayload, extra: { mediaIds?: string[]; meta?: DraftDrop['meta']; localUrl?: string; draft?: boolean } = {}) => {
     const id = newDropId();
@@ -406,6 +433,25 @@ export default function Today() {
 
       <MeetBanner />
 
+      {editable && newCircles.length ? (
+        <div className="sticky row" style={{ background: 'var(--sticky-blue)', gap: 10, marginBottom: 10, alignItems: 'flex-start' }} data-testid="new-circle-prompt">
+          <Doodle id="ui-lingkaran" size={26} />
+          <div className="col grow" style={{ gap: 8 }}>
+            <span className="small">
+              Lingkaran baru: <b>{newCircles.map((c) => c.name).join(', ')}</b>. Bagikan halaman ini juga ke sana?
+            </span>
+            <div className="row" style={{ gap: 6 }}>
+              <button className="btn sm auto" onClick={() => choosePage([...circleIds, ...newCircles.map((c) => c.id)])}>
+                ya, bagikan
+              </button>
+              <button className="btn ghost sm auto" onClick={() => choosePage(circleIds)}>
+                jangan
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {editable ? (
         <button className="for-chip" onClick={() => setSheet('audience')}>
           <span className="tiny ink-soft">untuk</span>
@@ -589,18 +635,16 @@ export default function Today() {
             const on = circleIds.includes(c.id);
             return (
               <button key={c.id} className={`pill ${on ? 'active' : ''}`} style={{ justifyContent: 'flex-start', padding: '12px 16px' }} onClick={() => {
-                const next = on ? circleIds.filter((x) => x !== c.id) : [...circleIds, c.id];
-                setPageCircles(next);
-                store.set('pageCircles', JSON.stringify(next));
+                choosePage(on ? circleIds.filter((x) => x !== c.id) : [...circleIds, c.id]);
               }}>
                 <Doodle id={c.doodle} size={20} color="currentColor" /> {c.name}
               </button>
             );
           })}
-          <button className={`pill ${circleIds.length === 0 ? 'active' : ''}`} style={{ justifyContent: 'flex-start', padding: '12px 16px' }} onClick={() => { setPageCircles([]); store.set('pageCircles', '[]'); }}>
+          <button className={`pill ${circleIds.length === 0 ? 'active' : ''}`} style={{ justifyContent: 'flex-start', padding: '12px 16px' }} onClick={() => choosePage([])}>
             🔒 hanya aku
           </button>
-          <p className="tiny soft">Berlaku untuk yang kamu tambahkan setelah ini. Tiap elemen juga bisa diubah sendiri lewat tombol “bersama / hanya aku”.</p>
+          <p className="tiny soft">Berlaku untuk semua yang “bersama” di halaman ini, termasuk yang sudah ditempel. Yang kamu kunci “hanya aku” tetap hanya untukmu.</p>
         </div>
       </Sheet>
 
