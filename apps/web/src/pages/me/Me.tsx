@@ -69,6 +69,7 @@ export default function Me() {
       </section>
       <section className="section">
         <span className="label">lainnya</span>
+        <ListLink icon="ui-ide" title="panduan & video tutorial" sub="semua fitur, dijelaskan langkah demi langkah" onClick={() => navigate('/panduan')} />
         <ListLink icon="gelembung-kata" title="tentang kita" sub="kartu ngobrol: pasangan, pdkt, sahabat, renungan" onClick={() => navigate('/tentang-kita')} />
         <ListLink icon="amplop" title="kartu ucapan" sub="tulis pesan, taruh foto, kirim ke WhatsApp" onClick={() => navigate('/kartu')} />
         <ListLink icon="kartu" title="dek kartu tematik" sub="Rindu, Perantau, Ramadan, …" onClick={() => navigate('/aku/dek')} />

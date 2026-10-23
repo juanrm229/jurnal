@@ -285,6 +285,7 @@ export default function Landing() {
       <footer className="l-foot">
         <Doodle id="tunas" size={22} />
         <span className="tiny soft">sehari · dibuat pelan-pelan untuk orang-orang tersayang</span>
+        <Link to="/panduan" className="tiny">panduan</Link>
         <Link to="/bantuan" className="tiny">bantuan</Link>
       </footer>
     </div>

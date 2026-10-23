@@ -64,6 +64,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/aku/dek', page('me/Dek'), true, false],
   ['/lapor', page('me/Lapor'), true, false],
   ['/bantuan', page('Bantuan'), false, false],
+  ['/panduan', page('Panduan'), false, false],
 ];
 
 function Guard({ children }: { children: React.ReactNode }) {
