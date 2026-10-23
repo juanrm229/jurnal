@@ -83,7 +83,7 @@ html,body{width:1920px;height:1080px;overflow:hidden}
 .intro p{font-size:28px;opacity:.9;max-width:900px;line-height:1.4}
 .intro .hand{font-family:Caveat;font-size:40px;opacity:.85;margin-top:30px}
 .intro::after{content:"";position:absolute;inset:0;background-image:radial-gradient(#ffffff22 1.5px,transparent 1.6px);background-size:26px 26px;mask:linear-gradient(90deg,transparent 40%,#000)}
-</style></head><body><div id="stage">
+</style></head><body><div id="sync" style="position:absolute;right:0;bottom:0;width:12px;height:12px;background:#000;z-index:999"></div><div id="stage">
 <div class="dots"></div>
 <div class="phone"><div class="screen"><iframe name="app" src="${APP}${start}" allow="clipboard-read; clipboard-write"></iframe></div></div>
 <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="#2a14d6" stroke-width="1.8" stroke-linecap="round"><path d="M12 21V11"/><path d="M12 13c-4 0-6-2.5-6-6 3.5 0 6 2 6 6Z"/><path d="M12 11c0-3.5 2.5-6 6.5-6 0 3.5-2.5 6-6.5 6Z"/><path d="M7 21h10"/></svg>sehari</div>
@@ -94,6 +94,7 @@ html,body{width:1920px;height:1080px;overflow:hidden}
 <script>
 const $=(id)=>document.getElementById(id);let ft;
 window.studio={
+  mark(){const m=document.getElementById('sync');m.style.background=m.style.background==='rgb(255, 255, 255)'?'#000':'#fff'},
   chapter(i,kicker,title){$('kicker').textContent=kicker;$('title').textContent=title;document.querySelectorAll('#toc span').forEach(s=>{const k=+s.dataset.i;s.className=k===i?'on':k<i?'done':''})},
   cap(t){const c=$('cap');c.classList.add('out');setTimeout(()=>{c.textContent=t;c.classList.remove('out')},300)},
   intro(n,t,p,h){$('in').textContent=n;$('it').textContent=t;$('ip').textContent=p||'';$('ih').textContent=h||'';$('intro').classList.remove('hide')},
@@ -133,25 +134,39 @@ export async function record(chapters, { start = '/', before } = {}) {
   const app = page.frame({ name: 'app' });
   const now = () => (Date.now() - t0) / 1000;
   const h = helpers(page, app, shared);
-  const timeline = { voice: [], chapters: [] };
+  const timeline = { voice: [], chapters: [], marks: [] };
+  // Tiap peristiwa membalik warna penanda di pojok; perakit membaca balikan itu dari video.
+  const mark = async (what) => {
+    await page.evaluate(() => studio.mark());
+    timeline.marks.push({ t: now(), what });
+  };
+  await sleep(300);
+  await mark('awal');
 
   for (const [i, ch] of chapters.entries()) {
     const c = { id: ch.id, title: ch.title, start: now() };
     timeline.chapters.push(c);
+    await mark(`bab:${ch.id}`);
     console.log(`▶ ${ch.id}`);
     await page.evaluate(([i, k, t]) => studio.chapter(i, k, t), [i, ch.kicker, ch.title]);
     await page.evaluate(([n, t, p, hh]) => studio.intro(n, t, p, hh), [ch.kicker, ch.title, ch.sub ?? '', ch.hand ?? '']);
     if (ch.setup) await ch.setup(h);
-    timeline.voice.push({ t: now() + 0.4, file: ch.introVoice.file });
-    await sleep(ch.introVoice.dur * 1000 + 900);
+    await sleep(400);
+    timeline.voice.push({ t: now(), file: ch.introVoice.file, m: timeline.marks.length });
+    await mark('suara');
+    await sleep(ch.introVoice.dur * 1000 + 500);
     await page.evaluate(() => studio.outro());
     await sleep(500);
     c.body = now();
+    c.bodyMark = timeline.marks.length;
+    await mark(`isi:${ch.id}`);
     for (const s of ch.steps) {
       await page.evaluate((t) => studio.cap(t), s.cap ?? s.say);
-      timeline.voice.push({ t: now() + 0.25, file: s.voice.file });
+      await sleep(250);
+      timeline.voice.push({ t: now(), file: s.voice.file, m: timeline.marks.length });
+      await mark('suara');
       try {
-        await Promise.all([s.run ? s.run(h) : null, sleep(s.voice.dur * 1000 + 550)]);
+        await Promise.all([s.run ? s.run(h) : null, sleep(s.voice.dur * 1000 + 300)]);
       } catch (e) {
         errors.push(`step "${s.say.slice(0, 40)}": ${e.message.split('\n')[0]}`);
         console.log(`  ✗ ${e.message.split('\n')[0]}`);
@@ -162,6 +177,9 @@ export async function record(chapters, { start = '/', before } = {}) {
   }
   await sleep(800);
   timeline.total = now();
+  timeline.endMark = timeline.marks.length;
+  await mark('akhir');
+  await sleep(800);
   const video = page.video();
   await ctx.close();
   const path = await video.path();
@@ -179,9 +197,16 @@ function helpers(page, app, shared) {
     shared,
     $: (sel) => app.locator(sel),
     wait: (ms) => sleep(ms),
-    async go(path) {
-      await app.goto(`${APP}${path}`);
-      await sleep(900);
+    /** Pindah halaman di dalam aplikasi (tanpa memuat ulang); `reload` untuk data segar. */
+    async go(path, { reload = false } = {}) {
+      if (reload) await app.goto(`${APP}${path}`);
+      else
+        await app.evaluate((p) => {
+          history.pushState(null, '', p);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+          window.scrollTo({ top: 0 });
+        }, path);
+      await sleep(reload ? 1400 : 700);
     },
     async point(t) {
       const l = loc(t);

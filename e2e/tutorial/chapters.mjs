@@ -60,7 +60,7 @@ export const CHAPTERS = [
         say: 'Untuk mulai, masukkan emailmu. Tidak perlu kata sandi: kami mengirimkan kode enam angka.',
         cap: 'Masuk dengan email. Tanpa kata sandi, cukup kode enam angka.',
         run: async (h) => {
-          await h.go('/masuk');
+          await h.go('/masuk', { reload: true });
           await h.type('input[type=email]', `naya-${tag}@contoh.id`);
           await h.tap('button:has-text("kirim kode")');
         },
@@ -266,8 +266,8 @@ export const CHAPTERS = [
       {
         say: 'Begitu semua sudah menyegel, tombol buka bersama muncul di halaman lingkaran.',
         run: async (h) => {
-          await h.go(`/l/${S.circleId}`);
-          await sleep(800);
+          await h.go(`/l/${S.circleId}`, { reload: true });
+          await h.app.waitForSelector(':is(a,button):has-text("buka hari ini bersama")', { timeout: 15000 });
           await h.tap(':is(a,button):has-text("buka hari ini bersama")');
           await sleep(2600);
         },
@@ -485,8 +485,8 @@ export const CHAPTERS = [
         say: 'Saat sudah di tempat, kalian bisa saling menandai: kita ketemu. Tidak wajib, tapi rasanya seperti mengecap stempel bersama.',
         cap: 'Di tempat? Saling tandai “kita ketemu”.',
         run: async (h) => {
-          await h.go(`/janji/${S.meetId}`);
-          await sleep(800);
+          await h.go(`/janji/${S.meetId}`, { reload: true });
+          await h.app.waitForSelector('button:has-text("kita ketemu ✓")', { timeout: 15000 });
           await h.tap('button:has-text("kita ketemu ✓")');
           await h.app.waitForSelector('.stamp-big', { timeout: 10000 });
           await sleep(1500);

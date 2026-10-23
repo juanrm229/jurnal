@@ -10,8 +10,33 @@ const OUT = process.env.TUT_OUT || 'e2e/out/tutorial';
 const CLIPS = process.argv[2] || 'apps/web/public/panduan';
 const t = JSON.parse(fs.readFileSync(`${OUT}/timeline.json`, 'utf8'));
 const ff = (args) => execFileSync('ffmpeg', ['-v', 'error', '-y', ...args], { stdio: 'inherit', maxBuffer: 1 << 26 });
-const start = Math.max(0, t.chapters[0].start - 0.2);
-const total = t.total - start;
+
+// ── Sinkron: baca balikan warna penanda di pojok kanan bawah ────────────────
+// Perekam video bisa tertinggal dari jam dinding, jadi waktu tiap peristiwa
+// diambil dari videonya sendiri, bukan dari catatan waktu perekam.
+const FPS = 25;
+const lum = execFileSync('ffmpeg', ['-v', 'error', '-i', t.video, '-vf', `crop=8:8:1910:1070,scale=1:1,format=gray,fps=${FPS}`, '-f', 'rawvideo', '-'], { maxBuffer: 1 << 28 });
+const flips = [];
+let white = false;
+for (let i = 0; i < lum.length; i++) {
+  if (!white && lum[i] > 190) (white = true), flips.push(i / FPS);
+  else if (white && lum[i] < 60) (white = false), flips.push(i / FPS);
+}
+if (flips.length !== t.marks.length) throw new Error(`penanda tidak cocok: ${flips.length} di video, ${t.marks.length} di catatan`);
+const at = (k) => flips[k];
+const markOf = (what) => t.marks.findIndex((m) => m.what === what);
+for (const v of t.voice) v.t = at(v.m);
+const chs = t.chapters.map((c, i) => ({
+  id: c.id,
+  start: at(markOf(`bab:${c.id}`)),
+  body: at(c.bodyMark),
+  end: i + 1 < t.chapters.length ? at(markOf(`bab:${t.chapters[i + 1].id}`)) : at(t.endMark),
+}));
+const start = Math.max(0, chs[0].start - 0.2);
+const total = at(t.endMark) + 0.6 - start;
+console.log(`sinkron: ${flips.length} penanda, geser terbesar ${Math.max(...t.marks.map((m, k) => Math.abs(flips[k] - m.t))).toFixed(1)} dtk`);
+// Tutup kotak penanda dengan warna latar panggung.
+const hide = 'drawbox=x=1906:y=1066:w=14:h=14:color=0xdde3fd:t=fill';
 
 // ── Musik latar: progresi Am–F–C–G yang lembut ──────────────────────────────
 const chords = [
@@ -45,13 +70,13 @@ const mix = `${OUT}/mix.wav`;
 ff(['-i', voice, '-i', music, '-filter_complex', '[1][0]sidechaincompress=threshold=0.015:ratio=10:attack=30:release=600[m];[0][m]amix=inputs=2:normalize=0:weights=1 0.55,alimiter=limit=0.95[o]', '-map', '[o]', mix]);
 
 // ── Video lengkap ──────────────────────────────────────────────────────────
-ff(['-ss', String(start), '-i', t.video, '-i', mix, '-map', '0:v', '-map', '1:a', '-t', String(total), '-c:v', 'libx264', '-preset', 'medium', '-crf', '23', '-pix_fmt', 'yuv420p', '-r', '25', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', `${OUT}/sehari-tutorial.mp4`]);
+ff(['-ss', String(start), '-i', t.video, '-i', mix, '-map', '0:v', '-map', '1:a', '-t', String(total), '-vf', hide, '-c:v', 'libx264', '-preset', 'medium', '-crf', '23', '-pix_fmt', 'yuv420p', '-r', '25', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', `${OUT}/sehari-tutorial.mp4`]);
 ff(['-i', `${OUT}/sehari-tutorial.mp4`, '-vf', 'scale=1280:720', '-c:v', 'libx264', '-preset', 'medium', '-crf', '26', '-c:a', 'copy', '-movflags', '+faststart', `${OUT}/sehari-tutorial-720p.mp4`]);
 
 // ── Klip vertikal per bab (hanya layar HP) ──────────────────────────────────
 fs.mkdirSync(CLIPS, { recursive: true });
 const chapters = [];
-for (const c of t.chapters) {
+for (const c of chs) {
   if (c.end - c.body < 4) continue;
   const a = c.body - start;
   const d = c.end - c.body;
@@ -60,6 +85,7 @@ for (const c of t.chapters) {
   ff(['-ss', String(c.body), '-i', t.video, '-ss', String(a), '-i', voice, '-map', '0:v', '-map', '1:a', '-t', String(d), '-vf', 'crop=540:1008:243:36,scale=432:806', '-c:v', 'libx264', '-preset', 'slow', '-crf', '30', '-pix_fmt', 'yuv420p', '-r', '25', '-c:a', 'aac', '-ac', '1', '-b:a', '64k', '-movflags', '+faststart', file]);
   ff(['-ss', String(c.body + Math.min(3, d / 2)), '-i', t.video, '-frames:v', '1', '-vf', 'crop=540:1008:243:36,scale=432:806', '-q:v', '5', `${CLIPS}/${c.id}.jpg`]);
   chapters.push({ id: c.id, at: Math.round((c.start - start) * 10) / 10, dur: Math.round(d) });
+  console.log(`  klip ${c.id}: ${Math.round(d)} dtk`);
 }
 fs.writeFileSync(`${OUT}/chapters.json`, JSON.stringify(chapters, null, 2));
 console.log('selesai:', `${OUT}/sehari-tutorial.mp4`, chapters.length, 'klip');
