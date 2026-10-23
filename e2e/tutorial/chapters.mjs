@@ -367,6 +367,8 @@ export const CHAPTERS = [
       {
         say: 'Dan Surat Petak Istimewa baru terbuka saat lingkaran kalian mencapai hari ketujuh, ketiga puluh, keseratus, atau setahun.',
         run: async (h) => {
+          await h.go('/surat');
+          await sleep(300);
           await h.go('/surat/tulis');
           await sleep(800);
           await h.tap('[data-testid=kind-milestone]');

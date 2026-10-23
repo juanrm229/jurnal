@@ -17,13 +17,43 @@ const ff = (args) => execFileSync('ffmpeg', ['-v', 'error', '-y', ...args], { st
 const FPS = 25;
 const lum = execFileSync('ffmpeg', ['-v', 'error', '-i', t.video, '-vf', `crop=8:8:1910:1070,scale=1:1,format=gray,fps=${FPS}`, '-f', 'rawvideo', '-'], { maxBuffer: 1 << 28 });
 const flips = [];
-let white = false;
-for (let i = 0; i < lum.length; i++) {
+let white = lum[0] > 128;
+for (let i = 1; i < lum.length; i++) {
   if (!white && lum[i] > 190) (white = true), flips.push(i / FPS);
   else if (white && lum[i] < 60) (white = false), flips.push(i / FPS);
 }
-if (flips.length !== t.marks.length) throw new Error(`penanda tidak cocok: ${flips.length} di video, ${t.marks.length} di catatan`);
-const at = (k) => flips[k];
+// Cocokkan tiap penanda dengan balikan terdekat, mengikuti geser yang berubah pelan.
+// Geser awal dicari dengan mencoba banyak kemungkinan dan memilih yang paling banyak cocok.
+function align(off0) {
+  let off = off0;
+  let j = 0;
+  const out = [];
+  for (const m of t.marks) {
+    let best = -1;
+    for (let k = j; k < flips.length && flips[k] < m.t + off + 2; k++) {
+      if (Math.abs(flips[k] - (m.t + off)) < 1.2 && (best < 0 || Math.abs(flips[k] - (m.t + off)) < Math.abs(flips[best] - (m.t + off)))) best = k;
+    }
+    if (best >= 0) {
+      out.push(flips[best]);
+      off = flips[best] - m.t;
+      j = best + 1;
+    } else out.push(null);
+  }
+  return out;
+}
+let mapped = [];
+for (let o = -6; o <= 6; o += 0.04) {
+  const r = align(o);
+  if (r.filter((x) => x !== null).length > mapped.filter((x) => x !== null).length) mapped = r;
+}
+// Penanda yang tidak ketemu: isi dengan geser dari tetangganya.
+const unmatched = mapped.filter((x) => x === null).length;
+for (let k = 0; k < mapped.length; k++) {
+  if (mapped[k] !== null) continue;
+  const p = mapped.slice(0, k).findLastIndex((x) => x !== null);
+  mapped[k] = t.marks[k].t + (p >= 0 ? mapped[p] - t.marks[p].t : 0);
+}
+const at = (k) => mapped[k];
 const markOf = (what) => t.marks.findIndex((m) => m.what === what);
 for (const v of t.voice) v.t = at(v.m);
 const chs = t.chapters.map((c, i) => ({
@@ -34,7 +64,7 @@ const chs = t.chapters.map((c, i) => ({
 }));
 const start = Math.max(0, chs[0].start - 0.2);
 const total = at(t.endMark) + 0.6 - start;
-console.log(`sinkron: ${flips.length} penanda, geser terbesar ${Math.max(...t.marks.map((m, k) => Math.abs(flips[k] - m.t))).toFixed(1)} dtk`);
+console.log(`sinkron: ${flips.length} balikan di video untuk ${t.marks.length} penanda (${unmatched} tidak ketemu); geser terbesar ${Math.max(...t.marks.map((m, k) => Math.abs(mapped[k] - m.t))).toFixed(1)} dtk`);
 // Tutup kotak penanda dengan warna latar panggung.
 const hide = 'drawbox=x=1906:y=1066:w=14:h=14:color=0xdde3fd:t=fill';
 
