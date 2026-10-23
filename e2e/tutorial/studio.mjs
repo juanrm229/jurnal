@@ -136,7 +136,12 @@ export async function record(chapters, { start = '/', before } = {}) {
   const h = helpers(page, app, shared);
   const timeline = { voice: [], chapters: [], marks: [] };
   // Tiap peristiwa membalik warna penanda di pojok; perakit membaca balikan itu dari video.
+  let lastMark = 0;
   const mark = async (what) => {
+    // Beri jarak minimal 3 frame supaya tiap balikan terlihat di video.
+    const gap = Date.now() - lastMark;
+    if (gap < 160) await sleep(160 - gap);
+    lastMark = Date.now();
     await page.evaluate(() => studio.mark());
     timeline.marks.push({ t: now(), what });
   };

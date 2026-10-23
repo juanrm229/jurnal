@@ -22,37 +22,48 @@ for (let i = 1; i < lum.length; i++) {
   if (!white && lum[i] > 190) (white = true), flips.push(i / FPS);
   else if (white && lum[i] < 60) (white = false), flips.push(i / FPS);
 }
-// Cocokkan tiap penanda dengan balikan terdekat, mengikuti geser yang berubah pelan.
-// Geser awal dicari dengan mencoba banyak kemungkinan dan memilih yang paling banyak cocok.
-function align(off0) {
-  let off = off0;
-  let j = 0;
-  const out = [];
-  for (const m of t.marks) {
-    let best = -1;
-    for (let k = j; k < flips.length && flips[k] < m.t + off + 2; k++) {
-      if (Math.abs(flips[k] - (m.t + off)) < 1.2 && (best < 0 || Math.abs(flips[k] - (m.t + off)) < Math.abs(flips[best] - (m.t + off)))) best = k;
+// Cocokkan urutan penanda dengan urutan balikan (pemrograman dinamis): biaya =
+// beda jarak antar-peristiwa di catatan vs di video. Balikan palsu boleh dilewati.
+const M = t.marks.map((m) => m.t);
+const N = M.length;
+const F = flips.length;
+const SKIP_F = 1.5;
+const SKIP_M = 4;
+const INF = 1e18;
+// dp[i][j]: penanda i cocok dengan balikan j. Penanda boleh tidak terlihat
+// (dua balikan dalam satu frame), balikan boleh palsu; keduanya kena denda.
+const dp = Array.from({ length: N }, () => new Float64Array(F).fill(INF));
+const prev = Array.from({ length: N }, () => new Array(F).fill(null));
+for (let i = 0; i < Math.min(N, 4); i++) for (let j = 0; j < F; j++) dp[i][j] = j * SKIP_F + i * SKIP_M;
+for (let i = 1; i < N; i++) {
+  for (let j = 1; j < F; j++) {
+    for (let a = Math.max(0, i - 4); a < i; a++) {
+      for (let k = Math.max(0, j - 8); k < j; k++) {
+        if (dp[a][k] >= INF) continue;
+        const c = dp[a][k] + Math.abs(flips[j] - flips[k] - (M[i] - M[a])) + (j - k - 1) * SKIP_F + (i - a - 1) * SKIP_M;
+        if (c < dp[i][j]) (dp[i][j] = c), (prev[i][j] = [a, k]);
+      }
     }
-    if (best >= 0) {
-      out.push(flips[best]);
-      off = flips[best] - m.t;
-      j = best + 1;
-    } else out.push(null);
   }
-  return out;
 }
-let mapped = [];
-for (let o = -6; o <= 6; o += 0.04) {
-  const r = align(o);
-  if (r.filter((x) => x !== null).length > mapped.filter((x) => x !== null).length) mapped = r;
+let end = null;
+let bestC = INF;
+for (let i = Math.max(0, N - 4); i < N; i++)
+  for (let k = 0; k < F; k++) {
+    const c = dp[i][k] + (F - 1 - k) * SKIP_F + (N - 1 - i) * SKIP_M;
+    if (c < bestC) (bestC = c), (end = [i, k]);
+  }
+const mapped = new Array(N).fill(null);
+for (let p = end; p; p = prev[p[0]][p[1]]) mapped[p[0]] = flips[p[1]];
+// Penanda yang tidak terlihat: pakai geser penanda terdekat yang cocok.
+const matchedIdx = mapped.map((x, i) => (x === null ? -1 : i)).filter((i) => i >= 0);
+for (let i = 0; i < N; i++) {
+  if (mapped[i] !== null) continue;
+  const near = matchedIdx.reduce((b, k) => (Math.abs(k - i) < Math.abs(b - i) ? k : b), matchedIdx[0]);
+  mapped[i] = M[i] + (mapped[near] - M[near]);
 }
-// Penanda yang tidak ketemu: isi dengan geser dari tetangganya.
-const unmatched = mapped.filter((x) => x === null).length;
-for (let k = 0; k < mapped.length; k++) {
-  if (mapped[k] !== null) continue;
-  const p = mapped.slice(0, k).findLastIndex((x) => x !== null);
-  mapped[k] = t.marks[k].t + (p >= 0 ? mapped[p] - t.marks[p].t : 0);
-}
+const errs = mapped.slice(1).map((x, i) => Math.abs(x - mapped[i] - (M[i + 1] - M[i])));
+const unmatched = N - matchedIdx.length;
 const at = (k) => mapped[k];
 const markOf = (what) => t.marks.findIndex((m) => m.what === what);
 for (const v of t.voice) v.t = at(v.m);
