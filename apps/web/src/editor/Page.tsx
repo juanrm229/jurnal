@@ -325,6 +325,9 @@ function Movable({
     if (editing && kind === 'move') return;
     e.stopPropagation();
     if (!editable) return;
+    // Di layar sentuh, tempelan baru bisa digeser setelah dipilih (ketuk dulu),
+    // supaya menggulir halaman tidak ikut menyeret isi.
+    if (e.pointerType === 'touch' && kind === 'move' && !selected) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const r = box.current!.getBoundingClientRect();
     const cx = r.left + r.width / 2;
@@ -397,6 +400,7 @@ function Movable({
       onClick={(e) => {
         e.stopPropagation();
         if (!editable) onTap({ x: L.x + L.w / 2, y: L.y });
+        else if (!selected) onSelect();
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();

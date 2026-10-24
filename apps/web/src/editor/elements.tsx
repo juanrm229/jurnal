@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { MOODS } from '@sehari/core';
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { useMediaUrl } from '@/lib/media';
@@ -127,6 +128,17 @@ function TextBody({
   };
   const ta = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState(p.text ?? '');
+  const coarse = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
+  // Tinggi layar yang benar-benar terlihat (mengecil saat keyboard muncul).
+  const [vh, setVh] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const v = window.visualViewport;
+    if (!editing || !coarse || !v) return;
+    const on = () => setVh(v.height);
+    on();
+    v.addEventListener('resize', on);
+    return () => v.removeEventListener('resize', on);
+  }, [editing, coarse]);
   useEffect(() => {
     if (!editing) setDraft(p.text ?? '');
   }, [p.text, editing]);
@@ -145,6 +157,38 @@ function TextBody({
     }
   }, [draft, editing, scale]);
 
+  if (editing && coarse) {
+    // HP: tulis di lembar layar penuh dengan huruf besar, bukan di kertas yang kecil.
+    return (
+      <>
+        <div className={`t-text ${isHand ? 'hand' : isSerif ? 'serif' : ''}`} style={style}>
+          {draft || <span className="t-placeholder">{placeholder}</span>}
+        </div>
+        {createPortal(
+          <div className="writer" style={{ height: vh }} onPointerDown={(e) => e.stopPropagation()}>
+            <div className="writer-head">
+              <span className="small ink-soft">menulis di halaman</span>
+              <button className="btn sm auto" onMouseDown={(e) => e.preventDefault()} onClick={onEndEdit}>
+                selesai
+              </button>
+            </div>
+            <textarea
+              ref={ta}
+              className={`writer-text ${isHand ? 'hand' : isSerif ? 'serif' : ''}`}
+              value={draft}
+              placeholder={placeholder}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                onText(e.target.value);
+                sound.play('type');
+              }}
+            />
+          </div>,
+          document.body,
+        )}
+      </>
+    );
+  }
   if (editing) {
     return (
       <textarea
