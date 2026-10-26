@@ -105,10 +105,15 @@ export function todayIn(tz: string, at: Date = new Date(), withRollover = false)
 }
 
 /** Hari yang masih boleh disegel saat ini: hari ini, dan kemarin sampai 04.00. */
+/** Hari terlewat yang masih boleh ditulis & disegel (halaman susulan). */
+export const CATCH_UP_DAYS = 7;
+
+/** Hari yang masih bisa ditulis & disegel: hari ini dan sampai 7 hari terlewat. */
 export function sealableDays(tz: string, at: Date = new Date()): DayKey[] {
   const p = localParts(tz, at);
   const today = dayKeyFromParts(p.year, p.month, p.day);
-  return p.hour < DAY_ROLLOVER_HOUR ? [addDays(today, -1), today] : [today];
+  // Sebelum 04.00 "hari ini" masih terasa kemarin; jendela susulan tetap dihitung dari tanggal kalender.
+  return Array.from({ length: CATCH_UP_DAYS + 1 }, (_, i) => addDays(today, i - CATCH_UP_DAYS));
 }
 
 export function parseDay(key: DayKey): { year: number; month: number; day: number } {

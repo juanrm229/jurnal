@@ -459,7 +459,7 @@ export default function Today() {
 
       {params.day && day !== today ? (
         <div className="card flat small row between" style={{ marginBottom: 12 }}>
-          <span>{sealed ? 'Halaman ini sudah tersegel.' : editable ? 'Halaman kemarin masih bisa disegel sampai 04.00.' : 'Hari ini hilang di kabut — tidak apa-apa.'}</span>
+          <span>{sealed ? 'Halaman ini sudah tersegel.' : editable ? 'Hari yang terlewat masih bisa ditulis dan disegel sampai 7 hari. Tulis halaman susulanmu, lalu segel untuk membuka halaman mereka.' : 'Hari ini hilang di kabut — tidak apa-apa.'}</span>
           <Link to="/hari" className="pill">hari ini</Link>
         </div>
       ) : null}

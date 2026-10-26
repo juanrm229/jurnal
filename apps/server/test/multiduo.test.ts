@@ -114,3 +114,24 @@ describe('halaman terpisah per lingkaran', () => {
     expect(v.drops.filter((x: any) => x.authorId === budi.userId).map((x: any) => dodi.open(x).text)).toEqual(['halaman susulan']);
   });
 });
+
+describe('halaman susulan untuk hari terlewat', () => {
+  it('hari yang terlewat (≤7 hari) masih bisa ditulis & disegel, lalu halaman pasangan terbuka', async () => {
+    const FRI = '2026-10-19';
+    const eka = await new Client(env.app, 'eka@contoh.id').signup('Eka');
+    const fajar = await new Client(env.app, 'fajar@contoh.id').signup('Fajar');
+    const d = await eka.createCircle('duo', 'Eka & Fajar');
+    await fajar.accept(await eka.invite(d.id));
+    await fajar.ok('POST', '/v1/drops', fajar.dropBody(FRI, { text: 'jumat kemarin hujan' }, { circleId: d.id }));
+    await fajar.ok('POST', `/v1/days/${FRI}/seal`, { tz: fajar.tz });
+    let v = await eka.ok('GET', `/v1/circles/${d.id}/days/${FRI}`);
+    expect(v.drops.filter((x: any) => x.authorId === fajar.userId)).toHaveLength(0);
+    await eka.ok('POST', '/v1/drops', eka.dropBody(FRI, { text: 'susulan jumat' }, { circleId: d.id }));
+    await eka.ok('POST', `/v1/days/${FRI}/seal`, { tz: eka.tz });
+    v = await eka.ok('GET', `/v1/circles/${d.id}/days/${FRI}`);
+    expect(v.drops.filter((x: any) => x.authorId === fajar.userId).map((x: any) => eka.open(x).text)).toEqual(['jumat kemarin hujan']);
+    // Lebih dari 7 hari: tertutup.
+    const old = await eka.req('POST', '/v1/drops', eka.dropBody('2026-10-10', { text: 'terlalu lama' }, { circleId: d.id }));
+    expect(old.status).toBe(400);
+  });
+});

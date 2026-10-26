@@ -2,7 +2,7 @@
  * Satu hari di lingkaran: buku terbuka. Halaman tiap orang berdampingan,
  * sampulnya terbuka pelan saat semuanya sudah tersegel.
  */
-import { addDays, COPY, dayName, type FootnoteWire, formatDayLong, getCity, type LockedDrop, openEnvelope, type ReactionKind, sealEnvelope, yellowing } from '@sehari/core';
+import { addDays, COPY, dayName, type FootnoteWire, formatDayLong, getCity, type LockedDrop, openEnvelope, type ReactionKind, sealableDays, sealEnvelope, yellowing } from '@sehari/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Page, type PageItem, withLayouts } from '@/editor/Page';
@@ -172,11 +172,11 @@ export default function Together() {
         </Link>
       ) : null}
 
-      {!data.iSealed && day === today && circle.settings.revealMode === 'after_seal' && circle.kind !== 'moment' ? (
+      {!data.iSealed && sealableDays(me.user.tz).includes(day) && circle.settings.revealMode === 'after_seal' && circle.kind !== 'moment' ? (
         <div className="card col center" style={{ alignItems: 'center', maxWidth: 520, margin: '0 auto 16px' }}>
           <Doodle id="segel-lilin" size={40} className="breathe" />
-          <p className="small">{COPY.seal.giveFirst}</p>
-          <Link to="/hari" className="btn auto">ke halamanku</Link>
+          <p className="small">{day === today ? COPY.seal.giveFirst : `Halaman ${dayName(day)} masih terkunci untukmu. Tulis halaman susulan untuk hari itu, segel, lalu halaman mereka terbuka.`}</p>
+          <Link to={day === today ? '/hari' : `/hari/${day}`} className="btn auto">{day === today ? 'ke halamanku' : `tulis halaman ${dayName(day)}`}</Link>
         </div>
       ) : null}
 

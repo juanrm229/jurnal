@@ -39,7 +39,7 @@ describe('waktu', () => {
     expect(todayIn('Asia/Jakarta', at)).toBe('2026-10-21');
     expect(todayIn('Asia/Makassar', at)).toBe('2026-10-22');
     expect(todayIn('Asia/Makassar', at, true)).toBe('2026-10-21'); // sebelum 04.00 masih kemarin
-    expect(sealableDays('Asia/Makassar', at)).toEqual(['2026-10-21', '2026-10-22']);
+    expect(sealableDays('Asia/Makassar', at)).toEqual(['2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22']);
   });
   it('minggu ISO', () => {
     expect(isoWeek('2026-10-22')).toBe('2026-W43');
