@@ -571,29 +571,113 @@ textarea.field {
   }
 }
 
-/* Simpan halaman sebagai PDF: cetak hanya kertasnya */
+/* Simpan halaman sebagai PDF: dokumen cetak yang ditata ulang */
+.print-sheet {
+  display: none;
+}
 @media print {
   @page {
-    margin: 10mm;
+    size: A4;
+    margin: 18mm 20mm;
   }
-  body * {
-    visibility: hidden;
+  body > *:not(.print-sheet) {
+    display: none !important;
   }
-  .page,
-  .page * {
-    visibility: visible;
+  html,
+  body {
+    background: #fff !important;
   }
-  .page {
-    position: absolute;
-    left: 0;
-    top: 0;
-    box-shadow: none !important;
+  .print-sheet *,
+  .print-sheet img {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .print-sheet {
+    display: block;
+    color: #1b1d3a;
+    font: 11.5pt/1.65 var(--serif);
+  }
+  .ps-head {
+    border-bottom: 1.5pt solid #2a14d6;
+    padding-bottom: 10pt;
+    margin-bottom: 16pt;
+  }
+  .ps-brand {
+    font: italic 500 11pt var(--serif-display);
+    color: #2a14d6;
+    letter-spacing: 0.02em;
+  }
+  .ps-head h1 {
+    margin: 4pt 0 2pt;
+    font: italic 500 26pt/1.1 var(--serif-display);
+    color: #2a14d6;
+  }
+  .ps-head p {
+    margin: 0;
+    font: 9pt var(--mono);
+    color: #6b6a8a;
+  }
+  .ps-mood {
+    display: inline-block;
+    width: 8pt;
+    height: 8pt;
+    border-radius: 50%;
+    vertical-align: middle;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .dock,
-  .el-toolbar,
-  .handle {
-    display: none !important;
+  .ps-item {
+    break-inside: avoid;
+    margin: 0 0 14pt;
+  }
+  .ps-item time {
+    display: block;
+    font: 8.5pt var(--mono);
+    color: #8a89a6;
+    margin-bottom: 2pt;
+  }
+  .ps-prompt {
+    margin: 0 0 4pt;
+    font-style: italic;
+    color: #55547a;
+  }
+  .ps-text {
+    margin: 0;
+    white-space: pre-wrap;
+  }
+  .ps-photo {
+    display: block;
+    max-width: 100%;
+    max-height: 115mm;
+    overflow: hidden;
+    margin: 4pt 0;
+    border-radius: 6pt;
+    object-fit: cover;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .ps-caption {
+    margin: 2pt 0 0;
+    font-family: var(--hand);
+    font-size: 15pt;
+    color: #2a14d6;
+  }
+  .ps-song {
+    margin: 4pt 0 0;
+    font: 9.5pt var(--mono);
+    color: #55547a;
+  }
+  .ps-last {
+    margin: 20pt 0 0;
+    padding: 10pt 14pt;
+    border-left: 2pt solid #2a14d6;
+    font: italic 14pt/1.5 var(--serif-display);
+    color: #2a14d6;
+  }
+  .ps-foot {
+    margin-top: 24pt;
+    font: 8pt var(--mono);
+    color: #a3a2bb;
+    text-align: center;
   }
 }

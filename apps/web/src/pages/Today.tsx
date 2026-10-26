@@ -25,6 +25,7 @@ import { gardenDoodleFor } from '@sehari/doodles';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultWidth, Page, type PageItem, PAGE_W } from '@/editor/Page';
+import { PrintSheet } from '@/editor/PrintSheet';
 import { SealCeremony } from '@/editor/Seal';
 import { MoodSheet, PromptSheet, SilentSheet, SongSheet, StickerSheet, VoiceSheet } from '@/editor/Sheets';
 import { TEXT_SIZES } from '@/editor/elements';
@@ -62,6 +63,7 @@ export default function Today() {
   const withPage = new Set((q.data?.drops ?? []).map((d) => d.pageCircleId).filter((x): x is string => !!x));
   const sepCircles = active.filter((c) => ownPageIds.has(c.id) || withPage.has(c.id) || (mainSealed && !sealedCircles.includes(c.id)));
   const [pageSel, setPageSel] = useState<string>('main');
+  const [printing, setPrinting] = useState(false);
   // Draf dari lembar tulis yang belum sempat "selesai" (aplikasi tertutup, dsb.).
   const [lost, setLost] = useState<string | null>(() => {
     const d = store.json<{ text: string; at: number }>('lastDraft');
@@ -722,6 +724,8 @@ export default function Today() {
           void create({ ...base('silent', { ...viewCenter(320) }), mood: m, text: text || undefined });
         }}
       />
+      {printing ? <PrintSheet day={day} items={pageItems.map((x) => x.payload)} author={me.user.penName ?? ''} place={getCity(me.user.cityId)?.name} title={pageCircle ? `untuk ${pageCircle.name}` : undefined} /> : null}
+
       <Sheet open={sheet === 'save'} onClose={() => setSheet(null)} title="simpan halaman ini">
         <div className="col" style={{ gap: 10 }}>
           <button
@@ -729,8 +733,18 @@ export default function Today() {
             onClick={() => {
               setSheet(null);
               setSelected(null);
-              // Cetak hanya kertasnya; di HP pilih "Simpan sebagai PDF".
-              setTimeout(() => window.print(), 350);
+              // Dokumen cetak yang ditata ulang; tunggu foto terbuka dulu. Di HP pilih "Simpan sebagai PDF".
+              setPrinting(true);
+              const done = () => {
+                setPrinting(false);
+                window.removeEventListener('afterprint', done);
+              };
+              window.addEventListener('afterprint', done);
+              // Huruf dimuat dulu (tidak dipakai di layar, jadi belum tentu sudah ada), lalu cetak.
+              const fonts = ['italic 500 26px "Fraunces Variable"', '400 16px Literata', 'italic 400 16px Literata', '400 12px "IBM Plex Mono"', '700 20px Caveat'];
+              void Promise.all(fonts.map((f) => document.fonts.load(f).catch(() => null))).then(() =>
+                setTimeout(() => window.print(), pageItems.some((x) => x.payload.media?.length) ? 2000 : 400),
+              );
             }}>
             <Doodle id="ui-cetak" size={20} color="currentColor" /> PDF / cetak
           </button>
