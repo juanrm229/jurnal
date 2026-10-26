@@ -112,7 +112,7 @@ export default function Today() {
 
   const [selected, setSelected] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<null | 'sticker' | 'mood' | 'song' | 'voice' | 'prompt' | 'silent' | 'audience' | 'more' | 'caption'>(null);
+  const [sheet, setSheet] = useState<null | 'sticker' | 'mood' | 'song' | 'voice' | 'prompt' | 'silent' | 'audience' | 'more' | 'caption' | 'save'>(null);
   const [caption, setCaption] = useState('');
   const [captionFor, setCaptionFor] = useState<string | null>(null);
   const kb = useKeyboardInset();
@@ -623,6 +623,7 @@ export default function Today() {
           <Tile icon="gelembung-kata" label="tentang kita" sub="kartu ngobrol yang dalam, 580+ kartu" onClick={() => navigate('/tentang-kita')} />
           <Tile icon="amplop" label="kartu ucapan" sub="tulis, hias, kirim ke WhatsApp" onClick={() => navigate('/kartu')} />
           <Tile icon="lilin" label="ruang hening" sub="hari berat boleh cuma lilin" onClick={() => setSheet('silent')} />
+          <Tile icon="ui-unduh" label="simpan halaman" sub="PDF atau teks, untuk disimpan sendiri" onClick={() => setSheet('save')} />
           <Tile icon="ui-lingkaran" label="untuk siapa" sub={defaultAudience === 'self' ? 'hanya aku' : names} onClick={() => setSheet('audience')} />
         </div>
       </Sheet>
@@ -690,6 +691,45 @@ export default function Today() {
           void create({ ...base('silent', { ...viewCenter(320) }), mood: m, text: text || undefined });
         }}
       />
+      <Sheet open={sheet === 'save'} onClose={() => setSheet(null)} title="simpan halaman ini">
+        <div className="col" style={{ gap: 10 }}>
+          <button
+            className="btn"
+            onClick={() => {
+              setSheet(null);
+              setSelected(null);
+              // Cetak hanya kertasnya; di HP pilih "Simpan sebagai PDF".
+              setTimeout(() => window.print(), 350);
+            }}>
+            <Doodle id="ui-cetak" size={20} color="currentColor" /> PDF / cetak
+          </button>
+          <button
+            className="btn soft"
+            onClick={() => {
+              const lines = [`${dayName(day)}, ${formatDayLong(day, false)}${pageCircle ? ` · halaman untuk ${pageCircle.name}` : ''}`, ''];
+              for (const it of pageItems) {
+                const p = it.payload;
+                const time = p.hour !== undefined ? `${String(p.hour).padStart(2, '0')}.${String(p.minute ?? 0).padStart(2, '0')} ` : '';
+                const body = [p.prompt && `(${p.prompt})`, p.kind === 'photo' ? `[foto]${p.text ? ` ${p.text}` : ''}` : p.text, p.song && `[lagu] ${p.song.title} — ${p.song.artist}`].filter(Boolean).join('\n');
+                if (body) lines.push(`${time}${body}`, '');
+              }
+              const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = `sehari-${day}${pageCircle ? `-${pageCircle.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}` : ''}.txt`;
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+              setSheet(null);
+              toast('Teks halaman diunduh.');
+            }}>
+            <Doodle id="ui-teks" size={20} color="currentColor" /> teks (.txt)
+          </button>
+          <p className="tiny soft" style={{ margin: 0 }}>
+            Tersimpan di perangkatmu, tidak dikirim ke mana pun. Untuk setahun penuh, pakai “cetak buku Tahun Kita” di kitab lingkaran.
+          </p>
+        </div>
+      </Sheet>
+
       <Sheet open={sheet === 'audience'} onClose={() => setSheet(null)} title={pageCircle ? `halaman khusus ${pageCircle.name}` : 'halaman ini untuk'}>
         <div className="col">
           {pageCircle ? (

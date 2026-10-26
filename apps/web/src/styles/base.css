@@ -570,3 +570,30 @@ textarea.field {
     border-radius: 28px;
   }
 }
+
+/* Simpan halaman sebagai PDF: cetak hanya kertasnya */
+@media print {
+  @page {
+    margin: 10mm;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .page,
+  .page * {
+    visibility: visible;
+  }
+  .page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .dock,
+  .el-toolbar,
+  .handle {
+    display: none !important;
+  }
+}

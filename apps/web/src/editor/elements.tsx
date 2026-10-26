@@ -167,7 +167,9 @@ function TextBody({
         {createPortal(
           <div className="writer" style={{ height: vh }} onPointerDown={(e) => e.stopPropagation()}>
             <div className="writer-head">
-              <span className="small ink-soft">menulis di halaman</span>
+              <span className="small ink-soft">
+                menulis di halaman · {draft.trim() ? draft.trim().split(/\s+/).length : 0} kata
+              </span>
               <button className="btn sm auto" onMouseDown={(e) => e.preventDefault()} onClick={onEndEdit}>
                 selesai
               </button>
