@@ -170,7 +170,15 @@ function TextBody({
               <span className="small ink-soft">
                 menulis di halaman · {draft.trim() ? draft.trim().split(/\s+/).length : 0} kata
               </span>
-              <button className="btn sm auto" onMouseDown={(e) => e.preventDefault()} onClick={onEndEdit}>
+              <button
+                className="btn sm auto"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('sehari.lastDraft');
+                  } catch {}
+                  onEndEdit();
+                }}>
                 selesai
               </button>
             </div>
@@ -183,6 +191,10 @@ function TextBody({
                 setDraft(e.target.value);
                 onText(e.target.value);
                 sound.play('type');
+                // Cadangan di perangkat kalau aplikasi tertutup sebelum "selesai".
+                try {
+                  localStorage.setItem('sehari.lastDraft', JSON.stringify({ text: e.target.value, at: Date.now() }));
+                } catch {}
               }}
             />
           </div>,

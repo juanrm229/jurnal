@@ -62,6 +62,15 @@ export default function Today() {
   const withPage = new Set((q.data?.drops ?? []).map((d) => d.pageCircleId).filter((x): x is string => !!x));
   const sepCircles = active.filter((c) => ownPageIds.has(c.id) || withPage.has(c.id) || (mainSealed && !sealedCircles.includes(c.id)));
   const [pageSel, setPageSel] = useState<string>('main');
+  // Draf dari lembar tulis yang belum sempat "selesai" (aplikasi tertutup, dsb.).
+  const [lost, setLost] = useState<string | null>(() => {
+    const d = store.json<{ text: string; at: number }>('lastDraft');
+    return d && d.text.trim() && Date.now() - d.at < 2 * 86400_000 ? d.text : null;
+  });
+  const forgetLost = () => {
+    setLost(null);
+    store.del('lastDraft');
+  };
   const page = pageSel !== 'main' && sepCircles.some((c) => c.id === pageSel) ? pageSel : 'main';
   const pageCircle = page === 'main' ? null : active.find((c) => c.id === page)!;
   const sealed = page === 'main' ? mainSealed : sealedCircles.includes(page);
@@ -465,6 +474,23 @@ export default function Today() {
       ) : null}
 
       <MeetBanner />
+
+      {editable && lost && !items.some((x) => x.payload.text?.trim() === lost.trim()) ? (
+        <div className="sticky row" style={{ background: 'var(--sticky-yellow)', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
+          <Doodle id="pena" size={24} />
+          <div className="col grow" style={{ gap: 8 }}>
+            <span className="small">Ada tulisan yang belum sempat tersimpan: “{lost.slice(0, 60)}{lost.length > 60 ? '…' : ''}”</span>
+            <div className="row" style={{ gap: 6 }}>
+              <button className="btn sm auto" onClick={() => { const c = viewCenter(560); addText(c.x, c.y, { kind: 'text', text: lost }); forgetLost(); }}>
+                pulihkan
+              </button>
+              <button className="btn ghost sm auto" onClick={forgetLost}>
+                buang
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {editable && newCircles.length ? (
         <div className="sticky row" style={{ background: 'var(--sticky-blue)', gap: 10, marginBottom: 10, alignItems: 'flex-start' }} data-testid="new-circle-prompt">
