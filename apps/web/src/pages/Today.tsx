@@ -632,6 +632,11 @@ export default function Today() {
                 </Link>
               ))
             : null}
+          {pageItems.length ? (
+            <button className="btn soft" onClick={() => setSheet('save')}>
+              <Doodle id="ui-unduh" size={22} /> simpan halaman (PDF / teks)
+            </button>
+          ) : null}
           <Link to="/kenangan" className="btn ghost">
             <Doodle id="ui-kenangan" size={22} /> ke kenangan
           </Link>
