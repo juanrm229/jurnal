@@ -141,7 +141,9 @@ export function Page(props: PageProps) {
       return { id: pool[(h + r) % pool.length]!, x: left ? 8 + (r % 40) : 930 - (r % 30), y: 260 + i * 230 + (r % 120), rot: (r % 40) - 20, size: 46 + (r % 24) };
     });
   }, [props.margins]);
-  const bottom = laid.reduce((m, it) => Math.max(m, it.layout.y + (it.payload.kind === 'photo' ? it.layout.w * 1.1 : 260)), 0);
+  // Tinggi halaman mengikuti tinggi isi yang sebenarnya (tulisan panjang memanjangkan halaman).
+  const [heights, setHeights] = useState<Record<string, number>>({});
+  const bottom = laid.reduce((m, it) => Math.max(m, it.layout.y + (heights[it.id] ?? (it.payload.kind === 'photo' ? it.layout.w * 1.1 : 260))), 0);
   const height = Math.max(props.minHeight ?? 1300, bottom + 260);
 
   const endPointer = (id: number) => {
@@ -167,7 +169,7 @@ export function Page(props: PageProps) {
     <div
       ref={ref}
       className={['page lined', dragOver ? 'drag-over' : '', props.sealed ? 'sealed' : '', props.className].filter(Boolean).join(' ')}
-      style={{ height: height * scale, '--s': scale, '--page-wash': moodColor ?? 'transparent', filter: aged ? `sepia(${aged * 0.55}) saturate(${1 - aged * 0.2})` : undefined, touchAction: editable && selectedId ? 'none' : undefined } as CSSProperties}
+      style={{ height: height * scale, '--s': scale, '--page-wash': moodColor ?? 'transparent', filter: aged ? `sepia(${aged * 0.55}) saturate(${1 - aged * 0.2})` : undefined } as CSSProperties}
       onPointerDownCapture={(e) => {
         pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
         if (pts.current.size === 2 && editable && selectedId) {
@@ -250,6 +252,7 @@ export function Page(props: PageProps) {
               window.setTimeout(() => setLive(({ [it.id]: _, ...rest }) => rest), 400);
             }}
             onTap={(at) => props.onItemTap?.(it.id, at)}
+            onMeasure={(h) => setHeights((m) => (Math.abs((m[it.id] ?? 0) - h) < 4 ? m : { ...m, [it.id]: h }))}
             onEdit={() => props.onEdit?.(it.id)}
             gesture={gesture}
             fresh={!!initial.current && !initial.current.has(it.id)}
@@ -290,6 +293,7 @@ function Movable({
   onCommit,
   onTap,
   onEdit,
+  onMeasure,
   gesture,
   fresh,
   tools,
@@ -306,13 +310,32 @@ function Movable({
   onLive: (l: PageLayout) => void;
   onCommit: (l: PageLayout) => void;
   onTap: (at: { x: number; y: number }) => void;
+  onMeasure: (h: number) => void;
   onEdit: () => void;
   tools: ReactNode;
   children: ReactNode;
 }) {
   const L = item.layout;
   const box = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ kind: 'move' | 'turn'; sx: number; sy: number; start: PageLayout; moved: boolean; cx?: number; cy?: number; a0?: number; d0?: number } | null>(null);
+  const drag = useRef<{ kind: 'move' | 'turn'; sx: number; sy: number; start: PageLayout; moved: boolean; touch?: boolean; armed?: boolean; timer?: number; cx?: number; cy?: number; a0?: number; d0?: number } | null>(null);
+  // Ukur tinggi sebenarnya (dalam satuan halaman) supaya halaman ikut memanjang.
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => onMeasure(el.offsetHeight / scale));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [scale]);
+  // Setelah tekan-tahan, jari menggeser tempelan, bukan menggulir halaman.
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const stop = (e: TouchEvent) => {
+      if (drag.current?.armed) e.preventDefault();
+    };
+    el.addEventListener('touchmove', stop, { passive: false });
+    return () => el.removeEventListener('touchmove', stop);
+  }, []);
   const [dragging, setDragging] = useState(false);
   const last = useRef<PageLayout>(L);
   last.current = L;
@@ -325,10 +348,8 @@ function Movable({
     if (editing && kind === 'move') return;
     e.stopPropagation();
     if (!editable) return;
-    // Di layar sentuh, tempelan baru bisa digeser setelah dipilih (ketuk dulu),
-    // supaya menggulir halaman tidak ikut menyeret isi.
-    if (e.pointerType === 'touch' && kind === 'move' && !selected) return;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const touch = e.pointerType === 'touch' && kind === 'move';
+    if (!touch) (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const r = box.current!.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
@@ -342,7 +363,25 @@ function Movable({
       cy,
       a0: Math.atan2(e.clientY - cy, e.clientX - cx),
       d0: Math.hypot(e.clientX - cx, e.clientY - cy),
+      touch,
     };
+    if (touch) {
+      // Di layar sentuh: geser cepat = menggulir halaman; tekan-tahan = menggeser tempelan.
+      const pid = e.pointerId;
+      const target = e.currentTarget as HTMLElement;
+      drag.current.timer = window.setTimeout(() => {
+        const d = drag.current;
+        if (!d || d.moved) return;
+        d.armed = true;
+        try {
+          target.setPointerCapture(pid);
+        } catch {}
+        setDragging(true);
+        if (!selected) onSelect();
+        navigator.vibrate?.(12);
+      }, 280);
+      return;
+    }
     if (!selected) onSelect();
   };
 
@@ -355,6 +394,14 @@ function Movable({
     }
     const dx = e.clientX - d.sx;
     const dy = e.clientY - d.sy;
+    if (d.touch && !d.armed) {
+      // Jari bergerak sebelum tekan-tahan selesai: ini menggulir, bukan menggeser.
+      if (Math.hypot(dx, dy) > 8) {
+        window.clearTimeout(d.timer);
+        drag.current = null;
+      }
+      return;
+    }
     if (!d.moved && Math.hypot(dx, dy) < 4) return;
     d.moved = true;
     setDragging(true);
@@ -375,9 +422,11 @@ function Movable({
     drag.current = null;
     setDragging(false);
     if (!d) return;
+    window.clearTimeout(d.timer);
     if (gesture.current) return;
     if (d.moved) onCommit(last.current);
-    else if (d.kind === 'move' && selected && editable) onEdit();
+    else if (d.kind === 'move' && selected && editable && !d.armed) onEdit();
+    else if (d.touch && !d.armed && !selected) onSelect();
     void e;
   };
 
@@ -396,7 +445,13 @@ function Movable({
       onPointerDown={(e) => begin(e, 'move')}
       onPointerMove={move}
       onPointerUp={end}
-      onPointerCancel={end}
+      onPointerCancel={() => {
+        // Peramban mengambil alih untuk menggulir: batalkan tanpa memilih apa pun.
+        if (drag.current) window.clearTimeout(drag.current.timer);
+        if (drag.current?.moved) onCommit(last.current);
+        drag.current = null;
+        setDragging(false);
+      }}
       onClick={(e) => {
         e.stopPropagation();
         if (!editable) onTap({ x: L.x + L.w / 2, y: L.y });

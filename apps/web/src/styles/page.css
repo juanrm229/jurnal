@@ -60,7 +60,6 @@
   touch-action: pan-y;
   cursor: grab;
 }
-.el.selected,
 .el.dragging {
   touch-action: none;
 }
