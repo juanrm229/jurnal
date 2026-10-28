@@ -14,7 +14,7 @@ export function TabBar({ path }: { path: string }) {
     <nav className="tabbar" aria-label="navigasi">
       {TABS.map((t) => (
         <Link key={t.to} to={t.to} className={path.startsWith(t.to) ? 'on' : ''} aria-current={path.startsWith(t.to) ? 'page' : undefined}>
-          <Doodle id={t.icon} size={24} color={path.startsWith(t.to) ? 'var(--ink)' : 'var(--ink-soft)'} />
+          <Doodle id={t.icon} size={24} color="currentColor" />
           {t.label}
         </Link>
       ))}

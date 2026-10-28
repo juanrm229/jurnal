@@ -215,12 +215,28 @@ export default function Today() {
   });
 
   /** Tengah layar dalam koordinat halaman — tempat stiker & elemen baru muncul. */
-  const viewCenter = (w: number) => {
+  // Elemen baru muncul di tengah layar, tapi mencari ruang kosong supaya tidak
+  // menumpuk di atas foto atau tulisan yang sudah ada.
+  const viewCenter = (w: number, h = w * 0.62) => {
     const r = pageBox.current?.getBoundingClientRect();
     if (!r) return { x: 200, y: 300 };
     const s = r.width / PAGE_W;
-    const y = (window.innerHeight / 2 - r.top) / s;
-    return { x: Math.round(PAGE_W / 2 - w / 2 + (Math.random() - 0.5) * 120), y: Math.round(Math.max(200, y - 80)) };
+    const vy = (window.innerHeight / 2 - r.top) / s;
+    const base = { x: Math.round(PAGE_W / 2 - w / 2 + (Math.random() - 0.5) * 120), y: Math.round(Math.max(200, vy - 80)) };
+    const boxes = [...pageBox.current!.querySelectorAll<HTMLElement>('.el')].map((el) => {
+      const b = el.getBoundingClientRect();
+      return { x: (b.left - r.left) / s, y: (b.top - r.top) / s, w: b.width / s, h: b.height / s };
+    });
+    const hit = (x: number, y: number) => boxes.some((b) => x < b.x + b.w - 24 && x + w > b.x + 24 && y < b.y + b.h - 24 && y + h > b.y + 24);
+    if (!hit(base.x, base.y)) return base;
+    const clamp = (x: number) => Math.round(Math.max(20, Math.min(PAGE_W - w - 20, x)));
+    const xs = [base.x, 40, PAGE_W - w - 40, PAGE_W / 2 - w / 2].map(clamp);
+    for (let dy = 50; dy < 3000; dy += 50)
+      for (const y of [base.y + dy, base.y - dy]) {
+        if (y < 190) continue;
+        for (const x of xs) if (!hit(x, y)) return { x, y: Math.round(y) };
+      }
+    return base;
   };
 
   // ── Aksi ──────────────────────────────────────────────────────────────────
@@ -258,7 +274,7 @@ export default function Today() {
 
   const addPhotos = async (files: File[], x?: number, y?: number) => {
     for (const [i, f] of files.slice(0, 6).entries()) {
-      const pos = x !== undefined && y !== undefined ? { x: x + i * 40, y: y + i * 40 } : viewCenter(460);
+      const pos = x !== undefined && y !== undefined ? { x: x + i * 40, y: y + i * 40 } : viewCenter(460, 540);
       const localUrl = URL.createObjectURL(f);
       const id = newDropId();
       const payload = base('photo', { ...pos, rot: Math.round((Math.random() - 0.5) * 8) });
@@ -577,7 +593,7 @@ export default function Today() {
         </button>
       ) : null}
 
-      <div ref={pageBox}>
+      <div ref={pageBox} className="page-stack">
         <Page
           key={page}
           items={pageItems}
@@ -638,7 +654,7 @@ export default function Today() {
               </>
             ) : (
               <>
-                <DockBtn icon="ui-teks" label="tulis" onClick={() => { const c = viewCenter(560); addText(c.x, c.y); }} />
+                <DockBtn icon="ui-teks" label="tulis" onClick={() => { const c = viewCenter(560, 170); addText(c.x, c.y); }} />
                 <DockBtn icon="ui-foto" label="foto" onClick={() => fileInput.current?.click()} />
                 <DockBtn icon="kilau" label="stiker" onClick={() => setSheet('sticker')} />
                 <DockBtn icon="ui-tambah" label="lainnya" onClick={() => setSheet('more')} />

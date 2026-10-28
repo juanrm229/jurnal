@@ -221,6 +221,7 @@
 .cassette .reels {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin: 6% 12%;
 }
 .cassette .reel {
@@ -241,6 +242,32 @@
 }
 .cassette.playing .reel {
   animation: spin 2.4s linear infinite;
+}
+.cassette .cas-play {
+  flex: none;
+  border-radius: 50%;
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--ink) 35%, transparent);
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.cassette .cas-tri {
+  width: 0;
+  height: 0;
+  margin-left: 12%;
+  border-style: solid;
+  border-width: 0.5em 0 0.5em 0.85em;
+  border-color: transparent transparent transparent var(--paper);
+}
+.cassette .cas-pause {
+  width: 0.8em;
+  height: 0.9em;
+  border-left: 0.28em solid var(--paper);
+  border-right: 0.28em solid var(--paper);
 }
 
 .washi {

@@ -8,7 +8,7 @@ import { type CSSProperties, useMemo, useState } from 'react';
 import { tiltFor } from '@/lib/board';
 import { memberName, type OpenDrop, useCircle, useCircleRange, useCircles, useMe, useOpenDrops, useToday } from '@/lib/data';
 import { Link, useParams } from '@/lib/router';
-import { Avatar, Doodle, Empty, Growing, Header, Sheet } from '@/ui/kit';
+import { Avatar, Doodle, Growing, Header, Sheet } from '@/ui/kit';
 
 const HUES = ['#f2c14e', '#e86a5b', '#5b8def', '#7cc47f', '#c78bd6', '#f39b6d', '#4fb6b0', '#2f2f3a'];
 const hueFor = (s: string) => HUES[Math.abs([...s].reduce((h, c) => (h * 33 + c.charCodeAt(0)) | 0, 7)) % HUES.length]!;
@@ -61,7 +61,17 @@ export default function Lagu() {
               ))}
             </div>
           ) : (
-            <Empty doodle="piringan-hitam" title="Dindingnya masih kosong." body="Tempel lagu yang diputar berulang di halaman hari ini. Setelah hari itu dibuka bersama, sampulnya tergantung di sini." />
+            <div className="rl-empty">
+              <div className="rl-hang" aria-hidden>
+                {[0, 1, 2].map((i) => (
+                  <span key={i} className={`rl-frame ${i === 1 ? 'hero' : ''}`}>
+                    <Doodle id={i === 1 ? 'piringan-hitam' : 'not-balok'} size={i === 1 ? 54 : 30} color="var(--ink-soft)" />
+                  </span>
+                ))}
+              </div>
+              <p className="rupa-hand" style={{ fontSize: 28, margin: 0 }}>dindingnya menunggu lagu pertama.</p>
+              <p className="small soft" style={{ margin: '4px 0 0' }}>Tempel lagu di halaman hari ini. Setelah dibuka bersama, sampulnya tergantung di sini.</p>
+            </div>
           )}
         </div>
         <div className="rl-floor" aria-hidden>

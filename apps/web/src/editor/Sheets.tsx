@@ -103,7 +103,7 @@ export function SongSheet({ open, onClose, onSave }: { open: boolean; onClose: (
   );
 }
 
-type Recog = { lang: string; continuous: boolean; interimResults: boolean; start: () => void; stop: () => void; onresult: (e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void; onerror: () => void };
+type Recog = { lang: string; continuous: boolean; interimResults: boolean; start: () => void; stop: () => void; abort: () => void; onend: (() => void) | null; onresult: (e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void; onerror: () => void };
 const Recognition = (globalThis as unknown as { SpeechRecognition?: new () => Recog; webkitSpeechRecognition?: new () => Recog }).SpeechRecognition ??
   (globalThis as unknown as { webkitSpeechRecognition?: new () => Recog }).webkitSpeechRecognition;
 
@@ -114,6 +114,7 @@ const Recognition = (globalThis as unknown as { SpeechRecognition?: new () => Re
 export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolean; onClose: () => void; maxSeconds: number; onDone: (blob: Blob, ms: number, transcript?: string) => void }) {
   const rec = useRef<MediaRecorder | null>(null);
   const recog = useRef<Recog | null>(null);
+  const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
   const started = useRef(0);
   const finalText = useRef('');
@@ -152,6 +153,14 @@ export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolea
         setLive(`${finalText.current}${interim}`);
       };
       r.onerror = () => {};
+      // Pengenal suara kadang berhenti sendiri saat hening; nyalakan lagi selama masih merekam.
+      r.onend = () => {
+        if (recog.current === r && rec.current?.state === 'recording') {
+          try {
+            r.start();
+          } catch {}
+        }
+      };
       r.start();
       recog.current = r;
     } catch {
@@ -162,19 +171,21 @@ export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolea
   const start = async () => {
     setErr(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.current = st;
       const type = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-      const r = new MediaRecorder(stream, { mimeType: type });
+      const r = new MediaRecorder(st, { mimeType: type });
       chunks.current = [];
       r.ondataavailable = (e) => e.data.size && chunks.current.push(e.data);
       r.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
+        st.getTracks().forEach((t) => t.stop());
+        const dur = Date.now() - started.current;
         // Beri pengenal suara sejenak untuk menuntaskan kalimat terakhir.
         setTimeout(() => {
           const text = finalText.current.trim() || undefined;
-          onDone(new Blob(chunks.current, { type }), Date.now() - started.current, text);
+          onDone(new Blob(chunks.current, { type }), dur, text);
           setLive('');
-        }, recog.current ? 600 : 0);
+        }, write && Recognition ? 700 : 0);
       };
       rec.current = r;
       started.current = Date.now();
@@ -185,12 +196,27 @@ export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolea
       setErr('Izin mikrofon dibutuhkan untuk merekam cerita.');
     }
   };
+  // Matikan semuanya: perekam, pengenal suara, dan mikrofon (lampu mik harus padam).
   const stop = () => {
     setRecording(false);
-    recog.current?.stop();
-    rec.current?.state === 'recording' && rec.current.stop();
-    setTimeout(() => (recog.current = null), 800);
+    const r = recog.current;
+    recog.current = null;
+    if (r) {
+      r.onend = null;
+      try {
+        r.stop();
+      } catch {}
+      setTimeout(() => {
+        try {
+          r.abort();
+        } catch {}
+      }, 650);
+    }
+    if (rec.current?.state === 'recording') rec.current.stop();
+    stream.current?.getTracks().forEach((t) => t.stop());
+    stream.current = null;
   };
+  useEffect(() => () => stop(), []);
   const secs = Math.floor(ms / 1000);
   return (
     <Sheet open={open} onClose={() => { stop(); onClose(); }} title="cerita suara">

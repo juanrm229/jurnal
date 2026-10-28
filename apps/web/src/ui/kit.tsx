@@ -65,15 +65,15 @@ export function Screen({ children, wide, className }: { children: ReactNode; wid
 
 export function Header({ title, sub, right, backTo }: { title?: ReactNode; sub?: ReactNode; right?: ReactNode; backTo?: string }) {
   return (
-    <header className="row between" style={{ minHeight: 52, marginBottom: 8 }}>
-      <button className="icon-btn" aria-label="kembali" onClick={() => back(backTo)}>
-        <Doodle id="ui-kembali" size={24} />
+    <header className="hdr">
+      <button className="hdr-back" aria-label="kembali" onClick={() => back(backTo)}>
+        <Doodle id="ui-kembali" size={20} />
       </button>
-      <div className="grow center">
-        {title ? <div className="h2" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div> : null}
-        {sub ? <div className="tiny ink-soft">{sub}</div> : null}
+      <div className="hdr-text">
+        {title ? <div className="hdr-title">{title}</div> : null}
+        {sub ? <div className="hdr-sub">{sub}</div> : null}
       </div>
-      <div style={{ minWidth: 40, display: 'flex', justifyContent: 'flex-end' }}>{right}</div>
+      <div className="hdr-right">{right}</div>
     </header>
   );
 }
@@ -92,10 +92,17 @@ export function Section({ title, right, children }: { title: string; right?: Rea
 
 export function Empty({ doodle = 'tunas', title, body, action }: { doodle?: string; title: string; body?: string; action?: ReactNode }) {
   return (
-    <div className="col center" style={{ alignItems: 'center', padding: '28px 8px', gap: 10 }}>
-      <Doodle id={doodle} size={72} draw />
-      <div className="h2">{title}</div>
-      {body ? <div className="small soft" style={{ maxWidth: 360 }}>{body}</div> : null}
+    <div className="empty rise">
+      <span className="empty-art" aria-hidden>
+        <span className="empty-blob" />
+        <span className="empty-paper">
+          <Doodle id={doodle} size={64} draw />
+        </span>
+        <span className="empty-spark a">✦</span>
+        <span className="empty-spark b">✦</span>
+      </span>
+      <div className="empty-title">{title}</div>
+      {body ? <div className="small soft empty-body">{body}</div> : null}
       {action}
     </div>
   );
@@ -162,8 +169,9 @@ export function Sheet({ open, onClose, children, title }: { open: boolean; onClo
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal onClick={(e) => e.stopPropagation()}>
-        <div className="row between" style={{ marginBottom: 10 }}>
-          <span className="h2">{title}</span>
+        <span className="sheet-grab" aria-hidden />
+        <div className="row between sheet-head">
+          <span className="sheet-title">{title}</span>
           <button className="icon-btn" aria-label="tutup" onClick={onClose}>
             <Doodle id="ui-tutup" size={22} />
           </button>

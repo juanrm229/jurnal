@@ -1,5 +1,6 @@
 /** Router mungil berbasis History API — cukup untuk aplikasi ini, tanpa dependensi. */
 import { type AnchorHTMLAttributes, createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -8,8 +9,15 @@ export function navigate(to: string, opts: { replace?: boolean } = {}) {
   if (to === location.pathname + location.search + location.hash) return;
   if (opts.replace) history.replaceState(null, '', to);
   else history.pushState(null, '', to);
-  window.scrollTo({ top: 0 });
-  listeners.forEach((l) => l());
+  const run = () => {
+    window.scrollTo({ top: 0 });
+    listeners.forEach((l) => l());
+  };
+  // Pindah halaman dengan transisi tampilan (peramban yang mendukung): halaman
+  // lama memudar dan terangkat, halaman baru naik pelan, tab bar tetap diam.
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  if (doc.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) doc.startViewTransition(() => flushSync(run));
+  else run();
 }
 
 export function back(fallback = '/hari') {

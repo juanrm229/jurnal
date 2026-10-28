@@ -240,9 +240,14 @@
   position: relative;
   border-radius: 26px;
   overflow: hidden;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, #fff) 0%, var(--card) 72%, color-mix(in srgb, var(--paper) 80%, #000 4%) 72.2%, var(--paper) 100%);
+  background:
+    radial-gradient(60% 70% at 50% 0%, rgba(255, 255, 255, 0.9), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, #fff), var(--card));
   box-shadow: var(--shadow);
   margin-bottom: 14px;
+}
+:root[data-dark='1'] .rl-room {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 85%, #fff), var(--card));
 }
 .rl-wall {
   padding: 26px 0 8px;
@@ -319,8 +324,10 @@
   color: var(--text-soft);
 }
 .rl-floor {
-  height: 34px;
+  height: 38px;
   position: relative;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 85%, #000 5%), var(--paper));
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
 }
 .rl-bench {
   position: absolute;
@@ -374,6 +381,31 @@
   border-radius: 3px;
   background: color-mix(in srgb, var(--text) 22%, var(--card));
   box-shadow: 0 10px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Dinding kosong: bingkai-bingkai menunggu diisi. */
+.rl-empty {
+  text-align: center;
+  padding: 0 22px 8px;
+}
+.rl-empty .rl-hang {
+  justify-content: center;
+  padding-bottom: 22px;
+}
+.rl-frame {
+  width: 74px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 2px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--paper) 60%, transparent);
+}
+.rl-frame.hero {
+  width: 112px;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ink) 20%, transparent);
+  box-shadow: 0 16px 22px -12px rgba(20, 20, 40, 0.3);
 }
 
 /* ── Niat pagi ───────────────────────────────────────────────────────────── */

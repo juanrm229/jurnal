@@ -262,32 +262,42 @@ function VoiceEl({ item, scale }: { item: PageItem; scale: number }) {
   const [playing, setPlaying] = useState(false);
   const secs = Math.round((m?.durationMs ?? 0) / 1000);
   const px = (u: number) => Math.max(9, u * scale);
+  const toggle = () => {
+    if (!url) return;
+    if (!audio.current) {
+      audio.current = new Audio(url);
+      audio.current.onended = () => setPlaying(false);
+    }
+    if (playing) {
+      audio.current.pause();
+      setPlaying(false);
+    } else {
+      void audio.current.play();
+      setPlaying(true);
+    }
+  };
+  useEffect(() => () => audio.current?.pause(), []);
+  // Badan kaset bisa diseret, dipilih, dan dihapus seperti tempelan lain;
+  // hanya tombol putar yang menangkap ketukan sendiri.
   return (
-    <div
-      className={`cassette ${playing ? 'playing' : ''}`}
-      style={{ fontSize: px(24), cursor: 'pointer' }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (!url) return;
-        if (!audio.current) {
-          audio.current = new Audio(url);
-          audio.current.onended = () => setPlaying(false);
-        }
-        if (playing) {
-          audio.current.pause();
-          setPlaying(false);
-        } else {
-          void audio.current.play();
-          setPlaying(true);
-        }
-      }}>
+    <div className={`cassette ${playing ? 'playing' : ''}`} style={{ fontSize: px(24) }}>
       <div className="row between">
         <Doodle id="ui-mikrofon" size={px(40)} />
-        <span>{playing ? 'memutar…' : 'putar suara'}</span>
+        <span>{playing ? 'memutar…' : 'cerita suara'}</span>
       </div>
       <div className="reels">
         <span className="reel" />
+        <button
+          className="cas-play"
+          style={{ width: px(84), height: px(84) }}
+          aria-label={playing ? 'jeda' : 'putar'}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle();
+          }}>
+          <span className={playing ? 'cas-pause' : 'cas-tri'} />
+        </button>
         <span className="reel" />
       </div>
       <div className="center" style={{ fontSize: px(20), opacity: 0.8 }}>
