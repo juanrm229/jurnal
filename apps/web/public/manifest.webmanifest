@@ -76,6 +76,18 @@
       ]
     },
     {
+      "name": "SIDIK",
+      "short_name": "SIDIK",
+      "description": "Game detektif bersama",
+      "url": "/sidik",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Tulis surat",
       "short_name": "Surat",
       "url": "/surat/tulis",

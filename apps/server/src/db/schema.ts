@@ -749,3 +749,12 @@ export const boothFrames = pgTable(
   },
   (t) => [primaryKey({ columns: [t.boothId, t.userId] })],
 );
+
+// ── SIDIK (permainan detektif) ──────────────────────────────────────────────
+
+/** Satu ruang permainan; seluruh keadaan disimpan sebagai JSON (bukan isi jurnal). */
+export const sidikRooms = pgTable('sidik_rooms', {
+  code: text('code').primaryKey(),
+  state: jsonb('state').notNull(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
+});

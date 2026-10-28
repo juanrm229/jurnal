@@ -57,6 +57,13 @@
       "when": 1793151917779,
       "tag": "0007_small_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793156557814,
+      "tag": "0008_melodic_outlaw_kid",
+      "breakpoints": true
     }
   ]
 }

@@ -63,3 +63,4 @@ export {
 export { DREAM_CATEGORIES, DREAM_IDEAS, DREAM_WHEN_LABEL, type DreamCategory, type DreamWhen } from './content/dreams';
 export type * from './content/types';
 export type { ChapterFeatures } from './content/chapterTitles';
+export * as sidik from './sidik';

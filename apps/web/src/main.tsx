@@ -20,6 +20,7 @@ import './styles/tentang.css';
 import './styles/rupa.css';
 import './styles/photobox.css';
 import './styles/polish.css';
+import './styles/sidik.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

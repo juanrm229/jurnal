@@ -20,6 +20,7 @@ import { workRoutes } from './routes/works';
 import { meetRoutes } from './routes/meets';
 import { boardRoutes } from './routes/board';
 import { boothRoutes } from './routes/booths';
+import { sidikRoutes } from './routes/sidik';
 import { dreamRoutes } from './routes/dreams';
 import { webRoutes } from './web/pages';
 
@@ -27,7 +28,7 @@ export function createApp(s: Services) {
   const app = new Hono<AppEnv>();
   const auth = requireAuth(s);
 
-  app.use('/v1/*', cors({ origin: (o) => o ?? '*', allowHeaders: ['authorization', 'content-type'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }));
+  app.use('/v1/*', cors({ origin: (o) => o ?? '*', allowHeaders: ['authorization', 'content-type', 'x-sidik-guest'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }));
 
   app.onError((err, c) => {
     if (err instanceof ApiError) return c.json({ error: { code: err.code, message: err.message } }, err.status);
@@ -50,6 +51,8 @@ export function createApp(s: Services) {
   });
   v1.route('/invites', inviteRoutes(s, auth));
   v1.route('/billing/webhook', webhookRoutes(s) as never);
+  // SIDIK boleh dimainkan tamu tanpa akun, jadi tidak di belakang auth.
+  v1.route('/sidik', sidikRoutes(s));
 
   const authed = new Hono<AppEnv>();
   authed.use('*', auth);
