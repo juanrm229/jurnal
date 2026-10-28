@@ -1,6 +1,7 @@
 /** Kamera depan, potong ke rasio strip (dicerminkan seperti photobox), bunyi jepret. */
 import { useEffect, useRef, useState } from 'react';
 import { applyFilter, type FilterId, type RGB } from './filters';
+import { drawProps, type Prop } from './props';
 
 export function useCamera(on: boolean) {
   const video = useRef<HTMLVideoElement | null>(null);
@@ -42,7 +43,7 @@ export function useCamera(on: boolean) {
 }
 
 /** Ambil satu bingkai dari video: dipotong tengah ke rasio, dicerminkan, difilter. */
-export function grab(v: HTMLVideoElement, aspect: number, maxW: number, filter: FilterId, ink: RGB, into?: HTMLCanvasElement): HTMLCanvasElement {
+export function grab(v: HTMLVideoElement, aspect: number, maxW: number, filter: FilterId, ink: RGB, into?: HTMLCanvasElement, props?: Prop[]): HTMLCanvasElement {
   const vw = v.videoWidth || 640;
   const vh = v.videoHeight || 480;
   let sw = vw;
@@ -63,6 +64,7 @@ export function grab(v: HTMLVideoElement, aspect: number, maxW: number, filter: 
   ctx.drawImage(v, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
   ctx.restore();
   applyFilter(ctx, w, h, filter, ink);
+  drawProps(ctx, w, h, props);
   return c;
 }
 

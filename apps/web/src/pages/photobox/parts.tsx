@@ -6,6 +6,9 @@ import { type CSSProperties, type RefObject, useEffect, useMemo, useRef, useStat
 import { type FilterId, type RGB } from '@/lib/photobox/filters';
 import { beep, grab, shutter, toBlob } from '@/lib/photobox/camera';
 import type { Pose } from '@/lib/photobox/poses';
+import type { Prop } from '@/lib/photobox/props';
+import { BURST, encodeVideo, pingPong, renderLiveFrames } from '@/lib/photobox/live';
+import { download } from '@/lib/meets';
 import { renderStrip, type StripInput, TEMPLATES, type TemplateId } from '@/lib/photobox/strips';
 import { Doodle } from '@/ui/kit';
 
@@ -14,10 +17,12 @@ export const SHOT_MS = 5400;
 const COUNT_AT = [1600, 2800, 4000];
 const SNAP_AT = 5100;
 
-export function LiveView({ video, ready, aspect, filter, ink, onCanvas, className }: { video: RefObject<HTMLVideoElement | null>; ready: boolean; aspect: number; filter: FilterId; ink: RGB; onCanvas?: (c: HTMLCanvasElement) => void; className?: string }) {
+const HEAVY: FilterId[] = ['tinta', 'pensil', 'catair', 'neon', 'komik', 'riso'];
+
+export function LiveView({ video, ready, aspect, filter, ink, props, onCanvas, className }: { video: RefObject<HTMLVideoElement | null>; ready: boolean; aspect: number; filter: FilterId; ink: RGB; props?: Prop[]; onCanvas?: (c: HTMLCanvasElement) => void; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const opts = useRef({ aspect, filter, ink });
-  opts.current = { aspect, filter, ink };
+  const opts = useRef({ aspect, filter, ink, props });
+  opts.current = { aspect, filter, ink, props };
   useEffect(() => {
     if (!ready) return;
     let raf = 0;
@@ -27,7 +32,7 @@ export function LiveView({ video, ready, aspect, filter, ink, onCanvas, classNam
       // ±24 fps cukup halus, dan hemat baterai untuk filter berat.
       if (t - last < 40 || !video.current || !ref.current) return;
       last = t;
-      grab(video.current, opts.current.aspect, opts.current.filter === 'tinta' ? 400 : 480, opts.current.filter, opts.current.ink, ref.current);
+      grab(video.current, opts.current.aspect, HEAVY.includes(opts.current.filter) ? 360 : 480, opts.current.filter, opts.current.ink, ref.current, opts.current.props);
     };
     raf = requestAnimationFrame(loop);
     if (ref.current) onCanvas?.(ref.current);
@@ -47,6 +52,10 @@ export function BoothStage({
   startLocal,
   side,
   partner,
+  candid,
+  burst,
+  ghost,
+  props,
   onDone,
 }: {
   video: RefObject<HTMLVideoElement | null>;
@@ -59,13 +68,23 @@ export function BoothStage({
   startLocal: number;
   side?: 'left' | 'right';
   partner?: { name: string; url: string | null };
-  onDone: (frames: HTMLCanvasElement[]) => void;
+  /** Mode candid: tanpa hitung mundur, jepret diam-diam di waktu acak. */
+  candid?: boolean;
+  /** Strip hidup: simpan bingkai gerak sebelum tiap jepretan. */
+  burst?: boolean;
+  /** Dulu & sekarang: foto lama yang ditiru, transparan di atas kamera. */
+  ghost?: string[];
+  props?: Prop[];
+  onDone: (frames: HTMLCanvasElement[], bursts?: HTMLCanvasElement[][]) => void;
 }) {
   const [now, setNow] = useState(Date.now());
   const [flash, setFlash] = useState(false);
   const taken = useRef<HTMLCanvasElement[]>([]);
   const [thumbs, setThumbs] = useState<string[]>([]);
   const fired = useRef(new Set<string>());
+  const bursts = useRef<HTMLCanvasElement[][]>([]);
+  // Candid: waktu jepret acak (tapi tetap) untuk tiap jepretan.
+  const snapAt = useMemo(() => Array.from({ length: shots }, () => (candid ? 1400 + Math.random() * 3400 : SNAP_AT)), []);
 
   useEffect(() => {
     let raf = 0;
@@ -77,23 +96,35 @@ export function BoothStage({
       const i = Math.floor(el / SHOT_MS);
       if (el < 0 || i >= shots) return;
       const p = el - i * SHOT_MS;
-      COUNT_AT.forEach((at, k) => {
-        const key = `${i}:c${k}`;
-        if (p >= at && !fired.current.has(key)) {
-          fired.current.add(key);
-          beep(false);
+      if (!candid)
+        COUNT_AT.forEach((at, k) => {
+          const key = `${i}:c${k}`;
+          if (p >= at && !fired.current.has(key)) {
+            fired.current.add(key);
+            beep(false);
+          }
+        });
+      const snap = snapAt[i]!;
+      // Bingkai gerak: setiap 130 ms menjelang jepretan.
+      if (burst && video.current)
+        for (let b = 0; b < BURST - 1; b++) {
+          const key = `${i}:b${b}`;
+          if (p >= snap - (BURST - 1 - b) * 130 && !fired.current.has(key)) {
+            fired.current.add(key);
+            (bursts.current[i] ??= [])[b] = grab(video.current, aspect, 640, filter, ink, undefined, props);
+          }
         }
-      });
       const key = `${i}:snap`;
-      if (p >= SNAP_AT && !fired.current.has(key) && video.current) {
+      if (p >= snap && !fired.current.has(key) && video.current) {
         fired.current.add(key);
-        const c = grab(video.current, aspect, 1100, filter, ink);
+        const c = grab(video.current, aspect, 1100, filter, ink, undefined, props);
         taken.current[i] = c;
+        if (burst) (bursts.current[i] ??= [])[BURST - 1] = c;
         shutter();
         setFlash(true);
         setTimeout(() => setFlash(false), 260);
         setThumbs((x) => [...x, c.toDataURL('image/jpeg', 0.5)]);
-        if (i === shots - 1) setTimeout(() => onDone(taken.current), 700);
+        if (i === shots - 1) setTimeout(() => onDone(taken.current, burst ? bursts.current.map((b) => b.filter(Boolean)) : undefined), 700);
       }
     };
     raf = requestAnimationFrame(tick);
@@ -103,16 +134,23 @@ export function BoothStage({
   const el = now - startLocal;
   const i = Math.max(0, Math.min(shots - 1, Math.floor(el / SHOT_MS)));
   const p = el - i * SHOT_MS;
-  const count = el < 0 ? Math.ceil(-el / 1000) : p < COUNT_AT[0]! ? null : p < COUNT_AT[1]! ? 3 : p < COUNT_AT[2]! ? 2 : p < SNAP_AT ? 1 : null;
+  const count = el < 0 ? Math.ceil(-el / 1000) : candid ? null : p < COUNT_AT[0]! ? null : p < COUNT_AT[1]! ? 3 : p < COUNT_AT[2]! ? 2 : p < SNAP_AT ? 1 : null;
   const pose = poses?.[i];
-  const showPose = !!pose && el >= 0 && p < SNAP_AT;
+  const showPose = !!pose && el >= 0 && p < (snapAt[i] ?? SNAP_AT) && !candid;
+  const ghostUrl = ghost?.length ? ghost[i % ghost.length] : undefined;
 
   return (
     <div className="pb-stage">
       <div className="pb-booth">
         <div className="pb-curtain" aria-hidden />
         <div className="pb-view">
-          <LiveView video={video} ready={ready} aspect={aspect} filter={filter} ink={ink} />
+          <LiveView video={video} ready={ready} aspect={aspect} filter={filter} ink={ink} props={props} />
+          {ghostUrl && el >= 0 ? <img className="pb-ghost" src={ghostUrl} alt="" /> : null}
+          {candid && el >= 0 ? (
+            <div className="pb-candid">
+              <span>👀</span> kamera bisa jepret kapan saja…
+            </div>
+          ) : null}
           {partner ? (
             <div className={`pb-pip ${side === 'right' ? 'left' : 'right'}`}>
               {partner.url ? <img src={partner.url} alt="" /> : <span className="tiny">menunggu…</span>}
@@ -165,7 +203,11 @@ export function StripResult({
   onTemplate,
   ink,
   actions,
+  bursts,
+  theme,
 }: {
+  theme?: 'waktu';
+  bursts?: Img[][][];
   frames: Img[][];
   names: string[];
   cities: string[];
@@ -186,7 +228,7 @@ export function StripResult({
     let alive = true;
     const t = setTimeout(async () => {
       const c = document.createElement('canvas');
-      const inp: StripInput = { frames, names, cities, poses, dateLabel: dateLabel(at), time: timeLabel(at), caption: caption.trim() || undefined, ink, seed };
+      const inp: StripInput = { frames, names, cities, poses, dateLabel: dateLabel(at), time: timeLabel(at), caption: caption.trim() || undefined, ink, seed, theme };
       await renderStrip(c, template, inp);
       const b = await toBlob(c, 'image/jpeg', 0.92);
       if (!alive) return;
@@ -204,6 +246,33 @@ export function StripResult({
 
   useEffect(() => setRound((r) => r + 1), [template]);
 
+  // Strip hidup: gambar ulang per bingkai gerak, lalu putar bolak-balik.
+  const [live, setLive] = useState<{ urls: string[]; blobs: Blob[] } | null>(null);
+  const [liveBusy, setLiveBusy] = useState<number | null>(null);
+  const [liveIdx, setLiveIdx] = useState(0);
+  const liveKey = `${template}|${caption}`;
+  const liveFor = useRef('');
+  const makeLive = async () => {
+    if (!bursts) return null;
+    if (live && liveFor.current === liveKey) return live;
+    setLiveBusy(0);
+    const blobs = await renderLiveFrames(template, { names, cities, poses, dateLabel: dateLabel(at), time: timeLabel(at), caption: caption.trim() || undefined, ink, seed, theme }, bursts, setLiveBusy);
+    live?.urls.forEach((u) => URL.revokeObjectURL(u));
+    const v = { blobs, urls: blobs.map((b) => URL.createObjectURL(b)) };
+    liveFor.current = liveKey;
+    setLive(v);
+    setLiveBusy(null);
+    return v;
+  };
+  useEffect(() => {
+    if (!live || liveFor.current !== liveKey) return;
+    const seq = pingPong(live.urls.length);
+    let k = 0;
+    const t = setInterval(() => setLiveIdx(seq[(k = (k + 1) % seq.length)]!), 110);
+    return () => clearInterval(t);
+  }, [live, liveKey]);
+  const showLive = !!live && liveFor.current === liveKey;
+
   return (
     <div className="pb-result">
       <div className="pb-machine" aria-hidden>
@@ -213,7 +282,13 @@ export function StripResult({
         </span>
       </div>
       <div className="pb-out">
-        {url ? <img key={round} src={url} alt="strip photobox" className={`pb-strip ${round <= 1 ? 'develop' : 'swap'}`} /> : <span className="pb-strip ph" />}
+        {showLive ? (
+          <img src={live!.urls[liveIdx]} alt="strip hidup" className="pb-strip" />
+        ) : url ? (
+          <img key={round} src={url} alt="strip photobox" className={`pb-strip ${round <= 1 ? 'develop' : 'swap'}`} />
+        ) : (
+          <span className="pb-strip ph" />
+        )}
       </div>
       <div className="pb-panel">
         <span className="label">ganti desain, fotonya tetap</span>
@@ -226,6 +301,33 @@ export function StripResult({
           ))}
         </div>
         <input className="field hand pb-caption" maxLength={44} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="tulis keterangan di strip…" />
+        {bursts ? (
+          <div className="pb-livebar">
+            <button className={`btn sm ${showLive ? '' : 'soft'} grow`} disabled={liveBusy !== null} onClick={() => (showLive ? setLive(null) : void makeLive())}>
+              {liveBusy !== null ? `menghidupkan… ${liveBusy}/${BURST}` : showLive ? '■ diamkan' : '▶ strip hidup'}
+            </button>
+            <button
+              className="btn sm soft grow"
+              disabled={liveBusy !== null}
+              onClick={async () => {
+                const v = await makeLive();
+                if (!v) return;
+                setLiveBusy(BURST);
+                try {
+                  const { blob: vid, ext } = await encodeVideo(v.blobs);
+                  const name = `sehari-strip-hidup-${new Date().toISOString().slice(0, 10)}.${ext}`;
+                  const file = new File([vid], name, { type: vid.type });
+                  const nav = navigator as Navigator & { canShare?: (d: unknown) => boolean };
+                  if (nav.canShare?.({ files: [file] })) await nav.share({ files: [file] }).catch(() => download(name, vid));
+                  else download(name, vid);
+                } finally {
+                  setLiveBusy(null);
+                }
+              }}>
+              video (bagikan)
+            </button>
+          </div>
+        ) : null}
         {blob ? actions(blob, caption) : null}
       </div>
     </div>

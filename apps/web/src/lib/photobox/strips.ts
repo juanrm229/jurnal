@@ -5,7 +5,7 @@
  */
 import { doodle, drawLogo, F, grain, loadFonts, photoCover, seeded, tape } from '@/lib/greeting';
 
-export type TemplateId = 'klasik' | 'korea' | 'film' | 'purikura' | 'tiket' | 'struk' | 'halaman' | 'malam';
+export type TemplateId = 'klasik' | 'korea' | 'film' | 'purikura' | 'tiket' | 'struk' | 'halaman' | 'malam' | 'koran' | 'perangko' | 'boarding' | 'konsol' | 'dicari' | 'y2k' | 'bukutulis' | 'kalender';
 
 export const TEMPLATES: { id: TemplateId; name: string; hint: string; swatch: string }[] = [
   { id: 'klasik', name: 'klasik', hint: 'photobox mal, putih bersih', swatch: 'linear-gradient(180deg,#fff,#f1efe9)' },
@@ -16,6 +16,14 @@ export const TEMPLATES: { id: TemplateId; name: string; hint: string; swatch: st
   { id: 'struk', name: 'struk', hint: 'bon kenangan', swatch: 'repeating-linear-gradient(180deg,#fff 0 6px,#f1f1f1 6px 8px)' },
   { id: 'halaman', name: 'halaman sehari', hint: 'polaroid & selotip', swatch: 'radial-gradient(#c9c4ff 1px,#f7f5ef 1.5px) 0 0/8px 8px' },
   { id: 'malam', name: 'malam', hint: 'bintang & cahaya', swatch: 'linear-gradient(180deg,#0f1238,#2a1f5c)' },
+  { id: 'boarding', name: 'boarding pass', hint: 'kota asal ✈ kota tujuan', swatch: 'linear-gradient(180deg,#1f4bd8 0 22%,#f4f6fb 22%)' },
+  { id: 'koran', name: 'koran', hint: 'berita utama hari ini', swatch: 'linear-gradient(180deg,#efe9da,#e2dac6)' },
+  { id: 'perangko', name: 'perangko', hint: 'tiap foto jadi prangko', swatch: 'radial-gradient(circle,#f4ead6 3px,#e3473d 3.5px) 0 0/10px 10px' },
+  { id: 'konsol', name: 'konsol jadul', hint: 'layar hijau 4 warna', swatch: 'linear-gradient(180deg,#c9c4b6 0 70%,#9bbc0f 70%)' },
+  { id: 'dicari', name: 'dicari', hint: 'poster koboi: hidup atau bahagia', swatch: 'radial-gradient(circle,#ecd9ad,#b98a4b)' },
+  { id: 'y2k', name: 'Y2K', hint: 'krom, kupu-kupu, bling', swatch: 'linear-gradient(135deg,#a0e9ff,#cdb4ff,#ffc8dd)' },
+  { id: 'bukutulis', name: 'buku tulis', hint: 'kertas bergaris & coretan', swatch: 'repeating-linear-gradient(180deg,#fff 0 9px,#a9c6f5 9px 10px)' },
+  { id: 'kalender', name: 'kalender sobek', hint: 'tanggal besar di atas', swatch: 'linear-gradient(180deg,#d8443a 0 30%,#fffdf8 30%)' },
 ];
 
 type Img = CanvasImageSource & { width: number; height: number };
@@ -30,6 +38,8 @@ export interface StripInput {
   dayLabel?: string;
   time: string;
   caption?: string;
+  /** 'waktu' = dulu & sekarang (dua waktu, bukan dua kota). */
+  theme?: 'waktu';
   /** Teks pose tiap jepretan (dipakai desain struk). */
   poses: string[];
   ink: string;
@@ -68,6 +78,22 @@ function spec(t: TemplateId, cols: number, shots: number): Spec {
       return { top: 230, bottom: 250, side: 70, gapX: duo ? 6 : 0, gapY: 70, aspect: 4 / 3 };
     case 'malam':
       return { top: 220, bottom: 190, side: 56, gapX: duo ? 10 : 0, gapY: 30, aspect: 4 / 3 };
+    case 'koran':
+      return { top: 300, bottom: 200, side: 54, gapX: duo ? 10 : 0, gapY: 64, aspect: 4 / 3, minW: 620 };
+    case 'perangko':
+      return { top: 140, bottom: 220, side: 76, gapX: duo ? 64 : 0, gapY: 70, aspect: 4 / 5, minW: 560 };
+    case 'boarding':
+      return { top: 400, bottom: 280, side: 56, gapX: duo ? 8 : 0, gapY: 22, aspect: 4 / 3, minW: 640 };
+    case 'konsol':
+      return { top: 150, bottom: 470, side: 96, gapX: duo ? 6 : 0, gapY: 14, aspect: 4 / 3 };
+    case 'dicari':
+      return { top: 330, bottom: 300, side: 76, gapX: duo ? 22 : 0, gapY: 30, aspect: duo ? 4 / 5 : 4 / 3, minW: 640 };
+    case 'y2k':
+      return { top: 220, bottom: 200, side: 60, gapX: duo ? 12 : 0, gapY: 36, aspect: 4 / 3 };
+    case 'bukutulis':
+      return { top: 200, bottom: 210, side: 96, gapX: duo ? 8 : 0, gapY: 74, aspect: 4 / 3 };
+    case 'kalender':
+      return { top: 470, bottom: 110, side: 56, gapX: duo ? 8 : 0, gapY: 18, aspect: 4 / 3 };
     default:
       return { top: 46, bottom: 230, side: 40, gapX: duo ? 8 : 0, gapY: 22, aspect: 4 / 3 };
   }
@@ -102,7 +128,10 @@ function rr(ctx: CanvasRenderingContext2D, r: Rect, rad: number) {
   ctx.roundRect(r.x, r.y, r.w, r.h, rad);
 }
 
-function photo(ctx: CanvasRenderingContext2D, img: Img | undefined, r: Rect, rad = 0, mono = false) {
+type Tone = boolean | 'mono' | 'sepia' | 'gb' | 'halftone';
+const GB: [number, number, number][] = [[15, 56, 15], [48, 98, 48], [139, 172, 15], [155, 188, 15]];
+
+function photo(ctx: CanvasRenderingContext2D, img: Img | undefined, r: Rect, rad = 0, mono: Tone = false) {
   ctx.save();
   rr(ctx, r, rad);
   ctx.clip();
@@ -114,9 +143,36 @@ function photo(ctx: CanvasRenderingContext2D, img: Img | undefined, r: Rect, rad
     const y = Math.round(r.y);
     const d = ctx.getImageData(x, y, Math.round(r.w), Math.round(r.h));
     const p = d.data;
-    for (let i = 0; i < p.length; i += 4) {
-      const l = Math.min(255, Math.max(0, (0.3 * p[i]! + 0.59 * p[i + 1]! + 0.11 * p[i + 2]! - 128) * 1.25 + 140));
-      p[i] = p[i + 1] = p[i + 2] = l;
+    const tone = mono === true ? 'mono' : mono;
+    const rw = Math.round(r.w);
+    for (let i = 0, k = 0; i < p.length; i += 4, k++) {
+      const g = 0.3 * p[i]! + 0.59 * p[i + 1]! + 0.11 * p[i + 2]!;
+      if (tone === 'sepia') {
+        const l = Math.min(255, Math.max(0, (g - 128) * 1.15 + 132));
+        p[i] = Math.min(255, l * 1.07 + 12);
+        p[i + 1] = l * 0.9 + 8;
+        p[i + 2] = l * 0.68;
+      } else if (tone === 'gb') {
+        const c = GB[Math.min(3, Math.floor((g / 256) * 4 + (((k % rw) + Math.floor(k / rw)) % 2) * 0.35))]!;
+        p[i] = c[0];
+        p[i + 1] = c[1];
+        p[i + 2] = c[2];
+      } else if (tone === 'halftone') {
+        // Raster titik ala cetakan koran.
+        const x = k % rw;
+        const y = Math.floor(k / rw);
+        const cell = 7;
+        const dx = (x % cell) - cell / 2;
+        const dy = (y % cell) - cell / 2;
+        const rad = (1 - g / 255) * cell * 0.62;
+        const v = dx * dx + dy * dy < rad * rad ? 30 : 236;
+        p[i] = v;
+        p[i + 1] = v - 2;
+        p[i + 2] = v - 8;
+      } else {
+        const l = Math.min(255, Math.max(0, (g - 128) * 1.25 + 140));
+        p[i] = p[i + 1] = p[i + 2] = l;
+      }
     }
     ctx.putImageData(d, x, y);
   }
@@ -170,6 +226,7 @@ export async function renderStrip(canvas: HTMLCanvasElement, t: TemplateId, inp:
   const all = rects.flatMap((col, k) => col.map((r, i) => ({ r, img: inp.frames[k]?.[i], i, k })));
   const r = seeded(inp.seed);
   const duo = cols > 1;
+  const pair = (kota: string, waktu: string) => (inp.theme === 'waktu' ? waktu : kota);
   const mid = W / 2;
 
   switch (t) {
@@ -205,7 +262,7 @@ export async function renderStrip(canvas: HTMLCanvasElement, t: TemplateId, inp:
         photo(ctx, a.img, a.r, 18);
       }
       const fy = H - 200;
-      text(ctx, inp.caption || (duo ? 'dua kota, satu bingkai' : 'hari ini lucu juga ya'), 46, fy + 92, F.hand(62), '#232030', 'left', W - 300);
+      text(ctx, inp.caption || (duo ? pair('dua kota, satu bingkai', 'dulu & sekarang, satu bingkai') : 'hari ini lucu juga ya'), 46, fy + 92, F.hand(62), '#232030', 'left', W - 300);
       if (duo) text(ctx, duoLine(inp), 46, fy + 140, F.mono(19), '#5d5866', 'left', W - 300);
       drawLogo(ctx, W - 46, fy + 120, 38, '#232030', 'right');
       ['hati-kecil', 'kilau', 'bintang-kecil'].forEach((id, i) => doodle(ctx, id, W - 140 - i * 70, fy + 20 + (i % 2) * 20, 46, '#232030', 3, (r() - 0.5) * 0.6));
@@ -257,9 +314,9 @@ export async function renderStrip(canvas: HTMLCanvasElement, t: TemplateId, inp:
       ctx.lineWidth = 14;
       ctx.strokeStyle = '#ff5fa8';
       ctx.lineJoin = 'round';
-      ctx.strokeText(duo ? 'kita berdua ♡' : 'hari yang lucu', mid, 140);
+      ctx.strokeText(duo ? pair('kita berdua ♡', 'dulu vs kini') : 'hari yang lucu', mid, 140);
       ctx.fillStyle = '#fff';
-      ctx.fillText(duo ? 'kita berdua ♡' : 'hari yang lucu', mid, 140);
+      ctx.fillText(duo ? pair('kita berdua ♡', 'dulu vs kini') : 'hari yang lucu', mid, 140);
       ctx.restore();
       for (const a of all) {
         const o = { x: a.r.x - 12, y: a.r.y - 12, w: a.r.w + 24, h: a.r.h + 24 };
@@ -409,7 +466,7 @@ export async function renderStrip(canvas: HTMLCanvasElement, t: TemplateId, inp:
         tape(ctx, box.x + box.w / 2 + (r() - 0.5) * 60, box.y - 14, 150, (r() - 0.5) * 0.3, 'rgba(201,196,255,0.75)');
       }
       const fy = H - 250;
-      text(ctx, inp.caption || (duo ? 'dua kota, satu halaman.' : 'satu hari, empat wajah.'), 60, fy + 120, F.hand(56), inp.ink, 'left', W - 270);
+      text(ctx, inp.caption || (duo ? pair('dua kota, satu halaman.', 'waktu berlalu, gaya tetap.') : 'satu hari, empat wajah.'), 60, fy + 120, F.hand(56), inp.ink, 'left', W - 270);
       if (duo) text(ctx, duoLine(inp), 62, fy + 164, F.mono(18), inp.ink, 'left', W - 270);
       // Cap pos tanggal.
       ctx.save();
@@ -453,17 +510,321 @@ export async function renderStrip(canvas: HTMLCanvasElement, t: TemplateId, inp:
         photo(ctx, a.img, a.r, 16);
       }
       const fy = H - 190;
-      text(ctx, inp.caption || (duo ? 'langit yang sama, kota yang beda' : inp.dateLabel), mid, fy + 84, F.display(42, 400, true), '#eef0ff', 'center', W - 80);
+      text(ctx, inp.caption || (duo ? pair('langit yang sama, kota yang beda', 'orang yang sama, waktu yang beda') : inp.dateLabel), mid, fy + 84, F.display(42, 400, true), '#eef0ff', 'center', W - 80);
       text(ctx, duo ? duoLine(inp) : `${inp.time} · ${inp.cities[0] ?? ''}`, mid, fy + 126, F.mono(19), '#aeb6ea', 'center', W - 80);
       drawLogo(ctx, mid, fy + 168, 28, '#c9d2ff', 'center');
       break;
     }
+    case 'koran': {
+      const k = '#1d1b18';
+      ctx.fillStyle = '#efe9da';
+      ctx.fillRect(0, 0, W, H);
+      grain(ctx, W, H, inp.seed, 0.09);
+      text(ctx, 'KABAR SEHARI', mid, 120, F.display(76, 700), k, 'center', W - 60);
+      ctx.fillStyle = k;
+      ctx.fillRect(40, 150, W - 80, 4);
+      ctx.fillRect(40, 196, W - 80, 1.5);
+      text(ctx, `EDISI ${inp.dateLabel.toUpperCase()}`, 40, 182, F.mono(15, 600), k, 'left', W * 0.6);
+      text(ctx, 'HARGA: SATU SENYUM', W - 40, 182, F.mono(15, 600), k, 'right');
+      text(ctx, duo ? pair(`${inp.names.join(' & ').toUpperCase()} BERTEMU DI DUA KOTA`, 'DULU DAN SEKARANG: HAMPIR TAK BERUBAH') : 'WARGA INI TERNYATA LUCU SEKALI', mid, 262, F.display(38, 700), k, 'center', W - 70);
+      for (const a of all) {
+        photo(ctx, a.img, a.r, 0, 'halftone');
+        ctx.strokeStyle = k;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(a.r.x, a.r.y, a.r.w, a.r.h);
+        if (a.k === 0) text(ctx, `Foto ${a.i + 1}: ${inp.poses[a.i] ?? 'momen yang terekam'}.`, rects[0]![a.i]!.x, a.r.y + a.r.h + 30, F.serif(19, 400, true), k, 'left', W - 108);
+      }
+      const fy = H - 200;
+      ctx.fillStyle = k;
+      ctx.fillRect(40, fy + 20, W - 80, 1.5);
+      text(ctx, inp.caption || 'Saksi mata: "hari ini terlalu lucu untuk dilupakan."', mid, fy + 80, F.serif(26, 600, true), k, 'center', W - 80);
+      text(ctx, duo ? duoLine(inp) : `${inp.cities[0] ?? ''} · ${inp.time}`, mid, fy + 120, F.mono(16), k, 'center', W - 80);
+      drawLogo(ctx, mid, fy + 168, 28, k, 'center');
+      break;
+    }
+    case 'perangko': {
+      ctx.fillStyle = '#f4ead6';
+      ctx.fillRect(0, 0, W, H);
+      grain(ctx, W, H, inp.seed, 0.06);
+      const red = '#d23b33';
+      text(ctx, 'POS SEHARI', mid, 92, F.display(44, 600, true), red);
+      const hues = ['#e3473d', '#2f6fd6', '#2f9d63', '#d68a2f', '#8a4fd6'];
+      for (const a of all) {
+        const o = { x: a.r.x - 22, y: a.r.y - 22, w: a.r.w + 44, h: a.r.h + 64 };
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.18)';
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetY = 6;
+        ctx.fillStyle = '#fffdf7';
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+        ctx.restore();
+        // Gigi prangko: lingkaran warna latar di sepanjang tepi.
+        ctx.fillStyle = '#f4ead6';
+        for (let x = o.x; x <= o.x + o.w; x += 18)
+          for (const y of [o.y, o.y + o.h]) {
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        for (let y = o.y; y <= o.y + o.h; y += 18)
+          for (const x of [o.x, o.x + o.w]) {
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        const hue = hues[(a.i + a.k) % hues.length]!;
+        ctx.fillStyle = hue;
+        ctx.fillRect(a.r.x - 6, a.r.y - 6, a.r.w + 12, a.r.h + 12);
+        photo(ctx, a.img, a.r);
+        text(ctx, `Rp${(a.i + 1) * 1000}`, a.r.x + a.r.w - 6, a.r.y + a.r.h + 32, F.mono(18, 600), hue, 'right');
+        text(ctx, a.k === 0 && duo ? (inp.cities[0] || 'SEHARI').toUpperCase() : duo ? (inp.cities[1] || 'SEHARI').toUpperCase() : 'INDONESIA · SEHARI', a.r.x + 4, a.r.y + a.r.h + 32, F.mono(14, 600), '#6b5c48', 'left', a.r.w * 0.6);
+      }
+      // Cap pos bergelombang di atas foto pertama.
+      const f = all[0]!.r;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(40,40,60,0.55)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(f.x + f.w - 10, f.y + 16, 52, 0, Math.PI * 2);
+      ctx.stroke();
+      text(ctx, inp.dateLabel.split(' ').slice(1, 3).join(' ').toUpperCase(), f.x + f.w - 10, f.y + 12, F.mono(14, 600), 'rgba(40,40,60,0.7)');
+      text(ctx, inp.time, f.x + f.w - 10, f.y + 34, F.mono(14), 'rgba(40,40,60,0.7)');
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        for (let x = 0; x <= 150; x += 6) ctx.lineTo(f.x + f.w + 48 + x - 150, f.y - 10 + i * 12 + Math.sin(x / 12) * 4);
+        ctx.stroke();
+      }
+      ctx.restore();
+      const fy = H - 220;
+      text(ctx, inp.caption || (duo ? pair('dikirim dari dua kota, sampai di satu strip', 'dikirim dari masa lalu') : 'salam dari hari ini'), mid, fy + 100, F.hand(50), red, 'center', W - 80);
+      text(ctx, duo ? duoLine(inp) : inp.dateLabel, mid, fy + 144, F.mono(17), '#6b5c48', 'center', W - 80);
+      drawLogo(ctx, mid, fy + 190, 28, red, 'center');
+      break;
+    }
+    case 'boarding': {
+      const blue = '#1f4bd8';
+      ctx.fillStyle = '#f4f6fb';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = blue;
+      ctx.fillRect(0, 0, W, 130);
+      text(ctx, 'BOARDING PASS', 48, 82, F.mono(30, 600), '#fff', 'left');
+      text(ctx, 'KELAS: BAHAGIA', W - 48, 82, F.mono(18, 600), 'rgba(255,255,255,0.85)', 'right');
+      const code = (c: string | undefined) => (c ? c.replace(/[aiueo\s-]/gi, '').slice(0, 3).toUpperCase() || c.slice(0, 3).toUpperCase() : 'SHR');
+      const waktu = inp.theme === 'waktu';
+      const from = waktu ? (/\d{4}/.exec(inp.names[0] ?? '')?.[0] ?? 'DULU') : code(inp.cities[0]);
+      const to = waktu ? String(new Date().getFullYear()) : duo ? code(inp.cities[1]) : 'SNG';
+      text(ctx, from, 48, 250, F.display(92, 700), '#141a33', 'left');
+      text(ctx, to, W - 48, 250, F.display(92, 700), '#141a33', 'right');
+      text(ctx, '✈', mid, 236, '54px sans-serif', blue);
+      text(ctx, inp.cities[0] || 'di sini', 50, 290, F.mono(16), '#6a7391', 'left');
+      text(ctx, duo ? inp.cities[1] || 'di sana' : 'senang', W - 50, 290, F.mono(16), '#6a7391', 'right');
+      ctx.fillStyle = '#dde3f3';
+      ctx.fillRect(48, 316, W - 96, 2);
+      text(ctx, `PENUMPANG  ${inp.names.join(' & ').toUpperCase()}`, 48, 356, F.mono(16, 600), '#141a33', 'left', W * 0.62);
+      text(ctx, `GATE ${1 + Math.floor(r() * 9)} · KURSI ${1 + Math.floor(r() * 30)}${'ABCDEF'[Math.floor(r() * 6)]}`, W - 48, 356, F.mono(16, 600), '#141a33', 'right');
+      for (const a of all) photo(ctx, a.img, a.r, 10);
+      const py = H - 280;
+      ctx.save();
+      ctx.setLineDash([10, 10]);
+      ctx.strokeStyle = '#9aa6c8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(30, py);
+      ctx.lineTo(W - 30, py);
+      ctx.stroke();
+      ctx.restore();
+      text(ctx, 'BERANGKAT', 48, py + 52, F.mono(15), '#6a7391', 'left');
+      text(ctx, `${inp.time} · ${inp.dateLabel}`, 48, py + 84, F.mono(20, 600), '#141a33', 'left', W - 96);
+      if (inp.caption) text(ctx, inp.caption, 48, py + 140, F.hand(46), blue, 'left', W - 96);
+      barcode(ctx, 48, H - 96, Math.min(300, W - 220), 52, inp.seed, '#141a33');
+      drawLogo(ctx, W - 48, H - 48, 28, blue, 'right');
+      break;
+    }
+    case 'konsol': {
+      ctx.fillStyle = '#c9c4b6';
+      ctx.fillRect(0, 0, W, H);
+      grain(ctx, W, H, inp.seed, 0.05);
+      const bezel = { x: 40, y: 60, w: W - 80, h: H - 60 - 430 };
+      ctx.fillStyle = '#5b5e6b';
+      ctx.beginPath();
+      ctx.roundRect(bezel.x, bezel.y, bezel.w, bezel.h, [18, 18, 70, 18]);
+      ctx.fill();
+      text(ctx, '• LAYAR KENANGAN •', mid, 112, F.mono(15, 600), '#c9c4b6');
+      ctx.fillStyle = '#9bbc0f';
+      const scr = { x: x0 - 10, y: rects[0]![0]!.y - 10, w: W - 2 * (x0 - 10), h: rects[0]![shots - 1]!.y + rects[0]![shots - 1]!.h - rects[0]![0]!.y + 20 };
+      ctx.fillRect(scr.x, scr.y, scr.w, scr.h);
+      for (const a of all) photo(ctx, a.img, a.r, 0, 'gb');
+      // Merek, D-pad, tombol A/B.
+      const by = H - 400;
+      text(ctx, 'SEHARI', 48, by + 52, F.display(42, 700, true), '#30318b', 'left');
+      ctx.font = F.display(42, 700, true);
+      text(ctx, 'BOY', 48 + ctx.measureText('SEHARI').width + 12, by + 52, F.mono(24, 600), '#30318b', 'left');
+      ctx.fillStyle = '#2c2c34';
+      const dx = 120;
+      const dy = by + 190;
+      ctx.fillRect(dx - 70, dy - 22, 140, 44);
+      ctx.fillRect(dx - 22, dy - 70, 44, 140);
+      ctx.fillStyle = '#9a2257';
+      for (const [cx, cy] of [
+        [W - 170, dy + 24],
+        [W - 80, dy - 24],
+      ]) {
+        ctx.beginPath();
+        ctx.arc(cx!, cy!, 34, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      text(ctx, 'B', W - 170, dy + 90, F.mono(20, 600), '#30318b');
+      text(ctx, 'A', W - 80, dy + 42, F.mono(20, 600), '#30318b');
+      text(ctx, inp.caption || (duo ? duoLine(inp) : `${inp.dateLabel}`), mid, H - 70, inp.caption ? F.hand(40) : F.mono(16, 600), '#30318b', 'center', W - 80);
+      text(ctx, 'SELECT   START', mid, H - 120, F.mono(15, 600), '#6b6a74');
+      break;
+    }
+    case 'dicari': {
+      const g = ctx.createRadialGradient(mid, H / 2, W * 0.2, mid, H / 2, H * 0.62);
+      g.addColorStop(0, '#f1dfb4');
+      g.addColorStop(1, '#a8773c');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      grain(ctx, W, H, inp.seed, 0.16, '80,50,20');
+      const k = '#3a2410';
+      text(ctx, 'DICARI', mid, 150, F.display(118, 700), k, 'center', W - 50);
+      text(ctx, 'HIDUP ATAU BAHAGIA', mid, 214, F.mono(26, 600), k, 'center', W - 60);
+      ctx.fillStyle = k;
+      ctx.fillRect(60, 244, W - 120, 3);
+      for (const a of all) {
+        ctx.fillStyle = k;
+        ctx.fillRect(a.r.x - 8, a.r.y - 8, a.r.w + 16, a.r.h + 16);
+        photo(ctx, a.img, a.r, 0, 'sepia');
+      }
+      const fy = H - 300;
+      text(ctx, duo ? inp.names.join(' & ').toUpperCase() : (inp.names[0] ?? 'SI LUCU').toUpperCase(), mid, fy + 90, F.display(52, 700), k, 'center', W - 80);
+      text(ctx, inp.caption || 'karena terlalu menggemaskan', mid, fy + 140, F.hand(46), k, 'center', W - 80);
+      text(ctx, 'HADIAH: RP. 1 PELUKAN', mid, fy + 204, F.display(40, 600), '#7a1f12', 'center', W - 60);
+      drawLogo(ctx, mid, fy + 264, 26, k, 'center');
+      break;
+    }
+    case 'y2k': {
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, '#a0e9ff');
+      g.addColorStop(0.5, '#cdb4ff');
+      g.addColorStop(1, '#ffc8dd');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      // Kilau krom di judul.
+      const tg = ctx.createLinearGradient(0, 70, 0, 160);
+      tg.addColorStop(0, '#ffffff');
+      tg.addColorStop(0.45, '#c5c9e8');
+      tg.addColorStop(0.55, '#7a7fb0');
+      tg.addColorStop(1, '#f1f2ff');
+      ctx.save();
+      ctx.font = F.display(84, 700, true);
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = '#5b4bc4';
+      ctx.lineJoin = 'round';
+      ctx.strokeText(duo ? pair('besties', 'throwback') : 'bling', mid, 150);
+      ctx.fillStyle = tg;
+      ctx.fillText(duo ? pair('besties', 'throwback') : 'bling', mid, 150);
+      ctx.restore();
+      for (const a of all) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(91,75,196,0.45)';
+        ctx.shadowBlur = 20;
+        const bg = ctx.createLinearGradient(a.r.x, a.r.y, a.r.x + a.r.w, a.r.y + a.r.h);
+        bg.addColorStop(0, '#ffffff');
+        bg.addColorStop(0.5, '#b9bde0');
+        bg.addColorStop(1, '#ffffff');
+        ctx.fillStyle = bg;
+        rr(ctx, { x: a.r.x - 9, y: a.r.y - 9, w: a.r.w + 18, h: a.r.h + 18 }, 30);
+        ctx.fill();
+        ctx.restore();
+        photo(ctx, a.img, a.r, 22);
+      }
+      for (let i = 0; i < 9; i++) doodle(ctx, i % 3 ? 'bintang-kecil' : 'kupu-kupu', r() * (W - 80), 170 + r() * (H - 420), 48 + r() * 30, i % 2 ? '#5b4bc4' : '#ffffff', 3, (r() - 0.5) * 0.8);
+      for (let i = 0; i < 20; i++) text(ctx, '✧', r() * W, r() * H, `${16 + r() * 22}px sans-serif`, 'rgba(255,255,255,0.95)');
+      const fy = H - 200;
+      text(ctx, inp.caption || '✧ forever & always ✧', mid, fy + 90, F.hand(56), '#4a3bb0', 'center', W - 60);
+      text(ctx, duo ? duoLine(inp) : `${inp.dateLabel} · ${inp.time}`, mid, fy + 134, F.mono(18), '#5b4bc4', 'center', W - 60);
+      drawLogo(ctx, mid, fy + 178, 28, '#4a3bb0', 'center');
+      break;
+    }
+    case 'bukutulis': {
+      ctx.fillStyle = '#fffefa';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#a9c6f5';
+      for (let y = 120; y < H; y += 44) ctx.fillRect(0, y, W, 2);
+      ctx.fillStyle = '#ef8a8a';
+      ctx.fillRect(74, 0, 2.5, H);
+      ctx.fillStyle = '#e8e4da';
+      for (let y = 140; y < H; y += 300) {
+        ctx.beginPath();
+        ctx.arc(34, y, 14, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const blue = '#2850b8';
+      text(ctx, inp.dateLabel.replace(/ \d{4}$/, ''), 96, 104, F.hand(56), blue, 'left', W - 130);
+      text(ctx, duo ? 'tugas: foto berdua (nilai: 100)' : 'tugas: foto lucu (nilai: 100)', 96, 160, F.hand(34), '#d6453d', 'left', W - 130);
+      for (const a of all) {
+        ctx.save();
+        ctx.translate(a.r.x + a.r.w / 2, a.r.y + a.r.h / 2);
+        ctx.rotate((a.i % 2 ? 1 : -1) * 0.018);
+        ctx.translate(-(a.r.x + a.r.w / 2), -(a.r.y + a.r.h / 2));
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = 'rgba(0,0,0,0.15)';
+        ctx.shadowBlur = 10;
+        ctx.fillRect(a.r.x - 8, a.r.y - 8, a.r.w + 16, a.r.h + 16);
+        ctx.shadowColor = 'transparent';
+        photo(ctx, a.img, a.r);
+        ctx.restore();
+        if (a.k === 0) {
+          tape(ctx, a.r.x + 20, a.r.y - 4, 90, -0.5, 'rgba(255,224,120,0.75)');
+          text(ctx, `${a.i + 1}. ${inp.poses[a.i] ?? 'senyum!'}`, rects[0]![a.i]!.x, a.r.y + a.r.h + 44, F.hand(32), blue, 'left', W - rects[0]![a.i]!.x - 30);
+        }
+      }
+      ['hati-kecil', 'bintang-kecil', 'wajah-senyum', 'kilau', 'matahari-kecil'].forEach((id, i) => doodle(ctx, id, 16, 300 + i * 260, 46, i % 2 ? '#d6453d' : blue, 2.6, (r() - 0.5) * 0.6));
+      const fy = H - 210;
+      text(ctx, inp.caption || 'catatan: hari ini menyenangkan :)', 96, fy + 110, F.hand(46), blue, 'left', W - 130);
+      if (duo) text(ctx, duoLine(inp), 96, fy + 150, F.mono(16), '#6a7391', 'left', W - 130);
+      drawLogo(ctx, W - 40, H - 40, 26, blue, 'right');
+      break;
+    }
+    case 'kalender': {
+      const red = '#d8443a';
+      ctx.fillStyle = '#fffdf8';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = red;
+      ctx.fillRect(0, 0, W, 130);
+      ctx.fillStyle = '#3a3a44';
+      for (let x = 70; x < W - 40; x += 90) {
+        ctx.beginPath();
+        ctx.roundRect(x, 30, 14, 60, 7);
+        ctx.fill();
+      }
+      const parts = inp.dateLabel.split(' ');
+      const day = (parts[1] ?? '').replace(',', '');
+      text(ctx, `${parts[2] ?? ''} ${parts[3] ?? ''}`.toUpperCase(), mid, 186, F.mono(24, 600), red);
+      text(ctx, day, mid, 380, F.display(210, 600), '#22222a');
+      text(ctx, (parts[0] ?? '').replace(',', ''), mid, 436, F.hand(48), red);
+      for (const a of all) photo(ctx, a.img, a.r, 6);
+      // Garis sobek di bawah.
+      ctx.fillStyle = '#e6e1d6';
+      for (let x = 0; x < W; x += 16) {
+        ctx.beginPath();
+        ctx.moveTo(x, H);
+        ctx.lineTo(x + 8, H - 12);
+        ctx.lineTo(x + 16, H);
+        ctx.fill();
+      }
+      text(ctx, inp.caption || (duo ? duoLine(inp) : `${inp.time} · ${inp.cities[0] ?? ''}`), mid, H - 60, inp.caption ? F.hand(42) : F.mono(17), '#55525c', 'center', W - 200);
+      drawLogo(ctx, W - 40, H - 30, 24, red, 'right');
+      break;
+    }
   }
   // Benang tipis di garis sambung strip berdua: tanda dua kota yang bertemu.
-  if (duo && t !== 'halaman') {
+  if (duo && !['halaman', 'perangko', 'dicari', 'konsol'].includes(t)) {
     const seam = rects[0]![0]!.x + rects[0]![0]!.w + (rects[1]![0]!.x - rects[0]![0]!.x - rects[0]![0]!.w) / 2;
     ctx.save();
-    ctx.fillStyle = t === 'film' || t === 'malam' ? 'rgba(255,255,255,0.9)' : inp.ink;
+    ctx.fillStyle = t === 'film' || t === 'malam' ? 'rgba(255,255,255,0.9)' : t === 'koran' ? '#1d1b18' : inp.ink;
     for (let i = 0; i < shots - 1; i++) {
       const y = rects[0]![i]!.y + rects[0]![i]!.h + spec(t, cols, shots).gapY / 2;
       text(ctx, '♥', seam, y + 9, '22px sans-serif', ctx.fillStyle as string);

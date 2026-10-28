@@ -9,7 +9,8 @@ import { useCircles, useMe } from '@/lib/data';
 import { createBooth } from '@/lib/photobox/booth';
 import { useCamera } from '@/lib/photobox/camera';
 import { FILTERS, type FilterId, themeInk } from '@/lib/photobox/filters';
-import { posesFor } from '@/lib/photobox/poses';
+import { type Pose, posesFor } from '@/lib/photobox/poses';
+import type { Prop } from '@/lib/photobox/props';
 import { frameAspect, TEMPLATES, type TemplateId } from '@/lib/photobox/strips';
 import { navigate, usePath } from '@/lib/router';
 import { useSession } from '@/lib/session';
@@ -17,8 +18,10 @@ import { sound } from '@/lib/sound';
 import { Avatar, Doodle, Header, ListLink, Sheet, Toggle, useToast } from '@/ui/kit';
 import { BoothStage, LiveView, StripResult } from './parts';
 import { StripActions } from './actions';
+import { GhostPicker, type OldPhoto, PropsEditor } from './extras';
 
 type Phase = 'start' | 'setup' | 'booth' | 'result';
+type Mode = 'biasa' | 'candid' | 'dulu';
 
 export default function Photobox() {
   const me = useMe();
@@ -33,6 +36,11 @@ export default function Photobox() {
   const [posesOn, setPosesOn] = useState(true);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const [frames, setFrames] = useState<HTMLCanvasElement[] | null>(null);
+  const [bursts, setBursts] = useState<HTMLCanvasElement[][] | null>(null);
+  const [mode, setMode] = useState<Mode>('biasa');
+  const [liveOn, setLiveOn] = useState(true);
+  const [props, setProps] = useState<Prop[]>([]);
+  const [olds, setOlds] = useState<OldPhoto[]>([]);
   const [startLocal, setStartLocal] = useState(0);
   const [pick, setPick] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -40,8 +48,15 @@ export default function Photobox() {
   const ink = useMemo(() => themeInk(), []);
   const inkCss = useMemo(() => getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#2a14d6', []);
   const active = circles.filter((c) => c.status === 'active' && c.me?.state === 'active');
-  const poses = useMemo(() => (posesOn ? posesFor(seed, shots, false) : null), [seed, shots, posesOn]);
-  const aspect = frameAspect(template, 1, shots);
+  const dulu = mode === 'dulu' && olds.length > 0;
+  const nShots = dulu ? Math.max(2, Math.min(4, olds.length)) : shots;
+  const poses = useMemo<Pose[] | null>(
+    () => (dulu ? Array.from({ length: nShots }, (_, i) => ({ emoji: '👻', text: `tiru pose foto ${i + 1}, sebisanya!` })) : posesOn ? posesFor(seed, shots, false) : null),
+    [seed, shots, posesOn, dulu, nShots],
+  );
+  const cols = dulu ? 2 : 1;
+  const aspect = frameAspect(template, cols, nShots);
+  const ghostImgs = dulu ? Array.from({ length: nShots }, (_, i) => olds[i % olds.length]!) : [];
 
   // Dari halaman lingkaran: ?berdua=<circleId> langsung membuka booth berdua.
   useEffect(() => {
@@ -76,10 +91,15 @@ export default function Photobox() {
           filter={filter}
           ink={ink}
           poses={poses}
-          shots={shots}
+          shots={nShots}
           startLocal={startLocal}
-          onDone={(f) => {
+          candid={mode === 'candid'}
+          burst={liveOn}
+          ghost={dulu ? ghostImgs.map((o) => o.url) : undefined}
+          props={props}
+          onDone={(f, b) => {
             setFrames(f);
+            setBursts(b ?? null);
             setPhase('result');
           }}
         />
@@ -91,9 +111,11 @@ export default function Photobox() {
       <main className="screen pb-screen">
         <Header title="stripmu jadi!" sub="ganti desain sepuasnya" backTo="/photobox" />
         <StripResult
-          frames={[frames]}
-          names={[me.user.penName ?? 'aku']}
-          cities={[getCity(me.user.cityId)?.name ?? '']}
+          frames={dulu ? [ghostImgs.map((o) => o.img), frames] : [frames]}
+          theme={dulu ? 'waktu' : undefined}
+          bursts={bursts ? (dulu ? [ghostImgs.map((o) => [o.img]), bursts] : [bursts]) : undefined}
+          names={dulu ? [`dulu${ghostImgs[0]?.year ? ` (${ghostImgs[0].year})` : ''}`, 'sekarang'] : [me.user.penName ?? 'aku']}
+          cities={dulu ? ['', getCity(me.user.cityId)?.name ?? ''] : [getCity(me.user.cityId)?.name ?? '']}
           poses={(poses ?? []).map((p) => p.text)}
           template={template}
           onTemplate={setTemplate}
@@ -123,10 +145,35 @@ export default function Photobox() {
               <span className="small">{cam.err}</span>
             </div>
           ) : (
-            <LiveView video={cam.video} ready={cam.ready} aspect={aspect} filter={filter} ink={ink} />
+            <div className="pb-setup-view">
+              <LiveView video={cam.video} ready={cam.ready} aspect={aspect} filter={filter} ink={ink} />
+              {dulu ? <img className="pb-ghost" src={olds[0]!.url} alt="" /> : null}
+              <PropsEditor props={props} onChange={setProps} />
+            </div>
           )}
           <span className="pb-setup-tag">{FILTERS.find((f) => f.id === filter)?.hint}</span>
         </div>
+        <PropsEditor.Tray props={props} onChange={setProps} />
+
+        <section className="section">
+          <span className="label">mode</span>
+          <div className="pb-modes3">
+            {(
+              [
+                ['biasa', '📸', 'biasa', 'hitung mundur & kartu pose'],
+                ['candid', '👀', 'candid', 'jepret diam-diam, tanpa aba-aba'],
+                ['dulu', '👻', 'dulu & sekarang', 'tiru pose foto lama'],
+              ] as const
+            ).map(([id, e, name, hint]) => (
+              <button key={id} className={`pb-mode3 ${mode === id ? 'on' : ''}`} onClick={() => setMode(id)} data-testid={`pb-mode-${id}`}>
+                <span className="pb-mode3-e">{e}</span>
+                <b>{name}</b>
+                <span className="tiny soft">{hint}</span>
+              </button>
+            ))}
+          </div>
+          {mode === 'dulu' ? <GhostPicker olds={olds} onChange={setOlds} /> : null}
+        </section>
 
         <section className="section">
           <span className="label">filter</span>
@@ -152,7 +199,7 @@ export default function Photobox() {
         </section>
         <section className="section">
           <span className="label">jepretan</span>
-          <div className="seg">
+          <div className="seg" style={dulu ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
             {[3, 4].map((n) => (
               <button key={n} className={shots === n ? 'on' : ''} onClick={() => setShots(n)}>
                 {n} foto
@@ -161,11 +208,12 @@ export default function Photobox() {
           </div>
           <div className="mt-sm">
             <Toggle label="kartu pose" hint="tantangan pose lucu sebelum tiap jepretan" value={posesOn} onChange={setPosesOn} />
+            <Toggle label="strip hidup" hint="tiap foto ikut merekam gerakan sesaat, bisa jadi video" value={liveOn} onChange={setLiveOn} />
           </div>
         </section>
         <button
           className="btn mt-lg pb-go"
-          disabled={!cam.ready}
+          disabled={!cam.ready || (mode === 'dulu' && !olds.length)}
           onClick={() => {
             setStartLocal(Date.now() + 3200);
             setPhase('booth');
@@ -201,7 +249,7 @@ export default function Photobox() {
         </div>
         <h1 className="pb-hero-title">photobox</h1>
         <p className="small soft" style={{ margin: 0 }}>
-          Empat jepretan, kartu pose yang bikin ketawa, dan delapan desain strip, dari negatif film sampai purikura. Bisa juga berdua dari kota yang berbeda.
+          14 filter, 16 desain strip (dari negatif film sampai boarding pass), aksesori, strip yang bisa bergerak, mode candid, dan dulu & sekarang. Bisa juga berdua dari kota yang berbeda.
         </p>
       </section>
 
