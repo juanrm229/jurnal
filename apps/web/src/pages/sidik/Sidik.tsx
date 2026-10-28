@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { navigate } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { createRoom, profile, rankOf, RANKS, stats } from '@/lib/sidik';
+import { Scene } from '@/ui/art';
 import { Doodle, Header, Sheet, useToast } from '@/ui/kit';
 
 export default function Sidik() {
@@ -18,7 +19,7 @@ export default function Sidik() {
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<sidik.RoleId | null>(null);
   const s = stats.get();
-  const [min, title, emoji] = rankOf(s.wins);
+  const [min, title, rankDoodle] = rankOf(s.wins);
   const next = RANKS.find(([m]) => m > s.wins);
 
   const create = async () => {
@@ -41,18 +42,15 @@ export default function Sidik() {
       <Header title="SIDIK" sub="permainan detektif bersama" backTo="/hari" />
       <section className="sd-hero">
         <div className="sd-hero-scene" aria-hidden>
-          <span className="sd-lamp" />
-          <span className="sd-beam" />
-          <span className="sd-hat">🕵️</span>
-          <span className="sd-fog" />
+          <Scene id="hujan-jendela" speed={1.4} />
         </div>
-        <h1 className="sd-hero-title">SIDIK</h1>
+        <h1 className="sd-hero-title">sidik.</h1>
         <p className="sd-hero-sub">Satu kasus. Banyak tersangka. Dan di antara kalian, ada yang berbohong.</p>
       </section>
 
       <div className="sd-home-actions">
         <button className="btn sd-cta" disabled={busy} onClick={() => void create()} data-testid="sd-create">
-          🗂️ buka kasus baru
+          <Doodle id="ui-cari" size={20} color="currentColor" /> buka kasus baru
         </button>
         <div className="sd-joincode">
           <input className="field" value={code} maxLength={4} placeholder="KODE" onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z]/g, ''))} />
@@ -64,7 +62,7 @@ export default function Sidik() {
       </div>
 
       <section className="sd-rank">
-        <span className="sd-rank-emoji">{emoji}</span>
+        <Doodle id={rankDoodle} size={40} color="#16161a" />
         <span className="grow">
           <b>{title}</b>
           <span className="tiny" style={{ display: 'block' }}>
@@ -78,11 +76,22 @@ export default function Sidik() {
       <section className="section">
         <span className="label">cara bermain</span>
         <ol className="sd-how">
-          <li><b>🌙 Malam.</b> Semua menunduk. Pilih tempat untuk diselidiki, lalu tahan tombol. Yang jahat diam-diam memalsukan petunjuk.</li>
-          <li><b>☀️ Pagi.</b> Petunjuk rahasia sampai di HP-mu. Bisa jadi palsu.</li>
-          <li><b>💬 Diskusi.</b> Bagikan petunjuk, atau tunjukkan buktinya ke semua HP. Yang menolak menunjukkan… patut dicurigai.</li>
-          <li><b>✏️ Coret.</b> Coret tersangka yang pasti bukan pelaku. Kalau pelakunya ikut tercoret, dia lolos.</li>
-          <li><b>☝️ Tuduh.</b> Setelah tiga malam, tunjuk pelakunya. Lalu tonton siaran ulang: siapa memalsukan apa.</li>
+          {(
+            [
+              ['bulan', 'Malam.', 'Semua menunduk. Pilih tempat untuk diselidiki, lalu tahan tombol. Yang jahat diam-diam memalsukan petunjuk.'],
+              ['matahari', 'Pagi.', 'Petunjuk rahasia sampai di HP-mu. Bisa jadi palsu.'],
+              ['gelembung-kata', 'Diskusi.', 'Bagikan petunjuk, atau tunjukkan buktinya ke semua HP. Yang menolak menunjukkan… patut dicurigai.'],
+              ['silang', 'Coret.', 'Coret tersangka yang pasti bukan pelaku. Kalau pelakunya ikut tercoret, dia lolos.'],
+              ['ui-cari', 'Tuduh.', 'Setelah tiga malam, tunjuk pelakunya. Lalu tonton siaran ulang: siapa memalsukan apa.'],
+            ] as const
+          ).map(([d, t, x]) => (
+            <li key={t}>
+              <Doodle id={d} size={34} />
+              <span>
+                <b>{t}</b> {x}
+              </span>
+            </li>
+          ))}
         </ol>
       </section>
 
@@ -91,7 +100,7 @@ export default function Sidik() {
         <div className="sd-role-gallery">
           {Object.values(sidik.ROLES).map((r) => (
             <button key={r.id} className={`sd-role-chip team-${r.team}`} onClick={() => setRole(r.id)}>
-              <span>{r.emoji}</span>
+              <Doodle id={r.doodle} size={34} color="currentColor" />
               <b>{r.name}</b>
             </button>
           ))}
@@ -103,7 +112,8 @@ export default function Sidik() {
         <div className="sd-story-list">
           {sidik.STORIES.map((st) => (
             <div key={st.id} className="sd-story-card">
-              <span className="sd-story-emoji">{st.emoji}</span>
+              <span className="sd-tape" />
+              <Doodle id={st.doodle} size={40} color="#16161a" />
               <b>{st.title}</b>
               <span className="tiny">{st.genre}</span>
               <p className="tiny">{st.crime}</p>
@@ -121,9 +131,10 @@ export default function Sidik() {
           </button>
         </div>
       </Sheet>
-      <Sheet open={!!role} onClose={() => setRole(null)} title={role ? `${sidik.ROLES[role].emoji} ${sidik.ROLES[role].name}` : ''}>
+      <Sheet open={!!role} onClose={() => setRole(null)} title={role ? sidik.ROLES[role].name : ''}>
         {role ? (
           <div className="col" style={{ gap: 8 }}>
+            <Doodle id={sidik.ROLES[role].doodle} size={64} draw />
             <i className="small">{sidik.ROLES[role].tagline}</i>
             <span className="small">
               <b>Kemampuan.</b> {sidik.ROLES[role].power}

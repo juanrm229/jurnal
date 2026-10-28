@@ -196,10 +196,10 @@ export const stats = {
   },
 };
 export const RANKS: [number, string, string][] = [
-  [0, 'Detektif Magang', '🐣'],
-  [3, 'Penyidik Muda', '🔎'],
-  [8, 'Inspektur', '🕵️'],
-  [15, 'Komisaris', '🎖️'],
-  [25, 'Legenda Sidik', '👑'],
+  [0, 'Detektif Magang', 'tunas'],
+  [3, 'Penyidik Muda', 'ui-cari'],
+  [8, 'Inspektur', 'kacamata'],
+  [15, 'Komisaris', 'stempel'],
+  [25, 'Legenda Sidik', 'bintang'],
 ];
 export const rankOf = (wins: number) => [...RANKS].reverse().find(([m]) => wins >= m)!;

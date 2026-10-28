@@ -18,6 +18,8 @@ export interface RoleInfo {
   name: string;
   team: Team;
   emoji: string;
+  /** Doodle Sehari untuk peran ini. */
+  doodle: string;
   /** Satu kalimat dalam cerita. */
   tagline: string;
   /** Apa yang bisa dilakukan. */
@@ -26,17 +28,17 @@ export interface RoleInfo {
 }
 
 export const ROLES: Record<RoleId, RoleInfo> = {
-  detektif: { id: 'detektif', name: 'Detektif', team: 'baik', emoji: '🕵️', tagline: 'Matamu tajam, catatanmu rapi.', power: 'Tiap malam selidiki satu tempat dan dapatkan satu petunjuk.', goal: 'Tuduh pelaku yang benar tanpa pernah mencoretnya.' },
-  forensik: { id: 'forensik', name: 'Ahli Forensik', team: 'baik', emoji: '🔬', tagline: 'Kamu sudah tahu pelakunya dari hasil lab.', power: 'Kamu tahu pelakunya. Tiap malam terbitkan satu Laporan Forensik yang pasti benar.', goal: 'Bimbing tim tanpa ketahuan. Kalau penyusup menebakmu di akhir, tim kalah.' },
-  saksi: { id: 'saksi', name: 'Saksi Mata', team: 'baik', emoji: '👁️', tagline: 'Malam itu kamu melihat sesuatu…', power: 'Di awal kamu tahu dua tersangka: salah satunya pelaku.', goal: 'Bantu tim menemukan pelaku.' },
-  peretas: { id: 'peretas', name: 'Peretas', team: 'baik', emoji: '💻', tagline: 'Tidak ada data yang aman darimu.', power: 'Tiap malam periksa satu orang: apakah petunjuknya malam itu dipalsukan?', goal: 'Bongkar petunjuk palsu.' },
-  pengawal: { id: 'pengawal', name: 'Pengawal', team: 'baik', emoji: '🛡️', tagline: 'Kamu menjaga yang lain dalam diam.', power: 'Tiap malam lindungi satu orang: petunjuknya tidak bisa dipalsukan.', goal: 'Lindungi kebenaran.' },
-  psikolog: { id: 'psikolog', name: 'Psikolog', team: 'baik', emoji: '🧠', tagline: 'Kamu membaca orang seperti membaca buku.', power: 'Sekali dalam permainan, pilih dua orang: kamu tahu mereka satu tim atau beda tim.', goal: 'Temukan siapa yang berbohong.' },
-  magang: { id: 'magang', name: 'Detektif Magang', team: 'baik', emoji: '🐣', tagline: 'Semangat besar, pengalaman kecil.', power: 'Tiap malam dapat dua petunjuk, tapi salah satunya keliru, dan kamu tidak tahu yang mana.', goal: 'Bantu tim menemukan pelaku.' },
-  penyusup: { id: 'penyusup', name: 'Penyusup', team: 'jahat', emoji: '🐍', tagline: 'Kamu bekerja untuk pelaku.', power: 'Kamu tahu pelakunya. Tiap malam palsukan petunjuk satu orang.', goal: 'Buat tim mencoret pelaku, atau menuduh orang yang salah. Kalau tim benar, tebak siapa Ahli Forensik.' },
-  kakitangan: { id: 'kakitangan', name: 'Kaki Tangan', team: 'jahat', emoji: '🦊', tagline: 'Tanganmu bersih, tempatnya juga.', power: 'Kamu tahu pelakunya. Tiap malam bersihkan satu tempat: siapa pun yang menyelidiki di sana pulang tanpa petunjuk.', goal: 'Bantu pelaku lolos.' },
-  peniru: { id: 'peniru', name: 'Peniru', team: 'jahat', emoji: '🎭', tagline: 'Tanda tanganmu sempurna.', power: 'Kamu tahu pelakunya. Dua kali dalam permainan, terbitkan Laporan Forensik palsu yang tampak asli.', goal: 'Bantu pelaku lolos.' },
-  wartawan: { id: 'wartawan', name: 'Wartawan', team: 'netral', emoji: '📰', tagline: 'Kamu tidak peduli siapa menang; kamu butuh berita.', power: 'Selidiki seperti detektif. Di akhir, tebak diam-diam siapa Penyusup.', goal: 'Menang sendiri bila tebakanmu tentang Penyusup benar.' },
+  detektif: { id: 'detektif', doodle: 'ui-cari', name: 'Detektif', team: 'baik', emoji: '🕵️', tagline: 'Matamu tajam, catatanmu rapi.', power: 'Tiap malam selidiki satu tempat dan dapatkan satu petunjuk.', goal: 'Tuduh pelaku yang benar tanpa pernah mencoretnya.' },
+  forensik: { id: 'forensik', doodle: 'kacamata', name: 'Ahli Forensik', team: 'baik', emoji: '🔬', tagline: 'Kamu sudah tahu pelakunya dari hasil lab.', power: 'Kamu tahu pelakunya. Tiap malam terbitkan satu Laporan Forensik yang pasti benar.', goal: 'Bimbing tim tanpa ketahuan. Kalau penyusup menebakmu di akhir, tim kalah.' },
+  saksi: { id: 'saksi', doodle: 'bintang-mata', name: 'Saksi Mata', team: 'baik', emoji: '👁️', tagline: 'Malam itu kamu melihat sesuatu…', power: 'Di awal kamu tahu dua tersangka: salah satunya pelaku.', goal: 'Bantu tim menemukan pelaku.' },
+  peretas: { id: 'peretas', doodle: 'laptop', name: 'Peretas', team: 'baik', emoji: '💻', tagline: 'Tidak ada data yang aman darimu.', power: 'Tiap malam periksa satu orang: apakah petunjuknya malam itu dipalsukan?', goal: 'Bongkar petunjuk palsu.' },
+  pengawal: { id: 'pengawal', doodle: 'payung-terbuka', name: 'Pengawal', team: 'baik', emoji: '🛡️', tagline: 'Kamu menjaga yang lain dalam diam.', power: 'Tiap malam lindungi satu orang: petunjuknya tidak bisa dipalsukan.', goal: 'Lindungi kebenaran.' },
+  psikolog: { id: 'psikolog', doodle: 'gelembung-kata', name: 'Psikolog', team: 'baik', emoji: '🧠', tagline: 'Kamu membaca orang seperti membaca buku.', power: 'Sekali dalam permainan, pilih dua orang: kamu tahu mereka satu tim atau beda tim.', goal: 'Temukan siapa yang berbohong.' },
+  magang: { id: 'magang', doodle: 'tunas', name: 'Detektif Magang', team: 'baik', emoji: '🐣', tagline: 'Semangat besar, pengalaman kecil.', power: 'Tiap malam dapat dua petunjuk, tapi salah satunya keliru, dan kamu tidak tahu yang mana.', goal: 'Bantu tim menemukan pelaku.' },
+  penyusup: { id: 'penyusup', doodle: 'pena', name: 'Penyusup', team: 'jahat', emoji: '🐍', tagline: 'Kamu bekerja untuk pelaku.', power: 'Kamu tahu pelakunya. Tiap malam palsukan petunjuk satu orang.', goal: 'Buat tim mencoret pelaku, atau menuduh orang yang salah. Kalau tim benar, tebak siapa Ahli Forensik.' },
+  kakitangan: { id: 'kakitangan', doodle: 'penyiram', name: 'Kaki Tangan', team: 'jahat', emoji: '🦊', tagline: 'Tanganmu bersih, tempatnya juga.', power: 'Kamu tahu pelakunya. Tiap malam bersihkan satu tempat: siapa pun yang menyelidiki di sana pulang tanpa petunjuk.', goal: 'Bantu pelaku lolos.' },
+  peniru: { id: 'peniru', doodle: 'stempel', name: 'Peniru', team: 'jahat', emoji: '🎭', tagline: 'Tanda tanganmu sempurna.', power: 'Kamu tahu pelakunya. Dua kali dalam permainan, terbitkan Laporan Forensik palsu yang tampak asli.', goal: 'Bantu pelaku lolos.' },
+  wartawan: { id: 'wartawan', doodle: 'kamera', name: 'Wartawan', team: 'netral', emoji: '📰', tagline: 'Kamu tidak peduli siapa menang; kamu butuh berita.', power: 'Selidiki seperti detektif. Di akhir, tebak diam-diam siapa Penyusup.', goal: 'Menang sendiri bila tebakanmu tentang Penyusup benar.' },
 };
 
 export const teamOf = (r: RoleId | null | undefined): Team => (r ? ROLES[r].team : 'baik');

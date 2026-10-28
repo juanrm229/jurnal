@@ -10,8 +10,9 @@ import { navigate, useParams } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { hush, joinRoom, leaveRoom, profile, sendAct, sfx, speak, stats, useCountdown, useRoom, useWakeLock, vibrate, type View } from '@/lib/sidik';
 import { QR } from '@/ui/art';
-import { Doodle, Growing, Header, useToast } from '@/ui/kit';
-import { Board, HoldButton, IntelList, PlayerFace, Replay, RoleCard, roleInfo, Timer, useNotes } from './parts';
+import { Doodle, Growing, Header, Toggle, useToast } from '@/ui/kit';
+import { Scene } from '@/ui/art';
+import { Board, faceOf, HoldButton, IntelList, PlayerFace, Replay, RoleCard, roleInfo, Timer, useNotes } from './parts';
 
 const AVATARS = ['tunas', 'kucing', 'burung', 'ikan', 'kelinci', 'landak', 'bebek', 'katak', 'kupu-kupu', 'lebah', 'siput', 'kepik'];
 
@@ -84,7 +85,7 @@ export default function Room() {
       <main className="screen sd-screen">
         <Header title="SIDIK" backTo="/sidik" />
         <div className="sd-empty">
-          <span className="sd-big">🕳️</span>
+          <Doodle id="awan" size={64} />
           <p>{err}</p>
           <button className="btn soft" onClick={() => navigate('/sidik')}>
             kembali
@@ -153,10 +154,17 @@ function TopBar({ view, serverNow, onLeave }: { view: View; serverNow: () => num
         <Doodle id="ui-kembali" size={20} />
       </button>
       <div className="sd-top-mid">
-        <b>{view.story.emoji} {view.phase === 'lobby' ? 'SIDIK' : view.story.title}</b>
+        <b>
+          <Doodle id={view.phase === 'lobby' ? 'ui-cari' : view.story.doodle} size={20} color="currentColor" /> {view.phase === 'lobby' ? 'SIDIK' : view.story.title}
+        </b>
         <span>
           {label[view.phase] ?? `ruang ${view.code}`}
-          {info && view.phase !== 'lobby' ? ` · ${info.emoji}` : ''}
+          {info && view.phase !== 'lobby' ? (
+            <>
+              {' · '}
+              <Doodle id={info.doodle} size={13} color="currentColor" />
+            </>
+          ) : null}
         </span>
       </div>
       <Timer secs={secs} total={total} />
@@ -175,12 +183,14 @@ function JoinForm({ view, defaultName, onJoin }: { view: View; defaultName: stri
     <main className="screen sd-screen">
       <Header title="masuk ke kasus" sub={`ruang ${view.code}`} backTo="/sidik" />
       <section className="sd-join">
-        <span className="sd-big">{view.story.emoji}</span>
+        <Doodle id={view.story.doodle} size={80} draw />
         <p className="sd-join-title">{view.phase === 'lobby' ? 'Kamu diundang ke sebuah kasus.' : 'Kasus ini sudah berjalan.'}</p>
         <div className="sd-avatar-pick">
           <button className="sd-selfie" onClick={() => file.current?.click()} aria-label="ambil foto wajah">
             <PlayerFace avatar={avatar} size={84} />
-            <span className="tiny">📸 foto wajah</span>
+            <span className="tiny sd-ico">
+              <Doodle id="ui-foto" size={14} color="currentColor" /> foto wajah
+            </span>
           </button>
           <div className="sd-avatars">
             {AVATARS.map((a) => (
@@ -230,11 +240,11 @@ function Lobby({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
           <QR value={link} size={150} />
         </div>
         <div className="row" style={{ gap: 8 }}>
-          <a className="btn sm soft grow" href={`https://wa.me/?text=${encodeURIComponent(`Ada kasus baru di SIDIK 🕵️ Masuk pakai kode ${view.code}: ${link}`)}`} target="_blank" rel="noreferrer">
+          <a className="btn sm soft grow" href={`https://wa.me/?text=${encodeURIComponent(`Ada kasus baru di SIDIK! Masuk pakai kode ${view.code}: ${link}`)}`} target="_blank" rel="noreferrer">
             undang lewat WA
           </a>
           <a className="btn sm soft grow" href={`/sidik/${view.code}/tv`} target="_blank" rel="noreferrer">
-            📺 mode TV
+            <Doodle id="laptop" size={16} color="currentColor" /> mode TV
           </a>
         </div>
       </div>
@@ -246,7 +256,7 @@ function Lobby({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
             <PlayerFace avatar={p.avatar} size={46} />
             <span className="tiny">
               {p.name}
-              {p.id === view.host ? ' 👑' : ''}
+              {p.id === view.host ? ' ★' : ''}
             </span>
           </span>
         ))}
@@ -254,7 +264,16 @@ function Lobby({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
 
       {n >= 2 ? (
         <p className="small soft center" style={{ margin: '4px 0 0' }}>
-          {n <= 3 ? '🎲 Mode paranoia: mungkin ada pengkhianat di antara kalian, mungkin juga tidak.' : `Peran yang mungkin muncul: ${[...new Set(preview)].map((r) => sidik.ROLES[r].emoji).join(' ')}`}
+          {n <= 3 ? (
+            'Mode paranoia: mungkin ada pengkhianat di antara kalian, mungkin juga tidak.'
+          ) : (
+            <span className="sd-ico" style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+              peran yang mungkin muncul:
+              {[...new Set(preview)].map((r) => (
+                <Doodle key={r} id={sidik.ROLES[r].doodle} size={20} color="currentColor" />
+              ))}
+            </span>
+          )}
         </p>
       ) : null}
 
@@ -262,9 +281,9 @@ function Lobby({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
         <div className="sd-settings">
           <span className="sd-label">kasus</span>
           <div className="sd-stories">
-            {[{ id: 'acak', emoji: '🎲', title: 'acak' }, ...sidik.STORIES].map((s) => (
-              <button key={s.id} className={`sd-story-chip ${view.opts.story === s.id ? 'on' : ''}`} onClick={() => act({ t: 'opts', opts: { story: s.id } })}>
-                <span>{s.emoji}</span>
+            {[{ id: 'acak', doodle: 'ui-dadu', title: 'acak' }, ...sidik.STORIES].map((s) => (
+              <button key={s.id} className={`pill sm sd-story-chip ${view.opts.story === s.id ? 'active' : ''}`} onClick={() => act({ t: 'opts', opts: { story: s.id } })}>
+                <Doodle id={s.doodle} size={16} color="currentColor" />
                 {s.title}
               </button>
             ))}
@@ -277,10 +296,9 @@ function Lobby({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
               </button>
             ))}
           </div>
-          <label className="row sd-toggle">
-            <input type="checkbox" checked={view.opts.narrator} onChange={(e) => act({ t: 'opts', opts: { narrator: e.target.checked } })} />
-            <span className="small">🎙️ narator suara di HP ini (taruh di tengah meja)</span>
-          </label>
+          <div className="mt">
+            <Toggle label="narator suara" hint="dibacakan dari HP ini; taruh di tengah meja" value={view.opts.narrator} onChange={(v) => act({ t: 'opts', opts: { narrator: v } })} />
+          </div>
           <button className="btn sd-cta" disabled={n < 2 || busy} onClick={() => act({ t: 'start' })} data-testid="sd-start">
             buka berkas kasus
           </button>
@@ -328,7 +346,7 @@ function Intro({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
       <div className="sd-file">
         <span className="sd-file-tab">BERKAS KASUS · {st.genre.toUpperCase()}</span>
         <h1 className="sd-file-title">
-          {st.emoji} {st.title}
+          <Doodle id={st.doodle} size={40} color="currentColor" draw /> {st.title}
         </h1>
         <p className="sd-file-text">
           <Typewriter text={st.intro} />
@@ -347,7 +365,8 @@ function Intro({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
         <div className="sd-places">
           {st.places.map((p, i) => (
             <span key={i} className="sd-place-mini">
-              {p.emoji} {p.name}
+              <Doodle id={p.doodle} size={26} color="currentColor" />
+              {p.name}
               <i>jejak {st.cats[p.cat]!.name}</i>
             </span>
           ))}
@@ -406,7 +425,7 @@ function Night({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
   if (done)
     return (
       <section className="sd-night done">
-        <span className="sd-moon">🌙</span>
+        <Scene id="langit-malam" width={240} className="sd-night-sky" />
         <p className="sd-night-title">Kamu bergerak dalam gelap.</p>
         <p className="small">Tutup layarmu. Menunggu yang lain… {acted}/{view.players.length}</p>
       </section>
@@ -414,12 +433,13 @@ function Night({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
 
   return (
     <section className="sd-night">
-      <p className="sd-night-title">Malam ke-{view.round}</p>
+      <Scene id="langit-malam" className="sd-night-sky" />
+      <p className="sd-night-title">malam ke-{view.round}</p>
       <span className="sd-label">selidiki di mana?</span>
       <div className="sd-place-grid">
         {st.places.map((p, i) => (
           <button key={i} className={`sd-place ${place === i ? 'on' : ''}`} onClick={() => setPlace(i)}>
-            <span className="sd-place-emoji">{p.emoji}</span>
+            <Doodle id={p.doodle} size={38} color="currentColor" />
             <b>{p.name}</b>
             <span className="tiny">jejak {st.cats[p.cat]!.name}</span>
           </button>
@@ -428,39 +448,49 @@ function Night({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
 
       {role === 'penyusup' ? (
         <>
-          <span className="sd-label">🐍 palsukan petunjuk siapa?</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="pena" size={16} color="currentColor" /> palsukan petunjuk siapa?
+          </span>
           <PlayerPick value={target} onPick={setTarget} exclude={me.allies} allowNone />
         </>
       ) : null}
       {role === 'pengawal' ? (
         <>
-          <span className="sd-label">🛡️ jaga siapa malam ini?</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="payung-terbuka" size={16} color="currentColor" /> jaga siapa malam ini?
+          </span>
           <PlayerPick value={target} onPick={setTarget} allowNone />
         </>
       ) : null}
       {role === 'peretas' ? (
         <>
-          <span className="sd-label">💻 retas petunjuk siapa?</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="laptop" size={16} color="currentColor" /> retas petunjuk siapa?
+          </span>
           <PlayerPick value={target} onPick={setTarget} allowNone />
         </>
       ) : null}
       {role === 'psikolog' && me.uses.psy > 0 ? (
         <>
-          <span className="sd-label">🧠 baca dua orang (sekali saja dalam permainan)</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="gelembung-kata" size={16} color="currentColor" /> baca dua orang (sekali saja dalam permainan)
+          </span>
           <PlayerPick value={target} onPick={setTarget} allowNone />
           {target ? <PlayerPick value={target2} onPick={setTarget2} exclude={[target]} allowNone /> : null}
         </>
       ) : null}
       {role === 'kakitangan' ? (
         <>
-          <span className="sd-label">🦊 bersihkan tempat mana?</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="penyiram" size={16} color="currentColor" /> bersihkan tempat mana?
+          </span>
           <div className="sd-pick-players">
             <button className={pickN === undefined ? 'on' : ''} onClick={() => setPick(undefined)}>
               tidak
             </button>
             {st.places.map((p, i) => (
               <button key={i} className={pickN === i ? 'on' : ''} onClick={() => setPick(i)}>
-                {p.emoji} {p.name}
+                <Doodle id={p.doodle} size={16} color="currentColor" /> {p.name}
               </button>
             ))}
           </div>
@@ -468,7 +498,10 @@ function Night({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
       ) : null}
       {(role === 'forensik' || role === 'peniru') && me.offers.length ? (
         <>
-          <span className="sd-label">{role === 'forensik' ? '🔬 terbitkan laporan mana?' : `🎭 terbitkan laporan palsu? (sisa ${me.uses.forge})`}</span>
+          <span className="sd-label sd-ico">
+            <Doodle id={role === 'forensik' ? 'kacamata' : 'stempel'} size={16} color="currentColor" />
+            {role === 'forensik' ? 'terbitkan laporan mana?' : `terbitkan laporan palsu? (sisa ${me.uses.forge})`}
+          </span>
           <div className="sd-offers">
             {role === 'peniru' ? (
               <button className={pickN === undefined ? 'on' : ''} onClick={() => setPick(undefined)}>
@@ -477,7 +510,7 @@ function Night({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
             ) : null}
             {me.offers.map((o, i) => (
               <button key={i} className={pickN === i ? 'on' : ''} onClick={() => setPick(i)}>
-                📢 {o}
+                <Doodle id="amplop" size={16} color="currentColor" /> {o}
               </button>
             ))}
           </div>
@@ -500,12 +533,17 @@ function Dawn({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
   const mine = view.intel.filter((i) => i.round === view.round && (i.to === view.me!.id || i.to === '*'));
   return (
     <section className="sd-dawn">
-      <p className="sd-dawn-title">☀️ Pagi ke-{view.round}</p>
+      <p className="sd-dawn-title">
+        <Doodle id="matahari" size={40} color="currentColor" draw /> pagi ke-{view.round}
+      </p>
       <div className="sd-envelopes">
         {mine.length ? (
           mine.map((i, k) => (
             <div key={i.id} className={`sd-envelope k-${i.kind}`} style={{ animationDelay: `${k * 0.35}s` }}>
-              <span className="sd-env-kind">{i.to === '*' ? (i.kind === 'event' ? '⚡ kejadian' : '📢 untuk semua') : '🔒 hanya untukmu'}</span>
+              <span className="sd-env-kind">
+                <Doodle id={i.to === '*' ? (i.kind === 'event' ? 'petir' : 'amplop') : 'ui-gembok'} size={14} color="currentColor" />
+                {i.to === '*' ? (i.kind === 'event' ? 'kejadian' : 'untuk semua') : 'hanya untukmu'}
+              </span>
               <p>{i.text}</p>
             </div>
           ))
@@ -529,12 +567,13 @@ function Day({ view, act, code }: { view: View; act: (a: sidik.Action) => void; 
   return (
     <section className="sd-day">
       <p className="sd-day-hint">
-        👑 Ketua penyidik hari ini: <b>{ketua?.name}</b> (memutuskan bila suara seri)
+        <Doodle id="stempel" size={14} color="currentColor" /> Ketua penyidik hari ini: <b>{ketua?.name}</b> (memutuskan bila suara seri)
       </p>
       <div className="sd-tabs">
         {(['papan', 'petunjuk', 'bisik', 'peran'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
-            {t === 'papan' ? '🗂️ papan' : t === 'petunjuk' ? '🔎 petunjuk' : t === 'bisik' ? '🤫 bisik' : '🎴 peranku'}
+            <Doodle id={t === 'papan' ? 'pin-papan' : t === 'petunjuk' ? 'ui-cari' : t === 'bisik' ? 'gelembung-kata' : 'kartu'} size={18} color="currentColor" />
+            {t === 'peran' ? 'peranku' : t}
           </button>
         ))}
       </div>
@@ -584,7 +623,7 @@ function Whisper({ view, act }: { view: View; act: (a: sidik.Action) => void }) 
           {view.whispers.map((w, i) => (
             <div key={i} className="sd-clue k-bisik">
               <span className="sd-clue-kind">
-                🤫 {w.from === me.id ? `kamu → ${name(w.to)}` : `${name(w.from)} → kamu`} · hari {w.round}
+                <Doodle id="gelembung-kata" size={14} color="currentColor" /> {w.from === me.id ? `kamu → ${name(w.to)}` : `${name(w.from)} → kamu`} · hari {w.round}
               </span>
               <span className="sd-clue-text">“{w.text}”</span>
             </div>
@@ -658,7 +697,9 @@ function Accuse({ view, act, code, busy }: { view: View; act: (a: sidik.Action) 
       <Board view={view} notes={notes} selected={pick !== null ? [pick] : []} onSelect={(id) => setPick(id)} />
       {me.role === 'wartawan' ? (
         <>
-          <span className="sd-label">📰 diam-diam: siapa Penyusup?</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="kamera" size={16} color="currentColor" /> diam-diam: siapa Penyusup?
+          </span>
           <div className="sd-pick-players">
             {others.map((p) => (
               <button key={p.id} className={scoop === p.id ? 'on' : ''} onClick={() => setScoop(p.id)}>
@@ -670,7 +711,9 @@ function Accuse({ view, act, code, busy }: { view: View; act: (a: sidik.Action) 
       ) : null}
       {paranoia && sidik.teamOf(me.role) !== 'jahat' ? (
         <>
-          <span className="sd-label">🎲 apakah ada pengkhianat di antara kalian?</span>
+          <span className="sd-label sd-ico">
+            <Doodle id="ui-dadu" size={16} color="currentColor" /> apakah ada pengkhianat di antara kalian?
+          </span>
           <p className="tiny soft">Benar menebak pengkhianat = menang. Menuduh rekan yang jujur = kalah.</p>
           <div className="sd-pick-players">
             <button className={traitor === '' ? 'on' : ''} onClick={() => setTraitor('')}>
@@ -699,7 +742,9 @@ function Hunt({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
   if (me.role !== 'penyusup')
     return (
       <section className="sd-hunt">
-        <span className="sd-big pulse">🐍</span>
+        <span className="pulse">
+          <Doodle id="pena" size={70} />
+        </span>
         <p className="sd-big-line">Penyusup sedang memilih…</p>
         <p className="small center">Pelaku sudah tertangkap. Tapi kalau penyusup berhasil menebak siapa Ahli Forensik, kemenangan direbut.</p>
       </section>
@@ -736,18 +781,24 @@ function End({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
   return (
     <section className="sd-end">
       <div className={`sd-result ${win ? 'win' : 'lose'}`}>
-        <span className="sd-result-big">{win ? 'MENANG' : 'KALAH'}</span>
+        <Doodle id={win ? 'bintang' : 'hati-patah'} size={56} draw />
+        <span className="sd-result-big">{win ? 'menang!' : 'kalah…'}</span>
         <span>{teamWin}</span>
       </div>
       <div className="sd-culprit-card">
         <span className="tiny">pelakunya adalah</span>
-        <span className="sd-culprit-traits">{c.attrs.map((v, k) => st.cats[k]!.traits[v]!.emoji).join(' ')}</span>
+        <PlayerFace avatar={faceOf(c.name)} size={120} />
+        <span className="sd-culprit-traits">
+          {c.attrs.map((v, k) => (
+            <span key={k}>{st.cats[k]!.traits[v]!.label}</span>
+          ))}
+        </span>
         <b>{c.name}</b>
         <span className="small">{c.job}</span>
         <i className="tiny">“{c.quirk}”</i>
       </div>
       <p className="sd-end-story">{endLine(view)}</p>
-      {r.scoops.length ? <p className="small center">📰 Wartawan {r.scoops.map((id) => view.players.find((p) => p.id === id)?.name).join(', ')} mendapat berita eksklusif!</p> : null}
+      {r.scoops.length ? <p className="small center">Wartawan {r.scoops.map((id) => view.players.find((p) => p.id === id)?.name).join(', ')} mendapat berita eksklusif!</p> : null}
 
       <div className="sd-roles-reveal">
         {view.players.map((p) => {
@@ -757,7 +808,7 @@ function End({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
               <PlayerFace avatar={p.avatar} size={36} />
               <b>{p.name}</b>
               <span className="tiny">
-                {info?.emoji} {info?.name}
+                {info ? <Doodle id={info.doodle} size={14} color="currentColor" /> : null} {info?.name}
               </span>
             </span>
           );
@@ -768,7 +819,8 @@ function End({ view, act }: { view: View; act: (a: sidik.Action) => void }) {
       <div className="sd-tabs">
         {(['cerita', 'ulang', 'petunjuk'] as const).map((t) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
-            {t === 'cerita' ? '🗂️ papan akhir' : t === 'ulang' ? '🎬 siaran ulang' : '🔎 petunjukku'}
+            <Doodle id={t === 'cerita' ? 'pin-papan' : t === 'ulang' ? 'bulan' : 'ui-cari'} size={18} color="currentColor" />
+            {t === 'cerita' ? 'papan akhir' : t === 'ulang' ? 'siaran ulang' : 'petunjukku'}
           </button>
         ))}
       </div>

@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react';
 import { useParams } from '@/lib/router';
 import { sfx, speak, useCountdown, useRoom } from '@/lib/sidik';
 import { QR } from '@/ui/art';
-import { Growing } from '@/ui/kit';
+import { Doodle, Growing } from '@/ui/kit';
 import { Board, IntelList, PlayerFace, Timer } from './parts';
 
 export default function Tv() {
@@ -32,9 +32,12 @@ export default function Tv() {
     <main className={`sd-tv ph-${view.phase}`}>
       <header className="sd-tv-top">
         <b>
-          {view.story.emoji} {view.phase === 'lobby' ? 'SIDIK' : view.story.title}
+          <Doodle id={view.phase === 'lobby' ? 'ui-cari' : view.story.doodle} size={44} color="currentColor" /> {view.phase === 'lobby' ? 'sidik.' : view.story.title}
         </b>
-        <span>{view.phase === 'lobby' ? `kode ${view.code}` : `${view.phase === 'night' ? '🌙 malam' : '☀️ hari'} ${view.round || ''}`}</span>
+        <span className="sd-ico">
+          {view.phase === 'lobby' ? null : <Doodle id={view.phase === 'night' ? 'bulan' : 'matahari'} size={26} color="currentColor" />}
+          {view.phase === 'lobby' ? `kode ${view.code}` : `${view.phase === 'night' ? 'malam' : 'hari'} ${view.round || ''}`}
+        </span>
         <Timer secs={secs} />
       </header>
       {view.phase === 'lobby' ? (
@@ -71,7 +74,7 @@ export default function Tv() {
             <IntelList view={view} />
             {view.phase === 'end' && view.result ? (
               <p className="sd-tv-story">
-                {view.result.winner === 'baik' ? '🕵️ Tim detektif menang!' : '🐍 Tim pelaku menang!'} Pelakunya: {view.suspects[view.culprit ?? 0]?.name}.
+                {view.result.winner === 'baik' ? 'Tim detektif menang!' : 'Tim pelaku menang!'} Pelakunya: {view.suspects[view.culprit ?? 0]?.name}.
               </p>
             ) : null}
           </aside>

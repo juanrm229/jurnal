@@ -20,6 +20,8 @@ export interface Category {
 export interface Place {
   name: string;
   emoji: string;
+  /** Doodle Sehari untuk tempat ini. */
+  doodle: string;
   /** Kategori ciri yang jejaknya tertinggal di sini. */
   cat: number;
   /** Sumber petunjuk khas tempat ini. */
@@ -30,6 +32,7 @@ export interface Story {
   id: string;
   title: string;
   emoji: string;
+  doodle: string;
   genre: string;
   /** Kalimat pembuka narator. */
   intro: string;
@@ -65,6 +68,7 @@ export const STORIES: Story[] = [
     id: 'kos',
     title: 'Kalung di Kos Melati',
     emoji: '🏚️',
+    doodle: 'rumah',
     genre: 'pencurian',
     intro:
       'Malam Minggu, hujan tidak berhenti sejak magrib. Di Kos Melati, Bu Ratmi menjerit dari kamar nomor tiga: kalung emas warisan ibunya lenyap dari kotak beludru. Pintu tidak dibobol. Pencurinya orang dalam, dan dia masih ada di rumah ini.',
@@ -72,10 +76,10 @@ export const STORIES: Story[] = [
     when: 'Sabtu malam, antara pukul 20.00 dan 22.00',
     loot: 'kalung warisan Bu Ratmi',
     places: [
-      { name: 'Dapur bersama', emoji: '🍳', cat: 0, sources: ['Serat kain tersangkut di paku dekat rak piring', 'Pak Jono yang menggoreng tempe bersumpah melihat', 'Noda kopi di kursi plastik'] },
-      { name: 'Teras & parkiran', emoji: '🛵', cat: 1, sources: ['Rekaman CCTV warung seberang', 'Tukang parkir yang kedinginan bercerita', 'Bekas cetakan di genangan lumpur'] },
-      { name: 'Tangga & lorong', emoji: '🪜', cat: 2, sources: ['Jejak basah di anak tangga', 'Lampu sensor lorong menyala, dan seseorang terlihat', 'Kertas jatuh di bawah sakelar'] },
-      { name: 'Jemuran atap', emoji: '👕', cat: 3, sources: ['Jemuran yang tergeser', 'Kucing kos tidur di atas sesuatu', 'Tetangga dari jendela sebelah mengintip'] },
+      { name: 'Dapur bersama', emoji: '🍳', doodle: 'cangkir', cat: 0, sources: ['Serat kain tersangkut di paku dekat rak piring', 'Pak Jono yang menggoreng tempe bersumpah melihat', 'Noda kopi di kursi plastik'] },
+      { name: 'Teras & parkiran', emoji: '🛵', doodle: 'motor', cat: 1, sources: ['Rekaman CCTV warung seberang', 'Tukang parkir yang kedinginan bercerita', 'Bekas cetakan di genangan lumpur'] },
+      { name: 'Tangga & lorong', emoji: '🪜', doodle: 'jendela', cat: 2, sources: ['Jejak basah di anak tangga', 'Lampu sensor lorong menyala, dan seseorang terlihat', 'Kertas jatuh di bawah sakelar'] },
+      { name: 'Jemuran atap', emoji: '👕', doodle: 'angin', cat: 3, sources: ['Jemuran yang tergeser', 'Kucing kos tidur di atas sesuatu', 'Tetangga dari jendela sebelah mengintip'] },
     ],
     cats: [
       CLOTH('kaus oblong', 'jaket hoodie', 'kemeja flanel'),
@@ -104,6 +108,7 @@ export const STORIES: Story[] = [
     id: 'kondangan',
     title: 'Amplop Raib di Kondangan',
     emoji: '💍',
+    doodle: 'kado',
     genre: 'pencurian',
     intro:
       'Pesta pernikahan anak Pak Lurah sedang meriah-meriahnya. Organ tunggal memainkan lagu dangdut kesekian. Tiba-tiba kotak amplop sumbangan di meja tamu ringan sekali: separuh isinya hilang. Tamu belum ada yang pulang. Pak Lurah mengunci gerbang.',
@@ -111,10 +116,10 @@ export const STORIES: Story[] = [
     when: 'Minggu siang, saat sesi foto keluarga',
     loot: 'amplop sumbangan pengantin',
     places: [
-      { name: 'Meja prasmanan', emoji: '🍛', cat: 0, sources: ['Bu katering hafal semua yang antre rendang', 'Noda kuah di taplak', 'Foto candid fotografer'] },
-      { name: 'Pelaminan', emoji: '💐', cat: 1, sources: ['Video drone dari atas', 'Pengantin ingat siapa yang salaman dua kali', 'Kelopak bunga yang terinjak'] },
-      { name: 'Parkiran motor', emoji: '🏍️', cat: 2, sources: ['Karcis parkir yang tercecer', 'Tukang parkir dadakan bercerita', 'Jejak di tanah becek'] },
-      { name: 'Belakang tenda', emoji: '⛺', cat: 3, sources: ['Sobekan amplop dekat genset', 'Anak kecil yang main petak umpet melihat', 'Asap rokok yang belum hilang'] },
+      { name: 'Meja prasmanan', emoji: '🍛', doodle: 'nasi-padang', cat: 0, sources: ['Bu katering hafal semua yang antre rendang', 'Noda kuah di taplak', 'Foto candid fotografer'] },
+      { name: 'Pelaminan', emoji: '💐', doodle: 'bunga-vas', cat: 1, sources: ['Video drone dari atas', 'Pengantin ingat siapa yang salaman dua kali', 'Kelopak bunga yang terinjak'] },
+      { name: 'Parkiran motor', emoji: '🏍️', doodle: 'motor', cat: 2, sources: ['Karcis parkir yang tercecer', 'Tukang parkir dadakan bercerita', 'Jejak di tanah becek'] },
+      { name: 'Belakang tenda', emoji: '⛺', doodle: 'tenda', cat: 3, sources: ['Sobekan amplop dekat genset', 'Anak kecil yang main petak umpet melihat', 'Asap rokok yang belum hilang'] },
     ],
     cats: [
       { name: 'busana', traits: [t('memakai batik', 'batik', '🥻'), t('memakai kebaya', 'kebaya', '👘'), t('memakai jas', 'jas', '🤵')] },
@@ -143,6 +148,7 @@ export const STORIES: Story[] = [
     id: 'startup',
     title: 'Kebocoran di Kantor Rintisan',
     emoji: '💻',
+    doodle: 'laptop',
     genre: 'spionase',
     intro:
       'Dua jam sebelum peluncuran aplikasi terbesar mereka, desain rahasia sudah beredar di grup kompetitor. Seseorang menyalinnya dari laptop CEO di lantai tujuh. Akses gedung terkunci sejak pukul delapan. Pengkhianatnya masih duduk di salah satu meja ini.',
@@ -150,10 +156,10 @@ export const STORIES: Story[] = [
     when: 'Kamis malam, lembur sebelum peluncuran',
     loot: 'berkas desain rahasia',
     places: [
-      { name: 'Pantri', emoji: '☕', cat: 0, sources: ['Gelas kopi bertuliskan nama samaran', 'Mesin kopi mencatat waktu pesanan', 'OB yang belum pulang bercerita'] },
-      { name: 'Ruang server', emoji: '🖥️', cat: 1, sources: ['Log masuk kartu akses', 'Kabel yang dicabut tergesa', 'Kamera termal di pintu'] },
-      { name: 'Ruang rapat kaca', emoji: '🪟', cat: 2, sources: ['Coretan di papan tulis yang dihapus terburu-buru', 'Pantulan di dinding kaca terekam', 'Kursi yang masih hangat'] },
-      { name: 'Lift & lobi', emoji: '🛗', cat: 3, sources: ['CCTV lift lantai tujuh', 'Resepsionis yang lembur ingat', 'Kartu tamu yang belum dikembalikan'] },
+      { name: 'Pantri', emoji: '☕', doodle: 'cangkir', cat: 0, sources: ['Gelas kopi bertuliskan nama samaran', 'Mesin kopi mencatat waktu pesanan', 'OB yang belum pulang bercerita'] },
+      { name: 'Ruang server', emoji: '🖥️', doodle: 'laptop', cat: 1, sources: ['Log masuk kartu akses', 'Kabel yang dicabut tergesa', 'Kamera termal di pintu'] },
+      { name: 'Ruang rapat kaca', emoji: '🪟', doodle: 'jendela', cat: 2, sources: ['Coretan di papan tulis yang dihapus terburu-buru', 'Pantulan di dinding kaca terekam', 'Kursi yang masih hangat'] },
+      { name: 'Lift & lobi', emoji: '🛗', doodle: 'kunci', cat: 3, sources: ['CCTV lift lantai tujuh', 'Resepsionis yang lembur ingat', 'Kartu tamu yang belum dikembalikan'] },
     ],
     cats: [
       { name: 'minuman', traits: [t('minum kopi susu', 'kopi susu', '☕'), t('minum teh tarik', 'teh', '🧋'), t('minum air mineral', 'air putih', '💧')] },
@@ -182,6 +188,7 @@ export const STORIES: Story[] = [
     id: 'sekolah',
     title: 'Soal Ujian yang Hilang',
     emoji: '🏫',
+    doodle: 'buku',
     genre: 'pencurian',
     intro:
       'Besok pagi ujian akhir. Malam ini, map berisi soal matematika lenyap dari lemari ruang guru SMA Harapan Bangsa. Penjaga sekolah sudah mengunci gerbang sejak pukul tujuh, tapi ada yang masih tinggal: panitia pensi, OSIS, dan beberapa guru yang lembur.',
@@ -189,10 +196,10 @@ export const STORIES: Story[] = [
     when: 'Malam sebelum ujian, pukul 19.00 sampai 21.00',
     loot: 'map soal ujian',
     places: [
-      { name: 'Kantin', emoji: '🍜', cat: 0, sources: ['Ibu kantin yang membereskan kursi', 'Bungkus jajan yang masih baru', 'Coretan di meja kayu'] },
-      { name: 'Lab komputer', emoji: '🖨️', cat: 1, sources: ['Riwayat cetak printer', 'Jejak jari di kaca monitor', 'Kursi yang bergeser'] },
-      { name: 'Lapangan basket', emoji: '🏀', cat: 2, sources: ['Lampu lapangan dinyalakan sebentar', 'Penjaga sekolah dari pos jaga', 'Jejak sepatu di pasir'] },
-      { name: 'Perpustakaan', emoji: '📚', cat: 3, sources: ['Buku yang dikembalikan di rak yang salah', 'Kartu pinjam dengan tulisan terburu-buru', 'Pustakawan yang tertidur bangun sebentar'] },
+      { name: 'Kantin', emoji: '🍜', doodle: 'mie', cat: 0, sources: ['Ibu kantin yang membereskan kursi', 'Bungkus jajan yang masih baru', 'Coretan di meja kayu'] },
+      { name: 'Lab komputer', emoji: '🖨️', doodle: 'hp', cat: 1, sources: ['Riwayat cetak printer', 'Jejak jari di kaca monitor', 'Kursi yang bergeser'] },
+      { name: 'Lapangan basket', emoji: '🏀', doodle: 'matahari', cat: 2, sources: ['Lampu lapangan dinyalakan sebentar', 'Penjaga sekolah dari pos jaga', 'Jejak sepatu di pasir'] },
+      { name: 'Perpustakaan', emoji: '📚', doodle: 'rak-buku', cat: 3, sources: ['Buku yang dikembalikan di rak yang salah', 'Kartu pinjam dengan tulisan terburu-buru', 'Pustakawan yang tertidur bangun sebentar'] },
     ],
     cats: [
       { name: 'jajan', traits: [t('makan cilok', 'cilok', '🍢'), t('minum es teh', 'es teh', '🧊'), t('makan keripik', 'keripik', '🥔')] },
@@ -221,6 +228,7 @@ export const STORIES: Story[] = [
     id: 'kapal',
     title: 'Berlian di Kapal Samudra Senja',
     emoji: '🛳️',
+    doodle: 'kapal',
     genre: 'pencurian mewah',
     intro:
       'Pesta topeng di kapal pesiar Samudra Senja mencapai puncaknya saat lampu dansa dimatikan sebentar. Ketika menyala lagi, kalung berlian Nyonya Wiradana tinggal kaitnya saja. Kapal ada di tengah laut. Tidak ada yang bisa turun sampai pagi.',
@@ -228,10 +236,10 @@ export const STORIES: Story[] = [
     when: 'Tengah malam di tengah Laut Jawa',
     loot: 'kalung berlian Nyonya Wiradana',
     places: [
-      { name: 'Ruang dansa', emoji: '💃', cat: 0, sources: ['Pemain biola melihat dari panggung', 'Manik-manik topeng yang lepas', 'Bayangan di lantai kaca'] },
-      { name: 'Dek atas', emoji: '🌊', cat: 1, sources: ['Angin membawa wangi parfum', 'Pelaut jaga bercerita', 'Teropong kapten'] },
-      { name: 'Kasino kecil', emoji: '🎰', cat: 2, sources: ['Bandar kartu hafal siapa yang menang', 'Chip yang tertinggal', 'Kamera di atas meja rolet'] },
-      { name: 'Lorong kabin', emoji: '🚪', cat: 3, sources: ['Kartu kunci kabin dipakai pukul 00.07', 'Pelayan kamar yang membawa nampan', 'Karpet yang basah'] },
+      { name: 'Ruang dansa', emoji: '💃', doodle: 'not-balok', cat: 0, sources: ['Pemain biola melihat dari panggung', 'Manik-manik topeng yang lepas', 'Bayangan di lantai kaca'] },
+      { name: 'Dek atas', emoji: '🌊', doodle: 'kapal', cat: 1, sources: ['Angin membawa wangi parfum', 'Pelaut jaga bercerita', 'Teropong kapten'] },
+      { name: 'Kasino kecil', emoji: '🎰', doodle: 'dadu', cat: 2, sources: ['Bandar kartu hafal siapa yang menang', 'Chip yang tertinggal', 'Kamera di atas meja rolet'] },
+      { name: 'Lorong kabin', emoji: '🚪', doodle: 'kunci-rumah', cat: 3, sources: ['Kartu kunci kabin dipakai pukul 00.07', 'Pelayan kamar yang membawa nampan', 'Karpet yang basah'] },
     ],
     cats: [
       { name: 'topeng', traits: [t('memakai topeng emas', 'topeng emas', '🎭'), t('memakai topeng bulu', 'topeng bulu', '🪶'), t('memakai topeng hitam', 'topeng hitam', '🖤')] },
@@ -260,6 +268,7 @@ export const STORIES: Story[] = [
     id: 'pocong',
     title: 'Pocong Palsu Kampung Bulak',
     emoji: '👻',
+    doodle: 'lentera',
     genre: 'komedi horor',
     intro:
       'Tiga malam berturut-turut, "pocong" melompat-lompat di dekat pos ronda Kampung Bulak dan membuat warga kabur meninggalkan gorengan. Malam ini warga memasang jebakan, dan si pocong terpeleset lalu kabur meninggalkan kain kafan. Pelakunya warga sendiri. Tapi siapa?',
@@ -267,10 +276,10 @@ export const STORIES: Story[] = [
     when: 'Malam Jumat, selepas isya',
     loot: 'gorengan ronda yang hilang',
     places: [
-      { name: 'Pos ronda', emoji: '🛖', cat: 0, sources: ['Kentongan yang dipukul tidak beraturan', 'Hansip yang pura-pura berani', 'Gorengan yang tinggal separuh'] },
-      { name: 'Pohon beringin', emoji: '🌳', cat: 1, sources: ['Tali rafia di dahan', 'Nenek penjual jamu melihat', 'Jejak bedak di akar'] },
-      { name: 'Kuburan pinggir desa', emoji: '🪦', cat: 2, sources: ['Senter yang tertinggal', 'Penggali kubur yang lembur', 'Jejak lompatan di tanah'] },
-      { name: 'Warung kopi', emoji: '☕', cat: 3, sources: ['Pemilik warung mencatat utang', 'Bon yang terselip', 'Radio yang tiba-tiba mati'] },
+      { name: 'Pos ronda', emoji: '🛖', doodle: 'lentera', cat: 0, sources: ['Kentongan yang dipukul tidak beraturan', 'Hansip yang pura-pura berani', 'Gorengan yang tinggal separuh'] },
+      { name: 'Pohon beringin', emoji: '🌳', doodle: 'pohon-kecil', cat: 1, sources: ['Tali rafia di dahan', 'Nenek penjual jamu melihat', 'Jejak bedak di akar'] },
+      { name: 'Kuburan pinggir desa', emoji: '🪦', doodle: 'bulan', cat: 2, sources: ['Senter yang tertinggal', 'Penggali kubur yang lembur', 'Jejak lompatan di tanah'] },
+      { name: 'Warung kopi', emoji: '☕', doodle: 'kopi-susu', cat: 3, sources: ['Pemilik warung mencatat utang', 'Bon yang terselip', 'Radio yang tiba-tiba mati'] },
     ],
     cats: [
       { name: 'bau', traits: [t('berbau minyak angin', 'minyak angin', '🧴'), t('berbau melati', 'melati', '🌼'), t('berbau rokok kretek', 'kretek', '🚬')] },
@@ -299,6 +308,7 @@ export const STORIES: Story[] = [
     id: 'kereta',
     title: 'Koper Tertukar di Kereta Malam',
     emoji: '🚆',
+    doodle: 'kereta',
     genre: 'spionase',
     intro:
       'Kereta malam Jakarta–Surabaya melaju di antara sawah gelap. Di gerbong eksekutif, koper berisi dokumen negara milik seorang diplomat tertukar dengan koper berisi batu bata. Kereta tidak berhenti sampai Semarang. Pelakunya masih di gerbong ini.',
@@ -306,10 +316,10 @@ export const STORIES: Story[] = [
     when: 'Antara Cirebon dan Semarang, lewat tengah malam',
     loot: 'koper dokumen diplomat',
     places: [
-      { name: 'Kereta makan', emoji: '🍽️', cat: 0, sources: ['Pramugari mencatat pesanan nasi goreng', 'Gelas yang belum diangkat', 'Struk makan yang tertinggal'] },
-      { name: 'Bordes sambungan', emoji: '🚪', cat: 1, sources: ['Angin malam membawa asap', 'Kondektur melihat seseorang', 'Bekas tangan di kaca pintu'] },
-      { name: 'Rak bagasi', emoji: '🧳', cat: 2, sources: ['Label koper yang dirobek', 'Penumpang sebelah terbangun', 'Goresan di rak besi'] },
-      { name: 'Toilet gerbong 3', emoji: '🚻', cat: 3, sources: ['Cermin berembun dengan tulisan', 'Tisu yang jatuh di lantai', 'Bau yang tertinggal'] },
+      { name: 'Kereta makan', emoji: '🍽️', doodle: 'teh-panas', cat: 0, sources: ['Pramugari mencatat pesanan nasi goreng', 'Gelas yang belum diangkat', 'Struk makan yang tertinggal'] },
+      { name: 'Bordes sambungan', emoji: '🚪', doodle: 'angin', cat: 1, sources: ['Angin malam membawa asap', 'Kondektur melihat seseorang', 'Bekas tangan di kaca pintu'] },
+      { name: 'Rak bagasi', emoji: '🧳', doodle: 'koper', cat: 2, sources: ['Label koper yang dirobek', 'Penumpang sebelah terbangun', 'Goresan di rak besi'] },
+      { name: 'Toilet gerbong 3', emoji: '🚻', doodle: 'jendela', cat: 3, sources: ['Cermin berembun dengan tulisan', 'Tisu yang jatuh di lantai', 'Bau yang tertinggal'] },
     ],
     cats: [
       { name: 'pesanan', traits: [t('memesan kopi hitam', 'kopi hitam', '☕'), t('memesan mi rebus', 'mi rebus', '🍜'), t('memesan teh manis', 'teh manis', '🍵')] },
@@ -338,6 +348,7 @@ export const STORIES: Story[] = [
     id: 'rendang',
     title: 'Resep Rendang Legendaris',
     emoji: '🍲',
+    doodle: 'nasi-padang',
     genre: 'pencurian kuliner',
     intro:
       'Festival kuliner kota tinggal sehari lagi. Buku resep rendang tiga generasi milik Uni Ros, juara bertahan, hilang dari dapur stan. Tanpa resep itu, gelar juaranya terancam. Semua peserta lomba ada di area festival malam ini.',
@@ -345,10 +356,10 @@ export const STORIES: Story[] = [
     when: 'Malam sebelum final lomba masak',
     loot: 'buku resep rendang Uni Ros',
     places: [
-      { name: 'Dapur stan', emoji: '🔥', cat: 0, sources: ['Bumbu yang tumpah di lantai', 'Asisten Uni Ros bercerita', 'Panci yang bergeser'] },
-      { name: 'Panggung juri', emoji: '🎤', cat: 1, sources: ['Kamera siaran langsung', 'Juri yang datang lebih awal', 'Kursi juri yang dipindah'] },
-      { name: 'Gudang bahan', emoji: '📦', cat: 2, sources: ['Daftar keluar-masuk bahan', 'Kardus santan yang terbuka', 'Kunci gudang yang hangat'] },
-      { name: 'Area makan pengunjung', emoji: '🪑', cat: 3, sources: ['Pengunjung yang mengunggah foto', 'Piring yang belum diangkat', 'Petugas kebersihan bercerita'] },
+      { name: 'Dapur stan', emoji: '🔥', doodle: 'cabai', cat: 0, sources: ['Bumbu yang tumpah di lantai', 'Asisten Uni Ros bercerita', 'Panci yang bergeser'] },
+      { name: 'Panggung juri', emoji: '🎤', doodle: 'bintang', cat: 1, sources: ['Kamera siaran langsung', 'Juri yang datang lebih awal', 'Kursi juri yang dipindah'] },
+      { name: 'Gudang bahan', emoji: '📦', doodle: 'kado', cat: 2, sources: ['Daftar keluar-masuk bahan', 'Kardus santan yang terbuka', 'Kunci gudang yang hangat'] },
+      { name: 'Area makan pengunjung', emoji: '🪑', doodle: 'kursi', cat: 3, sources: ['Pengunjung yang mengunggah foto', 'Piring yang belum diangkat', 'Petugas kebersihan bercerita'] },
     ],
     cats: [
       { name: 'celemek', traits: [t('memakai celemek merah', 'celemek merah', '🟥'), t('memakai celemek hijau', 'celemek hijau', '🟩'), t('memakai celemek kotak-kotak', 'celemek kotak', '🟦')] },
@@ -376,10 +387,10 @@ export const STORIES: Story[] = [
 ];
 
 /** Twist yang bisa muncul di malam kedua; narasinya umum, efeknya diatur mesin. */
-export const EVENTS: { id: 'saksi' | 'badai' | 'padam' | 'suratkaleng' | 'cctv'; title: string; text: string }[] = [
-  { id: 'saksi', title: 'Saksi baru muncul', text: 'Seseorang yang selama ini diam akhirnya bicara. Pagi ini ada satu petunjuk tambahan untuk semua.' },
-  { id: 'badai', title: 'Badai datang', text: 'Angin dan hujan menghantam. Waktu diskusi hari ini lebih pendek. Cepat!' },
-  { id: 'padam', title: 'Listrik padam', text: 'Lampu mati di salah satu tempat. Siapa pun yang menyelidiki di sana malam ini tidak menemukan apa-apa.' },
-  { id: 'suratkaleng', title: 'Surat kaleng', text: 'Sepucuk surat tanpa nama diselipkan di bawah pintu. Isinya bisa benar, bisa juga jebakan.' },
-  { id: 'cctv', title: 'Rekaman CCTV', text: 'Ketua penyidik menerima potongan rekaman CCTV secara pribadi. Dia harus memutuskan: membaginya, atau tidak.' },
+export const EVENTS: { id: 'saksi' | 'badai' | 'padam' | 'suratkaleng' | 'cctv'; title: string; text: string; doodle: string }[] = [
+  { id: 'saksi', doodle: 'gelembung-kata', title: 'Saksi baru muncul', text: 'Seseorang yang selama ini diam akhirnya bicara. Pagi ini ada satu petunjuk tambahan untuk semua.' },
+  { id: 'badai', doodle: 'petir', title: 'Badai datang', text: 'Angin dan hujan menghantam. Waktu diskusi hari ini lebih pendek. Cepat!' },
+  { id: 'padam', doodle: 'lampu', title: 'Listrik padam', text: 'Lampu mati di salah satu tempat. Siapa pun yang menyelidiki di sana malam ini tidak menemukan apa-apa.' },
+  { id: 'suratkaleng', doodle: 'amplop', title: 'Surat kaleng', text: 'Sepucuk surat tanpa nama diselipkan di bawah pintu. Isinya bisa benar, bisa juga jebakan.' },
+  { id: 'cctv', doodle: 'kamera', title: 'Rekaman CCTV', text: 'Ketua penyidik menerima potongan rekaman CCTV secara pribadi. Dia harus memutuskan: membaginya, atau tidak.' },
 ];

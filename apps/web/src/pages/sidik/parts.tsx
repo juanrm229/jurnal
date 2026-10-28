@@ -11,6 +11,10 @@ import { Doodle } from '@/ui/kit';
 
 export const roleInfo = (r: sidik.RoleId | null | undefined) => (r ? sidik.ROLES[r] : null);
 
+const FACES = ['wajah-senyum', 'wajah-ngantuk', 'wajah-tertawa', 'wajah-sedih', 'kucing', 'burung', 'kelinci', 'landak', 'bebek', 'katak', 'siput', 'kepik', 'ikan', 'lebah', 'kupu-kupu', 'capung'];
+/** Doodle wajah tersangka, tetap untuk nama yang sama. */
+export const faceOf = (name: string) => FACES[[...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % FACES.length]!;
+
 export function PlayerFace({ avatar, size = 40, dim }: { avatar: string; size?: number; dim?: boolean }) {
   const st = { width: size, height: size, opacity: dim ? 0.45 : 1 } as CSSProperties;
   return avatar.startsWith('data:') ? (
@@ -118,12 +122,13 @@ export function RoleCard({ view, onSeen }: { view: View; onSeen?: () => void }) 
       onPointerCancel={() => setOpen(false)}
       onContextMenu={(e) => e.preventDefault()}>
       <div className="sd-role-back">
-        <span className="sd-seal">SIDIK</span>
-        <span className="sd-role-hint">tahan untuk membuka · atau goyangkan HP</span>
+        <Doodle id="segel-lilin" size={110} color="currentColor" />
+        <span className="sd-seal">rahasia</span>
+        <span className="sd-role-hint">tahan untuk membuka, atau goyangkan HP</span>
         <span className="tiny">jangan biarkan orang lain mengintip</span>
       </div>
       <div className="sd-role-front">
-        <span className="sd-role-emoji">{info.emoji}</span>
+        <Doodle id={info.doodle} size={84} draw />
         <b className="sd-role-name">{info.name}</b>
         <span className="sd-role-team">{info.team === 'baik' ? 'tim detektif' : info.team === 'jahat' ? 'tim pelaku' : 'netral'}</span>
         <i className="sd-role-tag">{info.tagline}</i>
@@ -201,15 +206,16 @@ export function Board({
             className={`sd-sus ${s.out ? 'out' : ''} ${sel ? 'sel' : ''} m-${mark === '*' ? 'star' : mark === 'x' ? 'x' : mark === '?' ? 'q' : 'none'} ${isCulprit ? 'culprit' : ''}`}
             disabled={!!s.out && !onNote}
             onClick={() => (onSelect && !s.out ? onSelect(s.id) : onNote?.(s.id))}>
+            <PlayerFace avatar={faceOf(s.name)} size={40} />
+            <b className="sd-sus-name">{s.name}</b>
+            <span className="sd-sus-job">{s.job}</span>
             <span className="sd-sus-traits">
               {s.attrs.map((v, c) => (
-                <span key={c} title={st.cats[c]!.traits[v]!.label}>
-                  {st.cats[c]!.traits[v]!.emoji}
+                <span key={c} title={st.cats[c]!.name}>
+                  {st.cats[c]!.traits[v]!.label}
                 </span>
               ))}
             </span>
-            <b className="sd-sus-name">{s.name}</b>
-            <span className="sd-sus-job">{s.job}</span>
             {hits ? <span className="sd-hits">{hits}✕</span> : null}
             {mark ? <span className="sd-mark">{mark === 'x' ? '✗' : mark === '?' ? '?' : '★'}</span> : null}
             {s.out ? <span className="sd-stamp">DICORET</span> : null}
@@ -221,19 +227,19 @@ export function Board({
   );
 }
 
-const KIND: Partial<Record<sidik.Intel['kind'], string>> = {
-  selidik: '🔎 petunjukmu',
-  kosong: '🕳️ nihil',
-  forensik: '📢 laporan',
-  magang: '🐣 petunjuk magang',
-  saksi: '👁️ kesaksian',
-  audit: '💻 hasil retas',
-  psikolog: '🧠 hasil baca',
-  cctv: '📹 rahasia',
-  surat: '✉️ publik',
-  event: '⚡ kejadian',
-  gagal: '🛡️ gagal',
-  bukti: '📎 bukti ditunjukkan',
+const KIND: Partial<Record<sidik.Intel['kind'], [string, string]>> = {
+  selidik: ['ui-cari', 'petunjukmu'],
+  kosong: ['awan', 'nihil'],
+  forensik: ['kacamata', 'laporan forensik'],
+  magang: ['tunas', 'petunjuk magang'],
+  saksi: ['bintang-mata', 'kesaksian'],
+  audit: ['laptop', 'hasil retas'],
+  psikolog: ['gelembung-kata', 'hasil baca'],
+  cctv: ['kamera', 'rahasia'],
+  surat: ['amplop', 'untuk semua'],
+  event: ['petir', 'kejadian'],
+  gagal: ['payung-terbuka', 'gagal'],
+  bukti: ['klip-kertas', 'bukti ditunjukkan'],
 };
 
 export function IntelList({ view, round, onShow, off, onToggle }: { view: View; round?: number; onShow?: (id: string) => void; off?: Set<string>; onToggle?: (id: string) => void }) {
@@ -249,7 +255,8 @@ export function IntelList({ view, round, onShow, off, onToggle }: { view: View; 
         return (
           <div key={i.id} className={`sd-clue k-${i.kind} ${off?.has(i.id) ? 'off' : ''} ${i.truth === false ? 'fake' : i.truth === true ? 'real' : ''}`}>
             <span className="sd-clue-kind">
-              {!mine && i.to !== '*' && i.to !== 'jahat' ? `🔎 petunjuk ${view.players.find((p) => p.id === i.to)?.name ?? ''}` : (KIND[i.kind] ?? i.kind)}
+              <Doodle id={KIND[i.kind]?.[0] ?? 'ui-cari'} size={14} color="currentColor" />
+              {!mine && i.to !== '*' && i.to !== 'jahat' ? `petunjuk ${view.players.find((p) => p.id === i.to)?.name ?? ''}` : (KIND[i.kind]?.[1] ?? i.kind)}
               {by ? ` · ${by}` : ''} · malam {i.round || '0'}
             </span>
             <span className="sd-clue-text">{i.text}</span>
@@ -261,7 +268,7 @@ export function IntelList({ view, round, onShow, off, onToggle }: { view: View; 
               ) : null}
               {mine && onShow && i.kind !== 'gagal' && !shown.has(i.id) ? (
                 <button className="pill sm active" onClick={() => onShow(i.id)}>
-                  📎 tunjukkan
+                  <Doodle id="klip-kertas" size={14} color="currentColor" /> tunjukkan
                 </button>
               ) : null}
               {mine && shown.has(i.id) ? <span className="tiny soft">sudah ditunjukkan</span> : null}
@@ -278,28 +285,29 @@ export function IntelList({ view, round, onShow, off, onToggle }: { view: View; 
 export function Replay({ view }: { view: View }) {
   const st = view.story;
   const name = (id?: string) => (id === 'bayangan' ? 'bayangan' : view.players.find((p) => p.id === id)?.name ?? 'seseorang');
+  const ICON: Record<sidik.LogItem['kind'], string> = { tamper: 'pena', shadow: 'kabut', blocked: 'payung-terbuka', burn: 'penyiram', shield: 'payung-terbuka', audit: 'laptop', forge: 'stempel', publish: 'kacamata', psy: 'gelembung-kata', event: 'petir' };
   const line = (l: sidik.LogItem) => {
     switch (l.kind) {
       case 'tamper':
-        return `🐍 ${name(l.by)} memalsukan petunjuk ${name(l.target)}${l.place !== undefined ? ` di ${st.places[l.place]!.name}` : ''}.`;
+        return `${name(l.by)} memalsukan petunjuk ${name(l.target)}${l.place !== undefined ? ` di ${st.places[l.place]!.name}` : ''}.`;
       case 'shadow':
-        return `👤 Bayangan memalsukan petunjuk ${name(l.target)}.`;
+        return `Bayangan memalsukan petunjuk ${name(l.target)}.`;
       case 'blocked':
-        return `🛡️ ${name(l.by)} mencoba memalsukan petunjuk ${name(l.target)}, tapi dijaga.`;
+        return `${name(l.by)} mencoba memalsukan petunjuk ${name(l.target)}, tapi dijaga.`;
       case 'burn':
-        return `🦊 ${name(l.by)} membersihkan ${st.places[l.place ?? 0]!.name}.`;
+        return `${name(l.by)} membersihkan ${st.places[l.place ?? 0]!.name}.`;
       case 'shield':
-        return `🛡️ ${name(l.by)} menjaga ${name(l.target)}.`;
+        return `${name(l.by)} menjaga ${name(l.target)}.`;
       case 'audit':
-        return `💻 ${name(l.by)} meretas ${name(l.target)}: ${l.note}`;
+        return `${name(l.by)} meretas ${name(l.target)}: ${l.note}`;
       case 'forge':
-        return `🎭 ${name(l.by)} menerbitkan Laporan Forensik PALSU.`;
+        return `${name(l.by)} menerbitkan Laporan Forensik PALSU.`;
       case 'publish':
-        return `🔬 ${name(l.by)} menerbitkan Laporan Forensik.`;
+        return `${name(l.by)} menerbitkan Laporan Forensik.`;
       case 'psy':
-        return `🧠 ${name(l.by)}: ${l.note}`;
+        return `${name(l.by)}: ${l.note}`;
       case 'event':
-        return `⚡ ${l.note}`;
+        return `${l.note}`;
     }
   };
   const rounds = [...new Set(view.log.map((l) => l.round))].sort();
@@ -307,22 +315,30 @@ export function Replay({ view }: { view: View }) {
     <div className="sd-replay">
       {rounds.map((r) => (
         <div key={r} className="sd-replay-round">
-          <span className="sd-replay-night">🌙 malam {r}</span>
+          <span className="sd-replay-night">
+            <Doodle id="bulan" size={22} color="currentColor" /> malam {r}
+          </span>
           {view.log
             .filter((l) => l.round === r)
             .map((l, i) => (
               <span key={i} className={`sd-replay-line k-${l.kind}`} style={{ animationDelay: `${i * 0.12}s` }}>
-                {line(l)}
+                <Doodle id={ICON[l.kind]} size={20} color="currentColor" />
+                <span>{line(l)}</span>
               </span>
             ))}
         </div>
       ))}
       {view.whispers.length ? (
         <div className="sd-replay-round">
-          <span className="sd-replay-night">🤫 bisikan</span>
+          <span className="sd-replay-night">
+            <Doodle id="gelembung-kata" size={22} color="currentColor" /> bisikan
+          </span>
           {view.whispers.map((w, i) => (
             <span key={i} className="sd-replay-line">
-              {name(w.from)} → {name(w.to)}: “{w.text}”
+              <Doodle id="amplop" size={20} color="currentColor" />
+              <span>
+                {name(w.from)} → {name(w.to)}: “{w.text}”
+              </span>
             </span>
           ))}
         </div>
