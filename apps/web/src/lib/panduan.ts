@@ -171,6 +171,23 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'buka lingkaran', to: '/lingkaran' },
   },
   {
+    id: 'photobox',
+    title: 'Photobox',
+    doodle: 'kamera',
+    noClip: true,
+    lead: 'Booth foto di dalam Sehari: empat jepretan dengan kartu pose yang bikin ketawa, delapan desain strip, dan bisa berdua dari kota yang berbeda.',
+    steps: [
+      'Buka photobox dari menu lainnya di halaman hari ini, atau dari halaman lingkaran.',
+      'Pilih filter (coba “tinta”: wajahmu jadi doodle), desain strip, dan jumlah jepretan, lalu masuk booth.',
+      'Ikuti kartu pose dan hitung mundurnya. Setelah jepretan terakhir, stripnya keluar dari mesin.',
+      'Ganti desain sesukamu, karena fotonya tetap. Tulis keterangan, lalu tempel ke halaman hari ini, kirim, atau unduh (pas dicetak 2×6 inci).',
+      'Berdua jarak jauh: pilih lingkaran, dia dapat notifikasi. Kalian saling lihat lewat jendela kecil, tekan siap, dan hitung mundurnya berjalan serentak di dua HP.',
+      'Kartu pose berdua memberi tahu siapa condong ke kiri dan siapa ke kanan, jadi di strip kalian seolah tos, bersulang, atau membentuk hati bersama.',
+    ],
+    tip: 'Strip yang ditempel di halaman hari ini tergantung di dinding photobox lingkaran setelah hari itu dibuka bersama.',
+    try: { label: 'buka photobox', to: '/photobox' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

@@ -713,3 +713,39 @@ export const boardItems = pgTable(
   },
   (t) => [index('board_items_circle_idx').on(t.circleId)],
 );
+
+// ── Photobox berdua jarak jauh ──────────────────────────────────────────────
+
+/**
+ * Satu sesi photobox untuk dua orang di lingkaran yang sama. Server hanya
+ * menyimpan susunan (desain, jumlah jepretan) dan jam mulai bersama; kunci
+ * pratinjau ada di dalam envelope terenkripsi untuk lingkaran.
+ */
+export const booths = pgTable(
+  'booths',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    hostId: text('host_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    guestId: text('guest_id').references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    config: jsonb('config').$type<{ template: string; filter: string; shots: number; seed: number }>().notNull(),
+    ready: jsonb('ready').$type<string[]>().notNull().default([]),
+    startAt: ts('start_at'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('booths_circle_idx').on(t.circleId)],
+);
+
+/** Jepretan tiap orang: media terenkripsi + envelope berisi kuncinya. */
+export const boothFrames = pgTable(
+  'booth_frames',
+  {
+    boothId: text('booth_id').notNull().references(() => booths.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    mediaIds: jsonb('media_ids').$type<string[]>().notNull().default([]),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.boothId, t.userId] })],
+);

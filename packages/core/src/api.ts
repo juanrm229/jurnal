@@ -840,3 +840,33 @@ export interface BoardItemWire {
   doneAt: string | null;
   createdAt: string;
 }
+
+// ── Photobox berdua ─────────────────────────────────────────────────────────
+
+export const boothConfig = z.object({
+  template: z.string().min(1).max(30),
+  filter: z.string().min(1).max(30),
+  shots: z.number().int().min(2).max(6),
+  seed: z.number().int().min(0).max(1_000_000),
+});
+export type BoothConfig = z.infer<typeof boothConfig>;
+export const boothCreateBody = z.object({ id, envelope: envelopeSchema, config: boothConfig });
+export const boothUpdateBody = z.object({ config: boothConfig.optional(), ready: z.boolean().optional() });
+export const boothFramesBody = z.object({ envelope: envelopeSchema, mediaIds: z.array(id).max(6) });
+export interface BoothWire {
+  id: string;
+  circleId: string;
+  hostId: string;
+  guestId: string | null;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  config: BoothConfig;
+  ready: string[];
+  /** Jam mulai bersama (ISO), diisi saat keduanya siap dan tuan rumah menekan mulai. */
+  startAt: string | null;
+  /** Jam server saat respons dibuat, untuk menyamakan hitung mundur. */
+  serverNow: string;
+  /** Siapa yang punya pratinjau langsung, dan kapan terakhir diperbarui. */
+  previews: Record<string, string>;
+  frames: { userId: string; envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] }; mediaIds: string[] }[];
+  createdAt: string;
+}

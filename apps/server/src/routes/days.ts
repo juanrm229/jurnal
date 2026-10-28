@@ -47,7 +47,7 @@ import { newId } from '../lib/ids';
 import { canSeeDrop, dropsInCircle, filterForCircle } from '../lib/visibility';
 import { canSeeMeetMedia } from './meets';
 
-const { drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users, boardItems } = schema;
+const { drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users, boardItems, boothFrames, booths } = schema;
 
 type DropInput = z.infer<typeof createDropBody>;
 
@@ -651,6 +651,12 @@ async function canSeeMedia(s: Services, user: UserRow, mediaId: string): Promise
     .from(boardItems)
     .where(sql`${boardItems.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
   for (const p of pins) if ((await membership(s, p.circleId, user.id))?.state === 'active') return true;
+  const shots = await s.db
+    .select({ circleId: booths.circleId })
+    .from(boothFrames)
+    .innerJoin(booths, eq(booths.id, boothFrames.boothId))
+    .where(sql`${boothFrames.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
+  for (const p of shots) if ((await membership(s, p.circleId, user.id))?.state === 'active') return true;
   const letterHolders = await s.db
     .select()
     .from(letters)

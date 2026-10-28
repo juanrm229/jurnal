@@ -64,6 +64,18 @@
       ]
     },
     {
+      "name": "Photobox",
+      "short_name": "Photobox",
+      "description": "Strip foto lucu, sendiri atau berdua jarak jauh",
+      "url": "/photobox",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Tulis surat",
       "short_name": "Surat",
       "url": "/surat/tulis",

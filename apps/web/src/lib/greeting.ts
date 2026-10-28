@@ -60,21 +60,21 @@ export const OCCASIONS: { id: string; name: string; doodles: string[]; lines: st
 
 // ── Alat gambar ────────────────────────────────────────────────────────────
 
-const F = {
+export const F = {
   serif: (px: number, w = 400, italic = false) => `${italic ? 'italic ' : ''}${w} ${px}px "Literata", Georgia, serif`,
   display: (px: number, w = 400, italic = false) => `${italic ? 'italic ' : ''}${w} ${px}px "Fraunces Variable", "Fraunces", Georgia, serif`,
   hand: (px: number) => `700 ${px}px "Caveat", cursive`,
   mono: (px: number, w = 400) => `${w} ${px}px "IBM Plex Mono", monospace`,
 };
 
-async function loadFonts() {
+export async function loadFonts() {
   await document.fonts?.ready;
   await Promise.all(
     ['700 60px "Caveat"', '400 40px "Literata"', 'italic 400 40px "Literata"', '400 60px "Fraunces Variable"', 'italic 400 60px "Fraunces Variable"', '400 30px "IBM Plex Mono"', '600 30px "IBM Plex Mono"'].map((f) => document.fonts?.load(f).catch(() => null)),
   );
 }
 
-function seeded(seed: string) {
+export function seeded(seed: string) {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
   return () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0) % 100000) / 100000;
@@ -97,7 +97,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, max: number): string[
 }
 
 /** Tulis teks di dalam kotak; ukuran huruf mengecil sampai muat. */
-function fitText(ctx: CanvasRenderingContext2D, text: string, box: { x: number; y: number; w: number; h: number }, font: (px: number) => string, opts: { max: number; min: number; lh: number; align?: CanvasTextAlign; color: string; valign?: 'top' | 'middle' }) {
+export function fitText(ctx: CanvasRenderingContext2D, text: string, box: { x: number; y: number; w: number; h: number }, font: (px: number) => string, opts: { max: number; min: number; lh: number; align?: CanvasTextAlign; color: string; valign?: 'top' | 'middle' }) {
   let px = opts.max;
   let lines: string[] = [];
   for (; px >= opts.min; px -= 2) {
@@ -119,7 +119,7 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, box: { x: number; 
   return { bottom: y - px * opts.lh + px * 0.3, px };
 }
 
-function doodle(ctx: CanvasRenderingContext2D, id: string, x: number, y: number, size: number, color: string, lw = 2.4, rot = 0) {
+export function doodle(ctx: CanvasRenderingContext2D, id: string, x: number, y: number, size: number, color: string, lw = 2.4, rot = 0) {
   const d = getDoodle(id);
   ctx.save();
   ctx.translate(x + size / 2, y + size / 2);
@@ -154,7 +154,7 @@ function scene(ctx: CanvasRenderingContext2D, id: string, x: number, y: number, 
   ctx.restore();
 }
 
-function grain(ctx: CanvasRenderingContext2D, W: number, H: number, seed: string, alpha = 0.05, rgb = '60,50,30') {
+export function grain(ctx: CanvasRenderingContext2D, W: number, H: number, seed: string, alpha = 0.05, rgb = '60,50,30') {
   const r = seeded(seed);
   for (let i = 0; i < (W * H) / 900; i++) {
     ctx.fillStyle = `rgba(${rgb},${r() * alpha})`;
@@ -162,19 +162,19 @@ function grain(ctx: CanvasRenderingContext2D, W: number, H: number, seed: string
   }
 }
 
-function photoCover(ctx: CanvasRenderingContext2D, img: CanvasImageSource & { width: number; height: number }, x: number, y: number, w: number, h: number) {
+export function photoCover(ctx: CanvasRenderingContext2D, img: CanvasImageSource & { width: number; height: number }, x: number, y: number, w: number, h: number) {
   const k = Math.max(w / img.width, h / img.height);
   const sw = w / k;
   const sh = h / k;
   ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, x, y, w, h);
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, r);
 }
 
-function tape(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, rot: number, color = 'rgba(214,205,180,0.75)') {
+export function tape(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, rot: number, color = 'rgba(214,205,180,0.75)') {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(rot);

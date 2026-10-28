@@ -50,6 +50,13 @@
       "when": 1793148753630,
       "tag": "0006_daily_albert_cleary",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793151917779,
+      "tag": "0007_small_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

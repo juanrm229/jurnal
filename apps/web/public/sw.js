@@ -62,6 +62,8 @@ function routeFor(d) {
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
     case 'meet':
       return d.meetId ? `/janji/${d.meetId}` : '/janji';
+    case 'booth':
+      return d.boothId ? `/photobox/${d.boothId}` : '/photobox';
     case 'board':
       return d.circleId ? `/l/${d.circleId}/inspirasi` : '/lingkaran';
     case 'dream':

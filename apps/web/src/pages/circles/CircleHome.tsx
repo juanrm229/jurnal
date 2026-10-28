@@ -169,6 +169,14 @@ export default function CircleHome() {
             <span className="small ink">rak lagu</span>
             <span className="tiny soft">dinding sampul kalian</span>
           </Link>
+          <Link to={`/l/${id}/photobox`} className="rupa-tile t-booth rise" style={{ animationDelay: '0.1s' }}>
+            <span className="rt-objs" aria-hidden>
+              <span className="rt-strip a" />
+              <span className="rt-strip b" />
+            </span>
+            <span className="small ink">photobox</span>
+            <span className="tiny soft">strip kalian, juga jarak jauh</span>
+          </Link>
         </div>
       </section>
 

@@ -37,6 +37,7 @@ import { buildDropBody, type CircleView, type DraftDrop, newDropId, nowParts, op
 import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
+import { takePendingStrip } from '@/lib/photobox/booth';
 import { store } from '@/lib/storage';
 import { Avatar, Doodle, Growing, MusicToggle, Sheet, Toggle, useToast } from '@/ui/kit';
 import { sound } from '@/lib/sound';
@@ -236,7 +237,9 @@ export default function Today() {
         if (y < 190) continue;
         for (const x of xs) if (!hit(x, y)) return { x, y: Math.round(y) };
       }
-    return base;
+    // Halaman penuh: taruh di bawah elemen paling bawah (halaman ikut memanjang).
+    const bottom = boxes.reduce((m, b) => Math.max(m, b.y + b.h), 0);
+    return { x: clamp(PAGE_W / 2 - w / 2), y: Math.round(bottom + 40) };
   };
 
   // ── Aksi ──────────────────────────────────────────────────────────────────
@@ -272,12 +275,13 @@ export default function Today() {
     if (it && !it.draft) await api.del(`/drops/${id}`).catch((e) => toast((e as Error).message));
   };
 
-  const addPhotos = async (files: File[], x?: number, y?: number) => {
+  const addPhotos = async (files: File[], x?: number, y?: number, opts: { tags?: string[]; w?: number } = {}) => {
     for (const [i, f] of files.slice(0, 6).entries()) {
-      const pos = x !== undefined && y !== undefined ? { x: x + i * 40, y: y + i * 40 } : viewCenter(460, 540);
+      const w = opts.w ?? 460;
+      const pos = x !== undefined && y !== undefined ? { x: x + i * 40, y: y + i * 40 } : viewCenter(w, opts.w ? w * 2.6 : 540);
       const localUrl = URL.createObjectURL(f);
       const id = newDropId();
-      const payload = base('photo', { ...pos, rot: Math.round((Math.random() - 0.5) * 8) });
+      const payload = { ...base('photo', { ...pos, w, rot: Math.round((Math.random() - 0.5) * 8) }), ...(opts.tags ? { tags: opts.tags } : {}) };
       const it: Item = { id, authorId: me.user.id, payload, audience: defaultAudience, circleIds, pageCircleId: pageCircle?.id ?? null, mediaIds: [], reactions: [], footnotes: [], pending: true, localUrl };
       setItems((xs) => [...xs, it]);
       sound.play('pop');
@@ -315,6 +319,14 @@ export default function Today() {
     else addText(c.x, c.y, { kind, prompt, layout: { x: c.x, y: c.y, w: 480, rot: -1.5, z: nextZ() } }, { cardId: search.get('cardId') ?? undefined, questionId: search.get('questionId') ?? undefined, expeditionId: search.get('expeditionId') ?? undefined, expeditionDay: search.get('expeditionDay') ? Number(search.get('expeditionDay')) : undefined });
     navigate('/hari', { replace: true });
   }, [search.get('prompt'), editable, q.isLoading, !!ring, page, ownPageIds.size]);
+
+  // Strip dari photobox: dibawa lewat memori, ditempel sebagai strip (bukan polaroid).
+  useEffect(() => {
+    if (search.get('tempel') !== 'photobox' || !editable || q.isLoading || !ring) return;
+    const b = takePendingStrip();
+    navigate('/hari', { replace: true });
+    if (b) void addPhotos([new File([b], 'photobox.jpg', { type: b.type })], undefined, undefined, { tags: ['photobox'], w: 380 });
+  }, [editable, q.isLoading, !!ring]);
 
   // Pintasan aplikasi (PWA): ?cerita=1 membuka rekaman, ?niat=1 menampilkan Niat Pagi lagi.
   useEffect(() => {
@@ -693,6 +705,7 @@ export default function Today() {
       <Sheet open={sheet === 'more'} onClose={() => setSheet(null)} title="tambahkan">
         <div className="tile-grid">
           <Tile icon="ui-mikrofon" label="cerita suara" sub="rekam bebas, bisa jadi tulisan" onClick={() => setSheet('voice')} />
+          <Tile icon="kamera" label="photobox" sub="strip foto lucu, sendiri atau berdua" onClick={() => navigate('/photobox')} />
           <Tile icon="ui-lagu" label="lagu" sub="yang diputar berulang hari ini" onClick={() => setSheet('song')} />
           <Tile icon="ui-palet" label="warna hari" sub="satu warna untuk rasa hari ini" onClick={() => setSheet('mood')} />
           <Tile icon="kartu" label="kartu & pertanyaan" sub="kalau bingung mau menulis apa" onClick={() => setSheet('prompt')} />

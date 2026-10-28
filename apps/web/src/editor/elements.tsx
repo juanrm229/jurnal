@@ -246,6 +246,14 @@ function PhotoEl({ item, scale }: { item: PageItem; scale: number }) {
   const remote = useMediaUrl(item.localUrl ? undefined : m);
   const url = item.localUrl ?? remote;
   const ar = m?.width && m?.height ? `${m.width} / ${m.height}` : '4 / 3';
+  // Strip photobox: tanpa bingkai polaroid, hanya selotip dan bayangan.
+  if (item.payload.tags?.includes('photobox'))
+    return (
+      <div className="pb-el" style={{ '--ar': ar, '--tint': m?.tint ?? '#d9d6cf' } as CSSProperties}>
+        <span className="tape" />
+        {url ? <img src={url} alt="strip photobox" draggable={false} /> : <div className="ph" />}
+      </div>
+    );
   return (
     <div className="polaroid" style={{ '--ar': ar, '--tint': m?.tint ?? '#d9d6cf' } as CSSProperties}>
       <span className="tape" />
