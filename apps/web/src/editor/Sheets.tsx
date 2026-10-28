@@ -2,7 +2,8 @@ import { COPY, type DailyCard, DECKS, HELP_RESOURCES, type MoodCode, type NightQ
 import { DOODLES } from '@sehari/doodles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchSongMeta, parseSongUrl } from '@/lib/songs';
-import { Doodle, MoodPicker, Sheet } from '@/ui/kit';
+import { store } from '@/lib/storage';
+import { Doodle, MoodPicker, Sheet, Toggle } from '@/ui/kit';
 import { FILLS, SPECIAL, StickerArt } from './stickers';
 
 
@@ -102,13 +103,25 @@ export function SongSheet({ open, onClose, onSave }: { open: boolean; onClose: (
   );
 }
 
-export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolean; onClose: () => void; maxSeconds: number; onDone: (blob: Blob, ms: number) => void }) {
+type Recog = { lang: string; continuous: boolean; interimResults: boolean; start: () => void; stop: () => void; onresult: (e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void; onerror: () => void };
+const Recognition = (globalThis as unknown as { SpeechRecognition?: new () => Recog; webkitSpeechRecognition?: new () => Recog }).SpeechRecognition ??
+  (globalThis as unknown as { webkitSpeechRecognition?: new () => Recog }).webkitSpeechRecognition;
+
+/**
+ * Cerita Suara: rekam bebas, dan (kalau peramban mendukung dan kamu mau)
+ * ucapanmu ikut dituliskan menjadi teks di halaman.
+ */
+export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolean; onClose: () => void; maxSeconds: number; onDone: (blob: Blob, ms: number, transcript?: string) => void }) {
   const rec = useRef<MediaRecorder | null>(null);
+  const recog = useRef<Recog | null>(null);
   const chunks = useRef<Blob[]>([]);
   const started = useRef(0);
+  const finalText = useRef('');
   const [ms, setMs] = useState(0);
   const [recording, setRecording] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [write, setWrite] = useState(() => store.get('voiceWrite') === '1');
+  const [live, setLive] = useState('');
 
   useEffect(() => {
     if (!recording) return;
@@ -120,6 +133,32 @@ export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolea
     return () => clearInterval(t);
   }, [recording]);
 
+  const listen = () => {
+    if (!write || !Recognition) return;
+    finalText.current = '';
+    setLive('');
+    try {
+      const r = new Recognition();
+      r.lang = 'id-ID';
+      r.continuous = true;
+      r.interimResults = true;
+      r.onresult = (e) => {
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const res = e.results[i]!;
+          if (res.isFinal) finalText.current += `${res[0]!.transcript.trim()} `;
+          else interim += res[0]!.transcript;
+        }
+        setLive(`${finalText.current}${interim}`);
+      };
+      r.onerror = () => {};
+      r.start();
+      recog.current = r;
+    } catch {
+      recog.current = null;
+    }
+  };
+
   const start = async () => {
     setErr(null);
     try {
@@ -130,27 +169,61 @@ export function VoiceSheet({ open, onClose, maxSeconds, onDone }: { open: boolea
       r.ondataavailable = (e) => e.data.size && chunks.current.push(e.data);
       r.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        onDone(new Blob(chunks.current, { type }), Date.now() - started.current);
+        // Beri pengenal suara sejenak untuk menuntaskan kalimat terakhir.
+        setTimeout(() => {
+          const text = finalText.current.trim() || undefined;
+          onDone(new Blob(chunks.current, { type }), Date.now() - started.current, text);
+          setLive('');
+        }, recog.current ? 600 : 0);
       };
       rec.current = r;
       started.current = Date.now();
       r.start();
+      listen();
       setRecording(true);
     } catch {
-      setErr('Izin mikrofon dibutuhkan untuk voice note.');
+      setErr('Izin mikrofon dibutuhkan untuk merekam cerita.');
     }
   };
   const stop = () => {
     setRecording(false);
+    recog.current?.stop();
     rec.current?.state === 'recording' && rec.current.stop();
+    setTimeout(() => (recog.current = null), 800);
   };
+  const secs = Math.floor(ms / 1000);
   return (
-    <Sheet open={open} onClose={() => { stop(); onClose(); }} title="suara">
-      <div className="col" style={{ alignItems: 'center', gap: 14, padding: '10px 0 20px' }}>
-        <button className="hold-btn" style={{ background: recording ? 'var(--danger)' : 'var(--ink)' }} onClick={recording ? stop : start} aria-label={recording ? 'berhenti' : 'rekam'}>
-          <Doodle id="ui-mikrofon" size={54} color="currentColor" className={recording ? 'breathe' : undefined} />
-        </button>
-        <span className="ink">{recording ? `${Math.floor(ms / 1000)} / ${maxSeconds} detik` : `tekan untuk merekam · maks ${maxSeconds} detik`}</span>
+    <Sheet open={open} onClose={() => { stop(); onClose(); }} title="cerita suara">
+      <div className="voice-rupa">
+        <div className="vr-head">
+          <span className={`vr-dot ${recording ? 'on' : ''}`} />
+          <b>{recording ? 'mendengarkan' : 'siap mendengar'}</b>
+        </div>
+        <p className="small ink-soft" style={{ margin: 0 }}>Cerita saja sebebasnya: tawa, hujan, ucapan selamat tidur. Nanti tersimpan rapi di halamanmu.</p>
+        <div className={`vr-wave ${recording ? 'on' : ''}`} aria-hidden>
+          {Array.from({ length: 28 }, (_, i) => (
+            <i key={i} style={{ animationDelay: `${(i * 0.09) % 1.2}s` }} />
+          ))}
+        </div>
+        {live ? <p className="vr-live rupa-hand">{live}</p> : null}
+        <div className="vr-bar">
+          <span className="tiny ink-soft">{`${String(Math.floor(secs / 60))}:${String(secs % 60).padStart(2, '0')} / ${Math.floor(maxSeconds / 60)}:${String(maxSeconds % 60).padStart(2, '0')}`}</span>
+          <button className={`vr-btn ${recording ? 'stop' : ''}`} onClick={recording ? stop : start} aria-label={recording ? 'berhenti' : 'rekam'} data-testid="voice-rec">
+            {recording ? <span className="vr-square" /> : <Doodle id="ui-mikrofon" size={26} color="currentColor" />}
+            {recording ? 'selesai' : 'rekam'}
+          </button>
+        </div>
+        {Recognition ? (
+          <Toggle
+            label="tuliskan juga jadi teks"
+            hint="Memakai pengenal suara bawaan peramban (bisa diproses di server Google/Apple). Rekamannya sendiri tetap terenkripsi."
+            value={write}
+            onChange={(v) => {
+              setWrite(v);
+              store.set('voiceWrite', v ? '1' : '0');
+            }}
+          />
+        ) : null}
         {err ? <span className="small">{err}</span> : null}
       </div>
     </Sheet>

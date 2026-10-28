@@ -1,7 +1,7 @@
 {
   "name": "Sehari — kapsul hari bersama",
   "short_name": "Sehari",
-  "description": "Kapsul waktu harian yang diisi bersama orang terdekat.",
+  "description": "Jurnal harian yang diisi bersama orang terdekat: satu halaman sehari, disegel malam, dibuka bersama.",
   "start_url": "/hari",
   "scope": "/",
   "display": "standalone",
@@ -10,8 +10,88 @@
   "theme_color": "#F7F7F4",
   "lang": "id",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ]
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "/hari",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "categories": [
+    "lifestyle",
+    "social",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Niat pagi",
+      "short_name": "Niat",
+      "description": "Tanam satu pikiran baik untuk hari ini",
+      "url": "/hari?niat=1",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Cerita suara",
+      "short_name": "Cerita",
+      "description": "Rekam cerita harimu",
+      "url": "/hari?cerita=1",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Tulis surat",
+      "short_name": "Surat",
+      "url": "/surat/tulis",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Kenangan",
+      "url": "/kenangan",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/bagikan",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

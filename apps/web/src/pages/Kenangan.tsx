@@ -1,8 +1,11 @@
-import { COPY, daysInYear, eachDay, formatDayLong } from '@sehari/core';
+import { addDays, COPY, daysInYear, type DropWire, eachDay, formatDayLong, type MediaRef, type MyDay } from '@sehari/core';
 import { gardenDoodleFor } from '@sehari/doodles';
-import { useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import { type CSSProperties, useState } from 'react';
+import { api } from '@/lib/api';
+import { useMediaUrl } from '@/lib/media';
 import { gardenSeedFor } from '@/lib/garden';
-import { useCircles, useLetters, useMe, useMyDays, useOnThisDay, useToday } from '@/lib/data';
+import { openDrop, qk, useCircles, useKeyring, useLetters, useMe, useMyDays, useOnThisDay, useToday } from '@/lib/data';
 import { Link, navigate } from '@/lib/router';
 import { Scene } from '@/ui/art';
 import { Doodle, ListLink } from '@/ui/kit';
@@ -63,6 +66,8 @@ export default function Kenangan() {
         <p className="tiny soft center" style={{ marginTop: 12, minHeight: 16 }}>{hover ? formatDayLong(hover) : 'ketuk sebuah hari untuk membukanya lagi'}</p>
       </div>
 
+      <WeekPiles today={today} />
+
       {otd.data?.length ? (
         <section className="section">
           <span className="label">hari ini, dulu</span>
@@ -103,5 +108,69 @@ export default function Kenangan() {
         <ListLink icon="buku" title="jurnal pribadi" sub="halaman-halamanmu, termasuk yang “hanya aku”" onClick={() => navigate(`/hari/${today}`)} />
       </section>
     </main>
+  );
+}
+
+/** Seminggu ini: foto-foto tiap hari ditumpuk seperti polaroid di meja. */
+function WeekPiles({ today }: { today: string }) {
+  const ring = useKeyring();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(today, -i));
+  const qs = useQueries({ queries: days.map((d) => ({ queryKey: qk.myDay(d), queryFn: () => api.get<MyDay>(`/days/${d}`), staleTime: 60_000 })) });
+  const piles = days
+    .map((d, i) => {
+      const drops: DropWire[] = qs[i]?.data?.drops ?? [];
+      const photos = drops
+        .filter((w) => w.kind === 'photo')
+        .map((w) => openDrop(w, ring).payload?.media?.find((m) => m.mime.startsWith('image/')))
+        .filter((m): m is MediaRef => !!m);
+      const words = drops.length;
+      return { d, photos, words, sealed: !!qs[i]?.data?.sealedAt };
+    })
+    .filter((p) => p.words > 0);
+  if (!piles.length) return null;
+  const label = (d: string) => (d === today ? 'hari ini' : d === addDays(today, -1) ? 'kemarin' : formatDayLong(d, false));
+  return (
+    <section className="section rupa-week">
+      <span className="rupa-hand" style={{ fontSize: 30 }}>banyak yang terjadi minggu ini.</span>
+      <div className="col" style={{ gap: 14 }}>
+        {piles.map((p) => (
+          <Link key={p.d} to={`/hari/${p.d}`} className="rw-day">
+            <span className="rw-label">
+              <b className={p.d === addDays(today, -1) ? 'accent' : ''}>{label(p.d)}</b>
+              <span className="tiny soft">
+                {p.words} hal{p.sealed ? ' · tersegel' : ''}
+              </span>
+            </span>
+            <span className="rw-pile">
+              {p.photos.length ? (
+                p.photos.slice(0, 4).map((m, i) => <PileShot key={m.id} m={m} i={i} />)
+              ) : (
+                <span className="rw-empty">
+                  <Doodle id="buku-terbuka" size={30} />
+                </span>
+              )}
+            </span>
+          </Link>
+        ))}
+      </div>
+      <Link to="/hari?cerita=1" className="rw-listen">
+        <span className="vr-dot on" />
+        <span className="grow">
+          <b className="small">ceritakan harimu</b>
+          <span className="tiny soft" style={{ display: 'block' }}>rekam bebas, nanti tersimpan rapi di halaman</span>
+        </span>
+        <Doodle id="ui-mikrofon" size={22} />
+      </Link>
+    </section>
+  );
+}
+
+function PileShot({ m, i }: { m: MediaRef; i: number }) {
+  const url = useMediaUrl(m);
+  const rot = [-6, 4, -2, 7][i] ?? 0;
+  return (
+    <span className="rw-shot" style={{ '--r': `${rot}deg`, '--i': i, background: m.tint } as CSSProperties}>
+      {url ? <img src={url} alt="" loading="lazy" /> : null}
+    </span>
   );
 }

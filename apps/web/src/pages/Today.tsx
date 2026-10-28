@@ -26,6 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultWidth, Page, type PageItem, PAGE_W } from '@/editor/Page';
 import { PrintSheet } from '@/editor/PrintSheet';
+import { NiatCard, niatSkipped, rememberNiat, skipNiat } from '@/editor/Niat';
 import { SealCeremony } from '@/editor/Seal';
 import { MoodSheet, PromptSheet, SilentSheet, SongSheet, StickerSheet, VoiceSheet } from '@/editor/Sheets';
 import { TEXT_SIZES } from '@/editor/elements';
@@ -299,6 +300,14 @@ export default function Today() {
     navigate('/hari', { replace: true });
   }, [search.get('prompt'), editable, q.isLoading, !!ring, page, ownPageIds.size]);
 
+  // Pintasan aplikasi (PWA): ?cerita=1 membuka rekaman, ?niat=1 menampilkan Niat Pagi lagi.
+  useEffect(() => {
+    if (!editable || q.isLoading) return;
+    if (search.get('cerita')) setSheet('voice');
+    if (search.get('niat')) setNiatOff(false);
+    if (search.get('cerita') || search.get('niat')) navigate('/hari', { replace: true });
+  }, [editable, q.isLoading]);
+
   // Tempel gambar dari papan klip.
   useEffect(() => {
     if (!editable) return;
@@ -350,6 +359,12 @@ export default function Today() {
   const sunsetLabel = sunset ? new Intl.DateTimeFormat('id-ID', { timeZone: me.user.tz, hour: '2-digit', minute: '2-digit' }).format(sunset) : null;
   // Isi halaman yang sedang dibuka (utama, atau halaman terpisah satu lingkaran).
   const pageItems = items.filter((x) => (x.pageCircleId ?? null) === (pageCircle?.id ?? null));
+  const niat = items.find((x) => x.payload.kind === 'intent' && !x.pageCircleId && x.authorId === me.user.id)?.payload.text;
+  const [niatOff, setNiatOff] = useState(() => niatSkipped(day));
+  useEffect(() => {
+    if (niat) rememberNiat(day, niat);
+  }, [niat, day]);
+  const showNiat = editable && page === 'main' && day === today && !!q.data && !niat && !niatOff;
   const mood = pageItems.find((x) => x.payload.mood)?.payload.mood;
 
   if (q.isLoading || !ring) return <Growing label="membuka halaman…" />;
@@ -540,6 +555,20 @@ export default function Today() {
         </div>
       ) : null}
 
+      {showNiat ? (
+        <NiatCard
+          day={day}
+          onSkip={() => {
+            skipNiat(day);
+            setNiatOff(true);
+          }}
+          onSave={(text) => {
+            rememberNiat(day, text);
+            void create({ ...base('intent', { x: 90, y: 210, rot: -1.2 }), text, style: { font: 'hand', size: 54 } });
+          }}
+        />
+      ) : null}
+
       {editable ? (
         <button className="for-chip" onClick={() => setSheet('audience')}>
           <span className="tiny ink-soft">{pageCircle ? 'halaman khusus' : 'untuk'}</span>
@@ -647,7 +676,7 @@ export default function Today() {
 
       <Sheet open={sheet === 'more'} onClose={() => setSheet(null)} title="tambahkan">
         <div className="tile-grid">
-          <Tile icon="ui-mikrofon" label="suara" sub="rekam tawa, hujan, selamat tidur" onClick={() => setSheet('voice')} />
+          <Tile icon="ui-mikrofon" label="cerita suara" sub="rekam bebas, bisa jadi tulisan" onClick={() => setSheet('voice')} />
           <Tile icon="ui-lagu" label="lagu" sub="yang diputar berulang hari ini" onClick={() => setSheet('song')} />
           <Tile icon="ui-palet" label="warna hari" sub="satu warna untuk rasa hari ini" onClick={() => setSheet('mood')} />
           <Tile icon="kartu" label="kartu & pertanyaan" sub="kalau bingung mau menulis apa" onClick={() => setSheet('prompt')} />
@@ -695,11 +724,14 @@ export default function Today() {
         open={sheet === 'voice'}
         onClose={() => setSheet(null)}
         maxSeconds={meFull.limits.voiceSeconds}
-        onDone={async (blob, ms) => {
+        onDone={async (blob, ms, transcript) => {
           setSheet(null);
           try {
+            const at = viewCenter(420);
             const ref = await uploadBytes(new Uint8Array(await blob.arrayBuffer()), blob.type, { durationMs: ms });
-            await create({ ...base('voice', { ...viewCenter(420), rot: -2 }), media: [ref] }, { mediaIds: [ref.id] });
+            await create({ ...base('voice', { ...at, rot: -2 }), media: [ref] }, { mediaIds: [ref.id] });
+            // Transkrip jadi tulisan tepat di bawah kasetnya.
+            if (transcript) await create({ ...base('text', { x: Math.max(40, at.x - 60), y: at.y + 300, w: 620, rot: 0 }), text: transcript, prompt: 'cerita suara', style: { font: 'hand', size: 38 } });
           } catch (e) {
             toast((e as Error).message);
           }
@@ -817,6 +849,7 @@ export default function Today() {
           day={day}
           circles={pageCircle ? [pageCircle] : active.filter((c) => mainCircleIds.includes(c.id))}
           pageCircleId={pageCircle?.id}
+          niat={pageCircle ? undefined : niat}
           onClose={() => setSealing(false)}
           onSealed={() => {
             loaded.current = null;

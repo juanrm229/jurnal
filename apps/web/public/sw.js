@@ -1,6 +1,6 @@
 /* Sehari service worker: cangkang aplikasi luring + notifikasi push. */
-const CACHE = 'sehari-v2';
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'sehari-v3';
+const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -35,7 +35,7 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/') || /\.(woff2?|png|svg|webmanifest)$/.test(url.pathname)) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/') || /\.(woff2?|png|jpe?g|svg|webmanifest)$/.test(url.pathname)) {
     // Berkas ber-hash: cache dulu.
     e.respondWith(
       caches.match(req).then(
@@ -62,6 +62,10 @@ function routeFor(d) {
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
     case 'meet':
       return d.meetId ? `/janji/${d.meetId}` : '/janji';
+    case 'board':
+      return d.circleId ? `/l/${d.circleId}/inspirasi` : '/lingkaran';
+    case 'dream':
+      return d.circleId ? `/l/${d.circleId}/mimpi` : '/lingkaran';
     case 'letter':
       return d.letterId ? `/surat/${d.letterId}` : '/surat';
     case 'time_capsule':

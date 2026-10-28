@@ -3,10 +3,11 @@
  * penjelasan langkah demi langkah. Bisa dibuka tanpa masuk.
  */
 import { useRef, useState } from 'react';
-import { GUIDE, type GuideChapter } from '@/lib/panduan';
+import { GUIDE as ALL, type GuideChapter } from '@/lib/panduan';
 import { navigate } from '@/lib/router';
 import { Doodle, Header } from '@/ui/kit';
 
+const GUIDE = ALL.filter((c) => !c.noClip);
 const clip = (id: string) => `/panduan/${id}.mp4`;
 const poster = (id: string) => `/panduan/${id}.jpg`;
 
@@ -68,10 +69,10 @@ export default function Panduan() {
       </section>
 
       <section className="section">
-        <span className="label">{GUIDE.length} bab</span>
+        <span className="label">{ALL.length} bab</span>
         <div className="col" style={{ gap: 12 }}>
-          {GUIDE.map((c, i) => (
-            <Chapter key={c.id} c={c} n={i + 1} open={open === c.id} onToggle={() => setOpen(open === c.id ? null : c.id)} onPlay={() => playAll(i)} />
+          {ALL.map((c, i) => (
+            <Chapter key={c.id} c={c} n={i + 1} open={open === c.id} onToggle={() => setOpen(open === c.id ? null : c.id)} onPlay={() => playAll(GUIDE.indexOf(c))} />
           ))}
         </div>
       </section>
@@ -85,7 +86,7 @@ function Chapter({ c, n, open, onToggle, onPlay }: { c: GuideChapter; n: number;
     <article className={`pd-ch rise ${open ? 'open' : ''}`} style={{ animationDelay: `${n * 0.03}s` }}>
       <button className="pd-ch-head" onClick={onToggle} aria-expanded={open}>
         <span className="pd-thumb">
-          <img src={poster(c.id)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.display = 'none')} />
+          {c.noClip ? null : <img src={poster(c.id)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.display = 'none')} />}
           <Doodle id={c.doodle} size={22} />
         </span>
         <span className="grow" style={{ minWidth: 0 }}>
@@ -101,7 +102,7 @@ function Chapter({ c, n, open, onToggle, onPlay }: { c: GuideChapter; n: number;
           <p className="serif-italic" style={{ margin: 0 }}>
             {c.lead}
           </p>
-          <video className="pd-inline" src={clip(c.id)} poster={poster(c.id)} controls playsInline preload="none" />
+          {c.noClip ? null : <video className="pd-inline" src={clip(c.id)} poster={poster(c.id)} controls playsInline preload="none" />}
           <ol className="pd-steps">
             {c.steps.map((s) => (
               <li key={s}>{s}</li>
@@ -116,9 +117,11 @@ function Chapter({ c, n, open, onToggle, onPlay }: { c: GuideChapter; n: number;
             </div>
           ) : null}
           <div className="row" style={{ gap: 8 }}>
-            <button className="btn soft grow" onClick={onPlay}>
-              putar mulai dari sini
-            </button>
+            {c.noClip ? null : (
+              <button className="btn soft grow" onClick={onPlay}>
+                putar mulai dari sini
+              </button>
+            )}
             {c.try ? (
               <button className="btn grow" onClick={() => navigate(c.try!.to)}>
                 {c.try.label}

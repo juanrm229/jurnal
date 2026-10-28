@@ -696,3 +696,20 @@ export const dreamLikes = pgTable(
   },
   (t) => [primaryKey({ columns: [t.dreamId, t.userId] })],
 );
+
+// ── Papan Inspirasi ─────────────────────────────────────────────────────────
+
+/** Moodboard lingkaran: foto, tautan, catatan, incaran. Isinya terenkripsi. */
+export const boardItems = pgTable(
+  'board_items',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    mediaIds: jsonb('media_ids').$type<string[]>().notNull().default([]),
+    doneAt: ts('done_at'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('board_items_circle_idx').on(t.circleId)],
+);

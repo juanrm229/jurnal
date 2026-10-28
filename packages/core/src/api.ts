@@ -325,7 +325,7 @@ export const createDropBody = z.object({
   day: dayKey,
   kind: z.enum([
     'text', 'photo', 'video', 'voice', 'song', 'idea', 'screenshot', 'word', 'mood', 'answer', 'card',
-    'expedition', 'last_line', 'silent', 'auto', 'blackout', 'prologue', 'epilogue', 'sticker',
+    'expedition', 'last_line', 'silent', 'auto', 'blackout', 'prologue', 'epilogue', 'sticker', 'intent',
   ]),
   audience: z.enum(['self', 'circle', 'person', 'time_capsule']),
   circleIds: z.array(id).max(50).default([]),
@@ -823,5 +823,20 @@ export interface DreamWire {
   doneBy: string | null;
   /** Anggota yang menandai "aku juga mau" (pembuat otomatis termasuk). */
   likes: string[];
+  createdAt: string;
+}
+
+// ── Papan Inspirasi ─────────────────────────────────────────────────────────
+
+export const boardItemBody = z.object({ id, envelope: envelopeSchema, mediaIds: z.array(id).max(1).default([]) });
+export const boardItemUpdateBody = z.object({ envelope: envelopeSchema.optional(), done: z.boolean().optional() });
+export interface BoardItemWire {
+  id: string;
+  circleId: string;
+  authorId: string;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  mediaIds: string[];
+  /** Incaran yang sudah dibeli / ide yang sudah dicoba. */
+  doneAt: string | null;
   createdAt: string;
 }

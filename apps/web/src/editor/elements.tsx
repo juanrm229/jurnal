@@ -51,6 +51,15 @@ export function PageElement({
           {p.text ? <div className="hand" style={{ fontSize: px(34), marginTop: px(10), color: 'var(--text)' }}>{p.text}</div> : null}
         </div>
       );
+    case 'intent':
+      return (
+        <div className="niat-el">
+          <span className="niat-el-k" style={{ fontSize: px(18) }}>
+            <Doodle id="matahari-kecil" size={px(30)} /> niat pagi
+          </span>
+          <TextBody item={item} scale={scale} editing={editing} onText={onText} onEndEdit={onEndEdit} hand placeholder="satu pikiran baik…" />
+        </div>
+      );
     case 'mood':
       return (
         <div style={{ height: px(70) }}>

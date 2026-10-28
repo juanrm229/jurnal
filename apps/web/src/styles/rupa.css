@@ -1,0 +1,753 @@
+/* Rupa: bahasa visual "benda melayang". Guntingan foto tanpa latar, polaroid
+   bertumpuk, tulisan tangan, kertas bertitik, dan banyak ruang putih.
+   Tetap memakai token Sehari (--ink, --paper, --card, sticky) supaya ikut tema. */
+
+:root {
+  --rupa-dot: color-mix(in srgb, var(--text) 10%, transparent);
+  --rupa-tag: #ff9fd0;
+  --rupa-lime: #d7f26b;
+  --rupa-float: drop-shadow(0 14px 18px rgba(20, 20, 40, 0.16)) drop-shadow(0 2px 3px rgba(20, 20, 40, 0.08));
+}
+
+.rupa-hand {
+  font-family: var(--hand);
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.05;
+}
+
+/* Guntingan: tepi putih seperti stiker, bayangan lembut di bawahnya. */
+.rupa-cut {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 5px solid #fff;
+  filter: var(--rupa-float);
+  background: var(--ink-faint);
+}
+.rupa-cut.big {
+  max-height: 52vh;
+  object-fit: contain;
+  background: transparent;
+}
+.rupa-cut.ph {
+  min-height: 120px;
+}
+.rupa-chip {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%) rotate(-2deg);
+  background: #fff;
+  color: #16161a;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  white-space: nowrap;
+  max-width: 88%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rupa-tag {
+  display: inline-block;
+  background: var(--rupa-tag);
+  color: #3a0d25;
+  font: 600 12px/1 var(--mono, monospace);
+  padding: 6px 9px;
+  border-radius: 7px;
+  transform: rotate(-4deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+.rupa-tag.auto {
+  align-self: flex-start;
+}
+.rb-photo .rupa-tag {
+  position: absolute;
+  left: -6px;
+  bottom: 18%;
+}
+
+/* ── Papan inspirasi ─────────────────────────────────────────────────────── */
+
+.rupa-board {
+  background-image: radial-gradient(var(--rupa-dot) 1.1px, transparent 1.3px);
+  background-size: 18px 18px;
+}
+.rb-hero {
+  padding: 4px 2px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rb-hero h1 {
+  font-size: 44px;
+  margin: 0;
+}
+.rb-masonry {
+  columns: 2;
+  column-gap: 16px;
+  margin-top: 8px;
+}
+@media (min-width: 720px) {
+  .rb-masonry {
+    columns: 3;
+  }
+}
+.rb-pin {
+  position: relative;
+  display: block;
+  width: 100%;
+  break-inside: avoid;
+  margin: 0 0 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.25s ease;
+  color: inherit;
+}
+.rb-pin:active {
+  transform: rotate(0deg) scale(0.97);
+}
+.rb-pin.done > :not(.rb-stamp) {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+.rb-photo {
+  position: relative;
+  display: block;
+}
+.rb-link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  word-break: break-word;
+}
+.rb-link-ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--text);
+  color: var(--paper);
+}
+.rb-host {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rb-note {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 14px 18px;
+  border-radius: 4px 4px 14px 4px;
+  color: #16161a;
+  box-shadow: 0 10px 18px rgba(20, 20, 40, 0.12);
+}
+.rb-stamp {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  font: 600 12px var(--hand);
+  font-size: 18px;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  padding: 0 6px;
+  transform: rotate(8deg);
+  background: var(--paper);
+}
+.rb-dock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 30;
+}
+.rb-faces {
+  display: flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  margin-right: auto;
+}
+.rb-faces > * + * {
+  margin-left: -8px;
+}
+.rb-dock-btn,
+.rb-fab {
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-lift);
+}
+.rb-dock-btn {
+  width: 46px;
+  height: 46px;
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--text);
+}
+.rb-fab {
+  width: 60px;
+  height: 60px;
+  background: var(--rupa-lime);
+  color: #1d2a05;
+}
+.rb-drop {
+  border: 2px dashed var(--pill);
+  border-radius: 20px;
+  background: none;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+.rb-drop .rupa-cut {
+  max-height: 240px;
+  width: auto;
+  max-width: 100%;
+}
+.rb-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+.rb-swatch.on {
+  border-color: var(--text);
+}
+
+/* ── Rak lagu: galeri putih ──────────────────────────────────────────────── */
+
+.rl-room {
+  position: relative;
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, #fff) 0%, var(--card) 72%, color-mix(in srgb, var(--paper) 80%, #000 4%) 72.2%, var(--paper) 100%);
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.rl-wall {
+  padding: 26px 0 8px;
+  min-height: 230px;
+}
+.rl-hang {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 10px 20px 52px;
+  scrollbar-width: none;
+}
+.rl-hang::-webkit-scrollbar {
+  display: none;
+}
+.rl-cover {
+  position: relative;
+  flex: none;
+  width: 92px;
+  aspect-ratio: 1;
+  border: 0;
+  padding: 0;
+  background: none;
+  scroll-snap-align: center;
+  box-shadow: 0 16px 22px -10px rgba(20, 20, 40, 0.35);
+}
+.rl-cover.hero {
+  width: 150px;
+}
+.rl-cover.big {
+  width: 220px;
+  display: block;
+}
+.rl-cover img,
+.rl-blank {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rl-blank {
+  display: grid;
+  place-items: center;
+  background: var(--c);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.rl-blank > span {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  font: 600 10px/1.2 var(--mono, monospace);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rl-caption {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--text);
+  text-align: center;
+}
+.rl-caption span {
+  color: var(--text-soft);
+}
+.rl-floor {
+  height: 34px;
+  position: relative;
+}
+.rl-bench {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 38%;
+  height: 8px;
+  border-radius: 4px;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--text) 18%, var(--card));
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.12);
+}
+.rl-shelf {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  overflow-x: auto;
+  padding: 10px 6px 0;
+  scrollbar-width: none;
+}
+.rl-shelf::-webkit-scrollbar {
+  display: none;
+}
+.rl-spine {
+  flex: none;
+  width: 26px;
+  height: 118px;
+  border: 0;
+  border-radius: 3px 3px 0 0;
+  background: var(--c);
+  color: #fff;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg) rotate(var(--tilt));
+  transform-origin: bottom center;
+  font: 500 11px var(--mono, monospace);
+  padding: 8px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: inset -3px 0 0 rgba(0, 0, 0, 0.12);
+}
+.rl-spine:nth-child(3n) {
+  height: 104px;
+}
+.rl-spine:nth-child(5n) {
+  height: 128px;
+}
+.rl-plank {
+  display: block;
+  height: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text) 22%, var(--card));
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Niat pagi ───────────────────────────────────────────────────────────── */
+
+.niat {
+  position: relative;
+  background: var(--card);
+  border-radius: 30px;
+  padding: 18px 22px 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+.niat-float {
+  position: absolute;
+  width: 120px;
+  font: 500 15px/1.1 var(--hand);
+  color: var(--text-soft);
+  background: var(--paper);
+  padding: 8px 10px;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: niat-drift 9s ease-in-out infinite alternate;
+}
+.niat-float b {
+  display: block;
+  font: 600 9px var(--mono, monospace);
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+}
+@keyframes niat-drift {
+  to {
+    translate: 0 -8px;
+  }
+}
+.niat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+.niat-brand {
+  font-size: 22px;
+}
+.niat-ask {
+  position: relative;
+  margin: 26px auto 12px;
+  text-align: center;
+  font-size: 34px;
+}
+.niat-arrow {
+  position: absolute;
+  left: -38px;
+  top: -18px;
+  transform: rotate(-30deg);
+  opacity: 0.6;
+}
+.niat-input {
+  position: relative;
+  border: 0;
+  border-bottom: 1.5px dashed var(--pill);
+  background: transparent;
+  font-size: 26px;
+  resize: none;
+  outline: none;
+  padding: 6px 2px;
+  text-align: center;
+  color: var(--text);
+}
+.niat-foot {
+  margin-top: auto;
+  padding-top: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  position: relative;
+}
+.niat-days {
+  display: flex;
+  gap: 14px;
+}
+.niat-days > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font: 500 14px var(--hand);
+  color: var(--text-soft);
+}
+.niat-go {
+  width: 52px;
+  height: 64px;
+  border-radius: 26px;
+  border: 1.5px solid var(--text);
+  background: var(--paper);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  rotate: -90deg;
+}
+.niat-go:disabled {
+  opacity: 0.35;
+}
+.niat-el {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.4em 0.6em 0.6em;
+  border-left: 3px solid var(--sticky-yellow);
+}
+.niat-el-k {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono, monospace);
+  color: var(--text-soft);
+  text-transform: lowercase;
+}
+.niat-recall {
+  margin: 0 0 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--sticky-yellow);
+  color: #16161a;
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.niat-recall .rupa-hand {
+  font-size: 22px;
+  color: #16161a;
+}
+
+/* ── Cerita suara ────────────────────────────────────────────────────────── */
+
+.voice-rupa {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0 14px;
+}
+.vr-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.vr-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--fog);
+  flex: none;
+}
+.vr-dot.on {
+  background: #ef4b3f;
+  animation: vr-blink 1.2s ease-in-out infinite;
+}
+@keyframes vr-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.vr-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 56px;
+}
+.vr-wave i {
+  width: 4px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--pill);
+}
+.vr-wave.on i {
+  background: var(--text);
+  animation: vr-bar 1.2s ease-in-out infinite;
+}
+@keyframes vr-bar {
+  50% {
+    height: 46px;
+  }
+}
+.vr-live {
+  margin: 0;
+  font-size: 24px;
+  max-height: 150px;
+  overflow: auto;
+}
+.vr-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 999px;
+  background: var(--pill);
+}
+.vr-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: var(--text);
+  color: var(--paper);
+  font-size: 14px;
+}
+.vr-btn.stop {
+  background: #ef4b3f;
+  color: #fff;
+}
+.vr-square {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+/* ── Seminggu ini (Kenangan) ─────────────────────────────────────────────── */
+
+.rupa-week {
+  gap: 14px;
+}
+.rw-day {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: center;
+  color: inherit;
+}
+.rw-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.rw-label b.accent {
+  color: #e2562f;
+}
+.rw-pile {
+  display: flex;
+  height: 92px;
+  align-items: center;
+  padding-left: 6px;
+}
+.rw-shot {
+  width: 70px;
+  height: 80px;
+  flex: none;
+  padding: 5px 5px 14px;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 8px 16px rgba(20, 20, 40, 0.16);
+  transform: rotate(var(--r));
+  margin-left: -18px;
+  z-index: calc(10 - var(--i));
+}
+.rw-shot:first-child {
+  margin-left: 0;
+}
+.rw-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 1px;
+}
+.rw-empty {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--pill);
+}
+.rw-listen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: inherit;
+}
+
+/* ── Ubin "dikumpulkan bersama" di halaman lingkaran ─────────────────────── */
+
+.rupa-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.rupa-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px 14px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: inherit;
+  overflow: hidden;
+}
+.rupa-tile.t-board {
+  background-image: radial-gradient(var(--rupa-dot) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+  background-color: var(--card);
+}
+.rt-objs {
+  position: relative;
+  height: 92px;
+  display: block;
+}
+.rt-obj {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-6deg);
+  filter: var(--rupa-float);
+}
+.rt-sticky {
+  position: absolute;
+  right: 4px;
+  top: 8px;
+  background: var(--sticky-yellow);
+  color: #16161a;
+  font: 500 16px var(--hand);
+  padding: 4px 8px 8px;
+  transform: rotate(7deg);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+}
+.t-board .rupa-tag {
+  position: absolute;
+  left: 2px;
+  bottom: 12px;
+}
+.rt-sleeve {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  top: 16px;
+  border-radius: 3px;
+  box-shadow: 0 10px 16px -6px rgba(0, 0, 0, 0.3);
+}
+.rt-sleeve.a {
+  left: 6px;
+  background: linear-gradient(135deg, #f2c14e, #e86a5b);
+  transform: rotate(-5deg);
+}
+.rt-sleeve.b {
+  right: 6px;
+  background: linear-gradient(135deg, #5b8def, #7cc47f);
+  transform: rotate(4deg);
+}
+.t-songs .rt-obj {
+  transform: translate(-50%, -42%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .niat-float,
+  .vr-wave.on i,
+  .vr-dot.on {
+    animation: none;
+  }
+}

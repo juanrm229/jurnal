@@ -18,7 +18,7 @@ const MILESTONE: Record<string, { name: string; line: string; doodle: string }> 
 
 const HOLD_MS = 1200;
 
-export function SealCeremony({ day, circles, pageCircleId, onClose, onSealed, onOpen }: { day: string; circles: CircleView[]; pageCircleId?: string; onClose: () => void; onSealed: () => void; onOpen: (circleId: string) => void }) {
+export function SealCeremony({ day, circles, pageCircleId, niat, onClose, onSealed, onOpen }: { day: string; circles: CircleView[]; pageCircleId?: string; niat?: string; onClose: () => void; onSealed: () => void; onOpen: (circleId: string) => void }) {
   const { me } = useReady();
   const seal = useSeal();
   const [line, setLine] = useState('');
@@ -122,6 +122,11 @@ export function SealCeremony({ day, circles, pageCircleId, onClose, onSealed, on
         {phase === 'write' ? (
           <>
             <div className="col gap-sm rise">
+              {niat ? (
+                <p className="niat-recall">
+                  <Doodle id="matahari-kecil" size={22} /> tadi pagi kamu menanam: <span className="rupa-hand">“{niat}”</span>
+                </p>
+              ) : null}
               <span className="label">{COPY.seal.lastLinePrompt.toLowerCase()}</span>
               <input className="field hand" style={{ fontSize: 28 }} value={line} maxLength={200} onChange={(e) => setLine(e.target.value)} placeholder={COPY.seal.lastLinePlaceholder} autoFocus />
               <span className="tiny soft">Setahun lagi, kalimat-kalimat ini menjadi puisi panjang yang kalian tulis tanpa sadar.</span>

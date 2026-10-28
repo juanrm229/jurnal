@@ -149,6 +149,30 @@ export default function CircleHome() {
       </section>
 
       <section className="section">
+        <span className="label">dikumpulkan bersama</span>
+        <div className="rupa-tiles">
+          <Link to={`/l/${id}/inspirasi`} className="rupa-tile t-board rise">
+            <span className="rt-objs" aria-hidden>
+              <span className="rt-sticky">ingin!</span>
+              <span className="rupa-tag">Rp</span>
+              <Doodle id="kamera" size={46} className="rt-obj" />
+            </span>
+            <span className="small ink">papan inspirasi</span>
+            <span className="tiny soft">incaran, foto, tautan</span>
+          </Link>
+          <Link to={`/l/${id}/lagu`} className="rupa-tile t-songs rise" style={{ animationDelay: '0.05s' }}>
+            <span className="rt-objs" aria-hidden>
+              <span className="rt-sleeve a" />
+              <span className="rt-sleeve b" />
+              <Doodle id="piringan-hitam" size={50} className="rt-obj" />
+            </span>
+            <span className="small ink">rak lagu</span>
+            <span className="tiny soft">dinding sampul kalian</span>
+          </Link>
+        </div>
+      </section>
+
+      <section className="section">
         <span className="label">papan & kitab</span>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
           {FEATURES.filter((f) => circle.kind !== 'moment' || ['langit', 'puisi'].includes(f.path)).map((f, i) => (

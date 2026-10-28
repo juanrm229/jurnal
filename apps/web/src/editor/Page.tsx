@@ -45,6 +45,7 @@ const DEFAULT_W: Record<string, number> = {
   prologue: 640,
   epilogue: 640,
   expedition: 520,
+  intent: 780,
 };
 
 export const defaultWidth = (kind: string) => DEFAULT_W[kind] ?? 520;

@@ -7,11 +7,13 @@ import { currentTheme, INKS, PAPERS } from '@/lib/theme';
 import { Avatar, Doodle, ListLink, Toggle, useToast } from '@/ui/kit';
 import { sound, useSoundPrefs } from '@/lib/sound';
 import { pushState, subscribePush } from '@/lib/push';
+import { useInstall } from '@/lib/install';
 
 export default function Me() {
   const me = useMe();
   const { signOut } = useSession();
   const toast = useToast();
+  const install = useInstall();
   const city = getCity(me.user.cityId);
   const t = currentTheme();
   const [push, setPush] = useState<'on' | 'off' | 'unsupported' | 'denied'>('off');
@@ -69,6 +71,14 @@ export default function Me() {
       </section>
       <section className="section">
         <span className="label">lainnya</span>
+        {!install.installed && (install.canPrompt || install.ios) ? (
+          <ListLink
+            icon="hp"
+            title="pasang Sehari di layar utama"
+            sub={install.canPrompt ? 'jadi aplikasi: layar penuh, bisa luring, ada pintasan' : 'Safari → tombol Bagikan → Tambah ke Layar Utama'}
+            onClick={() => (install.canPrompt ? void install.prompt() : toast('Di Safari: ketuk tombol Bagikan, lalu “Tambah ke Layar Utama”.'))}
+          />
+        ) : null}
         <ListLink icon="ui-ide" title="panduan & video tutorial" sub="semua fitur, dijelaskan langkah demi langkah" onClick={() => navigate('/panduan')} />
         <ListLink icon="gelembung-kata" title="tentang kita" sub="kartu ngobrol: pasangan, pdkt, sahabat, renungan" onClick={() => navigate('/tentang-kita')} />
         <ListLink icon="amplop" title="kartu ucapan" sub="tulis pesan, taruh foto, kirim ke WhatsApp" onClick={() => navigate('/kartu')} />

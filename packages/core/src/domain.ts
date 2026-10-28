@@ -102,7 +102,8 @@ export type DropKind =
   | 'blackout' // Puisi Temuan
   | 'prologue'
   | 'epilogue'
-  | 'sticker'; // stiker doodle di halaman jurnal
+  | 'sticker' // stiker doodle di halaman jurnal
+  | 'intent'; // Niat Pagi: satu pikiran baik saat bangun
 
 /**
  * Audiens selalu terlihat di samping tombol Drop.

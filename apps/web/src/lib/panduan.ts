@@ -10,6 +10,8 @@ export interface GuideChapter {
   lead: string;
   steps: string[];
   tip?: string;
+  /** Belum ada klip video untuk bab ini. */
+  noClip?: boolean;
   /** Halaman untuk langsung mencoba. */
   try?: { label: string; to: string };
 }
@@ -56,6 +58,22 @@ export const GUIDE: GuideChapter[] = [
     ],
     tip: 'Tiap tempelan bisa diatur “hanya aku” atau “bersama” lewat ikon gembok.',
     try: { label: 'buka halaman hari ini', to: '/hari' },
+  },
+  {
+    id: 'niat',
+    title: 'Niat pagi & cerita suara',
+    doodle: 'matahari-kecil',
+    noClip: true,
+    lead: 'Pikiran pertama saat bangun adalah benih untuk seharian. Tanam satu yang baik, lalu ceritakan harimu dengan suara kalau sedang malas mengetik.',
+    steps: [
+      'Pagi hari, kartu “satu pikiran baik untuk hari ini?” muncul di atas halaman. Tulis satu kalimat, lalu ketuk panah.',
+      'Niatnya tertempel di halaman dengan tulisan tangan. Niat hari-hari sebelumnya melayang samar di pinggir kartu.',
+      'Saat menyegel, Sehari mengingatkan niat pagimu sebelum kamu menulis kalimat penutup.',
+      'Cerita suara: lainnya → cerita suara, lalu rekam bebas. Nyalakan “tuliskan juga jadi teks” supaya ucapanmu ikut menjadi tulisan di bawah kasetnya.',
+      'Di Kenangan, “banyak yang terjadi minggu ini” menumpuk foto tiap hari seperti polaroid di meja.',
+    ],
+    tip: 'Pasang Sehari di layar utama, lalu tekan lama ikonnya: ada pintasan langsung ke niat pagi dan cerita suara.',
+    try: { label: 'buka halaman hari ini', to: '/hari?niat=1' },
   },
   {
     id: 'segel',
@@ -135,6 +153,22 @@ export const GUIDE: GuideChapter[] = [
       'Ketuk mimpinya → jadikan janji temu. Janji itu tersambung ke mimpinya.',
       'Tandai terwujud: mimpinya menjadi bintang di toples, dan menyimpan tautan ke cerita kencannya.',
     ],
+  },
+  {
+    id: 'inspirasi',
+    title: 'Papan inspirasi & rak lagu',
+    doodle: 'klip-kertas',
+    noClip: true,
+    lead: 'Dua ruang yang terisi pelan-pelan: moodboard untuk incaran dan ide, dan dinding galeri untuk lagu-lagu kalian.',
+    steps: [
+      'Buka lingkaran → papan inspirasi. Ketuk + untuk menempel foto, atau ikon klip dan pena untuk tautan dan catatan.',
+      'Masukkan ke rak “incaran” (barang yang ingin dibeli, lengkap dengan harga) atau rak “ide”.',
+      'Dari aplikasi lain (marketplace, Pinterest, peta), ketuk Bagikan → Sehari. Tautannya langsung siap ditempel.',
+      'Sudah terbeli atau sudah dicoba? Ketuk tempelannya → sudah dibeli. Siapa pun di lingkaran boleh mencentang.',
+      'Rak lagu: setiap lagu yang kalian tempel di halaman hari tergantung sebagai sampul di dinding, dan semuanya berjajar di rak. Ketuk untuk memutarnya lagi.',
+    ],
+    tip: 'Isi papan terenkripsi seperti halaman jurnal: hanya anggota lingkaran yang bisa melihat fotonya.',
+    try: { label: 'buka lingkaran', to: '/lingkaran' },
   },
   {
     id: 'kartu',

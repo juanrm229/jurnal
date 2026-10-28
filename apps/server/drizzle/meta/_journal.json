@@ -43,6 +43,13 @@
       "when": 1792770497792,
       "tag": "0005_tiny_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793148753630,
+      "tag": "0006_daily_albert_cleary",
+      "breakpoints": true
     }
   ]
 }
