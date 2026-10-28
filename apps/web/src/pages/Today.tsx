@@ -706,7 +706,6 @@ export default function Today() {
         <div className="tile-grid">
           <Tile icon="ui-mikrofon" label="cerita suara" sub="rekam bebas, bisa jadi tulisan" onClick={() => setSheet('voice')} />
           <Tile icon="ui-cari" label="SIDIK" sub="game detektif, 2–20 orang" onClick={() => navigate('/sidik')} />
-          <Tile icon="segel-lilin" label="Sebelum Disegel" sub="arsip berlapis, 2–16 orang" onClick={() => navigate('/segel')} />
           <Tile icon="kamera" label="photobox" sub="strip foto lucu, sendiri atau berdua" onClick={() => navigate('/photobox')} />
           <Tile icon="ui-lagu" label="lagu" sub="yang diputar berulang hari ini" onClick={() => setSheet('song')} />
           <Tile icon="ui-palet" label="warna hari" sub="satu warna untuk rasa hari ini" onClick={() => setSheet('mood')} />

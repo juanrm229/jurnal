@@ -20,7 +20,6 @@ import { workRoutes } from './routes/works';
 import { meetRoutes } from './routes/meets';
 import { boardRoutes } from './routes/board';
 import { boothRoutes } from './routes/booths';
-import { segelRoutes } from './routes/segel';
 import { sidikRoutes } from './routes/sidik';
 import { dreamRoutes } from './routes/dreams';
 import { webRoutes } from './web/pages';
@@ -54,7 +53,6 @@ export function createApp(s: Services) {
   v1.route('/billing/webhook', webhookRoutes(s) as never);
   // SIDIK boleh dimainkan tamu tanpa akun, jadi tidak di belakang auth.
   v1.route('/sidik', sidikRoutes(s));
-  v1.route('/segel', segelRoutes(s));
 
   const authed = new Hono<AppEnv>();
   authed.use('*', auth);

@@ -64,4 +64,3 @@ export { DREAM_CATEGORIES, DREAM_IDEAS, DREAM_WHEN_LABEL, type DreamCategory, ty
 export type * from './content/types';
 export type { ChapterFeatures } from './content/chapterTitles';
 export * as sidik from './sidik';
-export * as segel from './segel';

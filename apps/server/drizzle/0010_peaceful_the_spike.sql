@@ -1,0 +1,1 @@
+DROP TABLE "segel_rooms" CASCADE;

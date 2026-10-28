@@ -25,8 +25,8 @@ export const profile = {
   set: (p: { name: string; avatar: string }) => store.set('sidikProfile', JSON.stringify(p)),
 };
 
-/** Panggilan ke ruang permainan bersama (/v1/sidik atau /v1/segel). Identitas tamu dipakai bersama. */
-export async function callGame<T>(base: 'sidik' | 'segel', method: string, path: string, body?: unknown): Promise<T> {
+/** Panggilan ke ruang permainan bersama (/v1/<base>). Identitas tamu dipakai bersama. */
+export async function callGame<T>(base: 'sidik', method: string, path: string, body?: unknown): Promise<T> {
   const tok = currentToken();
   const res = await fetch(`${API_URL}/v1/${base}${path}`, {
     method,
@@ -51,7 +51,7 @@ export function useRoom(code: string, opts: { tv?: boolean } = {}) {
   return useGameRoom<View>('sidik', code, opts);
 }
 
-export function useGameRoom<V extends { rev: number; now: number }>(base: 'sidik' | 'segel', code: string, opts: { tv?: boolean } = {}) {
+export function useGameRoom<V extends { rev: number; now: number }>(base: 'sidik', code: string, opts: { tv?: boolean } = {}) {
   type View = V;
   const call = <T,>(method: string, path: string) => callGame<T>(base, method, path);
   const [view, setView] = useState<View | null>(null);
