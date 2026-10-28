@@ -758,3 +758,10 @@ export const sidikRooms = pgTable('sidik_rooms', {
   state: jsonb('state').notNull(),
   updatedAt: ts('updated_at').notNull().defaultNow(),
 });
+
+/** Meja SEBELUM DISEGEL (keadaan permainan utuh, termasuk rahasia). */
+export const segelRooms = pgTable('segel_rooms', {
+  code: text('code').primaryKey(),
+  state: jsonb('state').notNull(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
+});

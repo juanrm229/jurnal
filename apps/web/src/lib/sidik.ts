@@ -25,9 +25,10 @@ export const profile = {
   set: (p: { name: string; avatar: string }) => store.set('sidikProfile', JSON.stringify(p)),
 };
 
-async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+/** Panggilan ke ruang permainan bersama (/v1/sidik atau /v1/segel). Identitas tamu dipakai bersama. */
+export async function callGame<T>(base: 'sidik' | 'segel', method: string, path: string, body?: unknown): Promise<T> {
   const tok = currentToken();
-  const res = await fetch(`${API_URL}/v1/sidik${path}`, {
+  const res = await fetch(`${API_URL}/v1/${base}${path}`, {
     method,
     headers: { 'x-sidik-guest': guestToken(), ...(tok ? { authorization: `Bearer ${tok}` } : {}), ...(body ? { 'content-type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
@@ -38,6 +39,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
   if (!res.ok) throw new ApiError(res.status, j?.error?.code ?? 'error', j?.error?.message ?? 'Gagal.');
   return j as T;
 }
+const call = <T>(method: string, path: string, body?: unknown) => callGame<T>('sidik', method, path, body);
 
 export const createRoom = (p: { name: string; avatar: string }) => call<View>('POST', '/rooms', p);
 export const joinRoom = (code: string, p: { name: string; avatar: string }) => call<View>('POST', `/rooms/${code}/join`, p);
@@ -46,6 +48,12 @@ export const leaveRoom = (code: string) => call('POST', `/rooms/${code}/leave`);
 
 /** Polling ruang. `serverNow()` memberi jam server agar hitung mundur sama di semua HP. */
 export function useRoom(code: string, opts: { tv?: boolean } = {}) {
+  return useGameRoom<View>('sidik', code, opts);
+}
+
+export function useGameRoom<V extends { rev: number; now: number }>(base: 'sidik' | 'segel', code: string, opts: { tv?: boolean } = {}) {
+  type View = V;
+  const call = <T,>(method: string, path: string) => callGame<T>(base, method, path);
   const [view, setView] = useState<View | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const skew = useRef(0);

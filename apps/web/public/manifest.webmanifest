@@ -88,6 +88,18 @@
       ]
     },
     {
+      "name": "Sebelum Disegel",
+      "short_name": "Segel",
+      "description": "Game arsip berlapis",
+      "url": "/segel",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Tulis surat",
       "short_name": "Surat",
       "url": "/surat/tulis",
