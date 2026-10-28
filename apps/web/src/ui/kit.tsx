@@ -63,10 +63,10 @@ export function Screen({ children, wide, className }: { children: ReactNode; wid
   return <main className={['screen', wide ? 'wide' : '', className].filter(Boolean).join(' ')}>{children}</main>;
 }
 
-export function Header({ title, sub, right, backTo }: { title?: ReactNode; sub?: ReactNode; right?: ReactNode; backTo?: string }) {
+export function Header({ title, sub, right, backTo, onBack }: { title?: ReactNode; sub?: ReactNode; right?: ReactNode; backTo?: string; onBack?: () => void }) {
   return (
     <header className="hdr">
-      <button className="hdr-back" aria-label="kembali" onClick={() => back(backTo)}>
+      <button className="hdr-back" aria-label="kembali" onClick={() => (onBack ? onBack() : back(backTo))}>
         <Doodle id="ui-kembali" size={20} />
       </button>
       <div className="hdr-text">

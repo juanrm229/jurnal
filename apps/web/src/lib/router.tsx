@@ -5,10 +5,18 @@ import { flushSync } from 'react-dom';
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
+/**
+ * Kedalaman riwayat di dalam aplikasi. Tiap entri yang kita dorong diberi
+ * nomor, jadi tombol kembali tahu apakah masih ada halaman Sehari di belakang
+ * (bukan halaman lain atau aplikasi yang baru dibuka dari ikon).
+ */
+let depth = (history.state as { idx?: number } | null)?.idx ?? 0;
+window.addEventListener('popstate', () => (depth = (history.state as { idx?: number } | null)?.idx ?? 0));
+
 export function navigate(to: string, opts: { replace?: boolean } = {}) {
   if (to === location.pathname + location.search + location.hash) return;
-  if (opts.replace) history.replaceState(null, '', to);
-  else history.pushState(null, '', to);
+  if (opts.replace) history.replaceState({ idx: depth }, '', to);
+  else history.pushState({ idx: ++depth }, '', to);
   const run = () => {
     window.scrollTo({ top: 0 });
     listeners.forEach((l) => l());
@@ -21,9 +29,10 @@ export function navigate(to: string, opts: { replace?: boolean } = {}) {
 }
 
 export function back(fallback = '/hari') {
-  if (history.length > 1 && document.referrer.startsWith(location.origin)) history.back();
-  else if (history.state !== null || history.length > 2) history.back();
-  else navigate(fallback, { replace: true });
+  if (depth > 0) return history.back();
+  // Tidak ada halaman Sehari di belakang: pergi ke induknya. Kalau induknya
+  // halaman ini sendiri, ke halaman hari ini supaya tombol tidak pernah diam.
+  navigate(fallback === location.pathname ? '/hari' : fallback, { replace: true });
 }
 
 export function usePath(): { path: string; search: URLSearchParams } {

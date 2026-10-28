@@ -83,7 +83,7 @@ export default function Photobox() {
   if (phase === 'booth')
     return (
       <main className="screen pb-screen">
-        <Header title="photobox" sub="lihat ke kamera ✦" backTo="/photobox" />
+        <Header title="photobox" sub="lihat ke kamera ✦" onBack={() => setPhase('setup')} />
         <BoothStage
           video={cam.video}
           ready={cam.ready}
@@ -109,7 +109,7 @@ export default function Photobox() {
   if (phase === 'result' && frames)
     return (
       <main className="screen pb-screen">
-        <Header title="stripmu jadi!" sub="ganti desain sepuasnya" backTo="/photobox" />
+        <Header title="stripmu jadi!" sub="ganti desain sepuasnya" onBack={() => setPhase('setup')} />
         <StripResult
           frames={dulu ? [ghostImgs.map((o) => o.img), frames] : [frames]}
           theme={dulu ? 'waktu' : undefined}
@@ -137,7 +137,7 @@ export default function Photobox() {
   if (phase === 'setup')
     return (
       <main className="screen pb-screen">
-        <Header title="siapkan booth" sub="desain, filter, jumlah jepretan" backTo="/photobox" />
+        <Header title="siapkan booth" sub="desain, filter, jumlah jepretan" onBack={() => setPhase('start')} />
         <div className="pb-setup-cam">
           {cam.err ? (
             <div className="pb-cam-err">
