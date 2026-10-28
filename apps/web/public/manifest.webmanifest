@@ -88,6 +88,18 @@
       ]
     },
     {
+      "name": "Seumur",
+      "short_name": "Seumur",
+      "description": "Satu kehidupan tanpa kata",
+      "url": "/seumur",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
       "name": "Tulis surat",
       "short_name": "Surat",
       "url": "/surat/tulis",
