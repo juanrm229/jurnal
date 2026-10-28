@@ -209,23 +209,6 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'main SIDIK', to: '/sidik' },
   },
   {
-    id: 'seumur',
-    title: 'Seumur: satu kehidupan tanpa kata',
-    doodle: 'lilin',
-    noClip: true,
-    lead: 'Permainan hening untuk 2 sampai 10 orang: susun momen-momen hidup dari lahir sampai senja, tanpa bicara. Ada juga Seumur Harian untuk dimainkan sendiri.',
-    steps: [
-      'Buka Seumur (menu lainnya di halaman hari ini), lalu “main bersama”. Teman masuk lewat QR atau kode empat huruf.',
-      'Setiap orang memegang kartu momen hidup, seperti “gigi susu pertama copot” atau “uban pertama”. Usianya tersembunyi, bahkan darimu.',
-      'Jangan bicara. Saat kamu merasa waktunya tiba, tahan kartumu untuk meletakkannya di garis hidup. Setiap momen berbunyi satu nada.',
-      'Kalau masih ada momen yang lebih muda di tangan seseorang, satu lilin padam. Napas Dalam membuka momen termuda di setiap tangan bila semua menahannya bersama.',
-      'Empat bab: Pagi, Siang, Sore, Malam. Di antaranya ada jeda renung: “sudah pernah mengalaminya?”',
-      'Di akhir, putar lagu kehidupan yang kalian susun. Seumur Harian: delapan momen baru setiap hari; tandai yang sudah kamu alami untuk mengisi garis hidupmu.',
-    ],
-    tip: 'Mulai setiap ronde dengan tiga napas bersama. Meja yang bernapas bersama biasanya bertahan lebih lama.',
-    try: { label: 'main Seumur', to: '/seumur' },
-  },
-  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

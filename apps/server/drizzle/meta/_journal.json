@@ -85,6 +85,13 @@
       "when": 1793181738662,
       "tag": "0011_brown_golden_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793186049580,
+      "tag": "0012_stiff_weapon_omega",
+      "breakpoints": true
     }
   ]
 }

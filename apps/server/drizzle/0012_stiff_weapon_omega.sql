@@ -1,0 +1,1 @@
+DROP TABLE "seumur_rooms" CASCADE;

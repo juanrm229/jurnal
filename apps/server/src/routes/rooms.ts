@@ -1,5 +1,5 @@
 /**
- * Ruang permainan bersama (SIDIK, SEUMUR): server jadi wasit.
+ * Ruang permainan bersama (SIDIK): server jadi wasit.
  * Keadaan permainan (termasuk rahasia) hanya ada di sini; tiap pemain
  * menerima tampilan miliknya sendiri. Boleh dimainkan tanpa akun Sehari:
  * tamu dikenali dari token acak di perangkatnya.
@@ -36,7 +36,7 @@ export interface Engine<G extends Base, A> {
   GameError: new (...a: never[]) => Error;
 }
 
-type RoomTable = typeof schema.sidikRooms | typeof schema.seumurRooms;
+type RoomTable = typeof schema.sidikRooms;
 
 async function who(s: Services, c: { req: { header: (k: string) => string | undefined } }): Promise<{ id: string; guest: boolean } | null> {
   const h = c.req.header('authorization') ?? '';

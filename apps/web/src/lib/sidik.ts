@@ -26,7 +26,7 @@ export const profile = {
 };
 
 /** Panggilan ke ruang permainan bersama (/v1/<base>). Identitas tamu dipakai bersama. */
-export async function callGame<T>(base: 'sidik' | 'seumur', method: string, path: string, body?: unknown): Promise<T> {
+export async function callGame<T>(base: 'sidik', method: string, path: string, body?: unknown): Promise<T> {
   const tok = currentToken();
   const res = await fetch(`${API_URL}/v1/${base}${path}`, {
     method,
@@ -51,7 +51,7 @@ export function useRoom(code: string, opts: { tv?: boolean } = {}) {
   return useGameRoom<View>('sidik', code, opts);
 }
 
-export function useGameRoom<V extends { rev: number; now: number }>(base: 'sidik' | 'seumur', code: string, opts: { tv?: boolean; ms?: (v: V | null) => number } = {}) {
+export function useGameRoom<V extends { rev: number; now: number }>(base: 'sidik', code: string, opts: { tv?: boolean; ms?: (v: V | null) => number } = {}) {
   type View = V;
   const call = <T,>(method: string, path: string) => callGame<T>(base, method, path);
   const [view, setView] = useState<View | null>(null);

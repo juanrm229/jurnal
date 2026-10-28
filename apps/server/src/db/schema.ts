@@ -759,9 +759,3 @@ export const sidikRooms = pgTable('sidik_rooms', {
   updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
-/** Meja SEUMUR (keadaan permainan utuh, termasuk kartu di tangan). */
-export const seumurRooms = pgTable('seumur_rooms', {
-  code: text('code').primaryKey(),
-  state: jsonb('state').notNull(),
-  updatedAt: ts('updated_at').notNull().defaultNow(),
-});
