@@ -68,4 +68,15 @@ describe('Titip Surat di server', () => {
     expect(v.petasan).toBe(1);
     expect(JSON.stringify(v.players)).not.toContain('hand');
   });
+
+  it('Kembang Api: kartuku tersembunyi, kartu orang lain terlihat', async () => {
+    const room = await host.ok('POST', '/v1/kembang/rooms', { name: 'Rani', avatar: 'kucing' });
+    await host.ok('POST', `/v1/kembang/rooms/${room.code}/act`, { action: { t: 'bot', tambah: true } });
+    const v = await host.ok('POST', `/v1/kembang/rooms/${room.code}/act`, { action: { t: 'mulai' } });
+    const aku = v.players.find((p: any) => p.id === v.me.id);
+    const bot = v.players.find((p: any) => p.id !== v.me.id);
+    expect(aku.hand.every((c: any) => c.w === null && c.n === null)).toBe(true);
+    expect(bot.hand.every((c: any) => c.w && c.n)).toBe(true);
+    expect(v.token).toBe(8);
+  });
 });

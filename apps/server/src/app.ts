@@ -21,6 +21,7 @@ import { meetRoutes } from './routes/meets';
 import { boardRoutes } from './routes/board';
 import { boothRoutes } from './routes/booths';
 import { sidikRoutes } from './routes/sidik';
+import { hanabiRoutes } from './routes/hanabi';
 import { petasanRoutes } from './routes/petasan';
 import { saudagarRoutes } from './routes/saudagar';
 import { satuRoutes } from './routes/satu';
@@ -63,6 +64,7 @@ export function createApp(s: Services) {
   v1.route('/tangga', tanggaRoutes(s));
   v1.route('/saudagar', saudagarRoutes(s));
   v1.route('/petasan', petasanRoutes(s));
+  v1.route('/kembang', hanabiRoutes(s));
 
   const authed = new Hono<AppEnv>();
   authed.use('*', auth);

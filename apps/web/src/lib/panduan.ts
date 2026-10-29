@@ -289,6 +289,22 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'main Kucing Petasan', to: '/main/petasan' },
   },
   {
+    id: 'kembang',
+    title: 'Kembang Api: kooperatif',
+    doodle: 'kembang-api',
+    noClip: true,
+    lead: 'Permainan kerja sama untuk 2 sampai 5 orang dengan aturan Hanabi lengkap. Kamu melihat kartu semua orang, kecuali kartumu sendiri.',
+    steps: [
+      'Di Ruang Main pilih Kembang Api, buka meja, dan ajak teman. Bot bisa menemani, dan mereka mengerti konvensi petunjuk.',
+      'Ketuk kartu teman untuk memberi petunjuk: sebut satu warna atau satu angka. Pratinjau menunjukkan kartu mana saja yang tersentuh. Setiap petunjuk memakai satu dari 8 token.',
+      'Ketuk kartumu untuk memainkan atau membuangnya. Catatan di kartu menunjukkan kemungkinan warna dan angkanya dari petunjuk yang pernah kamu terima.',
+      'Mainkan kartu berurutan 1 sampai 5 di setiap warna. Salah memainkan membakar satu dari 3 sumbu.',
+      'Saat kartu terakhir diambil, setiap orang mendapat satu giliran lagi. Skor maksimal 25.',
+    ],
+    tip: 'Kartu 5 hanya ada satu di setiap warna. Kalau melihatnya di ujung tangan teman, selamatkan dengan petunjuk angka 5.',
+    try: { label: 'main Kembang Api', to: '/main/kembang' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',
