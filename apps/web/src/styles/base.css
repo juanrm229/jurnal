@@ -69,6 +69,14 @@ body {
   overflow-x: hidden;
   transition: background 0.6s ease;
 }
+/* Halaman tidak pernah bisa digeser ke samping. `clip` (bukan hidden) tidak
+   membuat wadah gulir baru, jadi header sticky tetap bekerja. */
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
 /* Butir kertas halus di seluruh layar. */
 body::before {
   content: '';

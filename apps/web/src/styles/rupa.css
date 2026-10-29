@@ -86,20 +86,19 @@
   margin: 0;
 }
 .rb-masonry {
-  columns: 2;
-  column-gap: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
   margin-top: 8px;
 }
-@media (min-width: 720px) {
-  .rb-masonry {
-    columns: 3;
-  }
+.rb-kolom {
+  flex: 1;
+  min-width: 0;
 }
 .rb-pin {
   position: relative;
   display: block;
   width: 100%;
-  break-inside: avoid;
   margin: 0 0 18px;
   padding: 0;
   border: 0;

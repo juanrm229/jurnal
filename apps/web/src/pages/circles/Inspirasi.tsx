@@ -34,6 +34,7 @@ export default function Inspirasi() {
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<OpenPin | null>(null);
   const fileIn = useRef<HTMLInputElement>(null);
+  const kolom = useKolom();
 
   // Dibagikan dari aplikasi lain (share target PWA): buka lembar tempel berisi tautannya.
   useEffect(() => {
@@ -122,9 +123,12 @@ export default function Inspirasi() {
           }
         />
       ) : (
+        // Kolom flex, bukan CSS `columns`: di Safari iOS multi-kolom + rotasi + animasi memotong kartu di kolom kedua.
         <div className="rb-masonry">
-          {shown.map((p, i) => (
-            <PinCard key={p.wire.id} pin={p} i={i} onOpen={() => setOpen(p)} />
+          {Array.from({ length: kolom }, (_, k) => (
+            <div key={k} className="rb-kolom">
+              {shown.map((p, i) => (i % kolom === k ? <PinCard key={p.wire.id} pin={p} i={i} onOpen={() => setOpen(p)} /> : null))}
+            </div>
           ))}
         </div>
       )}
@@ -288,4 +292,17 @@ function PinCard({ pin, i, onOpen }: { pin: OpenPin; i: number; onOpen: () => vo
       {done ? <span className="rb-stamp">sudah ✓</span> : null}
     </button>
   );
+}
+
+/** Dua kolom di HP, tiga di layar lebar. */
+function useKolom() {
+  const q = '(min-width: 720px)';
+  const [lebar, setLebar] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(q).matches);
+  useEffect(() => {
+    const m = matchMedia(q);
+    const on = () => setLebar(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return lebar ? 3 : 2;
 }
