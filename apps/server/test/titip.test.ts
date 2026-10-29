@@ -41,4 +41,13 @@ describe('Titip Surat di server', () => {
     expect(v.me.hand.length).toBeGreaterThanOrEqual(7);
     expect((await env.app.request(`/v1/titip/rooms/${room.code}`)).status).toBe(404);
   });
+
+  it('Ular Tangga: papan acak dengan kotak kartu, mulai', async () => {
+    const room = await host.ok('POST', '/v1/tangga/rooms', { name: 'Rani', avatar: 'kucing' });
+    await host.ok('POST', `/v1/tangga/rooms/${room.code}/act`, { action: { t: 'bot', tambah: true } });
+    const v = await host.ok('POST', `/v1/tangga/rooms/${room.code}/act`, { action: { t: 'mulai' } });
+    expect(v.preset).toBe('jenius');
+    expect(v.papan.kotakKartu.length).toBe(8);
+    expect(v.players.every((p: any) => p.pos === 0)).toBe(true);
+  });
 });

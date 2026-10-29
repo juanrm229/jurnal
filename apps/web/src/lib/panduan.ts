@@ -241,6 +241,22 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'main Kartu Satu', to: '/main/satu' },
   },
   {
+    id: 'ular-tangga',
+    title: 'Ular Tangga Jenius',
+    doodle: 'ui-dadu',
+    noClip: true,
+    lead: 'Ular tangga yang tidak lagi soal untung-untungan, untuk 2 sampai 6 orang. Ada juga mode Klasik dengan papan klasik.',
+    steps: [
+      'Di Ruang Main pilih Ular Tangga, gelar papan, dan ajak teman atau tambahkan bot.',
+      'Ketuk lempar dadu, atau aktifkan goyang HP lalu goyangkan HP-mu.',
+      'Mode Jenius: pilih satu dadu untuk jalan. Dadu lainnya boleh mendorong lawan yang dekat. Pratinjau menunjukkan ke mana dia jatuh: kepala ular atau malah tangga.',
+      'Berhenti di kotak bergambar kartu untuk mendapat kartu aksi: Gergaji, Ular Peliharaan, Dadu Emas, Tukar Tempat, Angin Balik, Lompat, Perisai, dan Penawar.',
+      'Setiap 3 ronde musim berganti: ular atau tangga baru muncul di tempat yang bayangannya sudah terlihat. Harus pas di 100; kelebihan langkah memantul mundur.',
+    ],
+    tip: 'Dorong lawan hanya kalau hitunganmu yakin. Satu salah hitung bisa mengirimnya naik tangga.',
+    try: { label: 'main Ular Tangga', to: '/main/tangga' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

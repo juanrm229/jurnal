@@ -1263,3 +1263,337 @@ button.st-belakang {
 .st-tangan > .st-kartu.pilih {
   z-index: 3;
 }
+
+/* ── ULAR TANGGA ── */
+.tg-screen {
+  padding-bottom: 30px;
+}
+.tg-meja {
+  display: grid;
+  gap: 10px;
+}
+.tg-pemain {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 2px var(--gutter) 4px;
+}
+.tg-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px 4px 4px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 2px var(--c), var(--shadow);
+  font-size: 12px;
+}
+.tg-chip.giliran {
+  background: color-mix(in srgb, var(--c) 22%, var(--card));
+  box-shadow: inset 0 0 0 3px var(--c), 0 6px 14px -6px var(--c);
+}
+.tg-chip b {
+  font-size: 12px;
+}
+.tg-pos {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--c);
+  color: #fff;
+  font: 700 12px var(--mono);
+}
+.tg-jml-kartu {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+.tg-papan-wadah {
+  display: grid;
+  gap: 6px;
+}
+.tg-papan {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 3px #16161a, 0 14px 30px -12px #0006;
+  background: #fffaf0;
+}
+.tg-kotak-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+}
+.tg-kotak {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid #16161a22;
+  border-bottom: 1px solid #16161a22;
+  background: #fff6e2;
+  color: #b45309;
+  font: inherit;
+}
+.tg-kotak.b {
+  background: #fde9c7;
+}
+.tg-kotak > span {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  font: 600 clamp(8px, 2.2vw, 13px) var(--mono);
+  color: #16161a99;
+}
+.tg-ikon-kartu {
+  opacity: 0.8;
+}
+.tg-kotak.finis {
+  background: repeating-conic-gradient(#16161a 0 25%, #fff 0 50%) 0 0 / 12px 12px;
+  color: #d9473d;
+}
+.tg-kotak.finis > span {
+  background: #fff;
+  border-radius: 4px;
+  padding: 0 2px;
+}
+.tg-kotak.sorot {
+  background: color-mix(in srgb, var(--ink) 30%, #fff);
+  box-shadow: inset 0 0 0 3px var(--ink);
+  z-index: 1;
+}
+.tg-kotak.bisa {
+  cursor: pointer;
+  background: #ffe36b;
+  animation: ts-ajak 1s ease-in-out infinite;
+  z-index: 3;
+}
+.tg-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.tg-ular.putus {
+  opacity: 0.28;
+}
+.tg-ular.bayang,
+.tg-tangga.bayang {
+  opacity: 0.25;
+  stroke-dasharray: 10 10;
+  animation: sd-breathe 2s ease-in-out infinite;
+}
+.tg-pion {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--c), 0 4px 8px -2px #0008;
+  transition: left 0.16s ease, top 0.16s ease;
+}
+.tg-pion .sd-face {
+  border: 0;
+}
+.tg-pion.giliran {
+  animation: tg-lompat 0.9s ease-in-out infinite;
+  z-index: 5;
+}
+@keyframes tg-lompat {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.tg-pion.diam {
+  position: static;
+}
+.tg-lahir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tg-musim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--sticky-blue);
+  color: #16161a;
+  font-size: 13px;
+}
+.tg-aku {
+  gap: 8px;
+}
+.tg-aksi {
+  display: grid;
+  gap: 8px;
+}
+.tg-lempar {
+  min-height: 60px;
+  font-size: 18px;
+}
+.tg-tangan {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tg-kartu {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 84px;
+  padding: 10px 6px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sticky-yellow);
+  color: #16161a;
+  font: inherit;
+  box-shadow: 0 6px 14px -8px #0006;
+  rotate: -1.5deg;
+}
+.tg-kartu:nth-child(even) {
+  rotate: 1.5deg;
+  background: var(--sticky-peach);
+}
+.tg-kartu b {
+  font-size: 12px;
+  line-height: 1.1;
+  text-align: center;
+}
+button.tg-kartu {
+  cursor: pointer;
+}
+.tg-kartu.mati {
+  opacity: 0.5;
+}
+.tg-dadu-baris {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.tg-dadu {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 3px;
+  width: 64px;
+  height: 64px;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: inset 0 -5px 0 #0001, 0 0 0 2.5px #16161a, 0 8px 16px -6px #0006;
+  font: inherit;
+  cursor: pointer;
+}
+.tg-dadu i {
+  border-radius: 50%;
+}
+.tg-dadu i.on {
+  background: #16161a;
+}
+.tg-dadu.kocok {
+  animation: tg-kocok 0.7s cubic-bezier(0.3, 0.7, 0.4, 1.2);
+}
+@keyframes tg-kocok {
+  0% {
+    transform: translateY(-30px) rotate(-200deg) scale(0.8);
+  }
+  60% {
+    transform: translateY(4px) rotate(10deg);
+  }
+}
+.tg-dadu.jalan {
+  box-shadow: inset 0 -5px 0 #0001, 0 0 0 4px var(--ink), 0 10px 20px -6px var(--ink);
+}
+.tg-dadu.dorong {
+  box-shadow: inset 0 -5px 0 #0001, 0 0 0 4px var(--danger), 0 10px 20px -6px var(--danger);
+}
+.tg-dadu em {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  translate: -50% 0;
+  font: 600 11px var(--mono);
+  font-style: normal;
+  color: var(--ink);
+}
+.tg-dadu.dorong em {
+  color: var(--danger);
+}
+.tg-dadu.kecil {
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  gap: 2px;
+  border-radius: 9px;
+}
+.tg-dadu-baris.kecil {
+  justify-content: flex-start;
+}
+.tg-pratinjau {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 15px;
+}
+.tg-dorong {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tg-dorong .pill.bahaya {
+  box-shadow: inset 0 0 0 2px #3aa865;
+}
+.tg-dorong .pill.untung {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+.tg-nilai {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 30%;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--card);
+  font: inherit;
+  cursor: pointer;
+}
+.tg-hero-dadu {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 18px 0 10px;
+}
+.tg-tv {
+  grid-template-columns: minmax(0, 92vh) 1fr;
+  align-items: start;
+}
+.tg-tv-samping {
+  display: grid;
+  gap: 18px;
+  font-size: 22px;
+}
+.tg-tv-judul {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 34px var(--serif-display);
+  color: var(--ink);
+}

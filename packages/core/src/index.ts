@@ -66,3 +66,4 @@ export type { ChapterFeatures } from './content/chapterTitles';
 export * as sidik from './sidik';
 export * as surat from './surat';
 export * as satu from './satu';
+export * as tangga from './tangga';

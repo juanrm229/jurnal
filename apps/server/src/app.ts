@@ -23,6 +23,7 @@ import { boothRoutes } from './routes/booths';
 import { sidikRoutes } from './routes/sidik';
 import { satuRoutes } from './routes/satu';
 import { suratRoutes } from './routes/surat';
+import { tanggaRoutes } from './routes/tangga';
 import { dreamRoutes } from './routes/dreams';
 import { webRoutes } from './web/pages';
 
@@ -57,6 +58,7 @@ export function createApp(s: Services) {
   v1.route('/sidik', sidikRoutes(s));
   v1.route('/titip', suratRoutes(s));
   v1.route('/satu', satuRoutes(s));
+  v1.route('/tangga', tanggaRoutes(s));
 
   const authed = new Hono<AppEnv>();
   authed.use('*', auth);
