@@ -1,5 +1,5 @@
 /**
- * Ruang permainan bersama (SIDIK): server jadi wasit.
+ * Ruang permainan bersama (SIDIK, Ruang Main): server jadi wasit.
  * Keadaan permainan (termasuk rahasia) hanya ada di sini; tiap pemain
  * menerima tampilan miliknya sendiri. Boleh dimainkan tanpa akun Sehari:
  * tamu dikenali dari token acak di perangkatnya.
@@ -36,7 +36,7 @@ export interface Engine<G extends Base, A> {
   GameError: new (...a: never[]) => Error;
 }
 
-type RoomTable = typeof schema.sidikRooms;
+type RoomTable = typeof schema.sidikRooms | typeof schema.gameRooms;
 
 async function who(s: Services, c: { req: { header: (k: string) => string | undefined } }): Promise<{ id: string; guest: boolean } | null> {
   const h = c.req.header('authorization') ?? '';
@@ -69,7 +69,7 @@ export function roomRoutes<G extends Base, A>(s: Services, engine: Engine<G, A>,
     const hit = cache.get(k);
     if (hit) return hit;
     const [row] = await s.db.select().from(table).where(eq(table.code, k));
-    if (!row) throw notFound('Kode ruangan tidak ditemukan.');
+    if (!row || ('kind' in row && row.kind !== tag)) throw notFound('Kode ruangan tidak ditemukan.');
     const g = row.state as G;
     cache.set(k, g);
     return g;
@@ -78,7 +78,7 @@ export function roomRoutes<G extends Base, A>(s: Services, engine: Engine<G, A>,
     cache.set(g.code, g);
     await s.db
       .insert(table)
-      .values({ code: g.code, state: g, updatedAt: s.now() })
+      .values({ code: g.code, state: g, updatedAt: s.now(), ...(table === schema.gameRooms ? { kind: tag } : {}) } as typeof schema.gameRooms.$inferInsert)
       .onConflictDoUpdate({ target: table.code, set: { state: g, updatedAt: s.now() } });
   }
   const now = () => s.now().getTime();

@@ -209,6 +209,22 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'main SIDIK', to: '/sidik' },
   },
   {
+    id: 'ruang-main',
+    title: 'Ruang Main & Titip Surat',
+    doodle: 'dadu',
+    noClip: true,
+    lead: 'Semua permainan bersama ada di Ruang Main. Yang pertama: Titip Surat, kartu deduksi untuk 2 sampai 6 orang, dengan aturan lengkap ala Love Letter.',
+    steps: [
+      'Buka Ruang Main (menu lainnya di halaman hari ini). Masukkan kode untuk duduk di meja mana pun, atau pilih permainan.',
+      'Di Titip Surat, buka meja lalu ajak teman lewat QR atau kode. Sedang sendiri atau kurang orang? Tambahkan bot.',
+      'Setiap giliran ambil satu kartu, lalu mainkan salah satu dari dua kartumu. Ada 10 jenis kartu: Teman Kepo menebak, Teman Curhat mengintip, Saingan mengadu, Ayah menukar, dan Dia tidak boleh terbuang.',
+      'Ronde selesai saat tinggal satu orang atau tumpukan habis. Pemenang ronde mendapat perangko; kumpulkan lebih dulu untuk menang.',
+      'Catatan otomatis menghitung kartu yang belum terlihat dan mengingat kartu lawan yang pernah kamu lihat. Bisa dimatikan untuk tantangan penuh.',
+    ],
+    tip: 'Buka mode TV di laptop atau TV supaya semua bisa melihat meja dan kejadian terbaru.',
+    try: { label: 'buka Ruang Main', to: '/main' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

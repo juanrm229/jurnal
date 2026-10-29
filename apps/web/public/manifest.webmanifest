@@ -76,10 +76,10 @@
       ]
     },
     {
-      "name": "SIDIK",
-      "short_name": "SIDIK",
-      "description": "Game detektif bersama",
-      "url": "/sidik",
+      "name": "Ruang Main",
+      "short_name": "Ruang Main",
+      "description": "SIDIK, Titip Surat, dan game bersama lainnya",
+      "url": "/main",
       "icons": [
         {
           "src": "/icons/icon-192.png",

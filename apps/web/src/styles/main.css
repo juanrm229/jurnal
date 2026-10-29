@@ -1,0 +1,813 @@
+/* RUANG MAIN & TITIP SURAT: bahasa visual Sehari (kertas, tinta, doodle,
+   selotip). Kartu seperti kartu pos kecil: segel lilin bernomor, doodle,
+   dan warna lembut per jenis (--h). */
+
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ── Ruang Main ── */
+.rm-hero {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+.rm-daftar {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+.rm-game {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 18px 16px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.rm-game:nth-child(3n + 1) {
+  rotate: -0.6deg;
+}
+.rm-game:nth-child(3n + 2) {
+  rotate: 0.5deg;
+}
+.rm-game:not(:disabled):active {
+  transform: scale(0.98);
+}
+.rm-game > svg:first-of-type {
+  color: var(--ink);
+  flex: none;
+}
+.rm-game .grow {
+  display: grid;
+  gap: 2px;
+}
+.rm-game b {
+  font-family: var(--serif-display);
+  font-size: 20px;
+  font-weight: 480;
+}
+.rm-game .tiny {
+  color: var(--ink-soft);
+}
+.rm-game .small {
+  color: var(--text-soft);
+}
+.rm-game.segera {
+  cursor: default;
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--card-edge);
+}
+.rm-game.segera > svg:first-of-type {
+  color: var(--text-soft);
+}
+.rm-segera {
+  flex: none;
+  font-family: var(--hand);
+  font-size: 20px;
+  color: var(--ink-soft);
+  rotate: -6deg;
+}
+
+/* ── Kartu ── */
+.ts-kartu {
+  --tinta: hsl(var(--h) 52% 36%);
+  --muka: hsl(var(--h) 70% 95%);
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  width: 136px;
+  aspect-ratio: 5 / 7.2;
+  padding: 26px 10px 12px;
+  border: 0;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 40%, #fff8 0 36%, transparent 37%),
+    repeating-linear-gradient(135deg, transparent 0 9px, hsl(var(--h) 60% 88% / 0.5) 9px 10px),
+    var(--muka);
+  color: var(--tinta);
+  box-shadow: 0 1px 0 #0001, 0 10px 22px -10px hsl(var(--h) 40% 30% / 0.45), inset 0 0 0 1.5px hsl(var(--h) 45% 80%);
+  font: inherit;
+  text-align: center;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.3), box-shadow 0.2s ease;
+}
+button.ts-kartu {
+  cursor: pointer;
+}
+button.ts-kartu:not(.mati):hover,
+.ts-kartu.pilih {
+  transform: translateY(-12px) rotate(-1.5deg);
+}
+.ts-kartu.pilih {
+  box-shadow: 0 0 0 3px var(--ink), 0 18px 30px -12px hsl(var(--h) 40% 30% / 0.6);
+}
+.ts-kartu.mati {
+  opacity: 0.45;
+  filter: saturate(0.3);
+}
+.ts-kartu.kecil {
+  width: 92px;
+  padding: 20px 6px 8px;
+  gap: 2px;
+  border-radius: 10px;
+}
+.ts-segel {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 46% 54% 50% 50% / 52% 48% 52% 48%;
+  background: radial-gradient(circle at 35% 30%, hsl(var(--h) 70% 62%), hsl(var(--h) 60% 38%));
+  color: #fff;
+  font: 700 16px var(--serif-display);
+  box-shadow: 0 2px 0 hsl(var(--h) 60% 26% / 0.5), inset 0 0 0 3px hsl(var(--h) 60% 50% / 0.5);
+}
+.kecil > .ts-segel {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  top: 6px;
+  left: 6px;
+}
+.ts-jumlah {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font: 600 11px var(--mono);
+  opacity: 0.6;
+}
+.ts-nama {
+  font-family: var(--serif-display);
+  font-weight: 520;
+  font-size: 16px;
+  line-height: 1.1;
+}
+.kecil .ts-nama {
+  font-size: 12px;
+}
+.ts-efek {
+  font-family: var(--hand);
+  font-size: 17px;
+  line-height: 1.05;
+  color: hsl(var(--h) 35% 30%);
+}
+.ts-mini {
+  --tinta: hsl(var(--h) 52% 34%);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  height: 24px;
+  padding: 0 5px 0 6px;
+  border-radius: 6px;
+  background: hsl(var(--h) 70% 92%);
+  color: var(--tinta);
+  box-shadow: inset 0 0 0 1px hsl(var(--h) 45% 78%);
+  font: 700 12px var(--mono);
+}
+.ts-belakang {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 90px;
+  border-radius: 10px;
+  background:
+    linear-gradient(155deg, transparent 49%, #fff3 50% 51%, transparent 52%),
+    linear-gradient(25deg, transparent 49%, #fff3 50% 51%, transparent 52%),
+    var(--ink);
+  color: #fff;
+  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--ink) 70%, #000), inset 0 0 0 4px color-mix(in srgb, var(--ink) 70%, #fff);
+}
+.ts-belakang b {
+  position: absolute;
+  bottom: 6px;
+  font: 700 14px var(--mono);
+}
+.ts-belakang.kecil {
+  width: 18px;
+  height: 26px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 70%, #fff);
+}
+.ts-perangko {
+  display: inline-flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.ts-perangko i {
+  width: 11px;
+  height: 13px;
+  border-radius: 2px;
+  background: var(--fog);
+  opacity: 0.5;
+  -webkit-mask: radial-gradient(circle 1.6px at 50% 0, #0000 98%, #000) top/4px 50% repeat-x, radial-gradient(circle 1.6px at 50% 100%, #0000 98%, #000) bottom/4px 50% repeat-x;
+  mask: radial-gradient(circle 1.6px at 50% 0, #0000 98%, #000) top/4px 50% repeat-x, radial-gradient(circle 1.6px at 50% 100%, #0000 98%, #000) bottom/4px 50% repeat-x;
+}
+.ts-perangko i.ada {
+  background: #d9473d;
+  opacity: 1;
+  animation: ts-cap 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.4) both;
+}
+@keyframes ts-cap {
+  from {
+    transform: scale(2) rotate(-20deg);
+    opacity: 0;
+  }
+}
+
+/* ── Meja ── */
+.ts-screen {
+  padding-bottom: 40px;
+}
+.ts-ikon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ts-meja {
+  display: grid;
+  gap: 12px;
+}
+.ts-lawan {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.ts-kursi {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font: inherit;
+  text-align: left;
+  transition: box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+.ts-kursi-atas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ts-kursi-nama {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.ts-kursi-nama b {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ts-kursi-nama em {
+  font: 500 10px var(--mono);
+  color: var(--ink-soft);
+  font-style: normal;
+}
+.ts-kursi-tangan {
+  display: flex;
+  gap: 3px;
+  flex: none;
+}
+.ts-buang {
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ts-kursi.giliran {
+  box-shadow: 0 0 0 2.5px var(--ink), var(--shadow);
+}
+.ts-kursi.keluar {
+  opacity: 0.55;
+}
+.ts-kursi.keluar .ts-kursi-nama b {
+  text-decoration: line-through;
+}
+.ts-kursi.aman {
+  background: color-mix(in srgb, var(--sticky-blue) 60%, var(--card));
+}
+button.ts-kursi.bisa {
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--ink-soft), var(--shadow);
+  animation: ts-ajak 1.4s ease-in-out infinite;
+}
+button.ts-kursi:disabled {
+  opacity: 0.5;
+}
+@keyframes ts-ajak {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+.ts-dipilih {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 600 11px var(--mono);
+}
+.ts-mikir {
+  font-family: var(--hand);
+  font-size: 17px;
+  line-height: 1;
+  color: var(--ink);
+  animation: sd-breathe 1.6s ease-in-out infinite;
+}
+.ts-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--fog);
+  font: 600 10px var(--mono);
+  color: var(--text);
+}
+.ts-badge.aman {
+  background: var(--sticky-blue);
+  color: #16161a;
+}
+.ts-tengah {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+}
+.ts-tumpukan {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.ts-terbuka {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ts-terbuka .tiny {
+  color: var(--text-soft);
+}
+.ts-kejadian {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.ts-kj {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text-soft);
+}
+.ts-kj.baru {
+  color: var(--text);
+  font-size: 15px;
+  animation: ts-masuk 0.35s ease both;
+}
+@keyframes ts-masuk {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.ts-rahasia {
+  display: block;
+  font-style: normal;
+  font-family: var(--hand);
+  font-size: 19px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.ts-catatan {
+  border-radius: 14px;
+  background: var(--sticky-yellow);
+  color: #16161a;
+}
+.ts-catatan-kepala {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: 500 13px var(--sans, inherit);
+  text-align: left;
+  cursor: pointer;
+}
+.ts-sisa {
+  display: grid;
+  gap: 4px;
+  padding: 0 12px 12px;
+}
+.ts-sisa-baris {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  gap: 6px;
+  font-size: 13px;
+}
+.ts-sisa-baris b {
+  color: hsl(var(--h) 52% 34%);
+}
+.ts-sisa-baris i {
+  font-style: normal;
+  letter-spacing: 2px;
+  color: hsl(var(--h) 52% 38%);
+}
+.ts-sisa-baris.habis {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* Tanganku */
+.ts-aku {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 12px var(--gutter) calc(14px + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: var(--card);
+  box-shadow: 0 -10px 30px rgba(20, 20, 40, 0.1);
+}
+.ts-aku.giliran {
+  box-shadow: 0 -3px 0 var(--ink), 0 -14px 34px color-mix(in srgb, var(--ink) 25%, transparent);
+}
+.ts-aku-atas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ts-aku-atas b {
+  font-size: 14px;
+}
+.ts-status {
+  margin: 0;
+  text-align: center;
+  font-family: var(--hand);
+  font-size: 23px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.ts-tangan {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 8px;
+}
+.ts-tangan > .ts-kartu:nth-child(1) {
+  rotate: -3deg;
+}
+.ts-tangan > .ts-kartu:nth-child(2) {
+  rotate: 2.5deg;
+}
+.ts-tangan.tiga {
+  gap: 8px;
+}
+.ts-aksi,
+.ts-pos {
+  display: grid;
+  gap: 8px;
+}
+.ts-aksi .small {
+  margin: 0;
+  color: var(--text-soft);
+}
+.ts-awas {
+  color: var(--danger) !important;
+  font-weight: 600;
+}
+.ts-aksi .sd-label {
+  margin: 4px 0 0;
+}
+.ts-pilih {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ts-tebak {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.ts-tebak button {
+  display: grid;
+  justify-items: start;
+  gap: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: hsl(var(--h) 70% 93%);
+  color: hsl(var(--h) 52% 30%);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ts-tebak button b {
+  font: 700 15px var(--serif-display);
+}
+.ts-tebak button span {
+  font-size: 12px;
+  line-height: 1.1;
+}
+.ts-tebak button i {
+  font: 500 10px var(--mono);
+  opacity: 0.7;
+  font-style: normal;
+}
+.ts-tebak button.on {
+  box-shadow: 0 0 0 2.5px hsl(var(--h) 52% 36%);
+}
+.ts-urut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Riwayat */
+.ts-riwayat {
+  display: grid;
+  gap: 8px;
+}
+.ts-riwayat p {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.ts-riwayat p.ronde {
+  margin-top: 8px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Jeda & akhir */
+.ts-layar {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+.ts-layar-isi {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 460px);
+  padding: 22px 18px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow-lift);
+}
+.ts-layar-isi > .btn {
+  width: 100%;
+}
+.ts-layar.akhir .ts-layar-isi {
+  background: radial-gradient(circle at 50% 0, var(--sticky-peach), var(--card) 60%);
+}
+.ts-layar .sd-big-line {
+  font-size: 24px;
+}
+.ts-layar .sd-whisper {
+  margin: 0;
+}
+.ts-buka {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.ts-buka > span {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  opacity: 0.6;
+}
+.ts-buka > span.menang {
+  opacity: 1;
+  transform: translateY(-6px);
+}
+.ts-klasemen {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+.ts-klasemen > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 5%, var(--paper));
+}
+.ts-klasemen > span.baru {
+  background: var(--sticky-yellow);
+  color: #16161a;
+}
+
+/* Aturan */
+.ts-aturan p {
+  margin: 0 0 10px;
+}
+.ts-aturan-kartu {
+  display: grid;
+  gap: 8px;
+}
+.ts-aturan-baris {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
+  padding: 12px 12px 12px 44px;
+  border-radius: 12px;
+  background: hsl(var(--h) 70% 95%);
+  color: hsl(var(--h) 52% 30%);
+}
+.ts-aturan-baris > span:last-child {
+  display: grid;
+  gap: 2px;
+  color: #26262c;
+}
+.ts-aturan-baris .ts-segel {
+  top: 12px;
+  left: 8px;
+}
+
+/* Beranda */
+.ts-hero {
+  text-align: center;
+}
+.ts-hero-kartu {
+  position: relative;
+  height: 170px;
+  margin: 6px 0 4px;
+}
+.ts-hero-kartu > span {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  translate: calc(-50% + var(--i) * 46px) calc(var(--i) * var(--i) * 5px);
+  rotate: calc(var(--i) * 9deg);
+  animation: ts-kipas 0.8s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+  animation-delay: calc((var(--i) + 2) * 70ms);
+}
+@keyframes ts-kipas {
+  from {
+    translate: -50% 40px;
+    rotate: 0deg;
+    opacity: 0;
+  }
+}
+.ts-galeri {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 14px 2px 12px;
+  margin-bottom: 10px;
+}
+.ts-galeri .ts-kartu {
+  flex: none;
+}
+
+/* TV */
+.ts-tv {
+  min-height: 100vh;
+  padding: 28px 40px;
+  background: var(--paper);
+  color: var(--text);
+  display: grid;
+  gap: 22px;
+  align-content: start;
+}
+.ts-tv-lobi {
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+  padding-top: 40px;
+}
+.ts-tv-lobi > :first-child {
+  background: #fff;
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-lift);
+}
+.ts-tv-lobi h1 {
+  font-family: var(--hand);
+  font-size: 80px;
+  margin: 0;
+  color: var(--ink);
+}
+.ts-tv-atas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22px;
+}
+.ts-tv-atas b {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 34px var(--serif-display);
+  color: var(--ink);
+}
+.ts-tv-kursi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.ts-tv-kursi .ts-kursi-nama b {
+  font-size: 20px;
+}
+.ts-tv-tengah {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.ts-tv-kejadian {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+.ts-tv-kejadian p {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text-soft);
+}
+.ts-tv-kejadian p.baru {
+  font: 500 32px var(--serif-display);
+  color: var(--text);
+  animation: ts-masuk 0.4s ease both;
+}
+
+@media (max-width: 380px) {
+  .ts-kartu {
+    width: 120px;
+  }
+  .ts-kartu.kecil {
+    width: 84px;
+  }
+  .ts-lawan {
+    grid-template-columns: 1fr 1fr;
+  }
+}

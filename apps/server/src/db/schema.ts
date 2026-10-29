@@ -759,3 +759,11 @@ export const sidikRooms = pgTable('sidik_rooms', {
   updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
+/** Meja permainan Ruang Main lainnya (Titip Surat, dst.); `kind` = nama permainan. */
+export const gameRooms = pgTable('game_rooms', {
+  code: text('code').primaryKey(),
+  kind: text('kind').notNull(),
+  state: jsonb('state').notNull(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
+});
+
