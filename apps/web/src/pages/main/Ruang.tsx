@@ -5,14 +5,14 @@
  */
 import { useState } from 'react';
 import { navigate } from '@/lib/router';
-import { adaMeja } from '@/lib/titip';
+import { callGame } from '@/lib/sidik';
 import { Doodle, Header, useToast } from '@/ui/kit';
 
 const GAMES: { id: string; nama: string; asal?: string; doodle: string; orang: string; kata: string; to?: string }[] = [
   { id: 'titip', nama: 'Titip Surat', asal: 'gaya Love Letter', doodle: 'amplop', orang: '2–6', kata: 'Kartu deduksi: tebak isi tangan lawan, bertahan sampai kartu terakhir.', to: '/main/titip' },
   { id: 'sidik', nama: 'SIDIK', doodle: 'ui-cari', orang: '2–20', kata: 'Detektif bersama. Ada yang berbohong di antara kalian.', to: '/sidik' },
   { id: 'saudagar', nama: 'Saudagar', asal: 'gaya Monopoli', doodle: 'rumah', orang: '2–6', kata: 'Beli, tawar, lelang, bangun rumah dan hotel di kota-kota Indonesia.' },
-  { id: 'kartu-satu', nama: 'Kartu Satu', asal: 'gaya UNO', doodle: 'kartu', orang: '2–10', kata: 'Cepat, ramai, penuh balasan. Jangan lupa teriak "satu!".' },
+  { id: 'kartu-satu', nama: 'Kartu Satu', asal: 'gaya UNO', doodle: 'kartu', orang: '2–10', kata: 'Aturan ori atau tongkrongan: tumpuk plus, salip, sampai ketemu yang kalah.', to: '/main/satu' },
   { id: 'ular-tangga', nama: 'Ular Tangga', doodle: 'ui-dadu', orang: '2–6', kata: 'Klasik, dengan kartu aksi supaya ada strateginya.' },
   { id: 'petasan', nama: 'Kucing Petasan', asal: 'gaya Exploding Kittens', doodle: 'kucing', orang: '2–5', kata: 'Ambil kartu dan berdoa. Yang menarik petasan, meledak.' },
   { id: 'istana', nama: 'Rahasia Istana', asal: 'gaya Secret Hitler', doodle: 'gembok-hati', orang: '5–10', kata: 'Kubu tersembunyi, undang-undang, dan pemimpin yang tak boleh terpilih.' },
@@ -27,7 +27,9 @@ export default function RuangMain() {
   const masuk = async () => {
     setBusy(true);
     try {
-      navigate((await adaMeja(code)) ? `/main/titip/${code}` : `/sidik/${code}`);
+      // Kode meja unik di semua permainan baru; SIDIK punya ruangnya sendiri.
+      for (const [base, path] of [['titip', '/main/titip'], ['satu', '/main/satu']] as const) if (await callGame(base, 'GET', `/rooms/${code}?tv=1`).then(() => true, () => false)) return navigate(`${path}/${code}`);
+      navigate(`/sidik/${code}`);
     } catch (e) {
       toast((e as Error).message);
     } finally {

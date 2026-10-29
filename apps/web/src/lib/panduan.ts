@@ -225,6 +225,22 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'buka Ruang Main', to: '/main' },
   },
   {
+    id: 'kartu-satu',
+    title: 'Kartu Satu: aturan ori & tongkrongan',
+    doodle: 'kartu',
+    noClip: true,
+    lead: 'Permainan cocokkan warna untuk 2 sampai 10 orang. Pilih aturan resmi, aturan tongkrongan, atau racik sendiri.',
+    steps: [
+      'Di Ruang Main pilih Kartu Satu, buka meja, dan ajak teman. Tuan rumah memilih Aturan Ori atau Aturan Tongkrongan, lalu boleh menyalakan atau mematikan setiap aturan.',
+      'Mainkan kartu yang sama warna atau angkanya. Tidak ada yang cocok? Ketuk tumpukan untuk mengambil kartu.',
+      'Kartumu tinggal dua? Tekan SATU!. Kalau lupa, lawan bisa menekan tangkap dan kamu mengambil 2 kartu.',
+      'Aturan tongkrongan: balas +2 dengan +2 atau +4, pantulkan dengan Putar Balik, salip dengan kartu kembar persis, buang beberapa kartu sama sekaligus, dan main sampai ketemu siapa yang kalah.',
+      'Aturan ori: +4 bisa ditantang, dan yang habis duluan mengumpulkan poin dari kartu lawan sampai 500.',
+    ],
+    tip: 'Kurang orang? Tambahkan bot. Mereka juga bisa menangkap kalau kamu lupa bilang SATU!',
+    try: { label: 'main Kartu Satu', to: '/main/satu' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

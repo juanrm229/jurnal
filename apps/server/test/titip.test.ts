@@ -31,4 +31,14 @@ describe('Titip Surat di server', () => {
     expect(tv.me).toBeNull();
     expect((await env.app.request(`/v1/sidik/rooms/${room.code}`)).status).toBe(404);
   });
+
+  it('Kartu Satu: preset tongkrongan, mulai, kode tidak tertukar dengan Titip Surat', async () => {
+    const room = await host.ok('POST', '/v1/satu/rooms', { name: 'Rani', avatar: 'kucing' });
+    await host.ok('POST', `/v1/satu/rooms/${room.code}/act`, { action: { t: 'preset', nama: 'tongkrongan' } });
+    await host.ok('POST', `/v1/satu/rooms/${room.code}/act`, { action: { t: 'bot', tambah: true } });
+    const v = await host.ok('POST', `/v1/satu/rooms/${room.code}/act`, { action: { t: 'mulai' } });
+    expect(v.preset).toBe('tongkrongan');
+    expect(v.me.hand.length).toBeGreaterThanOrEqual(7);
+    expect((await env.app.request(`/v1/titip/rooms/${room.code}`)).status).toBe(404);
+  });
 });
