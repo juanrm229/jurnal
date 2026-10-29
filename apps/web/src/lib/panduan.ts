@@ -273,6 +273,22 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'main Saudagar', to: '/main/saudagar' },
   },
   {
+    id: 'petasan',
+    title: 'Kucing Petasan',
+    doodle: 'kucing',
+    noClip: true,
+    lead: 'Permainan kartu untung-untungan yang penuh tipu daya untuk 2 sampai 10 orang. Jangan sampai mengambil Kucing Petasan tanpa Siram Air.',
+    steps: [
+      'Di Ruang Main pilih Kucing Petasan, buka meja, dan ajak teman atau tambahkan bot.',
+      'Di giliranmu, mainkan kartu sebanyak yang kamu mau, lalu ketuk tumpukan untuk mengambil satu kartu dan mengakhiri giliran.',
+      'Ambil Kucing Petasan? Siram Air menyelamatkanmu; geser untuk menyelipkan petasan kembali di posisi mana pun. Tanpa Siram Air, kamu meledak.',
+      'Setelah setiap aksi ada beberapa detik untuk menekan OGAH! dan membatalkannya, bahkan saat bukan giliranmu.',
+      'Pilih dua kartu kembar untuk mencuri, tiga kembar untuk meminta kartu tertentu, atau lima kartu berbeda untuk memungut buangan.',
+    ],
+    tip: 'Persentase peluang petasan di tengah meja naik setiap ada yang mengambil kartu. Simpan Serbu! dan Kabur untuk saat genting.',
+    try: { label: 'main Kucing Petasan', to: '/main/petasan' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

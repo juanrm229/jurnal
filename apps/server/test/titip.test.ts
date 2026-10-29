@@ -59,4 +59,13 @@ describe('Titip Surat di server', () => {
     expect(v.players.every((p: any) => p.uang === 1500)).toBe(true);
     expect(v.milik.length).toBe(40);
   });
+
+  it('Kucing Petasan: tiap pemain hanya melihat tangannya sendiri', async () => {
+    const room = await host.ok('POST', '/v1/petasan/rooms', { name: 'Rani', avatar: 'kucing' });
+    await host.ok('POST', `/v1/petasan/rooms/${room.code}/act`, { action: { t: 'bot', tambah: true } });
+    const v = await host.ok('POST', `/v1/petasan/rooms/${room.code}/act`, { action: { t: 'mulai' } });
+    expect(v.me.hand.length).toBe(5);
+    expect(v.petasan).toBe(1);
+    expect(JSON.stringify(v.players)).not.toContain('hand');
+  });
 });

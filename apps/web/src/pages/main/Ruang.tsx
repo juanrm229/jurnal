@@ -14,7 +14,7 @@ const GAMES: { id: string; nama: string; asal?: string; doodle: string; orang: s
   { id: 'saudagar', nama: 'Saudagar', asal: 'gaya Monopoli', doodle: 'rumah', orang: '2–8', kata: 'Aturan resmi lengkap: lelang, tukar-menukar, rumah & hotel di kota-kota Indonesia.', to: '/main/saudagar' },
   { id: 'kartu-satu', nama: 'Kartu Satu', asal: 'gaya UNO', doodle: 'kartu', orang: '2–10', kata: 'Aturan ori atau tongkrongan: tumpuk plus, salip, sampai ketemu yang kalah.', to: '/main/satu' },
   { id: 'ular-tangga', nama: 'Ular Tangga', doodle: 'ui-dadu', orang: '2–6', kata: 'Dua dadu: satu untuk jalan, satu untuk mendorong lawan ke mulut ular. Ada kartu aksi & musim.', to: '/main/tangga' },
-  { id: 'petasan', nama: 'Kucing Petasan', asal: 'gaya Exploding Kittens', doodle: 'kucing', orang: '2–5', kata: 'Ambil kartu dan berdoa. Yang menarik petasan, meledak.' },
+  { id: 'petasan', nama: 'Kucing Petasan', asal: 'gaya Exploding Kittens', doodle: 'kucing', orang: '2–10', kata: 'Ambil kartu dan berdoa. Siram Air, Serbu!, dan Ogah! kapan saja. Yang terakhir selamat menang.', to: '/main/petasan' },
   { id: 'istana', nama: 'Rahasia Istana', asal: 'gaya Secret Hitler', doodle: 'gembok-hati', orang: '5–10', kata: 'Kubu tersembunyi, undang-undang, dan pemimpin yang tak boleh terpilih.' },
   { id: 'kembang-api', nama: 'Kembang Api', asal: 'gaya Hanabi', doodle: 'kembang-api', orang: '2–5', kata: 'Kooperatif: kamu melihat kartu semua orang kecuali kartumu.' },
   { id: 'tambang', nama: 'Tambang', asal: 'gaya Saboteur', doodle: 'peta', orang: '3–10', kata: 'Gali jalan menuju emas. Di antara penambang ada penyabot.' },
@@ -28,7 +28,7 @@ export default function RuangMain() {
     setBusy(true);
     try {
       // Kode meja unik di semua permainan baru; SIDIK punya ruangnya sendiri.
-      for (const [base, path] of [['titip', '/main/titip'], ['satu', '/main/satu'], ['tangga', '/main/tangga'], ['saudagar', '/main/saudagar']] as const) if (await callGame(base, 'GET', `/rooms/${code}?tv=1`).then(() => true, () => false)) return navigate(`${path}/${code}`);
+      for (const [base, path] of [['titip', '/main/titip'], ['satu', '/main/satu'], ['tangga', '/main/tangga'], ['saudagar', '/main/saudagar'], ['petasan', '/main/petasan']] as const) if (await callGame(base, 'GET', `/rooms/${code}?tv=1`).then(() => true, () => false)) return navigate(`${path}/${code}`);
       navigate(`/sidik/${code}`);
     } catch (e) {
       toast((e as Error).message);
