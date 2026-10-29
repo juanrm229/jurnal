@@ -67,3 +67,4 @@ export * as sidik from './sidik';
 export * as surat from './surat';
 export * as satu from './satu';
 export * as tangga from './tangga';
+export * as saudagar from './saudagar';

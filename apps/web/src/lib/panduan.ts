@@ -257,6 +257,22 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'main Ular Tangga', to: '/main/tangga' },
   },
   {
+    id: 'saudagar',
+    title: 'Saudagar: jual-beli properti',
+    doodle: 'rumah',
+    noClip: true,
+    lead: 'Permainan properti untuk 2 sampai 8 orang dengan aturan Monopoli resmi lengkap, bertema kota-kota Indonesia.',
+    steps: [
+      'Di Ruang Main pilih Saudagar, buka meja, pilih Aturan Resmi atau Aturan Rumahan, lalu ajak teman atau tambahkan bot.',
+      'Lempar dadu dan jalan. Berhenti di properti tanpa pemilik: beli, atau tolak dan properti dilelang ke semua HP.',
+      'Kuasai satu grup warna untuk menggandakan sewa, lalu bangun rumah merata dan hotel lewat Asetku. Butuh uang? Gadai properti atau jual bangunan.',
+      'Tekan Tukar untuk menawarkan properti, uang, atau kartu bebas penjara ke pemain lain. Bot juga bisa menawarimu.',
+      'Tidak sanggup membayar tagihan walau sudah menjual dan menggadai? Bangkrut. Yang terakhir bertahan, atau terkaya saat waktu habis, menang.',
+    ],
+    tip: 'Ketuk petak mana pun di papan untuk melihat aktanya: harga, tabel sewa, dan pemiliknya.',
+    try: { label: 'main Saudagar', to: '/main/saudagar' },
+  },
+  {
     id: 'kartu',
     title: 'Kartu ucapan',
     doodle: 'kartu',

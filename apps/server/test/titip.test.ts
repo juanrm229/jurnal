@@ -50,4 +50,13 @@ describe('Titip Surat di server', () => {
     expect(v.papan.kotakKartu.length).toBe(8);
     expect(v.players.every((p: any) => p.pos === 0)).toBe(true);
   });
+
+  it('Saudagar: meja, mulai, uang & properti terbuka untuk semua', async () => {
+    const room = await host.ok('POST', '/v1/saudagar/rooms', { name: 'Rani', avatar: 'kucing' });
+    await host.ok('POST', `/v1/saudagar/rooms/${room.code}/act`, { action: { t: 'bot', tambah: true } });
+    const v = await host.ok('POST', `/v1/saudagar/rooms/${room.code}/act`, { action: { t: 'mulai' } });
+    expect(v.preset).toBe('resmi');
+    expect(v.players.every((p: any) => p.uang === 1500)).toBe(true);
+    expect(v.milik.length).toBe(40);
+  });
 });
