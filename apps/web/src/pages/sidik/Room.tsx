@@ -12,6 +12,7 @@ import { hush, joinRoom, leaveRoom, profile, sendAct, sfx, speak, stats, useCoun
 import { QR } from '@/ui/art';
 import { Doodle, Growing, Header, Toggle, useToast } from '@/ui/kit';
 import { Scene } from '@/ui/art';
+import { KabariLingkaran } from '../main/shared';
 import { Board, faceOf, HoldButton, IntelList, PlayerFace, Replay, RoleCard, roleInfo, Timer, useNotes } from './parts';
 
 const AVATARS = ['tunas', 'kucing', 'burung', 'ikan', 'kelinci', 'landak', 'bebek', 'katak', 'kupu-kupu', 'lebah', 'siput', 'kepik'];
@@ -247,6 +248,7 @@ function Lobby({ view, act, busy }: { view: View; act: (a: sidik.Action) => void
             <Doodle id="laptop" size={16} color="currentColor" /> mode TV
           </a>
         </div>
+        <KabariLingkaran path={`/sidik/${view.code}`} />
       </div>
 
       <span className="sd-label">penyidik di ruangan · {n}/20</span>

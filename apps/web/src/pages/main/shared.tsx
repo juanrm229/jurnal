@@ -3,9 +3,11 @@
  * (QR, undang WA, mode TV), dan kursi pemain. Dipakai semua permainan baru.
  */
 import { useRef, useState } from 'react';
+import { api } from '@/lib/api';
+import { useCircles } from '@/lib/data';
 import { compressImage } from '@/lib/media';
 import { QR } from '@/ui/art';
-import { Doodle, Header } from '@/ui/kit';
+import { Doodle, Header, useToast } from '@/ui/kit';
 import { PlayerFace } from '../sidik/parts';
 
 export const AVATARS = ['tunas', 'kucing', 'burung', 'ikan', 'kelinci', 'landak', 'bebek', 'katak', 'kupu-kupu', 'lebah', 'siput', 'kepik'];
@@ -59,6 +61,44 @@ export function DudukForm({ judul, ajakan, tombol, backTo, defaultName, avatar0,
   );
 }
 
+const NAMA_GAME: Record<string, string> = { titip: 'Titip Surat', satu: 'Kartu Satu', tangga: 'Ular Tangga', saudagar: 'Saudagar', petasan: 'Kucing Petasan', kembang: 'Kembang Api', sidik: 'SIDIK' };
+
+/** Kabari teman di lingkaran aktif lewat notifikasi: "Rani mengajak main Saudagar!" */
+export function KabariLingkaran({ path }: { path: string }) {
+  const { circles } = useCircles();
+  const toast = useToast();
+  const [sudah, setSudah] = useState<string[]>([]);
+  const aktif = circles.filter((c) => c.status === 'active' && c.members.filter((m) => m.state === 'active').length > 1);
+  if (!aktif.length) return null;
+  const game = NAMA_GAME[path.split('/').filter(Boolean).at(-2) ?? ''] ?? 'game';
+  return (
+    <div className="rm-kabari">
+      <span className="tiny soft">kabari lingkaran lewat notifikasi:</span>
+      <div className="ts-pilih">
+        {aktif.map((c) => (
+          <button
+            key={c.id}
+            className={`pill sm ${sudah.includes(c.id) ? 'active' : ''}`}
+            disabled={sudah.includes(c.id)}
+            onClick={async () => {
+              try {
+                const r = await api.post<{ dikabari: number }>(`/circles/${c.id}/ajak-main`, { game, path });
+                setSudah((x) => [...x, c.id]);
+                toast(r.dikabari ? `${r.dikabari} orang di ${c.name} dikabari.` : 'Belum ada teman lain di lingkaran itu.');
+              } catch (e) {
+                toast((e as Error).message);
+              }
+            }}
+            data-testid="rm-kabari"
+          >
+            <Doodle id="bunga-lonceng" size={14} color="currentColor" /> {sudah.includes(c.id) ? `${c.name} ✓` : c.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function KodeMeja({ code, path, ajak }: { code: string; path: string; ajak: string }) {
   const link = `${location.origin}${path}`;
   return (
@@ -76,6 +116,7 @@ export function KodeMeja({ code, path, ajak }: { code: string; path: string; aja
           <Doodle id="laptop" size={16} color="currentColor" /> mode TV
         </a>
       </div>
+      <KabariLingkaran path={path} />
     </div>
   );
 }

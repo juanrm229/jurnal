@@ -258,6 +258,12 @@ export const COPY = {
     whenLetterArrived: (name: string) => `${name} menitipkan surat “buka kalau…” untukmu. Bukalah saat momennya tiba.`,
     whenLetterOpened: (name: string) => `${name} baru saja membuka suratmu. Mungkin hari ini ia membutuhkannya.`,
     chapterCeremony: 'Bulan ini selesai. Saatnya memberi judul bab bersama.',
+    friendWriting: (name: string) => `${name} mulai mengisi halaman hari ini.`,
+    friendReacted: (name: string, what: string) => `${name} ${what} di halamanmu.`,
+    friendFootnote: (name: string) => `${name} menulis catatan kaki di halamanmu.`,
+    friendFootnoteReply: (name: string) => `${name} ikut menulis catatan kaki di halaman yang kamu komentari.`,
+    gameInvite: (name: string, game: string) => `${name} mengajak main ${game}! Ketuk untuk duduk di mejanya.`,
+    pushTest: 'Notifikasi Sehari sudah menyala di perangkat ini.',
   },
 };
 

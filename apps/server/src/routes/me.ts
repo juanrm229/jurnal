@@ -1,4 +1,5 @@
 import {
+  COPY,
   deviceLinkApproveBody,
   deviceLinkCreateBody,
   type DeviceLinkState,
@@ -125,6 +126,18 @@ export function meRoutes(s: Services) {
   r.post('/push-token', async (c) => {
     const input = await body(c, pushTokenBody);
     await s.db.update(sessions).set({ pushToken: input.token }).where(eq(sessions.id, c.get('session').id));
+    return c.json({ ok: true });
+  });
+
+  /** Notifikasi uji ke perangkat ini saja: memastikan rantai langganan → server → HP benar-benar jalan. */
+  r.post('/push-test', async (c) => {
+    const [row] = await s.db.select({ token: sessions.pushToken }).from(sessions).where(eq(sessions.id, c.get('session').id));
+    if (!row?.token) return c.json({ ok: false, alasan: 'Perangkat ini belum terdaftar untuk notifikasi.' });
+    const mati = await s.pusher.send([{ to: row.token, title: 'Sehari', body: COPY.notifications.pushTest, data: { type: 'test' } }]);
+    if (mati?.length) {
+      await s.db.update(sessions).set({ pushToken: null }).where(eq(sessions.id, c.get('session').id));
+      return c.json({ ok: false, alasan: 'Langganan di perangkat ini sudah kedaluwarsa. Nyalakan ulang notifikasi.' });
+    }
     return c.json({ ok: true });
   });
 

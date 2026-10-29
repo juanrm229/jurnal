@@ -12,7 +12,8 @@ export interface PushMessage {
  * kabar ringan seperti "Naya sudah menyegel harinya".
  */
 export interface Pusher {
-  send(messages: PushMessage[]): Promise<void>;
+  /** Mengembalikan token yang sudah mati (langganan dicabut/kedaluwarsa) supaya dibersihkan. */
+  send(messages: PushMessage[]): Promise<string[] | void>;
 }
 
 export class ExpoPusher implements Pusher {
@@ -42,6 +43,7 @@ export class MemoryPusher implements Pusher {
   sent: PushMessage[] = [];
   async send(messages: PushMessage[]) {
     this.sent.push(...messages);
+    return [];
   }
 }
 
@@ -63,15 +65,23 @@ export class CompositePusher implements Pusher {
   async send(messages: PushMessage[]) {
     const web = messages.filter((m) => m.to.startsWith('webpush:'));
     await this.expo.send(messages.filter((m) => !m.to.startsWith('webpush:')));
-    if (!this.webpush || !web.length) return;
+    if (!this.webpush || !web.length) return [];
     const wp = await this.webpush;
+    const mati: string[] = [];
     await Promise.all(
-      web.map((m) =>
-        wp
-          .sendNotification(JSON.parse(m.to.slice(8)), JSON.stringify({ title: m.title ?? 'Sehari', body: m.body, data: m.data ?? {} }), { TTL: 60 * 60 * 24 })
-          .catch(() => {}),
-      ),
+      web.map(async (m) => {
+        try {
+          // urgency high: iOS & Android mengantar segera, tidak ditunda sampai layar menyala.
+          await wp.sendNotification(JSON.parse(m.to.slice(8)), JSON.stringify({ title: m.title ?? 'Sehari', body: m.body, data: m.data ?? {} }), { TTL: 60 * 60 * 24, urgency: 'high' });
+        } catch (e) {
+          const status = (e as { statusCode?: number }).statusCode;
+          // 404/410: langganan sudah dicabut di perangkat; selain itu catat supaya kelihatan di log.
+          if (status === 404 || status === 410) mati.push(m.to);
+          else console.warn('web push gagal', status, (e as { body?: string }).body ?? (e as Error).message);
+        }
+      }),
     );
+    return mati;
   }
 }
 

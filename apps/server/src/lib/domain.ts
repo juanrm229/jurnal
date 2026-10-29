@@ -270,6 +270,19 @@ export async function freezeState(s: Services, user: UserRow) {
   return { month, perMonth, used, received, gifted, left: Math.max(0, perMonth + received - used - gifted) };
 }
 
+/** Anggota aktif dari lingkaran-lingkaran aktif, selain `kecuali` dan orang yang saling memblokir dengannya. */
+export async function rekanAktif(s: Services, circleIds: string[], kecuali: string): Promise<string[]> {
+  if (!circleIds.length) return [];
+  const aktif = await s.db.select({ id: schema.circles.id }).from(schema.circles).where(and(inArray(schema.circles.id, circleIds), eq(schema.circles.status, 'active')));
+  if (!aktif.length) return [];
+  const rows = await s.db
+    .select({ userId: schema.circleMembers.userId })
+    .from(schema.circleMembers)
+    .where(and(inArray(schema.circleMembers.circleId, aktif.map((c) => c.id)), eq(schema.circleMembers.state, 'active')));
+  const blok = await blockedWith(s, kecuali);
+  return [...new Set(rows.map((r) => r.userId))].filter((id) => id !== kecuali && !blok.has(id));
+}
+
 export async function pushTo(s: Services, userIds: string[], msg: Omit<PushMessage, 'to'>, pref?: keyof UserSettings): Promise<void> {
   if (!userIds.length) return;
   const rows = await s.db
@@ -280,7 +293,9 @@ export async function pushTo(s: Services, userIds: string[], msg: Omit<PushMessa
   const messages = rows
     .filter((r) => !pref || ({ ...DEFAULT_USER_SETTINGS, ...(r.settings ?? {}) } as UserSettings)[pref] !== false)
     .map((r) => ({ ...msg, to: r.token! }));
-  await s.pusher.send(messages);
+  const mati = await s.pusher.send(messages);
+  // Langganan yang sudah dicabut di perangkat dibersihkan, supaya tidak dicoba terus.
+  if (mati?.length) await s.db.update(sessions).set({ pushToken: null }).where(inArray(sessions.pushToken, mati));
 }
 
 /** Susun DropWire lengkap (penerima, reaksi, catatan kaki) untuk sekumpulan Drop. */

@@ -64,6 +64,8 @@ export interface UserSettings {
   notifyPartnerSealed: boolean;
   notifyWraps: boolean;
   notifyLetters: boolean;
+  /** Kabar kecil dari teman di lingkaran aktif: mulai menulis, reaksi, catatan kaki, ajakan main. */
+  notifyActivity: boolean;
   autoWeather: boolean;
   autoCity: boolean;
   autoSteps: boolean;
@@ -84,6 +86,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   notifyPartnerSealed: true,
   notifyWraps: true,
   notifyLetters: true,
+  notifyActivity: true,
   autoWeather: false,
   autoCity: false,
   autoSteps: false,
@@ -133,6 +136,7 @@ export const updateMeBody = z.object({
       notifyPartnerSealed: z.boolean(),
       notifyWraps: z.boolean(),
       notifyLetters: z.boolean(),
+      notifyActivity: z.boolean(),
       autoWeather: z.boolean(),
       autoCity: z.boolean(),
       autoSteps: z.boolean(),
@@ -167,7 +171,7 @@ export interface KeyBackupResponse {
   keyBackup: KeyBackup;
 }
 
-export const pushTokenBody = z.object({ token: z.string().max(4000), platform: z.enum(['ios', 'android', 'web']) });
+export const pushTokenBody = z.object({ token: z.string().max(4000), platform: z.enum(['ios', 'android', 'web']).optional() });
 
 export interface SessionInfo {
   id: string;

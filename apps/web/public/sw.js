@@ -1,5 +1,5 @@
 /* Sehari service worker: cangkang aplikasi luring + notifikasi push. */
-const CACHE = 'sehari-v3';
+const CACHE = 'sehari-v4';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -57,6 +57,9 @@ function routeFor(d) {
   switch (d && d.type) {
     case 'capsules_open':
     case 'partner_sealed':
+    case 'drop_new':
+    case 'reaction':
+    case 'footnote':
       return d.circleId && d.day ? `/l/${d.circleId}/hari/${d.day}` : '/hari';
     case 'invite_accepted':
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
@@ -72,6 +75,10 @@ function routeFor(d) {
       return d.letterId ? `/surat/${d.letterId}` : '/surat';
     case 'time_capsule':
       return '/kenangan';
+    case 'ajak':
+      return d.url && /^\/[a-z]/.test(d.url) ? d.url : '/main';
+    case 'test':
+      return '/aku';
     case 'wrap':
     case 'chapter':
       return '/lingkaran';
@@ -85,14 +92,23 @@ self.addEventListener('push', (e) => {
   try {
     msg = Object.assign(msg, e.data ? e.data.json() : {});
   } catch {}
+  const d = msg.data || {};
+  // Tag per lingkaran & jenis: kabar sejenis dari lingkaran yang sama saling menggantikan
+  // (tidak menumpuk), tapi kabar berbeda tetap muncul masing-masing, dan selalu berbunyi.
+  const tag = [d.type || 'sehari', d.circleId || '', d.meetId || d.letterId || d.boothId || ''].join(':');
   e.waitUntil(
-    self.registration.showNotification(msg.title || 'Sehari', {
-      body: msg.body,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      data: { url: routeFor(msg.data) },
-      tag: msg.data && msg.data.type,
-    }),
+    Promise.all([
+      self.registration.showNotification(msg.title || 'Sehari', {
+        body: msg.body,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: { url: routeFor(d) },
+        tag,
+        renotify: true,
+      }),
+      // Titik di ikon aplikasi (didukung di iOS 16.4+ dan Android Chrome).
+      self.navigator.setAppBadge ? self.navigator.setAppBadge().catch(() => {}) : Promise.resolve(),
+    ]),
   );
 });
 

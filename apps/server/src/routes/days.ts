@@ -38,6 +38,7 @@ import {
   hydrateDrops,
   membership,
   pushTo,
+  rekanAktif,
   requireMember,
   sealedInCircles,
   userToday,
@@ -214,12 +215,35 @@ async function myDay(s: Services, user: UserRow, day: string): Promise<MyDay> {
   };
 }
 
+/**
+ * Kabar "teman mulai mengisi halaman": hanya untuk Drop pertamanya hari itu di
+ * lingkaran tersebut (bukan setiap tulisan), tanpa isi apa pun.
+ */
+async function kabarMenulis(s: Services, user: UserRow, input: DropInput) {
+  if (input.kind === 'silent' || (input.audience !== 'circle' && input.audience !== 'person')) return;
+  const circleIds = [...new Set(input.circleIds)];
+  if (!circleIds.length) return;
+  const sebelumnya = await s.db
+    .select({ circleId: dropCircles.circleId })
+    .from(drops)
+    .innerJoin(dropCircles, eq(dropCircles.dropId, drops.id))
+    .where(and(eq(drops.authorId, user.id), eq(drops.day, input.day), inArray(dropCircles.circleId, circleIds), sql`${drops.id} <> ${input.id}`));
+  const sudah = new Set(sebelumnya.map((r) => r.circleId));
+  for (const cid of circleIds.filter((x) => !sudah.has(x))) {
+    const tujuan = input.audience === 'person' ? (input.personId ? [input.personId] : []) : await rekanAktif(s, [cid], user.id);
+    await pushTo(s, tujuan, { body: say(COPY.notifications.friendWriting, user.penName ?? 'Seseorang'), data: { type: 'drop_new', circleId: cid, day: input.day } }, 'notifyActivity');
+  }
+}
+
 export function dayRoutes(s: Services) {
   const r = new Hono<AppEnv>();
 
   r.post('/drops', async (c) => {
     const input = await body(c, createDropBody);
-    const id = await createDrop(s, c.get('user'), input);
+    const user = c.get('user');
+    const [lama] = await s.db.select({ id: drops.id }).from(drops).where(eq(drops.id, input.id));
+    const id = await createDrop(s, user, input);
+    if (!lama) await kabarMenulis(s, user, input).catch((e) => console.warn('kabar menulis gagal', e));
     return c.json({ id }, 201);
   });
 
@@ -511,7 +535,11 @@ export function dayRoutes(s: Services) {
     if (!allowedReactions(seen.drop.kind as never).includes(parsed.data.kind)) {
       throw bad('reaction_not_allowed', 'Di Ruang Hening hanya bisa menyalakan lilin.');
     }
-    await s.db.insert(reactions).values({ dropId: seen.drop.id, userId: user.id, kind: parsed.data.kind }).onConflictDoNothing();
+    const baru = await s.db.insert(reactions).values({ dropId: seen.drop.id, userId: user.id, kind: parsed.data.kind }).onConflictDoNothing().returning();
+    if (baru.length) {
+      const kata = { hug: 'memeluk tulisanmu', me_too: 'bilang "aku juga"', here: 'bilang "aku di sini"', candle: 'menyalakan lilin' }[parsed.data.kind];
+      await pushTo(s, [seen.drop.authorId], { body: say(COPY.notifications.friendReacted, user.penName ?? 'Seseorang', kata), data: { type: 'reaction', circleId: seen.circle?.id, day: seen.drop.day } }, 'notifyActivity');
+    }
     return c.json({ ok: true });
   });
 
@@ -537,6 +565,12 @@ export function dayRoutes(s: Services) {
       ciphertext: input.envelope.ciphertext,
       recipients: input.envelope.recipients,
     });
+    // Pemilik halaman dikabari; yang sebelumnya ikut berkomentar juga (percakapan kecil di pinggir halaman).
+    const ikut = (await s.db.select({ a: footnotes.authorId }).from(footnotes).where(eq(footnotes.dropId, seen.drop.id))).map((r) => r.a);
+    const kabar = { type: 'footnote', circleId: seen.circle?.id, day: seen.drop.day };
+    if (seen.drop.authorId !== user.id) await pushTo(s, [seen.drop.authorId], { body: say(COPY.notifications.friendFootnote, user.penName ?? 'Seseorang'), data: kabar }, 'notifyActivity');
+    const lain = [...new Set(ikut)].filter((id) => id !== user.id && id !== seen.drop.authorId);
+    if (lain.length) await pushTo(s, lain, { body: say(COPY.notifications.friendFootnoteReply, user.penName ?? 'Seseorang'), data: kabar }, 'notifyActivity');
     if (seen.drop.authorId !== user.id) {
       await s.db
         .insert(visits)

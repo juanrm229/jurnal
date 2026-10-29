@@ -6,7 +6,7 @@ import { useSession } from '@/lib/session';
 import { currentTheme, INKS, PAPERS } from '@/lib/theme';
 import { Avatar, Doodle, ListLink, Toggle, useToast } from '@/ui/kit';
 import { sound, useSoundPrefs } from '@/lib/sound';
-import { pushState, subscribePush } from '@/lib/push';
+import { pushState, subscribePush, testPush } from '@/lib/push';
 import { useInstall } from '@/lib/install';
 
 export default function Me() {
@@ -53,11 +53,13 @@ export default function Me() {
           title="notifikasi di perangkat ini"
           sub={push === 'on' ? 'aktif' : push === 'denied' ? 'diblokir di pengaturan peramban' : push === 'unsupported' ? 'tidak didukung peramban ini (di iPhone: pasang ke layar utama dulu)' : 'mati — ketuk untuk menyalakan'}
           onClick={async () => {
-            if (push === 'on' || push === 'unsupported') return;
+            if (push === 'unsupported') return;
             try {
+              // Selalu daftar ulang: memperbaiki perangkat yang "nyala" tapi tokennya tidak pernah sampai ke server.
               await subscribePush();
               setPush('on');
-              toast('Notifikasi menyala.');
+              await testPush();
+              toast('Notifikasi menyala. Sebentar lagi ada notifikasi uji.');
             } catch (e) {
               toast((e as Error).message);
               setPush(await pushState());
@@ -65,6 +67,21 @@ export default function Me() {
           }}
           right={<span className={`pill ${push === 'on' ? 'active' : ''}`}>{push === 'on' ? 'nyala' : 'mati'}</span>}
         />
+        {push === 'on' ? (
+          <ListLink
+            icon="bunga-lonceng"
+            title="kirim notifikasi uji"
+            sub="pastikan notifikasi benar-benar sampai ke HP ini"
+            onClick={async () => {
+              try {
+                await testPush();
+                toast('Terkirim. Kalau tidak muncul, ketuk “notifikasi di perangkat ini” untuk mendaftar ulang.');
+              } catch (e) {
+                toast((e as Error).message);
+              }
+            }}
+          />
+        ) : null}
         <ListLink icon="matahari" title="jejak otomatis" sub="cuaca, kota — semua opsional" onClick={() => navigate('/aku/jejak')} />
         <ListLink icon="ui-gembok" title="keamanan & perangkat" sub="kode pemulihan, tautkan perangkat baru" onClick={() => navigate('/aku/keamanan')} />
         <ListLink icon="kunci" title="privasi & data" sub="E2EE, AI, ekspor, hapus akun" onClick={() => navigate('/aku/privasi')} />

@@ -1,6 +1,6 @@
 import { type ComponentType, lazy, Suspense, useEffect } from 'react';
 import { useKeyMaintenance } from './lib/data';
-import { refreshPushToken } from './lib/push';
+import { bersihkanLencana, refreshPushToken } from './lib/push';
 import { match, navigate, ParamsProvider, usePath } from './lib/router';
 import { useSession } from './lib/session';
 import { useThemeSync } from './lib/theme';
@@ -109,7 +109,13 @@ function Guard({ children }: { children: React.ReactNode }) {
 
 function Ready({ children }: { children: React.ReactNode }) {
   useKeyMaintenance();
-  useEffect(() => void refreshPushToken(), []);
+  useEffect(() => {
+    void refreshPushToken();
+    bersihkanLencana();
+    const lihat = () => document.visibilityState === 'visible' && bersihkanLencana();
+    document.addEventListener('visibilitychange', lihat);
+    return () => document.removeEventListener('visibilitychange', lihat);
+  }, []);
   return <>{children}</>;
 }
 

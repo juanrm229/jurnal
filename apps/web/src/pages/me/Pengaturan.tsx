@@ -65,9 +65,11 @@ export default function Pengaturan() {
           <Toggle label="Wrap sudah jadi" hint={COPY.notifications.weeklyWrapReady} value={s.notifyWraps} onChange={(v) => set('notifyWraps', v)} />
           <Hr />
           <Toggle label="Surat yang tiba" hint={COPY.notifications.lostLetterArrived} value={s.notifyLetters} onChange={(v) => set('notifyLetters', v)} />
+          <Hr />
+          <Toggle label="Kabar dari teman" hint="Teman mulai mengisi halaman, memberi reaksi atau catatan kaki di halamanmu, dan mengajak main game." value={s.notifyActivity ?? true} onChange={(v) => set('notifyActivity', v)} />
         </ListCard>
         <p className="tiny soft" style={{ margin: '8px 0 0' }}>
-          Pengingat dikirim ke aplikasi Sehari di HP-mu. Pilihan di sini berlaku untuk semua perangkatmu.
+          Notifikasi dikirim ke perangkat yang menyalakannya di halaman Aku → notifikasi di perangkat ini. Pilihan di sini berlaku untuk semua perangkatmu.
         </p>
       </Section>
 

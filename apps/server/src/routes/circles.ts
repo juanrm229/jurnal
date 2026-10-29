@@ -25,6 +25,7 @@ import {
 } from '@sehari/core';
 import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { type AppEnv, body, say, type Services } from '../context';
 import { schema } from '../db';
 import {
@@ -36,6 +37,7 @@ import {
   getCircle,
   membership,
   pushTo,
+  rekanAktif,
   requireMember,
   sealedInCircles,
   userToday,
@@ -192,6 +194,17 @@ export function circleRoutes(s: Services) {
   });
 
   // ── Undangan ──────────────────────────────────────────────────────────────
+
+  /** Ajak main game Ruang Main: kabari anggota lingkaran dengan tautan meja. */
+  r.post('/:id/ajak-main', async (c) => {
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    if (circle.status !== 'active') throw conflict('circle_frozen', 'Lingkaran ini sedang tidak aktif.');
+    const input = await body(c, z.object({ game: z.string().trim().min(1).max(40), path: z.string().regex(/^\/(main\/[a-z]+|sidik)\/[A-Z]{4}$/) }));
+    const tujuan = await rekanAktif(s, [circle.id], user.id);
+    await pushTo(s, tujuan, { body: say(COPY.notifications.gameInvite, user.penName ?? 'Seseorang', input.game), data: { type: 'ajak', url: input.path, circleId: circle.id } }, 'notifyActivity');
+    return c.json({ ok: true, dikabari: tujuan.length });
+  });
 
   r.post('/:id/invites', async (c) => {
     const input = await body(c, createInviteBody);

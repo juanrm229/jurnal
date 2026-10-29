@@ -2627,3 +2627,9 @@ button.kb-kartu {
 .ts-layar-isi .kb-api {
   width: 100%;
 }
+.rm-kabari {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+}
