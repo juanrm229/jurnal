@@ -72,3 +72,4 @@ export * as petasan from './petasan';
 export * as hanabi from './hanabi';
 export * from './wrapStory';
 export * from './wrapExtras';
+export * from './plant';

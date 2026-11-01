@@ -261,6 +261,7 @@ export const COPY = {
     friendWriting: (name: string) => `${name} mulai mengisi halaman hari ini.`,
     flashSnap: (name: string) => `${name} mengirim kilasan. Intip sebentar?`,
     flashKangen: (name: string) => `${name} sedang memikirkanmu.`,
+    friendFace: (name: string, label: string, flash: boolean) => `${name} membalas ${flash ? 'kilasanmu' : 'tulisanmu'} dengan wajah ${label}.`,
     friendReacted: (name: string, what: string) => `${name} ${what} di halamanmu.`,
     friendFootnote: (name: string) => `${name} menulis catatan kaki di halamanmu.`,
     friendFootnoteReply: (name: string) => `${name} ikut menulis catatan kaki di halaman yang kamu komentari.`,

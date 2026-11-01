@@ -11,6 +11,7 @@ import { defaultFlashCircles, FLASH_KEY, type Flash, flashTargets, useFlashes, u
 import { useMediaUrl } from '@/lib/media';
 import { Link, navigate, usePath } from '@/lib/router';
 import { Avatar, Doodle, Empty, Growing, Header, Sheet, useToast } from '@/ui/kit';
+import { FaceButton, FaceRow } from './Faces';
 
 function FlashPhoto({ f }: { f: Flash }) {
   const ref = f.payload!.media?.[0];
@@ -111,6 +112,7 @@ function FlashCard({ f, meId, focus }: { f: Flash; meId: string; focus: boolean 
         <>
           <FlashPhoto f={f} />
           {p.text ? <p className="kl-caption">{p.text}</p> : null}
+          <FaceRow faces={f.wire.faces ?? []} />
         </>
       ) : (
         <div className="kl-kangen">
@@ -126,6 +128,7 @@ function FlashCard({ f, meId, focus }: { f: Flash; meId: string; focus: boolean 
             <button className={`pill${hugged ? ' active' : ''}`} onClick={hug} aria-pressed={hugged}>
               <Doodle id="ui-peluk" size={16} color="currentColor" /> {hugged ? 'dipeluk' : 'peluk'}
             </button>
+            {f.flash === 'snap' ? <FaceButton dropId={f.wire.id} circleIds={f.wire.circleIds} faces={f.wire.faces ?? []} /> : null}
             <button className="pill" onClick={() => setKangen(true)}>
               <Doodle id="hati-kecil" size={16} color="currentColor" /> balas kangen
             </button>

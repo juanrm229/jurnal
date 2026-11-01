@@ -7,6 +7,8 @@ import {
   createDropBody,
   updateDropBody,
   diffDays,
+  FACE_EXPRESSIONS,
+  faceBody,
   FLASH_DAILY_LIMIT,
   footnoteBody,
   footnotePrintBody,
@@ -50,7 +52,7 @@ import { newId } from '../lib/ids';
 import { canSeeDrop, dropsInCircle, filterForCircle } from '../lib/visibility';
 import { canSeeMeetMedia } from './meets';
 
-const { drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users, boardItems, boothFrames, booths } = schema;
+const { faceReactions, drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users, boardItems, boothFrames, booths } = schema;
 
 type DropInput = z.infer<typeof createDropBody>;
 
@@ -590,6 +592,54 @@ export function dayRoutes(s: Services) {
     return c.json({ ok: true });
   });
 
+  /** Reaksi Wajah: foto ekspresi untuk Drop orang lain. Ikut dihitung sebagai pelukan. */
+  r.put('/drops/:id/face', async (c) => {
+    const input = await body(c, faceBody);
+    const user = c.get('user');
+    const seen = await canSeeDrop(s, user, c.req.param('id'));
+    if (!seen) throw notFound();
+    if (seen.drop.authorId === user.id) throw bad('own', 'Reaksi wajah untuk tulisan orang lain.');
+    if (seen.drop.kind === 'silent') throw bad('reaction_not_allowed', 'Di Ruang Hening hanya bisa menyalakan lilin.');
+    const owned = await s.db.select({ id: media.id }).from(media).where(and(inArray(media.id, input.mediaIds), eq(media.ownerId, user.id)));
+    if (owned.length !== input.mediaIds.length) throw forbidden('Media tidak ditemukan.');
+    const homes = new Set((await s.db.select().from(dropCircles).where(eq(dropCircles.dropId, seen.drop.id))).map((x) => x.circleId));
+    const recips = input.envelope.recipients;
+    if (!recips.some((r) => r.t === 'user' && r.userId === user.id)) throw bad('self_copy', 'Reaksi harus bisa dibuka pengirimnya sendiri.');
+    for (const r of recips) {
+      if (r.t === 'user' && r.userId !== user.id && r.userId !== seen.drop.authorId) throw bad('stray_wrap', 'Penerima reaksi tidak sesuai.');
+      if (r.t === 'circle') {
+        const m = await membership(s, r.circleId, user.id);
+        if (!homes.has(r.circleId) || !m || m.state !== 'active') throw bad('stray_wrap', 'Penerima reaksi tidak sesuai.');
+      }
+    }
+    const row = { dropId: seen.drop.id, userId: user.id, expression: input.expression, ciphertext: input.envelope.ciphertext, recipients: recips, mediaIds: input.mediaIds };
+    const [lama] = await s.db.select({ e: faceReactions.expression }).from(faceReactions).where(and(eq(faceReactions.dropId, seen.drop.id), eq(faceReactions.userId, user.id)));
+    await s.db
+      .insert(faceReactions)
+      .values(row)
+      .onConflictDoUpdate({ target: [faceReactions.dropId, faceReactions.userId], set: { expression: row.expression, ciphertext: row.ciphertext, recipients: row.recipients, mediaIds: row.mediaIds, createdAt: s.now() } });
+    await s.db.insert(reactions).values({ dropId: seen.drop.id, userId: user.id, kind: 'hug' }).onConflictDoNothing();
+    if (!lama) {
+      const label = FACE_EXPRESSIONS.find((x) => x.id === input.expression)?.label ?? 'senyum';
+      const flash = !!seen.drop.meta?.flash;
+      await pushTo(
+        s,
+        [seen.drop.authorId],
+        {
+          body: say(COPY.notifications.friendFace, user.penName ?? 'Seseorang', label, flash),
+          data: flash ? { type: 'flash', circleId: seen.circle?.id, day: seen.drop.day, dropId: seen.drop.id } : { type: 'reaction', circleId: seen.circle?.id, day: seen.drop.day },
+        },
+        'notifyActivity',
+      );
+    }
+    return c.json({ ok: true });
+  });
+
+  r.delete('/drops/:id/face', async (c) => {
+    await s.db.delete(faceReactions).where(and(eq(faceReactions.dropId, c.req.param('id')), eq(faceReactions.userId, c.get('user').id)));
+    return c.json({ ok: true });
+  });
+
   r.delete('/drops/:id/reactions/:kind', async (c) => {
     await s.db
       .delete(reactions)
@@ -726,6 +776,11 @@ async function canSeeMedia(s: Services, user: UserRow, mediaId: string): Promise
     .from(drops)
     .where(sql`${drops.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
   for (const h of holders) if (await canSeeDrop(s, user, h.id)) return true;
+  const faceHolders = await s.db
+    .select({ dropId: faceReactions.dropId })
+    .from(faceReactions)
+    .where(sql`${faceReactions.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
+  for (const f of faceHolders) if (await canSeeDrop(s, user, f.dropId)) return true;
   if (await canSeeMeetMedia(s, user.id, mediaId)) return true;
   const pins = await s.db
     .select({ circleId: boardItems.circleId })

@@ -11,6 +11,8 @@ import type {
   CircleStatus,
   DropKind,
   DropMeta,
+  MediaRef,
+  FaceExpression,
   LetterKind,
   MemberRole,
   MemberState,
@@ -380,6 +382,22 @@ export interface DropWire {
   meta: DropMeta;
   reactions: { kind: ReactionKind; userId: string }[];
   footnotes: FootnoteWire[];
+  /** Reaksi Wajah: foto ekspresi, terenkripsi untuk lingkaran. */
+  faces: FaceWire[];
+}
+
+export interface FaceWire {
+  userId: string;
+  expression: FaceExpression;
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  mediaIds: string[];
+  createdAt: string;
+}
+
+/** Isi terenkripsi Reaksi Wajah. */
+export interface FacePayload {
+  v: 1;
+  media: MediaRef;
 }
 
 export interface FootnoteWire {
@@ -444,6 +462,12 @@ export interface CircleCalendarDay {
 }
 
 export const reactionParams = z.object({ kind: z.enum(['hug', 'me_too', 'candle', 'here']) });
+
+export const faceBody = z.object({
+  expression: z.enum(['senyum', 'ketawa', 'kaget', 'terharu', 'sayang', 'semangat']),
+  envelope: envelopeSchema,
+  mediaIds: z.array(id).min(1).max(1),
+});
 
 export const footnoteBody = z.object({ id, envelope: envelopeSchema });
 export const footnotePrintBody = z.object({ includeInPrint: z.boolean() });

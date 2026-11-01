@@ -202,6 +202,18 @@ export type FlashKind = 'snap' | 'kangen';
 /** Batas harian kilasan per orang, supaya tetap terasa istimewa. */
 export const FLASH_DAILY_LIMIT: Record<FlashKind, number> = { snap: 12, kangen: 3 };
 
+/** Reaksi Wajah: balas dengan foto ekspresimu sendiri, bukan emoji. */
+export type FaceExpression = 'senyum' | 'ketawa' | 'kaget' | 'terharu' | 'sayang' | 'semangat';
+
+export const FACE_EXPRESSIONS: { id: FaceExpression; label: string; emoji: string }[] = [
+  { id: 'senyum', label: 'senyum', emoji: '😊' },
+  { id: 'ketawa', label: 'ketawa', emoji: '😂' },
+  { id: 'kaget', label: 'kaget', emoji: '😮' },
+  { id: 'terharu', label: 'terharu', emoji: '🥹' },
+  { id: 'sayang', label: 'sayang', emoji: '😍' },
+  { id: 'semangat', label: 'semangat', emoji: '👍' },
+];
+
 export interface DropMeta {
   flash?: FlashKind;
   questionId?: string;
