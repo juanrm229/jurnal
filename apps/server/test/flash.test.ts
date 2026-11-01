@@ -57,4 +57,12 @@ describe('kilasan', () => {
     const k = env.pusher.sent.filter((m) => m.data?.type === 'flash' && m.to.includes('raka-f'));
     expect(k[0]!.body).toContain('memikirkanmu');
   });
+
+  it('kilasan tetap bisa dikirim setelah halaman disegel; tulisan biasa tidak', async () => {
+    await raka.ok('POST', `/v1/days/${DAY}/seal`, { tz: raka.tz });
+    const r = await snap(raka);
+    expect(r.status).toBe(201);
+    const biasa = await raka.req('POST', '/v1/drops', raka.dropBody(DAY, { text: 'tambahan' }, { circleId: duo }));
+    expect(biasa.status).toBe(409);
+  });
 });

@@ -31,7 +31,7 @@ export interface GuessScene {
   rounds: { text: string; answerId: string; options: string[] }[];
 }
 
-export type NextAction = 'write' | 'letter' | 'kamus' | 'circle' | 'reminder' | 'day';
+export type NextAction = 'write' | 'letter' | 'kamus' | 'circle' | 'snap' | 'day';
 
 export interface NextScene {
   type: 'next';
@@ -250,7 +250,7 @@ export function nextScene(
   const quiet = f.people.filter((p) => p.userId !== f.viewerId && !f.drops.some((d) => d.authorId === p.userId));
   if (quiet.length) items.push({ doodle: 'pelukan', text: `${quiet.map((p) => p.name).join(', ')} belum sempat menulis. Mungkin sedang sibuk; satu sapaan kecil bisa membantu.`, cta: 'buka lingkaran', action: 'circle' });
   if (f.sharedWord) items.push({ doodle: 'ui-kata', text: `“${f.sharedWord}” sudah jadi kata kalian. Simpan di kamus lingkaran?`, cta: 'buka kamus', action: 'kamus' });
-  if (f.peak !== undefined) items.push({ doodle: 'ui-jam', text: `Jam ramai kalian sekitar ${formatClock(f.peak, 0)}. Pasang pengingat di jam itu supaya ${nextP} tidak ada yang terlewat.`, cta: 'atur pengingat', action: 'reminder' });
+  if (f.peak !== undefined) items.push({ doodle: 'ui-jam', text: `Jam ramai kalian sekitar ${formatClock(f.peak, 0)}. Besok, kirim satu kilasan di jam itu; mungkin mereka sedang membuka Sehari juga.`, cta: 'jepret kilasan', action: 'snap' });
   if (!f.streak) items.push({ doodle: 'ui-api', text: 'Apinya sedang redup. Segel hari ini bersama untuk menyalakannya lagi.', cta: 'tulis hari ini', action: 'write' });
   else items.push({ doodle: 'pena', text: `Halaman ${nextP} masih kosong. Mulai dari satu kalimat hari ini.`, cta: 'tulis hari ini', action: 'write' });
   return items.length ? { type: 'next', items: items.slice(0, 4) } : null;

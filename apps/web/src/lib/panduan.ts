@@ -79,6 +79,7 @@ export const GUIDE: GuideChapter[] = [
     id: 'kilasan',
     title: 'Kilasan & kangen',
     doodle: 'kamera',
+    noClip: true,
     lead: 'Cuplikan siang hari. Satu-satunya yang langsung terlihat lingkaranmu sebelum halaman disegel.',
     steps: [
       'Di atas halaman hari ini, ketuk “jepret”. Kamera belakang dulu, lalu kamera depan otomatis, digabung jadi satu foto.',
