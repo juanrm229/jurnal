@@ -1,6 +1,8 @@
 import { CIRCLE_KIND_LABEL, COPY } from '@sehari/core';
+
+const WRAP_TITLE: Record<string, string> = { week: 'Minggu Kita', month: 'Bulan Kita', year: 'Tahun Kita' };
 import { useCircles } from '@/lib/data';
-import { Link } from '@/lib/router';
+import { Link, usePath } from '@/lib/router';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing } from '@/ui/kit';
 
@@ -8,6 +10,12 @@ export default function Circles() {
   const { circles, isLoading } = useCircles();
   const live = circles.filter((x) => x.status === 'active');
   const past = circles.filter((x) => x.status !== 'active');
+  // Dibuka dari kabar "Minggu/Bulan Kita sudah jadi": ketukan kartu langsung membuka wrap-nya.
+  const { search } = usePath();
+  const wrapScope = search.get('wrap') ?? '';
+  const wrapPeriod = search.get('periode') ?? '';
+  const pickWrap = !!WRAP_TITLE[wrapScope] && !!wrapPeriod;
+  const hrefFor = (id: string) => (pickWrap ? `/wrap/${id}/${wrapScope}/${encodeURIComponent(wrapPeriod)}` : `/l/${id}`);
   return (
     <main className="screen">
       <div className="row between mt">
@@ -17,6 +25,15 @@ export default function Circles() {
         </Link>
       </div>
       <p className="small soft">Kecil, dipilih, dan intim. Paling banyak delapan orang.</p>
+      {pickWrap && live.length ? (
+        <div className="sticky row mt" style={{ background: 'var(--sticky-yellow)', gap: 12, alignItems: 'center' }}>
+          <Doodle id={wrapScope === 'week' ? 'amplop' : wrapScope === 'month' ? 'pena' : 'buku'} size={30} />
+          <span className="grow small">
+            <b className="ink">{WRAP_TITLE[wrapScope]}</b> sudah jadi. Pilih lingkaran yang mau dibuka.
+          </span>
+          <Link to="/lingkaran" className="tiny soft">tutup</Link>
+        </div>
+      ) : null}
       {isLoading ? (
         <Growing />
       ) : circles.length === 0 ? (
@@ -29,7 +46,7 @@ export default function Circles() {
       ) : (
         <div className="col mt" style={{ gap: 12 }}>
           {live.map((x, i) => (
-            <Link key={x.id} to={`/l/${x.id}`} className="card col rise" style={{ animationDelay: `${i * 0.05}s`, gap: 10 }}>
+            <Link key={x.id} to={hrefFor(x.id)} className="card col rise" style={{ animationDelay: `${i * 0.05}s`, gap: 10 }}>
               <div className="row between">
                 <div className="row grow" style={{ minWidth: 0 }}>
                   <Doodle id={x.doodle} size={38} />

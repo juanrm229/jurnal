@@ -1,5 +1,7 @@
 import { CIRCLE_KIND_LABEL, COPY } from '@sehari/core';
-import { router } from 'expo-router';
+
+const WRAP_TITLE: Record<string, string> = { week: 'Minggu Kita', month: 'Bulan Kita', year: 'Tahun Kita' };
+import { router, useLocalSearchParams } from 'expo-router';
 import { RefreshControl, View } from 'react-native';
 import { useState } from 'react';
 import { useCircles, useMe } from '@/lib/data';
@@ -16,6 +18,10 @@ export default function Circles() {
   const [refreshing, setRefreshing] = useState(false);
   const live = circles.filter((x) => x.status === 'active');
   const past = circles.filter((x) => x.status !== 'active');
+  // Dibuka dari kabar "Minggu/Bulan Kita sudah jadi": ketukan kartu langsung membuka wrap-nya.
+  const params = useLocalSearchParams<{ wrap?: string; periode?: string }>();
+  const pickWrap = !!params.wrap && !!WRAP_TITLE[params.wrap] && !!params.periode;
+  const open = (id: string) => router.push(pickWrap ? `/wrap/${id}/${params.wrap}/${params.periode}` : `/l/${id}`);
   const limitReached = live.filter((x) => x.kind !== 'moment').length >= me.limits.maxCircles;
 
   return (
@@ -30,6 +36,19 @@ export default function Circles() {
       <Txt v="small" soft>
         Kecil, dipilih, dan intim. Paling banyak delapan orang.
       </Txt>
+      {pickWrap && live.length ? (
+        <>
+          <Gap h={SPACE.sm} />
+          <Card style={{ backgroundColor: c.sticky.yellow }} testID="wrap-pick">
+            <Row>
+              <Doodle id={params.wrap === 'week' ? 'amplop' : params.wrap === 'month' ? 'pena' : 'buku'} size={28} />
+              <Txt v="small" style={{ flex: 1 }}>
+                {WRAP_TITLE[params.wrap!]} sudah jadi. Pilih lingkaran yang mau dibuka.
+              </Txt>
+            </Row>
+          </Card>
+        </>
+      ) : null}
       <Gap />
       {isLoading ? (
         <Growing />
@@ -38,7 +57,7 @@ export default function Circles() {
       ) : (
         <View style={{ gap: SPACE.sm }}>
           {live.map((x) => (
-            <Card key={x.id} onPress={() => router.push(`/l/${x.id}`)} testID={`circle-${x.id}`}>
+            <Card key={x.id} onPress={() => open(x.id)} testID={`circle-${x.id}`}>
               <Row style={{ justifyContent: 'space-between' }}>
                 <Row style={{ flex: 1 }}>
                   <Doodle id={x.doodle} size={34} />
@@ -72,7 +91,7 @@ export default function Circles() {
         <Section title="arsip">
           <View style={{ gap: SPACE.sm }}>
             {past.map((x) => (
-              <Card key={x.id} onPress={() => router.push(`/l/${x.id}`)} tint={c.paper}>
+              <Card key={x.id} onPress={() => open(x.id)} tint={c.paper}>
                 <Row>
                   <Doodle id={x.status === 'memorial' ? 'lilin' : x.status === 'split' ? 'daun-kering' : 'kado'} size={28} />
                   <View style={{ flex: 1 }}>

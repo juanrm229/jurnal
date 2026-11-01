@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { runJobs } from '../src/jobs/scheduler';
 import { Client, id, setup } from './helpers';
 
 let env: Awaited<ReturnType<typeof setup>>;
@@ -72,5 +73,21 @@ describe('notifikasi aktivitas teman', () => {
     const r = await raka.ok('POST', '/v1/me/push-test', {});
     expect(r.ok).toBe(true);
     expect(kabar('test', 'raka-n')).toHaveLength(1);
+  });
+
+  it('kabar Minggu & Bulan Kita membawa id lingkaran supaya langsung terbuka', async () => {
+    // Minggu, 1 November 2026, 19.30 WIB.
+    env.setNow('2026-11-01T12:30:00Z');
+    await runJobs(env.services);
+    const minggu = kabar('wrap', 'naya-n').find((m) => m.data?.scope === 'week');
+    expect(minggu?.data).toMatchObject({ scope: 'week', period: '2026-W44', circleId: duo });
+    const bulan = kabar('wrap', 'naya-n').find((m) => m.data?.scope === 'month');
+    expect(bulan?.data).toMatchObject({ scope: 'month', period: '2026-10', circleId: duo });
+    // Dua lingkaran: tanpa id, aplikasi menawarkan pilihan.
+    await raka.createCircle('circle', 'Rumah');
+    env.setNow('2026-11-08T12:30:00Z');
+    await runJobs(env.services);
+    const raka2 = kabar('wrap', 'raka-n').find((m) => m.data?.period === '2026-W45');
+    expect(raka2?.data?.circleId).toBeUndefined();
   });
 });

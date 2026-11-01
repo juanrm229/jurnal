@@ -1,4 +1,4 @@
-import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthKey, nightQuestionFor, penHolderFor, prevMonth, type SceneWire } from '@sehari/core';
+import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthName, nightQuestionFor, penHolderFor, wrapMonthFor, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
@@ -32,6 +32,7 @@ export default function CircleHome() {
   if (!circle) return <Screen header={<Header />}><Growing /></Screen>;
 
   const week = isoWeek(today);
+  const wrapMonth = wrapMonthFor(today);
   const holderId = scenes.data?.find((s) => s.week === week)?.penHolderId ?? penHolderFor(circle.active.map((m) => m.userId), week, circle.id);
   const holder = circle.members.find((m) => m.userId === holderId);
   const scene = scenes.data?.find((s) => s.week === week);
@@ -149,7 +150,7 @@ export default function CircleHome() {
       <Section title="cerita kita">
         <Row style={{ flexWrap: 'wrap' }} gap={8}>
           <WrapChip label="Minggu Kita" onPress={() => router.push(`/wrap/${id}/week/${week}`)} doodle="amplop" />
-          <WrapChip label="Bulan Kita" onPress={() => router.push(`/wrap/${id}/month/${prevMonth(monthKey(today))}`)} doodle="pena" />
+          <WrapChip label={`Bulan Kita · ${monthName(Number(wrapMonth.slice(5)))}`} onPress={() => router.push(`/wrap/${id}/month/${wrapMonth}`)} doodle="pena" />
           <WrapChip label="Tahun Kita" onPress={() => router.push(`/wrap/${id}/year/${today.slice(0, 4)}`)} doodle="buku" />
           {circle.kind === 'moment' ? <WrapChip label="Wrap Acara" onPress={() => router.push(`/wrap/${id}/moment/${id}`)} doodle="kado" /> : null}
         </Row>
@@ -183,7 +184,7 @@ export default function CircleHome() {
 
 function WrapChip({ label, onPress, doodle }: { label: string; onPress: () => void; doodle: string }) {
   return (
-    <Card onPress={onPress} style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999 }} testID={`wrap-${label}`}>
+    <Card onPress={onPress} style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999 }} testID={`wrap-${label.split(" · ")[0]}`}>
       <Row gap={6}>
         <Doodle id={doodle} size={20} />
         <Txt v="small" ink>
