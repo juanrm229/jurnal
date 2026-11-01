@@ -1,4 +1,4 @@
-import { Component, type ComponentType, lazy, type ReactNode, Suspense, useEffect } from 'react';
+import { Component, type ComponentType, lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 import { useKeyMaintenance } from './lib/data';
 import { bersihkanLencana, refreshPushToken } from './lib/push';
 import { match, navigate, ParamsProvider, usePath } from './lib/router';
@@ -28,6 +28,20 @@ if (typeof window !== 'undefined') {
   });
 }
 
+/**
+ * Pembungkus halaman yang memudar masuk. Animasi dimulai dari opacity 0; kalau
+ * peramban tidak menjalankannya (pernah terjadi di iPhone), halaman tetap
+ * tak terlihat. Jadi setelah sesaat animasinya dilepas dan halaman pasti tampil.
+ */
+function RouteIn({ children }: { children: ReactNode }) {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setSettled(true), 700);
+    return () => window.clearTimeout(t);
+  }, []);
+  return <div className={settled ? undefined : 'route-in'}>{children}</div>;
+}
+
 /** Jangan pernah layar kosong: tangkap galat halaman dan tawarkan muat ulang. */
 class PageErrorBoundary extends Component<{ children: ReactNode; resetKey: string }, { error: unknown }> {
   state = { error: null as unknown };
@@ -50,6 +64,11 @@ class PageErrorBoundary extends Component<{ children: ReactNode; resetKey: strin
           <p className="soft small" style={{ maxWidth: 340, margin: 0 }}>Mungkin aplikasinya baru saja diperbarui. Muat ulang sekali, ya.</p>
           <button className="btn auto" onClick={() => location.reload()}>muat ulang</button>
           <a className="tiny soft" href="/hari">ke halaman hari ini</a>
+          <pre className="tiny soft" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '92vw', textAlign: 'left' }}>
+            {location.pathname}
+            {'\n'}
+            {String((this.state.error as { message?: string })?.message ?? this.state.error)}
+          </pre>
         </div>
       </main>
     );
@@ -176,9 +195,9 @@ export function App() {
       <ParamsProvider value={params}>
         <PageErrorBoundary resetKey={path}>
           <Suspense fallback={<Growing />}>
-            <div key={pattern} className="route-in">
+            <RouteIn key={pattern}>
               <Comp />
-            </div>
+            </RouteIn>
           </Suspense>
         </PageErrorBoundary>
         {tabs && status === 'ready' ? <TabBar path={path} /> : null}

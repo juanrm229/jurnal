@@ -50,10 +50,15 @@ const DEFAULT_W: Record<string, number> = {
 
 export const defaultWidth = (kind: string) => DEFAULT_W[kind] ?? 520;
 
-/** Elemen tanpa posisi (dibuat dari aplikasi lain) disusun rapi ke bawah. */
-export function withLayouts(items: PageItem[]): (PageItem & { layout: PageLayout })[] {
+/**
+ * Elemen tanpa posisi (dibuat dari aplikasi lain) disusun rapi ke bawah.
+ * `heights` = tinggi sebenarnya tiap elemen (satuan halaman) bila sudah diukur:
+ * tulisan panjang mendorong elemen berikutnya ke bawah, tidak ditimpa.
+ */
+export function withLayouts(items: PageItem[], heights: Record<string, number> = {}): (PageItem & { layout: PageLayout })[] {
+  const guess = (it: PageItem, w: number) => (it.payload.kind === 'photo' ? w * 1.1 : 200);
   // Elemen tanpa posisi menyusul di bawah elemen yang sudah diletakkan.
-  const placedBottom = items.reduce((m, it) => (it.payload.layout ? Math.max(m, it.payload.layout.y + (it.payload.kind === 'photo' ? it.payload.layout.w * 1.1 : 200)) : m), 0);
+  const placedBottom = items.reduce((m, it) => (it.payload.layout ? Math.max(m, it.payload.layout.y + (heights[it.id] ?? guess(it, it.payload.layout.w))) : m), 0);
   let y = Math.max(230, placedBottom + 60);
   let i = 0;
   return items.map((it) => {
@@ -62,7 +67,8 @@ export function withLayouts(items: PageItem[]): (PageItem & { layout: PageLayout
     const side = i++ % 2 === 0;
     const x = it.payload.kind === 'sticker' ? (side ? 760 : 90) : it.payload.kind === 'photo' ? (side ? 90 : 450) : it.payload.kind === 'last_line' ? 110 : 90;
     const layout: PageLayout = { x, y, w, rot: it.payload.kind === 'photo' ? (side ? -3 : 2.5) : 0, z: i };
-    y += it.payload.kind === 'photo' ? 420 : it.payload.kind === 'sticker' ? 120 : it.payload.kind === 'last_line' ? 140 : 200;
+    const step = it.payload.kind === 'photo' ? 420 : it.payload.kind === 'sticker' ? 120 : it.payload.kind === 'last_line' ? 140 : 200;
+    y += Math.max(step, (heights[it.id] ?? 0) + 60);
     return { ...it, layout };
   });
 }
@@ -131,7 +137,9 @@ export function Page(props: PageProps) {
     return () => ro.disconnect();
   }, []);
 
-  const laid = withLayouts(items).map((it) => ({ ...it, layout: live[it.id] ?? it.layout }));
+  // Tinggi halaman mengikuti tinggi isi yang sebenarnya (tulisan panjang memanjangkan halaman).
+  const [heights, setHeights] = useState<Record<string, number>>({});
+  const laid = withLayouts(items, heights).map((it) => ({ ...it, layout: live[it.id] ?? it.layout }));
   const marginDoodles = useMemo(() => {
     if (!props.margins) return [];
     const pool = DOODLES.filter((d) => ['stiker', 'cuaca', 'perasaan', 'bunga'].includes(d.category)).map((d) => d.id);
@@ -142,8 +150,6 @@ export function Page(props: PageProps) {
       return { id: pool[(h + r) % pool.length]!, x: left ? 8 + (r % 40) : 930 - (r % 30), y: 260 + i * 230 + (r % 120), rot: (r % 40) - 20, size: 46 + (r % 24) };
     });
   }, [props.margins]);
-  // Tinggi halaman mengikuti tinggi isi yang sebenarnya (tulisan panjang memanjangkan halaman).
-  const [heights, setHeights] = useState<Record<string, number>>({});
   const bottom = laid.reduce((m, it) => Math.max(m, it.layout.y + (heights[it.id] ?? (it.payload.kind === 'photo' ? it.layout.w * 1.1 : 260))), 0);
   const height = Math.max(props.minHeight ?? 1300, bottom + 260);
 

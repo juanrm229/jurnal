@@ -22,6 +22,9 @@
   user-select: none;
   -webkit-user-select: none;
 }
+.story.settled {
+  animation: none;
+}
 :root[data-dark='1'] .story {
   background: #000;
 }

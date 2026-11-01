@@ -23,7 +23,7 @@ import './styles/polish.css';
 import './styles/sidik.css';
 import './styles/main.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode } from 'react';
+import { Component, type ReactNode, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './lib/install';
@@ -39,8 +39,41 @@ const qc = new QueryClient({
   defaultOptions: { queries: { staleTime: 20_000, refetchOnWindowFocus: true, retry: (n, e) => n < 2 && ![401, 403, 404].includes((e as { status?: number }).status ?? 0) } },
 });
 
+/** Penangkap galat terluar: apa pun yang gagal, jangan pernah layar kosong. */
+class RootErrorBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
+  state = { error: null as unknown };
+  static getDerivedStateFromError(error: unknown) {
+    return { error };
+  }
+  componentDidCatch(error: unknown) {
+    console.error('aplikasi gagal', error);
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    const e = this.state.error as { message?: string; stack?: string };
+    return (
+      <main className="screen">
+        <div className="col center" style={{ alignItems: 'center', textAlign: 'center', gap: 14, paddingTop: '18vh' }}>
+          <h1 className="h2" style={{ fontSize: 20 }}>Ada yang gagal dimuat</h1>
+          <p className="soft small" style={{ maxWidth: 340, margin: 0 }}>Coba muat ulang. Kalau masih begini, kirim tangkapan layar ini, ya.</p>
+          <button className="btn auto" onClick={() => location.reload()}>muat ulang</button>
+          <a className="tiny soft" href="/hari">ke halaman hari ini</a>
+          <pre className="tiny soft" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '92vw', textAlign: 'left' }}>
+            {location.pathname}
+            {'\n'}
+            {String(e?.message ?? e)}
+            {'\n'}
+            {(e?.stack ?? '').split('\n').slice(0, 6).join('\n')}
+          </pre>
+        </div>
+      </main>
+    );
+  }
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+   <RootErrorBoundary>
     <QueryClientProvider client={qc}>
       <SessionProvider>
         <ToastHost>
@@ -48,6 +81,7 @@ createRoot(document.getElementById('root')!).render(
         </ToastHost>
       </SessionProvider>
     </QueryClientProvider>
+   </RootErrorBoundary>
   </StrictMode>,
 );
 
