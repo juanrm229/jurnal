@@ -7,6 +7,7 @@ import {
   createDropBody,
   updateDropBody,
   diffDays,
+  FLASH_DAILY_LIMIT,
   footnoteBody,
   footnotePrintBody,
   giftFreezeBody,
@@ -32,6 +33,7 @@ import {
   blockedWith,
   circleSettings,
   circleSummaries,
+  type DropRow,
   effectivePlan,
   freezeState,
   getCircle,
@@ -91,6 +93,21 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
     throw paymentRequired('video_limit', `Video maksimal ${limits.videoSeconds} detik.`);
   }
   if (input.mediaIds.length > limits.photosPerDrop) throw paymentRequired('photo_limit', `Maksimal ${limits.photosPerDrop} foto per Drop.`);
+
+  // Kilasan: hanya untuk lingkaran, bentuknya tetap, dan dibatasi per hari.
+  const flash = input.meta?.flash;
+  if (flash) {
+    if (input.audience !== 'circle' || !input.circleIds.length) throw bad('flash_audience', 'Kilasan hanya untuk lingkaran.');
+    if (flash === 'snap' && (input.kind !== 'photo' || !input.mediaIds.length)) throw bad('flash_kind', 'Kilasan butuh foto.');
+    if (flash === 'kangen' && input.kind !== 'sticker') throw bad('flash_kind', 'Kangen dikirim sebagai stiker.');
+    const [row] = await s.db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(drops)
+      .where(and(eq(drops.authorId, user.id), eq(drops.day, input.day), sql`${drops.meta}->>'flash' = ${flash}`, sql`${drops.id} <> ${input.id}`));
+    if ((row?.n ?? 0) >= FLASH_DAILY_LIMIT[flash]) {
+      throw conflict('flash_limit', flash === 'kangen' ? 'Kangen hari ini sudah tiga kali. Simpan sisanya untuk besok, biar tetap istimewa.' : 'Kilasan hari ini sudah banyak. Ceritakan sisanya di halaman, ya.');
+    }
+  }
 
   // Audiens
   const circleIds = [...new Set(input.circleIds)];
@@ -235,6 +252,16 @@ async function kabarMenulis(s: Services, user: UserRow, input: DropInput) {
   }
 }
 
+/** Kabar kilasan: langsung ke rekan di lingkaran tujuan (kilasan memang tidak menunggu segel). */
+async function kabarKilasan(s: Services, user: UserRow, input: DropInput) {
+  const name = user.penName ?? 'Seseorang';
+  for (const cid of [...new Set(input.circleIds)]) {
+    const tujuan = await rekanAktif(s, [cid], user.id);
+    const text = input.meta?.flash === 'kangen' ? say(COPY.notifications.flashKangen, name) : say(COPY.notifications.flashSnap, name);
+    await pushTo(s, tujuan, { body: text, data: { type: 'flash', circleId: cid, day: input.day, dropId: input.id } }, 'notifyActivity');
+  }
+}
+
 export function dayRoutes(s: Services) {
   const r = new Hono<AppEnv>();
 
@@ -243,7 +270,8 @@ export function dayRoutes(s: Services) {
     const user = c.get('user');
     const [lama] = await s.db.select({ id: drops.id }).from(drops).where(eq(drops.id, input.id));
     const id = await createDrop(s, user, input);
-    if (!lama) await kabarMenulis(s, user, input).catch((e) => console.warn('kabar menulis gagal', e));
+    if (!lama && input.meta?.flash) await kabarKilasan(s, user, input).catch((e) => console.warn('kabar kilasan gagal', e));
+    else if (!lama) await kabarMenulis(s, user, input).catch((e) => console.warn('kabar menulis gagal', e));
     return c.json({ id }, 201);
   });
 
@@ -483,6 +511,25 @@ export function dayRoutes(s: Services) {
     const rows = await dropsInCircle(s, circle.id, from, to);
     const { visible, locked } = await filterForCircle(s, user, circle, rows);
     return c.json({ drops: await hydrateDrops(s, visible, user.id, { hidden: await blockedWith(s, user.id) }), locked });
+  });
+
+  /** Kilasan terbaru dari semua lingkaranmu (kemarin & hari ini), terbaru dulu. */
+  r.get('/flashes', async (c) => {
+    const user = c.get('user');
+    const today = userToday(user, s.now());
+    const from = addDays(today, -1);
+    const ids = await activeCircleIds(s, user.id);
+    const rows = ids.length ? await s.db.select().from(circles).where(inArray(circles.id, ids)) : [];
+    const hidden = await blockedWith(s, user.id);
+    const seen = new Map<string, DropRow>();
+    for (const circle of rows) {
+      if (circle.status !== 'active') continue;
+      const flashes = (await dropsInCircle(s, circle.id, from, today)).filter((d) => d.meta?.flash && !seen.has(d.id));
+      const { visible } = await filterForCircle(s, user, circle, flashes);
+      for (const d of visible) seen.set(d.id, d);
+    }
+    const list = [...seen.values()].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 60);
+    return c.json({ flashes: await hydrateDrops(s, list, user.id, { hidden }) });
   });
 
   /** "Halaman yang Menguning": kunjungan menghidupkan warna halaman lagi. */

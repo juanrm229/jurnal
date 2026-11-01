@@ -56,7 +56,8 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
       continue;
     }
     // Kapsul waktu yang sudah terbuka dan Kapsul Momen tidak butuh segel.
-    const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule';
+    // Kilasan sengaja terlihat sebelum segel: cuplikan siang hari. Ceritanya tetap di halaman tersegel.
+    const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule' && !d.meta?.flash;
     if (needsSeal && !sealed.has(d.day)) {
       locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'not_sealed', unlockOn: null });
       continue;

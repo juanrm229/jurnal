@@ -62,6 +62,8 @@ function routeFor(d) {
     case 'reaction':
     case 'footnote':
       return d.circleId && d.day ? `/l/${d.circleId}/hari/${d.day}` : '/hari';
+    case 'flash':
+      return d.dropId ? `/kilasan?id=${encodeURIComponent(d.dropId)}` : '/kilasan';
     case 'invite_accepted':
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
     case 'meet':

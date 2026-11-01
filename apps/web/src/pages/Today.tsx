@@ -33,6 +33,7 @@ import { TEXT_SIZES } from '@/editor/elements';
 import { FILLS, isSpecial, LINES, specialWidth } from '@/editor/stickers';
 import { DockBtn, EmptyPage, Tile, useKeyboardInset } from '@/editor/dock';
 import { api } from '@/lib/api';
+import { FlashStrip } from '@/pages/kilasan/FlashStrip';
 import { buildDropBody, type CircleView, type DraftDrop, newDropId, nowParts, openDrop, qk, updateDrop, useCircles, useKeyring, useMe, useMyDay, useToday } from '@/lib/data';
 import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
@@ -517,6 +518,8 @@ export default function Today() {
           <Link to="/hari" className="pill">hari ini</Link>
         </div>
       ) : null}
+
+      {day === today ? <FlashStrip /> : null}
 
       <MeetBanner />
 
