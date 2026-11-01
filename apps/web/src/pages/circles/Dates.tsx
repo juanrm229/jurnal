@@ -86,7 +86,7 @@ export function DatesCard({ circle }: { circle: CircleView }) {
         </div>
       ) : (
         <p className="small soft" style={{ margin: '8px 0 0' }}>
-          Belum ada tanggal. Tambahkan hari pertama bertemu, hari jadian, atau tanggal kecil yang hanya kalian yang paham.
+          Hari jadian, pertama bertemu, atau tanggal kecil yang hanya kalian paham.
         </p>
       )}
       {rest.length ? (

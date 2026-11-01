@@ -54,7 +54,7 @@ function Status({ circle, answered, lockedBy }: { circle: CircleView; answered: 
 }
 
 /** Pertanyaan Hari Ini: jawab, lalu jawaban mereka terbuka berdampingan. */
-export function QuestionCard({ circle, q }: { circle: CircleView; q: { id: string; text: string } }) {
+export function QuestionCard({ circle, q, embedded }: { circle: CircleView; q: { id: string; text: string }; embedded?: boolean }) {
   const me = useMe();
   const today = useToday();
   const toast = useToast();
@@ -82,14 +82,18 @@ export function QuestionCard({ circle, q }: { circle: CircleView; q: { id: strin
   };
 
   return (
-    <div className="card qa" data-testid="question-card">
-      <div className="row" style={{ gap: 10, alignItems: 'flex-start' }}>
-        <Doodle id="bulan" size={28} />
-        <div className="grow">
-          <span className="label">pertanyaan hari ini</span>
-          <p className="qa-q hand">{q.text}</p>
+    <div className={embedded ? 'qa' : 'card qa'} data-testid="question-card">
+      {embedded ? (
+        <p className="qa-q hand">{q.text}</p>
+      ) : (
+        <div className="row" style={{ gap: 10, alignItems: 'flex-start' }}>
+          <Doodle id="bulan" size={28} />
+          <div className="grow">
+            <span className="label">pertanyaan hari ini</span>
+            <p className="qa-q hand">{q.text}</p>
+          </div>
         </div>
-      </div>
+      )}
       <Status circle={circle} answered={answered} lockedBy={lockedBy} />
       {!mine ? (
         <>
@@ -134,7 +138,7 @@ function Answer({ d, circle }: { d: OpenDrop; circle: CircleView }) {
 }
 
 /** Kuis Seberapa Kenal: jawab untuk dirimu, tebak jawaban mereka. */
-export function QuizCard({ circle }: { circle: CircleView }) {
+export function QuizCard({ circle, embedded }: { circle: CircleView; embedded?: boolean }) {
   const me = useMe();
   const today = useToday();
   const toast = useToast();
@@ -178,18 +182,26 @@ export function QuizCard({ circle }: { circle: CircleView }) {
   const myQuiz = mine?.payload?.quiz;
 
   return (
-    <div className="card qa quiz" data-testid="quiz-card">
-      <div className="row between" style={{ alignItems: 'flex-start' }}>
-        <div>
-          <span className="label">kuis seberapa kenal</span>
-          {myScore?.total ? (
-            <div className="tiny soft">
-              30 hari: benar {myScore.correct}/{myScore.total} · {kenalLabel(myScore.correct, myScore.total)}
-            </div>
-          ) : null}
+    <div className={embedded ? 'qa quiz' : 'card qa quiz'} data-testid="quiz-card">
+      {embedded ? (
+        myScore?.total ? (
+          <div className="tiny soft">
+            30 hari: benar {myScore.correct}/{myScore.total} · {kenalLabel(myScore.correct, myScore.total)}
+          </div>
+        ) : null
+      ) : (
+        <div className="row between" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <span className="label">kuis seberapa kenal</span>
+            {myScore?.total ? (
+              <div className="tiny soft">
+                30 hari: benar {myScore.correct}/{myScore.total} · {kenalLabel(myScore.correct, myScore.total)}
+              </div>
+            ) : null}
+          </div>
+          <Doodle id="ui-kata" size={26} />
         </div>
-        <Doodle id="ui-kata" size={26} />
-      </div>
+      )}
       <Status circle={circle} answered={answered} lockedBy={lockedBy} />
       {!mine ? (
         <>
@@ -263,6 +275,33 @@ export function QuizCard({ circle }: { circle: CircleView }) {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * "Hari ini bersama": pertanyaan hari ini & kuis dalam satu kartu bertab,
+ * supaya halaman lingkaran tidak menumpuk dua kartu besar.
+ */
+export function TogetherToday({ circle, q, quiz }: { circle: CircleView; q: { id: string; text: string } | null; quiz: boolean }) {
+  const [tab, setTab] = useState<'q' | 'kuis'>(q ? 'q' : 'kuis');
+  if (!q && !quiz) return null;
+  const both = !!q && quiz;
+  return (
+    <div className="card tt" data-testid="together-today">
+      {both ? (
+        <div className="tt-tabs" role="tablist">
+          <button role="tab" aria-selected={tab === 'q'} className={tab === 'q' ? 'on' : ''} onClick={() => setTab('q')} data-testid="tab-question">
+            <Doodle id="bulan" size={16} color="currentColor" /> pertanyaan
+          </button>
+          <button role="tab" aria-selected={tab === 'kuis'} className={tab === 'kuis' ? 'on' : ''} onClick={() => setTab('kuis')} data-testid="tab-quiz">
+            <Doodle id="ui-kata" size={16} color="currentColor" /> kuis kenal
+          </button>
+        </div>
+      ) : (
+        <span className="label">{q ? 'pertanyaan hari ini' : 'kuis seberapa kenal'}</span>
+      )}
+      {tab === 'q' && q ? <QuestionCard circle={circle} q={q} embedded /> : <QuizCard circle={circle} embedded />}
     </div>
   );
 }

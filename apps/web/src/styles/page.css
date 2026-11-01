@@ -474,6 +474,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
+  /* Tiap halaman setinggi isinya sendiri, tidak ditarik menyamai halaman sebelahnya. */
+  align-items: start;
 }
 .spread > * + * {
   border-left: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
@@ -481,6 +483,7 @@
 @media (max-width: 820px) {
   .spread {
     display: flex;
+    align-items: flex-start;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 12px;

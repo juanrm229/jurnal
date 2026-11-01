@@ -40,7 +40,7 @@ import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { takePendingStrip } from '@/lib/photobox/booth';
 import { store } from '@/lib/storage';
-import { Avatar, Doodle, Growing, MusicToggle, Sheet, Toggle, useToast } from '@/ui/kit';
+import { Avatar, Doodle, Growing, Sheet, Toggle, useToast } from '@/ui/kit';
 import { sound } from '@/lib/sound';
 import { countdown, fmtWhen, useMeets } from '@/lib/meets';
 
@@ -492,16 +492,14 @@ export default function Today() {
           <Doodle id="tunas" size={26} />
           <span className="h2">sehari</span>
         </Link>
-        <div className="row" style={{ gap: 2 }}>
-          {active.slice(0, 2).map((c) => (
-            <TogetherChip key={c.id} c={c} meId={me.user.id} day={day} />
-          ))}
+        <div className="row today-nav">
+          <span className="today-chips">
+            {active.slice(0, 2).map((c) => (
+              <TogetherChip key={c.id} c={c} meId={me.user.id} day={day} />
+            ))}
+          </span>
           <Link to="/lingkaran" className="icon-btn" aria-label="lingkaran">
             <Doodle id="ui-lingkaran" size={22} />
-          </Link>
-          <MusicToggle />
-          <Link to="/karya" className="icon-btn" aria-label="karya">
-            <Doodle id="pena" size={22} />
           </Link>
           <Link to="/kenangan" className="icon-btn" aria-label="kenangan">
             <Doodle id="ui-kenangan" size={22} />
@@ -708,6 +706,7 @@ export default function Today() {
       <Sheet open={sheet === 'more'} onClose={() => setSheet(null)} title="tambahkan">
         <div className="tile-grid">
           <Tile icon="ui-mikrofon" label="cerita suara" sub="rekam bebas, bisa jadi tulisan" onClick={() => setSheet('voice')} />
+          <Tile icon="pena" label="karya" sub="esai, cerpen, puisi: ruang menulis yang tenang" onClick={() => navigate('/karya')} />
           <Tile icon="dadu" label="Ruang Main" sub="SIDIK, Titip Surat, dan game bersama lainnya" onClick={() => navigate('/main')} />
           <Tile icon="kamera" label="photobox" sub="strip foto lucu, sendiri atau berdua" onClick={() => navigate('/photobox')} />
           <Tile icon="ui-lagu" label="lagu" sub="yang diputar berulang hari ini" onClick={() => setSheet('song')} />

@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import { type CircleView, useMe, useToday } from '@/lib/data';
 import { useFlashes } from '@/lib/flash';
 import { navigate } from '@/lib/router';
-import { Doodle } from '@/ui/kit';
+import { Avatar, Doodle, Flame } from '@/ui/kit';
 
 /** Hitung keadaan tanaman sebuah lingkaran (memakai kilasan hari ini). */
 export function usePlant(circle: CircleView): PlantState {
@@ -52,50 +52,61 @@ export function PlantArt({ state, size = 150 }: { state: PlantState; size?: numb
   );
 }
 
-/** Kartu tanaman di halaman lingkaran. */
+/**
+ * Kartu "kita": tanaman (wajah api lingkaran) dan api bersama dalam satu kartu.
+ * Atas: tanaman + nama tahap + satu kalimat. Tengah: tiga angka. Bawah: siapa
+ * yang sudah menyegel hari ini.
+ */
 export function PlantCard({ circle }: { circle: CircleView }) {
-  const today = useToday();
+  const me = useMe();
   const p = usePlant(circle);
   const ann = p.anniversary;
+  const s = circle.streak;
+  const members = circle.members.filter((m) => m.state !== 'left');
   return (
-    <section className="card pl-card" data-testid="plant">
-      <PlantArt state={p} />
-      <div className="pl-text">
-        <span className="label">tanaman kita</span>
-        <div className="pl-name hand">{p.stage.name}</div>
-        <p className="small" style={{ margin: '2px 0 8px' }}>
-          {p.line}
-        </p>
-        <div className="pl-facts">
-          <span>
-            <b>{p.sinceDays}</b> hari bersama sejak {formatDayLong(circle.createdDay)}
-          </span>
-          <span>
-            <b>{p.togetherDays}</b> hari disegel berdua
-          </span>
-          {p.next && p.toNext !== undefined ? (
-            <span>
-              <b>{p.toNext}</b> hari lagi jadi {p.next.name}
-            </span>
-          ) : null}
-          <span className={ann.inDays === 0 ? 'pl-ann today' : ''}>
-            {ann.inDays === 0 ? (
-              <>
-                hari jadi ke-<b>{ann.years}</b> hari ini!
-              </>
-            ) : (
-              <>
-                hari jadi ke-{ann.years} dalam <b>{ann.inDays}</b> hari
-              </>
-            )}
-          </span>
+    <section className="card kt" data-testid="plant">
+      <div className="kt-top">
+        <PlantArt state={p} size={104} />
+        <div className="kt-head">
+          <span className="label">tanaman kita</span>
+          <div className="pl-name hand">{p.stage.name}</div>
+          <p className="small kt-line">{p.line}</p>
         </div>
-        {!p.watered && circle.status === 'active' && today ? (
-          <div className="row" style={{ gap: 6, marginTop: 10 }}>
-            <button className="btn sm auto" onClick={() => navigate('/kilasan/jepret')}>
-              <Doodle id="penyiram" size={18} color="currentColor" /> siram dengan kilasan
-            </button>
-          </div>
+      </div>
+      <div className="kt-stats">
+        <div>
+          <b>{p.sinceDays}</b>
+          <span>hari bersama</span>
+        </div>
+        <div title={`terpanjang ${s.longest} hari`}>
+          <span className="kt-flame">
+            <Flame level={s.flame} days={s.current} size={22} />
+          </span>
+          <span>hari api</span>
+        </div>
+        <div className={ann.inDays === 0 ? 'today' : ''}>
+          <b>{ann.inDays === 0 ? '🎉' : ann.inDays}</b>
+          <span>{ann.inDays === 0 ? `hari jadi ke-${ann.years}` : 'ke hari jadi'}</span>
+        </div>
+      </div>
+      <p className="tiny soft kt-sub">
+        {p.togetherDays} hari disegel berdua sejak {formatDayLong(circle.createdDay)} · api terpanjang {s.longest}
+        {p.next && p.toNext !== undefined ? ` · ${p.toNext} hari lagi jadi ${p.next.name}` : ''}
+        {s.next ? ` · ${s.next.remaining} hari lagi ke ${s.next.name}` : ''}
+      </p>
+      <div className="kt-foot">
+        <div className="kt-members">
+          {members.map((m) => (
+            <span key={m.userId} className="kt-member" title={circle.todaySealed[m.userId] ? 'sudah menyegel hari ini' : 'belum menyegel'}>
+              <Avatar doodle={m.doodle} size={30} sealed={circle.todaySealed[m.userId]} dim={m.state === 'remembered'} />
+              <span className="tiny">{m.userId === me.user.id ? 'kamu' : m.penName}</span>
+            </span>
+          ))}
+        </div>
+        {!p.watered && circle.status === 'active' ? (
+          <button className="btn sm auto ghost" onClick={() => navigate('/kilasan/jepret')}>
+            <Doodle id="penyiram" size={16} color="currentColor" /> siram
+          </button>
         ) : null}
       </div>
     </section>
