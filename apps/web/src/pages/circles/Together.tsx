@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Page, type PageItem, withLayouts } from '@/editor/Page';
 import { api } from '@/lib/api';
+import { FaceButton, FaceRow } from '@/pages/kilasan/Faces';
 import { newDropId, qk, useCircle, useCircleDay, useKeyring, useMe, useOpenDrops, useReact, useToday } from '@/lib/data';
 import { Link, navigate, useParams } from '@/lib/router';
 import { useSession } from '@/lib/session';
@@ -256,6 +257,14 @@ export default function Together() {
                   mine={tapped.wire.reactions.filter((r) => r.userId === me.user.id).map((r) => r.kind)}
                   onReact={(kind, on) => react.mutate({ dropId: tapped.wire.id, kind, on })}
                   onNote={tapped.wire.kind !== 'silent' ? () => setNoteFor(tapped.wire.id) : undefined}
+                  extra={
+                    tapped.wire.kind !== 'silent' ? (
+                      <>
+                        {tapped.wire.authorId !== me.user.id ? <FaceButton dropId={tapped.wire.id} circleIds={tapped.wire.circleIds.length ? tapped.wire.circleIds : [id]} faces={tapped.wire.faces ?? []} /> : null}
+                        <FaceRow faces={tapped.wire.faces ?? []} size={30} />
+                      </>
+                    ) : null
+                  }
                 />
               ) : null}
             </div>
@@ -288,7 +297,7 @@ export default function Together() {
   );
 }
 
-function ReactBar({ x, y, mine, onReact, onNote }: { x: number; y: number; mine: ReactionKind[]; onReact: (k: ReactionKind, on: boolean) => void; onNote?: () => void }) {
+function ReactBar({ x, y, mine, onReact, onNote, extra }: { x: number; y: number; mine: ReactionKind[]; onReact: (k: ReactionKind, on: boolean) => void; onNote?: () => void; extra?: React.ReactNode }) {
   return (
     <div className="react-bar" style={{ position: 'fixed', left: Math.max(150, Math.min(window.innerWidth - 150, x)), top: Math.max(70, y) }} onClick={(e) => e.stopPropagation()}>
       {REACTIONS.map((r) => (
@@ -301,6 +310,7 @@ function ReactBar({ x, y, mine, onReact, onNote }: { x: number; y: number; mine:
           <Doodle id="pena" size={16} color="currentColor" sw={2.6} /> catatan
         </button>
       ) : null}
+      {extra}
     </div>
   );
 }

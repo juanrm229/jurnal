@@ -242,6 +242,21 @@ export const reactions = pgTable(
   (t) => [primaryKey({ columns: [t.dropId, t.userId, t.kind] })],
 );
 
+/** Reaksi Wajah: satu foto ekspresi per orang per Drop, terenkripsi untuk lingkaran. */
+export const faceReactions = pgTable(
+  'face_reactions',
+  {
+    dropId: text('drop_id').notNull().references(() => drops.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    expression: text('expression').notNull(),
+    ciphertext: text('ciphertext').notNull(),
+    recipients: jsonb('recipients').notNull(),
+    mediaIds: jsonb('media_ids').$type<string[]>().notNull().default([]),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.dropId, t.userId] })],
+);
+
 export const footnotes = pgTable('footnotes', {
   id: text('id').primaryKey(),
   dropId: text('drop_id').notNull().references(() => drops.id, { onDelete: 'cascade' }),

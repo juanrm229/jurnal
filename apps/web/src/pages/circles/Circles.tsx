@@ -5,6 +5,7 @@ import { useCircles } from '@/lib/data';
 import { Link, usePath } from '@/lib/router';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing } from '@/ui/kit';
+import { PlantMini } from './Plant';
 
 export default function Circles() {
   const { circles, isLoading } = useCircles();
@@ -55,7 +56,14 @@ export default function Circles() {
                     <div className="tiny soft">{CIRCLE_KIND_LABEL[x.kind]} · {x.active.length} orang</div>
                   </div>
                 </div>
-                {x.kind !== 'moment' ? <Flame level={x.streak.flame} days={x.streak.current} /> : <Doodle id="kado" size={26} />}
+                {x.kind !== 'moment' ? (
+                  <span className="row" style={{ gap: 4, alignItems: 'center' }}>
+                    <PlantMini circle={x} />
+                    <Flame level={x.streak.flame} days={x.streak.current} />
+                  </span>
+                ) : (
+                  <Doodle id="kado" size={26} />
+                )}
               </div>
               <div className="row" style={{ gap: 6 }}>
                 {x.active.map((m) => <Avatar key={m.userId} doodle={m.doodle} size={28} sealed={x.todaySealed[m.userId]} title={m.penName} />)}

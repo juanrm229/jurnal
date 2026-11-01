@@ -8,6 +8,7 @@ import { memberName, useCircles } from '@/lib/data';
 import { excerpt, useCircleWorks } from '@/lib/works';
 import { countdown, fmtWhen, useCircleMeets } from '@/lib/meets';
 import { Cover } from '@/pages/karya/Cover';
+import { PlantCard } from './Plant';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
 
@@ -67,6 +68,12 @@ export default function CircleHome() {
         <div className="card col center" style={{ alignItems: 'center' }}>
           <Doodle id="daun-kering" size={40} />
           <p>{COPY.modes.split.done}</p>
+        </div>
+      ) : null}
+
+      {circle.kind !== 'moment' && circle.status !== 'memorial' ? (
+        <div className="mt">
+          <PlantCard circle={circle} />
         </div>
       ) : null}
 

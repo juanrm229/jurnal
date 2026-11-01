@@ -311,12 +311,14 @@ export async function hydrateDrops(
   // Penulis selalu boleh melihat semua lingkaran tempat Drop-nya tinggal.
   const visibleCircle = (d: DropRow, circleId: string) => d.authorId === viewerId || viewerCircles.has(circleId);
   const ids = rows.map((r) => r.id);
-  const [recips, reacts, notes, circlesOf] = await Promise.all([
+  const [recips, reacts, notes, circlesOf, faces] = await Promise.all([
     s.db.select().from(dropRecipients).where(inArray(dropRecipients.dropId, ids)),
     s.db.select().from(reactions).where(inArray(reactions.dropId, ids)),
     s.db.select().from(footnotes).where(inArray(footnotes.dropId, ids)),
     s.db.select().from(dropCircles).where(inArray(dropCircles.dropId, ids)),
+    s.db.select().from(schema.faceReactions).where(inArray(schema.faceReactions.dropId, ids)),
   ]);
+  type Wrap = { t: 'circle'; circleId: string; epoch: number; wk: string } | { t: 'user'; userId: string; wk: string };
   return rows.map((d) => ({
     id: d.id,
     authorId: d.authorId,
@@ -352,6 +354,19 @@ export async function hydrateDrops(
         envelope: { ciphertext: n.ciphertext, recipients: n.recipients as never },
         includeInPrint: n.includeInPrint,
         createdAt: n.createdAt.toISOString(),
+      })),
+    faces: faces
+      .filter((f) => f.dropId === d.id && !hidden.has(f.userId))
+      .map((f) => ({
+        userId: f.userId,
+        expression: f.expression as never,
+        envelope: {
+          ciphertext: f.ciphertext,
+          // Hanya bungkus yang bisa dibuka pembaca ini.
+          recipients: (f.recipients as Wrap[]).filter((r) => (r.t === 'circle' ? viewerCircles.has(r.circleId) : r.userId === viewerId)),
+        },
+        mediaIds: f.mediaIds,
+        createdAt: f.createdAt.toISOString(),
       })),
   }));
 }
