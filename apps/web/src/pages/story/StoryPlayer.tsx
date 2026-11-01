@@ -25,6 +25,12 @@ export function StoryPlayer({ pages, slow, onClose, startAt = 0 }: { pages: Stor
   const [index, setIndex] = useState(Math.max(0, Math.min(startAt, count - 1)));
   const [paused, setPaused] = useState(false);
   const [hidden, setHidden] = useState(false);
+  // Animasi masuk dilepas setelah sesaat supaya cerita pasti terlihat (lihat RouteIn).
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setSettled(true), 600);
+    return () => window.clearTimeout(t);
+  }, []);
   const hold = useRef<{ timer: number | null; held: boolean; skip: boolean }>({ timer: null, held: false, skip: false });
   const page = pages[Math.min(index, count - 1)]!;
   const playing = !paused && !hidden;
@@ -101,7 +107,7 @@ export function StoryPlayer({ pages, slow, onClose, startAt = 0 }: { pages: Stor
   const body = <div key={page.key} className={`story-page${slow ? ' slow' : ''}`}>{page.render({ playing, duration: page.duration ?? 0, go })}</div>;
 
   return (
-    <div className={`story${playing ? '' : ' paused'}`} role="dialog" aria-modal aria-label="cerita" data-testid="story">
+    <div className={`story${playing ? '' : ' paused'}${settled ? ' settled' : ''}`} role="dialog" aria-modal aria-label="cerita" data-testid="story">
       {index > 0 ? (
         <button className="story-side prev" aria-label="kartu sebelumnya" onClick={() => go(-1)}>
           <Doodle id="ui-kembali" size={26} color="currentColor" />

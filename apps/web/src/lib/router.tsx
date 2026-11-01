@@ -3,6 +3,8 @@ import { type AnchorHTMLAttributes, createContext, type ReactNode, useContext, u
 import { flushSync } from 'react-dom';
 
 type Listener = () => void;
+
+const WEBKIT = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|OPR/.test(navigator.userAgent));
 const listeners = new Set<Listener>();
 
 /**
@@ -24,7 +26,9 @@ export function navigate(to: string, opts: { replace?: boolean } = {}) {
   // Pindah halaman dengan transisi tampilan (peramban yang mendukung): halaman
   // lama memudar dan terangkat, halaman baru naik pelan, tab bar tetap diam.
   const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
-  if (doc.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) doc.startViewTransition(() => flushSync(run));
+  // WebKit (Safari & semua peramban di iPhone) dimatikan: di sana transisi bisa
+  // tersangkut dan halaman tampil kosong.
+  if (doc.startViewTransition && !WEBKIT && !matchMedia('(prefers-reduced-motion: reduce)').matches) doc.startViewTransition(() => flushSync(run));
   else run();
 }
 

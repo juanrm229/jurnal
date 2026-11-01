@@ -15,6 +15,51 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Penjaga layar kosong: kalau setelah beberapa detik tidak ada yang tampil
+      // (bundel gagal dimuat atau aplikasi berhenti), tampilkan pesan + galatnya.
+      (function () {
+        var errs = [];
+        function note(m) { if (m && errs.length < 5) errs.push(String(m).slice(0, 300)); }
+        window.addEventListener('error', function (e) { note(e.message || (e.target && e.target.src ? 'gagal memuat ' + e.target.src : '')); }, true);
+        window.addEventListener('unhandledrejection', function (e) { note(e.reason && (e.reason.stack || e.reason.message) || e.reason); });
+        window.__sehariErrors = errs;
+        function blank() {
+          var r = document.getElementById('root');
+          if (!r) return true;
+          var t = (r.innerText || '').trim();
+          if (!t) return true;
+          // Isi ada tapi tak terlihat (animasi tersangkut di opacity 0).
+          var el = r.firstElementChild;
+          for (var i = 0; el && i < 6; i++, el = el.firstElementChild) if (parseFloat(getComputedStyle(el).opacity) < 0.05) return true;
+          return false;
+        }
+        function show() {
+          if (document.getElementById('sehari-rescue') || !blank()) return;
+          var d = document.createElement('div');
+          d.id = 'sehari-rescue';
+          d.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#F7F7F4;color:#1d1d3a;font:15px/1.5 ui-monospace,Menlo,monospace');
+          d.innerHTML = '<div style="font-size:19px">Halaman ini belum mau tampil.</div><div style="max-width:320px;opacity:.7">Coba muat ulang sekali. Kalau masih kosong, kirim tangkapan layar ini, ya.</div>';
+          var b = document.createElement('button');
+          b.textContent = 'muat ulang';
+          b.setAttribute('style', 'font:inherit;padding:12px 22px;border-radius:999px;border:0;background:#2a1fd6;color:#fff');
+          b.onclick = function () { location.reload(); };
+          d.appendChild(b);
+          var info = document.createElement('pre');
+          info.setAttribute('style', 'max-width:92vw;white-space:pre-wrap;word-break:break-word;font-size:11px;opacity:.6;margin:8px 0 0');
+          info.textContent = location.pathname + '\n' + navigator.userAgent + (errs.length ? '\n\n' + errs.join('\n---\n') : '\n\n(tanpa pesan galat)');
+          d.appendChild(info);
+          document.body.appendChild(d);
+          var iv = setInterval(function () { if (!blank()) { d.remove(); clearInterval(iv); } }, 1000);
+        }
+        function watch() { setTimeout(function () { if (blank()) setTimeout(show, 2500); }, 6000); }
+        watch();
+        // Pindah halaman di dalam aplikasi: periksa lagi.
+        var push = history.pushState;
+        history.pushState = function () { var r = push.apply(this, arguments); watch(); return r; };
+        window.addEventListener('popstate', watch);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
