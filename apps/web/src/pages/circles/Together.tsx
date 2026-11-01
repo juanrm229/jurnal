@@ -317,7 +317,16 @@ function ReactBar({ x, y, mine, onReact, onNote, extra }: { x: number; y: number
 
 function LockedNote({ locked, who }: { locked: LockedDrop[]; who: string }) {
   const l = locked[0]!;
-  const why = l.reason === 'time_capsule' ? `kapsul waktu · terbuka ${l.unlockOn ? formatDayLong(l.unlockOn) : 'nanti'}` : l.reason === 'secret_card' ? 'kartu rahasia · terbuka setelah kamu menjawab' : l.reason === 'split' ? 'mode pisah' : 'terbuka setelah kamu menyegel';
+  const why =
+    l.reason === 'time_capsule'
+      ? `kapsul waktu · terbuka ${l.unlockOn ? formatDayLong(l.unlockOn) : 'nanti'}`
+      : l.reason === 'secret_card'
+        ? 'kartu rahasia · terbuka setelah kamu menjawab'
+        : l.reason === 'answer_first'
+          ? 'jawab pertanyaannya dulu, atau segel halamanmu'
+          : l.reason === 'split'
+            ? 'mode pisah'
+            : 'terbuka setelah kamu menyegel';
   return (
     <div data-paper="1" style={{ position: 'absolute', left: '12%', right: '12%', bottom: '6%', pointerEvents: 'none' }}>
       <div className="card col center" style={{ alignItems: 'center', transform: 'rotate(-1.5deg)', background: 'color-mix(in srgb, var(--ink) 8%, var(--card))' }}>

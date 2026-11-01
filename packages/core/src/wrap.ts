@@ -32,6 +32,8 @@ export interface WrapDrop {
   reactions: { kind: ReactionKind; userId: string }[];
   /** Kilasan (terlihat sebelum segel). */
   flash?: FlashKind;
+  /** Pertanyaan/kuis yang dijawab (meta.questionId). */
+  questionId?: string;
   /** Reaksi Wajah yang sudah dibuka. */
   faces?: { userId: string; expression: FaceExpression; media: MediaRef }[];
 }

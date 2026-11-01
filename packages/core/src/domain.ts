@@ -176,6 +176,8 @@ export interface DropPayload {
   layout?: PageLayout;
   /** Gaya teks di halaman. */
   style?: { font?: 'mono' | 'hand' | 'serif'; size?: number; color?: string; align?: 'left' | 'center'; /** Stiker: warna isi pastel. */ fill?: string; /** Stiker: tepi putih seperti stiker vinyl (bawaan nyala). */ cut?: boolean };
+  /** Kuis Seberapa Kenal: pilihanmu sendiri & tebakanmu untuk anggota lain (indeks opsi). */
+  quiz?: { choice: number; guesses?: Record<string, number> };
   /** Untuk kind 'sticker': id doodle & warnanya. */
   sticker?: string;
   color?: string;

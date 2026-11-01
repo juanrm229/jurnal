@@ -56,6 +56,19 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
       continue;
     }
     // Kapsul waktu yang sudah terbuka dan Kapsul Momen tidak butuh segel.
+    // Jawab Dulu, Baru Lihat: jawaban pertanyaan terbuka begitu kamu menjawab pertanyaan
+    // yang sama di hari itu, tanpa menunggu segel. Segel tetap membuka semuanya.
+    const qid = d.kind === 'answer' ? d.meta?.questionId : undefined;
+    if (qid && !sealed.has(d.day)) {
+      if (await answeredQuestion(s, viewer.id, qid, d.day)) {
+        visible.push(d);
+        continue;
+      }
+      if (settings.revealMode === 'after_seal' && circle.kind !== 'moment') {
+        locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'answer_first', unlockOn: null, questionId: qid });
+        continue;
+      }
+    }
     // Kilasan sengaja terlihat sebelum segel: cuplikan siang hari. Ceritanya tetap di halaman tersegel.
     const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule' && !d.meta?.flash;
     if (needsSeal && !sealed.has(d.day)) {
@@ -72,6 +85,15 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
     visible.push(d);
   }
   return { visible, locked };
+}
+
+async function answeredQuestion(s: Services, userId: string, questionId: string, day: string): Promise<boolean> {
+  const rows = await s.db
+    .select({ id: drops.id })
+    .from(drops)
+    .where(and(eq(drops.authorId, userId), eq(drops.day, day), eq(drops.kind, 'answer'), sql`${drops.meta}->>'questionId' = ${questionId}`))
+    .limit(1);
+  return rows.length > 0;
 }
 
 async function answeredCard(s: Services, userId: string, cardId: string): Promise<boolean> {

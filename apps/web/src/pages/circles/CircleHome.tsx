@@ -10,6 +10,8 @@ import { countdown, fmtWhen, useCircleMeets } from '@/lib/meets';
 import { Cover } from '@/pages/karya/Cover';
 import { PlantCard } from './Plant';
 import { RollCard } from './RollCard';
+import { QuestionCard, QuizCard } from './Questions';
+import { DatesCard } from './Dates';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
 
@@ -77,6 +79,11 @@ export default function CircleHome() {
           <PlantCard circle={circle} />
         </div>
       ) : null}
+      {circle.kind !== 'moment' && circle.status === 'active' ? (
+        <div className="mt">
+          <DatesCard circle={circle} />
+        </div>
+      ) : null}
 
       <div className="card mt">
         <div className="row between" style={{ alignItems: 'flex-start' }}>
@@ -135,10 +142,14 @@ export default function CircleHome() {
             </Link>
           ) : null}
           {q ? (
-            <Link to={`/hari?${new URLSearchParams({ prompt: q.text, questionId: q.id, kind: 'answer', circleId: circle.id })}`} className="card row mt" style={{ gap: 12 }}>
-              <Doodle id="bulan" size={30} />
-              <span className="small">{q.text}</span>
-            </Link>
+            <div className="mt">
+              <QuestionCard circle={circle} q={q} />
+            </div>
+          ) : null}
+          {!frozen ? (
+            <div className="mt">
+              <QuizCard circle={circle} />
+            </div>
           ) : null}
         </section>
       ) : null}

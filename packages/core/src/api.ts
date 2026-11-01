@@ -414,8 +414,10 @@ export interface LockedDrop {
   id: string;
   authorId: string;
   kind: 'locked';
-  reason: 'not_sealed' | 'time_capsule' | 'split' | 'secret_card';
+  reason: 'not_sealed' | 'time_capsule' | 'split' | 'secret_card' | 'answer_first';
   unlockOn: DayKey | null;
+  /** Untuk 'answer_first': pertanyaan yang perlu kamu jawab dulu. */
+  questionId?: string;
 }
 
 export interface MyDay {
@@ -517,6 +519,23 @@ export interface ChapterWire {
   titleEnc: string | null;
   closedAt: string | null;
   proposals: { id: string; userId: string; titleEnc: string; votes: string[] }[];
+}
+
+/** Tanggal Penting buatan sendiri: judul terenkripsi, bulan & tanggal terlihat server (untuk pengingat). */
+export const importantDateBody = z.object({
+  titleEnc: z.string().min(1).max(2000),
+  month: z.number().int().min(1).max(12),
+  day: z.number().int().min(1).max(31),
+  year: z.number().int().min(1900).max(2100).nullable().optional(),
+});
+export interface ImportantDateWire {
+  id: string;
+  authorId: string;
+  titleEnc: string;
+  month: number;
+  day: number;
+  year: number | null;
+  createdAt: string;
 }
 
 /** Rol Minggu Ini: sampai lima foto favorit seminggu. Kosong = hapus pilihan. */
