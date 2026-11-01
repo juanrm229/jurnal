@@ -1,9 +1,9 @@
-import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthName, nightQuestionFor, penHolderFor, wrapMonthFor, type SceneWire } from '@sehari/core';
+import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, nightQuestionFor, penHolderFor, wrapHistory, type WrapPeriod, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { api } from '@/lib/api';
-import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
+import { openCircleText, useCalendar, useCircle, useMe, useToday } from '@/lib/data';
 import { Avatar } from '@/ui/Avatar';
 import { Doodle } from '@/ui/Doodle';
 import { Flame } from '@/ui/Flame';
@@ -32,7 +32,6 @@ export default function CircleHome() {
   if (!circle) return <Screen header={<Header />}><Growing /></Screen>;
 
   const week = isoWeek(today);
-  const wrapMonth = wrapMonthFor(today);
   const holderId = scenes.data?.find((s) => s.week === week)?.penHolderId ?? penHolderFor(circle.active.map((m) => m.userId), week, circle.id);
   const holder = circle.members.find((m) => m.userId === holderId);
   const scene = scenes.data?.find((s) => s.week === week);
@@ -147,14 +146,7 @@ export default function CircleHome() {
         </Section>
       ) : null}
 
-      <Section title="cerita kita">
-        <Row style={{ flexWrap: 'wrap' }} gap={8}>
-          <WrapChip label="Minggu Kita" onPress={() => router.push(`/wrap/${id}/week/${week}`)} doodle="amplop" />
-          <WrapChip label={`Bulan Kita · ${monthName(Number(wrapMonth.slice(5)))}`} onPress={() => router.push(`/wrap/${id}/month/${wrapMonth}`)} doodle="pena" />
-          <WrapChip label="Tahun Kita" onPress={() => router.push(`/wrap/${id}/year/${today.slice(0, 4)}`)} doodle="buku" />
-          {circle.kind === 'moment' ? <WrapChip label="Wrap Acara" onPress={() => router.push(`/wrap/${id}/moment/${id}`)} doodle="kado" /> : null}
-        </Row>
-      </Section>
+      <WrapHistory circleId={id} createdDay={circle.createdDay} today={today} moment={circle.kind === 'moment'} />
 
       <Section title="papan & kitab">
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACE.sm }}>
@@ -182,15 +174,59 @@ export default function CircleHome() {
   );
 }
 
-function WrapChip({ label, onPress, doodle }: { label: string; onPress: () => void; doodle: string }) {
+function WrapChip({ label, onPress, doodle, testID }: { label: string; onPress: () => void; doodle?: string; testID?: string }) {
   return (
-    <Card onPress={onPress} style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999 }} testID={`wrap-${label.split(" · ")[0]}`}>
+    <Card onPress={onPress} style={{ paddingVertical: 10, paddingHorizontal: 14, borderRadius: 999 }} testID={testID}>
       <Row gap={6}>
-        <Doodle id={doodle} size={20} />
+        {doodle ? <Doodle id={doodle} size={20} /> : null}
         <Txt v="small" ink>
           {label}
         </Txt>
       </Row>
     </Card>
+  );
+}
+
+/** Cerita kita: Minggu Kita & Bulan Kita dari minggu/bulan mana pun sejak lingkaran dibuat. */
+function WrapHistory({ circleId, createdDay, today, moment }: { circleId: string; createdDay: string; today: string; moment: boolean }) {
+  const { weeks, months } = wrapHistory(createdDay, today);
+  const oldest = [weeks[weeks.length - 1]!.start, months[months.length - 1]!.start].sort()[0]!;
+  const cal = useCalendar(circleId, oldest, today);
+  const filled = (p: WrapPeriod) => (cal.data ? cal.data.some((d) => d.day >= p.start && d.day <= p.end && (d.dropCount > 0 || d.sealed.length > 0)) : true);
+  const years = [...new Set(months.map((m) => m.key.slice(0, 4)))];
+  const strip = (scope: 'week' | 'month', list: WrapPeriod[]) => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+      {list.map((p) => (
+        <View key={p.key} style={{ opacity: filled(p) ? 1 : 0.5 }}>
+          <WrapChip label={`${p.label}${scope === 'month' && p.current ? ' · berjalan' : ''}`} testID={`wrap-${scope}-${p.key}`} onPress={() => router.push(`/wrap/${circleId}/${scope}/${p.key}`)} />
+        </View>
+      ))}
+    </ScrollView>
+  );
+  return (
+    <Section title="cerita kita">
+      <Row gap={6}>
+        <Doodle id="amplop" size={18} />
+        <Txt v="small" ink>
+          Minggu Kita
+        </Txt>
+      </Row>
+      {strip('week', weeks)}
+      <Gap h={SPACE.sm} />
+      <Row gap={6}>
+        <Doodle id="pena" size={18} />
+        <Txt v="small" ink>
+          Bulan Kita
+        </Txt>
+      </Row>
+      {strip('month', months)}
+      <Gap h={SPACE.sm} />
+      <Row style={{ flexWrap: 'wrap' }} gap={8}>
+        {years.map((y) => (
+          <WrapChip key={y} label={`Tahun Kita ${y}`} doodle="buku" testID={`wrap-year-${y}`} onPress={() => router.push(`/wrap/${circleId}/year/${y}`)} />
+        ))}
+        {moment ? <WrapChip label="Wrap Acara" doodle="kado" testID="wrap-moment" onPress={() => router.push(`/wrap/${circleId}/moment/${circleId}`)} /> : null}
+      </Row>
+    </Section>
   );
 }
