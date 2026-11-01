@@ -305,15 +305,22 @@ export function buildWrap(input: WrapInput): Wrap {
     });
   }
 
-  // Satu foto pilihan tiap anggota (paling dipeluk, lalu yang terbaru).
+  // Foto-foto periode ini: bergiliran antaranggota supaya semua kebagian tempat,
+  // tiap orang diurutkan dari yang paling dipeluk lalu yang terbaru. Paling banyak 9.
   const photoItems: { userId: string; dropId: string; media: MediaRef; day: DayKey }[] = [];
-  for (const m of input.members) {
-    const p = drops
+  const perMember = input.members.map((m) =>
+    drops
       .filter((d) => d.authorId === m.userId && d.kind === 'photo' && d.payload.media?.[0])
-      .sort((a, b) => hugs(b) - hugs(a) || (a.day < b.day ? 1 : -1))[0];
-    if (p) photoItems.push({ userId: m.userId, dropId: p.id, media: p.payload.media![0]!, day: p.day });
+      .sort((a, b) => hugs(b) - hugs(a) || (a.day < b.day ? 1 : -1)),
+  );
+  for (let round = 0; photoItems.length < 9 && perMember.some((list) => list.length > round); round++) {
+    input.members.forEach((m, i) => {
+      const p = perMember[i]![round];
+      if (p && photoItems.length < 9) photoItems.push({ userId: m.userId, dropId: p.id, media: p.payload.media![0]!, day: p.day });
+    });
   }
-  if (photoItems.length) cards.push({ type: 'photos', title: 'Satu foto dari tiap orang', items: photoItems });
+  const PHOTO_TITLE: Record<WrapScope, string> = { week: 'Foto-foto minggu ini', month: 'Foto-foto bulan ini', year: 'Foto-foto tahun ini', moment: 'Foto-foto acara ini' };
+  if (photoItems.length) cards.push({ type: 'photos', title: PHOTO_TITLE[input.scope], items: photoItems });
 
   if (input.scope !== 'week') {
     const words = topWords(texts(drops), 8);

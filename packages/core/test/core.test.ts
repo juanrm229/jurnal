@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addDays,
   wrapMonthFor,
+  wrapHistory,
   backupIdentity,
   buildWrap,
   coverageOn,
@@ -35,6 +36,14 @@ import {
 } from '../src';
 
 describe('waktu', () => {
+  it('riwayat wrap: minggu & bulan sejak lingkaran dibuat', () => {
+    const h = wrapHistory('2026-09-28', '2026-11-01');
+    expect(h.weeks.map((w) => w.key)).toEqual(['2026-W44', '2026-W43', '2026-W42', '2026-W41', '2026-W40']);
+    expect(h.weeks.map((w) => w.label).slice(0, 3)).toEqual(['minggu ini', 'minggu lalu', '12–18 okt']);
+    expect(h.weeks[4]!.label).toBe('28 sep – 4 okt');
+    expect(h.months.map((m) => m.label)).toEqual(['november', 'oktober', 'september']);
+    expect(wrapHistory('2025-12-30', '2026-01-02').months.map((m) => m.label)).toEqual(['januari', 'desember 2025']);
+  });
   it('tombol Bulan Kita: minggu pertama bulan lalu, sesudahnya bulan berjalan', () => {
     expect(wrapMonthFor('2026-11-01')).toBe('2026-10');
     expect(wrapMonthFor('2026-11-07')).toBe('2026-10');
@@ -169,6 +178,17 @@ describe('wrap', () => {
     expect(wrap.cards.some((c) => c.type === 'moment')).toBe(true);
     expect(wrap.public.sealedDays).toBe(3);
     expect(JSON.stringify(wrap.public)).not.toContain('kopi');
+  });
+  it('foto-foto minggu ini: semua foto ikut, bergiliran antaranggota', () => {
+    const photo = (id: string, authorId: string, day: string): WrapDrop => ({
+      id, authorId, day, kind: 'photo', reactions: [],
+      payload: { v: 1, kind: 'photo', hour: 9, minute: 0, tz: 'Asia/Jakarta', media: [{ id: `m-${id}`, key: 'k', mime: 'image/jpeg' }] } as WrapDrop['payload'],
+    });
+    const drops = [photo('a1', 'a', '2026-10-19'), photo('a2', 'a', '2026-10-20'), photo('a3', 'a', '2026-10-21'), photo('b1', 'b', '2026-10-20')];
+    const wrap = buildWrap({ scope: 'week', period: '2026-W43', circle: { id: 'c1', kind: 'duo' }, members: [{ userId: 'a', name: 'Raka' }, { userId: 'b', name: 'Naya' }], drops, seals: {} });
+    const card = wrap.cards.find((c) => c.type === 'photos');
+    expect(card && card.type === 'photos' ? card.items.map((x) => x.dropId) : []).toEqual(['a3', 'b1', 'a2', 'a1']);
+    expect(card?.type === 'photos' && card.title).toBe('Foto-foto minggu ini');
   });
   it('kamus lingkaran hanya kata yang dipakai bersama', () => {
     const t = (a: string, d: string, text: string) => ({ authorId: a, day: d, text });

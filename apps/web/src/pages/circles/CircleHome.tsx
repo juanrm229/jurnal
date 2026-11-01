@@ -1,7 +1,7 @@
-import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthName, nightQuestionFor, penHolderFor, wrapMonthFor, type SceneWire } from '@sehari/core';
+import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, nightQuestionFor, penHolderFor, wrapHistory, type WrapPeriod, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
+import { openCircleText, useCalendar, useCircle, useMe, useToday } from '@/lib/data';
 import { useDreams } from '@/lib/dreams';
 import { Link, useParams } from '@/lib/router';
 import { memberName, useCircles } from '@/lib/data';
@@ -33,7 +33,6 @@ export default function CircleHome() {
   if (!circle) return <Growing />;
 
   const week = isoWeek(today);
-  const wrapMonth = wrapMonthFor(today);
   const scene = scenes.data?.find((s) => s.week === week);
   const holderId = scene?.penHolderId ?? penHolderFor(circle.active.map((m) => m.userId), week, circle.id);
   const holder = circle.members.find((m) => m.userId === holderId);
@@ -139,15 +138,7 @@ export default function CircleHome() {
       <CircleDreams circleId={id} />
       <CircleWorks circleId={id} />
 
-      <section className="section">
-        <span className="label">cerita kita</span>
-        <div className="row wrap">
-          <Link className="pill" to={`/wrap/${id}/week/${week}`}><Doodle id="amplop" size={18} /> minggu kita</Link>
-          <Link className="pill" to={`/wrap/${id}/month/${wrapMonth}`}><Doodle id="pena" size={18} /> bulan kita · {monthName(Number(wrapMonth.slice(5))).toLowerCase()}</Link>
-          <Link className="pill" to={`/wrap/${id}/year/${today.slice(0, 4)}`}><Doodle id="buku" size={18} /> tahun kita</Link>
-          {circle.kind === 'moment' ? <Link className="pill" to={`/wrap/${id}/moment/${id}`}><Doodle id="kado" size={18} /> wrap acara</Link> : null}
-        </div>
-      </section>
+      <WrapHistory circleId={id} createdDay={circle.createdDay} today={today} moment={circle.kind === 'moment'} />
 
       <section className="section">
         <span className="label">dikumpulkan bersama</span>
@@ -280,6 +271,52 @@ function CircleDreams({ circleId }: { circleId: string }) {
           <span className="tiny soft">{top ? `${top.wire.likes.length} orang ingin mewujudkannya` : 'bucket list kalian: tulis, jadikan janji, wujudkan'}</span>
         </span>
       </Link>
+    </section>
+  );
+}
+
+/** Cerita kita: Minggu Kita & Bulan Kita dari minggu/bulan mana pun sejak lingkaran dibuat. */
+function WrapHistory({ circleId, createdDay, today, moment }: { circleId: string; createdDay: string; today: string; moment: boolean }) {
+  const { weeks, months } = wrapHistory(createdDay, today);
+  const from = weeks[weeks.length - 1]!.start < months[months.length - 1]!.start ? weeks[weeks.length - 1]!.start : months[months.length - 1]!.start;
+  const cal = useCalendar(circleId, from, today);
+  const filled = (p: WrapPeriod) => (cal.data ? cal.data.some((d) => d.day >= p.start && d.day <= p.end && (d.dropCount > 0 || d.sealed.length > 0)) : true);
+  const years = [...new Set(months.map((m) => m.key.slice(0, 4)))];
+  const strip = (scope: 'week' | 'month', list: WrapPeriod[]) => (
+    <div className="wrap-strip">
+      {list.map((p) => (
+        <Link key={p.key} className={`pill${p.current ? ' active' : ''}${filled(p) ? '' : ' wrap-empty'}`} to={`/wrap/${circleId}/${scope}/${p.key}`}>
+          {p.label}
+          {scope === 'month' && p.current ? ' · berjalan' : ''}
+        </Link>
+      ))}
+    </div>
+  );
+  return (
+    <section className="section">
+      <span className="label">cerita kita</span>
+      <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+        <Doodle id="amplop" size={18} />
+        <span className="small ink">minggu kita</span>
+      </div>
+      {strip('week', weeks)}
+      <div className="row mt" style={{ gap: 8, alignItems: 'center' }}>
+        <Doodle id="pena" size={18} />
+        <span className="small ink">bulan kita</span>
+      </div>
+      {strip('month', months)}
+      <div className="row wrap mt">
+        {years.map((y) => (
+          <Link key={y} className="pill" to={`/wrap/${circleId}/year/${y}`}>
+            <Doodle id="buku" size={18} /> tahun kita {y}
+          </Link>
+        ))}
+        {moment ? (
+          <Link className="pill" to={`/wrap/${circleId}/moment/${circleId}`}>
+            <Doodle id="kado" size={18} /> wrap acara
+          </Link>
+        ) : null}
+      </div>
     </section>
   );
 }

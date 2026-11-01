@@ -278,6 +278,51 @@ export function wrapMonthFor(today: DayKey): MonthKey {
   return parseDay(today).day <= 7 ? prevMonth(key) : key;
 }
 
+export interface WrapPeriod {
+  key: string;
+  start: DayKey;
+  end: DayKey;
+  /** Label pendek: "minggu ini", "19–25 okt", "29 sep – 5 okt", "oktober", "desember 2025". */
+  label: string;
+  current: boolean;
+}
+
+function shortRange(start: DayKey, end: DayKey): string {
+  const a = parseDay(start);
+  const b = parseDay(end);
+  const mon = (m: number) => monthName(m, true).toLowerCase();
+  return a.month === b.month ? `${a.day}–${b.day} ${mon(b.month)}` : `${a.day} ${mon(a.month)} – ${b.day} ${mon(b.month)}`;
+}
+
+/**
+ * Riwayat Wrap sebuah lingkaran, terbaru dulu: minggu-minggu (paling banyak `maxWeeks`)
+ * dan bulan-bulan sejak lingkaran dibuat sampai hari ini.
+ */
+export function wrapHistory(createdDay: DayKey, today: DayKey, maxWeeks = 104): { weeks: WrapPeriod[]; months: WrapPeriod[] } {
+  const from = createdDay > today ? today : createdDay;
+  const weeks: WrapPeriod[] = [];
+  const firstWeek = isoWeek(from);
+  let w = isoWeek(today);
+  for (let i = 0; i < maxWeeks; i++) {
+    const r = weekRange(w);
+    weeks.push({ key: w, ...r, label: i === 0 ? 'minggu ini' : i === 1 ? 'minggu lalu' : shortRange(r.start, r.end), current: i === 0 });
+    if (w === firstWeek) break;
+    w = isoWeek(addDays(r.start, -1));
+  }
+  const months: WrapPeriod[] = [];
+  const firstMonth = monthKey(from);
+  const thisYear = today.slice(0, 4);
+  let m = monthKey(today);
+  for (;;) {
+    const r = monthRange(m);
+    const name = monthName(Number(m.slice(5))).toLowerCase();
+    months.push({ key: m, ...r, label: m.slice(0, 4) === thisYear ? name : `${name} ${m.slice(0, 4)}`, current: months.length === 0 });
+    if (m <= firstMonth) break;
+    m = prevMonth(m);
+  }
+  return { weeks, months };
+}
+
 /** "Hari ini", "Kemarin", "3 hari lalu", lalu tanggal. */
 export function relativeDay(key: DayKey, today: DayKey): string {
   const d = diffDays(today, key);

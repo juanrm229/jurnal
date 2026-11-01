@@ -2633,3 +2633,18 @@ button.kb-kartu {
   width: 100%;
   margin-top: 4px;
 }
+
+/* Riwayat Minggu Kita & Bulan Kita: satu baris yang bisa digeser. */
+.wrap-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 2px 8px;
+  margin-top: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.wrap-strip::-webkit-scrollbar { display: none; }
+.wrap-strip .pill { flex: 0 0 auto; white-space: nowrap; }
+.wrap-strip .pill.wrap-empty { opacity: 0.5; }

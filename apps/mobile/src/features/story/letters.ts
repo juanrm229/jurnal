@@ -34,9 +34,10 @@ export const KIND_LABEL: Record<LetterWire['kind'], string> = {
   lost: 'Surat Tersesat',
   future: 'Surat untuk Nanti',
   milestone: 'Surat Petak Istimewa',
+  when: 'Surat Buka Kalau…',
 };
 
-export const KIND_DOODLE: Record<LetterWire['kind'], string> = { lost: 'surat-botol', future: 'jam-pasir', milestone: 'kunci' };
+export const KIND_DOODLE: Record<LetterWire['kind'], string> = { lost: 'surat-botol', future: 'jam-pasir', milestone: 'kunci', when: 'amplop' };
 
 export function milestoneName(days: number | null | undefined): string | undefined {
   return MILESTONES.find((m) => m.days === days)?.name;

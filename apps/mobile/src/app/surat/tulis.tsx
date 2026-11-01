@@ -42,6 +42,10 @@ const INTRO: Record<LetterKind, { title: string; body: string }> = {
     title: 'Surat Wasiat Kecil',
     body: 'Kapsul waktu untuk dibuka di masa depan: untuk dirimu setahun lagi, untuk anak di umur tujuh belas, atau untuk seseorang di hari yang kamu pilih. Sampai hari itu, tidak ada yang bisa membacanya, termasuk kami.',
   },
+  when: {
+    title: 'Surat Buka Kalau…',
+    body: 'Amplop yang langsung sampai, tapi baru dibuka saat momennya tiba: kalau dia sedih, kangen, tidak bisa tidur, atau habis bertengkar. Kamu akan tahu ketika amplopnya dibuka.',
+  },
   milestone: {
     title: 'Surat Petak Istimewa',
     body: 'Disimpan di petak papan permainan kalian. Surat ini baru terbuka saat lingkaran sampai di petak itu: Gerbang, Jembatan, Mercusuar, atau Pelabuhan.',
