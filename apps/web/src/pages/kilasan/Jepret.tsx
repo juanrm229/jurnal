@@ -74,6 +74,20 @@ function compose(main: HTMLCanvasElement, inset: HTMLCanvasElement | null): HTML
   return c;
 }
 
+/** Tunggu sampai video punya gambar nyata (ukuran > 0 dan sudah diputar). */
+function framesReady(v: HTMLVideoElement | null, timeout: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!v) return resolve(false);
+    const t0 = performance.now();
+    const check = () => {
+      if (v.readyState >= 2 && v.videoWidth > 0 && !v.paused) return resolve(true);
+      if (performance.now() - t0 > timeout) return resolve(false);
+      window.setTimeout(check, 100);
+    };
+    check();
+  });
+}
+
 const toBlob = (c: HTMLCanvasElement) => new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Foto gagal dibuat.'))), 'image/jpeg', 0.88));
 
 export default function Jepret() {
@@ -141,13 +155,14 @@ export default function Jepret() {
       mainShot.current = grab(v, false);
       if (!dual) return finish(mainShot.current);
       await start('user', 'front');
-      // Beri kamera depan sedetik untuk menyesuaikan cahaya, lalu jepret otomatis.
-      window.setTimeout(() => {
-        if (!video.current) return;
-        const inset = grab(video.current, true);
-        void finish(compose(mainShot.current!, inset));
-      }, 1100);
-      return;
+      // Tunggu kamera depan benar-benar mengalirkan gambar (di iPhone bisa lebih
+      // dari sedetik), beri waktu menyesuaikan cahaya, lalu jepret otomatis.
+      // Kalau tidak siap dalam 4 detik, pakai foto belakang saja.
+      const ready = await framesReady(video.current, 4000);
+      await new Promise((r) => window.setTimeout(r, 700));
+      if (!video.current || !ready) return finish(mainShot.current);
+      const inset = grab(video.current, true);
+      return finish(compose(mainShot.current!, inset));
     }
   };
 

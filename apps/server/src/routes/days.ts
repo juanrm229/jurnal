@@ -78,7 +78,8 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
   const allowedDays = sealableDays(user.tz, now);
   if (!allowedDays.includes(input.day)) throw bad('day_closed', 'Hari itu sudah lewat. Drop hanya untuk hari ini.');
 
-  if (!opts.sealing && !LATE_KINDS.has(input.kind) && (await pageLocked(s, user.id, input.day, input.pageCircleId))) {
+  // Kilasan boleh setelah menyegel: ia memang pengecualian dari segel (cuplikan, bukan halaman).
+  if (!opts.sealing && !LATE_KINDS.has(input.kind) && !input.meta?.flash && (await pageLocked(s, user.id, input.day, input.pageCircleId))) {
     throw conflict('sealed', 'Halaman ini sudah disegel. Sampai jumpa besok.');
   }
 
@@ -122,7 +123,7 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
     // Halaman utama tidak boleh sampai ke lingkaran yang punya halaman sendiri,
     // atau yang halamannya hari ini sudah tersegel terpisah.
     const own = await s.db.select().from(circleMembers).where(and(eq(circleMembers.userId, user.id), inArray(circleMembers.circleId, circleIds)));
-    const sealedSep = opts.sealing ? new Set<string>() : await sealedPages(s, user.id, input.day);
+    const sealedSep = opts.sealing || input.meta?.flash ? new Set<string>() : await sealedPages(s, user.id, input.day);
     if (own.some((m) => m.ownPage) || circleIds.some((c) => sealedSep.has(c))) {
       throw conflict('own_page', 'Lingkaran itu punya halaman sendiri hari ini. Muat ulang halaman, ya.');
     }

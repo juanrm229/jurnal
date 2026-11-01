@@ -1095,8 +1095,8 @@ function Next({ s, ctx, letter, day }: { s: Extract<StoryScene, { type: 'next' }
         return `/l/${ctx.circleId}/kamus`;
       case 'circle':
         return `/l/${ctx.circleId}`;
-      case 'reminder':
-        return '/aku/pengaturan';
+      case 'snap':
+        return '/kilasan/jepret';
       case 'day':
         return day ? `/l/${ctx.circleId}/hari/${day}` : null;
     }
