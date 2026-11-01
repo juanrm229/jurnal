@@ -22,6 +22,7 @@ import './styles/photobox.css';
 import './styles/polish.css';
 import './styles/sidik.css';
 import './styles/main.css';
+import './styles/wrapped.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Component, type ReactNode, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
