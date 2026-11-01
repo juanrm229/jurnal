@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildWrapStory, hourNickname, type WrapDrop } from '../src';
+import { awardsScene, buildWrapStory, hourNickname, type WrapDrop } from '../src';
 
 const drop = (id: string, authorId: string, day: string, hour: number, minute: number, extra: Partial<WrapDrop['payload']> = {}, reactions: WrapDrop['reactions'] = [], kind: WrapDrop['kind'] = 'text'): WrapDrop => ({
   id,
@@ -76,5 +76,42 @@ describe('wrapped cerita', () => {
   it('minggu tanpa isi tetap punya cerita yang lembut', () => {
     const q = buildWrapStory({ scope: 'week', period: '2026-W44', circle: { id: 'c', kind: 'duo' }, members, drops: [], seals: {} });
     expect(q.scenes.map((s) => s.type)).toEqual(['opening', 'quiet']);
+  });
+
+  it('kamu minggu ini: persona & angka milik pembaca', () => {
+    const y = scene('you')!;
+    expect(y.userId).toBe('j');
+    expect(y.persona).toMatch(/^(Penulis|Fotografer|Pencerita|DJ|Pembaca Cuaca) /);
+    expect(y.stats[0]).toEqual({ value: 2, label: 'hal kecil darimu' });
+    expect(story.scenes[1]!.type).toBe('you');
+  });
+
+  it('penghargaan: setiap anggota dapat satu, tidak dobel', () => {
+    const a = scene('awards')!;
+    expect(a.items.map((x) => x.userId).sort()).toEqual(['j', 'r']);
+    expect(new Set(a.items.map((x) => x.title)).size).toBe(2);
+  });
+
+  it('tebak siapa: kalimat dari lebih dari satu orang, jawaban ada di pilihan', () => {
+    const g = scene('guess')!;
+    expect(g.rounds.length).toBeGreaterThanOrEqual(2);
+    for (const r of g.rounds) expect(r.options).toContain(r.answerId);
+    expect(new Set(g.rounds.map((r) => r.answerId)).size).toBe(2);
+  });
+
+  it('untuk berikutnya: kirim surat ke satu-satunya teman & simpan kata bersama', () => {
+    const n = scene('next')!;
+    expect(n.items[0]).toMatchObject({ action: 'letter', cta: 'kirim ke Raya' });
+    expect(n.items.some((i) => i.action === 'kamus')).toBe(true);
+    expect(scene('letter')!.toUserIds).toEqual(['r']);
+  });
+
+  it('penghargaan tidak dobel meski semua seri', () => {
+    const ppl = [{ userId: 'a' }, { userId: 'b' }, { userId: 'c' }, { userId: 'd' }];
+    const ds = ['a', 'b', 'c'].map((u) => drop(`${u}1`, u, '2026-10-26', 12, 0, { text: 'halo semua apa kabar' }));
+    const a = awardsScene(ppl, ds, {})!;
+    expect(a.items).toHaveLength(4);
+    expect(new Set(a.items.map((x) => x.title)).size).toBe(4);
+    expect(a.items.find((x) => x.userId === 'd')!.title).toBe('Penonton Setia');
   });
 });

@@ -71,9 +71,19 @@ function useSeen(root: React.RefObject<HTMLElement | null>, count: number): Set<
   return seen;
 }
 
-function Scene({ i, seen, tone, children, className }: { i: number; seen: boolean; tone?: string; children: ReactNode; className?: string }) {
+const NO_TAP = 'a,button,input,textarea,select,label,[data-no-tap],.wr-lines';
+
+function Scene({ i, seen, tone, children, className, onTap }: { i: number; seen: boolean; tone?: string; children: ReactNode; className?: string; onTap?: () => void }) {
   return (
-    <section data-scene={i} className={['wr-scene', seen ? 'in' : '', className].filter(Boolean).join(' ')} style={tone ? ({ '--tone': tone } as CSSProperties) : undefined}>
+    <section
+      data-scene={i}
+      className={['wr-scene', seen ? 'in' : '', onTap ? 'tappable' : '', className].filter(Boolean).join(' ')}
+      style={tone ? ({ '--tone': tone } as CSSProperties) : undefined}
+      onClick={(e) => {
+        // Ketuk di mana saja (bukan tombol) untuk lanjut ke adegan berikutnya.
+        if (!onTap || (e.target as HTMLElement).closest(NO_TAP) || String(window.getSelection?.() ?? '').length) return;
+        onTap();
+      }}>
       <div className="wr-inner">{children}</div>
     </section>
   );
@@ -174,7 +184,7 @@ function Opening({ s, on, ctx, story }: { s: Extract<StoryScene, { type: 'openin
         {s.tagline}
       </R>
       <R n={8} className="wr-scroll-hint">
-        <span>gulir pelan-pelan</span>
+        <span>ketuk layar atau gulir untuk lanjut</span>
         <span className="wr-chev" aria-hidden>
           ↓
         </span>
@@ -744,8 +754,10 @@ function Extra({ card, ctx }: { card: WrapCard; ctx: WrappedCtx }) {
   }
 }
 
-function Letter({ s }: { s: Extract<StoryScene, { type: 'letter' }> }) {
+function Letter({ s, circleId }: { s: Extract<StoryScene, { type: 'letter' }>; circleId: string }) {
+  const href = letterHref(s, circleId);
   return (
+    <div className="wr-letter-wrap">
     <div className="wr-letter">
       <R n={0} className="wr-letter-stamp" aria-hidden>
         <Doodle id="surat-terbuka" size={30} />
@@ -762,6 +774,218 @@ function Letter({ s }: { s: Extract<StoryScene, { type: 'letter' }> }) {
         {s.signoff}
       </R>
     </div>
+      {href ? (
+        <R n={4 + s.paragraphs.length * 1.6} className="wr-letter-actions">
+          <button className="btn auto" onClick={() => navigate(href)}>
+            <Doodle id="surat-terbuka" size={20} color="currentColor" /> kirim surat ini, sampai besok pagi
+          </button>
+          <span className="tiny soft">kamu masih bisa mengubah isinya sebelum dikirim</span>
+        </R>
+      ) : null}
+    </div>
+  );
+}
+
+/** Kartu "kamu minggu ini": persona dan angka milik pembaca sendiri. */
+function You({ s, on, ctx, scope }: { s: Extract<StoryScene, { type: 'you' }>; on: boolean; ctx: WrappedCtx; scope: WrapStory['scope'] }) {
+  const word = scope === 'week' ? 'minggu ini' : scope === 'month' ? 'bulan ini' : scope === 'year' ? 'tahun ini' : 'di acara ini';
+  return (
+    <>
+      <Kicker>kamu {word}</Kicker>
+      <R n={1} className="wr-you-card">
+        <div className="wr-you-badge">
+          <Avatar doodle={ctx.doodleOf(s.userId)} size={64} />
+        </div>
+        <div className="wr-you-label">kamu adalah</div>
+        <div className="wr-you-persona">{s.persona}</div>
+        <p className="wr-you-blurb">{s.blurb}</p>
+        {s.stats.length ? (
+          <div className="wr-you-stats">
+            {s.stats.map((x) => (
+              <div key={x.label}>
+                <b>
+                  <CountUp value={x.value} on={on} />
+                </b>
+                <span>{x.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {s.topWord || s.favDay ? (
+          <div className="wr-you-tags">
+            {s.topWord ? (
+              <span>
+                kata favoritmu <b>“{s.topWord}”</b>
+              </span>
+            ) : null}
+            {s.favDay ? (
+              <span>
+                harimu <b>{s.favDay}</b>
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+      </R>
+      {s.funFact ? (
+        <R n={3} as="p" className="wr-caption wr-fun">
+          <Doodle id="kilau" size={18} /> {s.funFact}
+        </R>
+      ) : null}
+    </>
+  );
+}
+
+/** Penghargaan lucu: piala kertas untuk setiap anggota. */
+function Awards({ s, ctx }: { s: Extract<StoryScene, { type: 'awards' }>; ctx: WrappedCtx }) {
+  return (
+    <>
+      <Kicker>malam penghargaan</Kicker>
+      <R n={1} as="p" className="wr-caption" style={{ marginTop: 0 }}>
+        Semua dapat piala. Itu aturannya.
+      </R>
+      <div className="wr-awards">
+        {s.items.map((a, i) => (
+          <R key={a.userId} n={2 + i} className="wr-award" style={{ '--pc': ctx.colorOf(a.userId), '--r': `${i % 2 ? 1.5 : -1.5}deg` } as CSSProperties}>
+            <div className="wr-award-medal">
+              <Doodle id={a.doodle} size={30} color="#fff" />
+            </div>
+            <div className="wr-award-body">
+              <div className="wr-award-title">{a.title}</div>
+              <div className="wr-award-who">
+                <Avatar doodle={ctx.doodleOf(a.userId)} size={20} /> {ctx.name(a.userId)}
+              </div>
+              <div className="tiny soft">{a.reason}</div>
+            </div>
+          </R>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Tebak siapa: permainan kecil. Jawaban langsung terlihat setelah memilih. */
+function Guess({ s, ctx }: { s: Extract<StoryScene, { type: 'guess' }>; ctx: WrappedCtx }) {
+  const [picks, setPicks] = useState<(string | null)[]>(() => s.rounds.map(() => null));
+  const [round, setRound] = useState(0);
+  const done = picks.every((p) => p !== null);
+  const score = picks.filter((p, i) => p === s.rounds[i]!.answerId).length;
+  const r = s.rounds[Math.min(round, s.rounds.length - 1)]!;
+  const picked = picks[round] ?? null;
+  const verdict = score === s.rounds.length ? 'Kamu benar-benar kenal mereka.' : score === 0 ? 'Hmm, kalian perlu lebih sering ngobrol. Atau tulisannya memang menyamar.' : 'Lumayan! Ada yang berhasil menyamar.';
+  return (
+    <div className="wr-guess" data-no-tap>
+      <Kicker>tebak siapa?</Kicker>
+      <R n={1} className="wr-guess-steps">
+        {s.rounds.map((_, i) => (
+          <i key={i} className={i === round ? 'now' : picks[i] === null ? '' : picks[i] === s.rounds[i]!.answerId ? 'ok' : 'no'} />
+        ))}
+      </R>
+      {!done || round < s.rounds.length ? (
+        <>
+          <R n={2} className="wr-guess-card" key={round}>
+            <span className="wr-quote-mark" aria-hidden>
+              “
+            </span>
+            <p>{r.text}</p>
+          </R>
+          <R n={3} className="wr-guess-options">
+            {r.options.map((id) => {
+              const state = picked === null ? '' : id === r.answerId ? ' right' : id === picked ? ' wrong' : ' dim';
+              return (
+                <button key={id} className={`wr-guess-opt${state}`} disabled={picked !== null} onClick={() => setPicks((p) => p.map((x, i) => (i === round ? id : x)))}>
+                  <Avatar doodle={ctx.doodleOf(id)} size={30} />
+                  <span>{ctx.name(id)}</span>
+                </button>
+              );
+            })}
+          </R>
+          {picked !== null ? (
+            <div className="wr-guess-after">
+              <span className="wr-hand" style={{ fontSize: 26 }}>
+                {picked === r.answerId ? 'tepat!' : `ternyata ${ctx.name(r.answerId)}`}
+              </span>
+              <button className="btn sm auto" onClick={() => setRound((x) => x + 1)}>
+                {round < s.rounds.length - 1 ? 'kalimat berikutnya' : 'lihat skor'}
+              </button>
+            </div>
+          ) : (
+            <p className="tiny soft" style={{ margin: 0 }}>
+              pilih siapa yang menulis kalimat ini
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="wr-guess-score">
+          <div className="wr-big">
+            {score}/{s.rounds.length}
+          </div>
+          <p className="wr-caption">{verdict}</p>
+          <button
+            className="btn ghost sm auto"
+            onClick={() => {
+              setPicks(s.rounds.map(() => null));
+              setRound(0);
+            }}>
+            main lagi
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function localTomorrow(): string {
+  const d = new Date(Date.now() + 86_400_000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function letterHref(letter: Extract<StoryScene, { type: 'letter' }>, circleId: string): string | null {
+  const to = letter.toUserIds[0];
+  if (letter.toUserIds.length !== 1 || !to) return null;
+  const text = [letter.to, '', ...letter.paragraphs.flatMap((p) => [p, '']), letter.signoff].join('\n');
+  return `/surat/tulis?${new URLSearchParams({ kind: 'future', circleId, to, deliverOn: localTomorrow(), text })}`;
+}
+
+/** Saran kecil untuk berikutnya, masing-masing dengan satu tombol. */
+function Next({ s, ctx, letter, day }: { s: Extract<StoryScene, { type: 'next' }>; ctx: WrappedCtx; letter?: Extract<StoryScene, { type: 'letter' }>; day?: string }) {
+  const href = (a: (typeof s.items)[number]): string | null => {
+    switch (a.action) {
+      case 'write':
+        return '/hari';
+      case 'letter':
+        return letter ? letterHref(letter, ctx.circleId) : null;
+      case 'kamus':
+        return `/l/${ctx.circleId}/kamus`;
+      case 'circle':
+        return `/l/${ctx.circleId}`;
+      case 'reminder':
+        return '/aku/pengaturan';
+      case 'day':
+        return day ? `/l/${ctx.circleId}/hari/${day}` : null;
+    }
+  };
+  return (
+    <>
+      <Kicker>untuk berikutnya</Kicker>
+      <R n={1} as="h2" className="wr-song-title">
+        Beberapa hal kecil yang bisa kamu lakukan
+      </R>
+      <div className="wr-next-list">
+        {s.items.map((it, i) => {
+          const to = href(it);
+          if (!to) return null;
+          return (
+            <R key={it.action} n={2 + i} className="wr-next-item">
+              <Doodle id={it.doodle} size={28} />
+              <span className="grow small">{it.text}</span>
+              <button className={`btn sm auto${i === 0 ? '' : ' ghost'}`} onClick={() => navigate(to)}>
+                {it.cta}
+              </button>
+            </R>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -792,6 +1016,10 @@ const TONE: Partial<Record<StoryScene['type'], string>> = {
   bestDay: 'var(--sticky-yellow)',
   fire: 'var(--sticky-peach)',
   letter: 'var(--paper)',
+  you: 'color-mix(in srgb, var(--ink) 9%, var(--paper))',
+  awards: 'var(--sticky-yellow)',
+  guess: 'var(--sticky-blue)',
+  next: 'var(--sticky-green)',
 };
 
 export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: WrappedCtx; end: (nav: { toStart: () => void; back: () => void }) => ReactNode; onClose: () => void }) {
@@ -862,7 +1090,18 @@ export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: W
       case 'extra':
         return <Extra card={s.card} ctx={ctx} />;
       case 'letter':
-        return <Letter s={s} />;
+        return <Letter s={s} circleId={ctx.circleId} />;
+      case 'you':
+        return <You s={s} on={on} ctx={ctx} scope={story.scope} />;
+      case 'awards':
+        return <Awards s={s} ctx={ctx} />;
+      case 'guess':
+        return <Guess s={s} ctx={ctx} />;
+      case 'next': {
+        const letter = story.scenes.find((x) => x.type === 'letter');
+        const best = story.scenes.find((x) => x.type === 'bestDay');
+        return <Next s={s} ctx={ctx} letter={letter?.type === 'letter' ? letter : undefined} day={best?.type === 'bestDay' ? best.day : undefined} />;
+      }
       case 'quiet':
         return <Quiet s={s} />;
     }
@@ -886,7 +1125,8 @@ export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: W
           i={i}
           seen={seen.has(i)}
           tone={s.type === 'mood' && moodTone?.type === 'mood' ? `color-mix(in srgb, ${moodTone.dominant.color} 22%, var(--paper))` : TONE[s.type]}
-          className={`wr-s-${s.type}`}>
+          className={`wr-s-${s.type}`}
+          onTap={s.type === 'guess' || s.type === 'next' ? undefined : () => go(i + 1)}>
           {scene(s, i)}
           {i < story.scenes.length - 1 && s.type !== 'opening' ? (
             <button className="wr-next" aria-label="adegan berikutnya" onClick={() => go(i + 1)}>

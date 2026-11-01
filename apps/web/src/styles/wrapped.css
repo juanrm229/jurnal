@@ -1101,3 +1101,275 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ── Ketuk untuk lanjut ───────────────────────────────────────────────────── */
+.wr-scene.tappable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Kamu minggu ini ──────────────────────────────────────────────────────── */
+.wr-you-card {
+  position: relative;
+  width: 100%;
+  padding: 44px 20px 20px;
+  margin-top: 26px;
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 30px 60px -36px rgba(20, 10, 80, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.wr-you-badge {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.wr-you-label {
+  font: 11px var(--mono);
+  letter-spacing: 0.14em;
+  opacity: 0.6;
+}
+.wr-you-persona {
+  font: 600 clamp(26px, 8vw, 34px) / 1.1 var(--serif-display);
+  color: var(--ink);
+  max-width: 340px;
+}
+.wr-you-blurb {
+  margin: 4px 0 6px;
+  font: 15px/1.5 var(--serif);
+  opacity: 0.85;
+}
+.wr-you-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  padding: 10px 0 4px;
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  width: 100%;
+}
+.wr-you-stats div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wr-you-stats b {
+  font: 600 28px/1.1 var(--serif-display);
+  color: var(--ink);
+}
+.wr-you-stats > div > span {
+  font: 11px var(--mono);
+  opacity: 0.75;
+}
+.wr-you-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.wr-you-tags span {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  font: 12px var(--mono);
+}
+.wr-you-tags b {
+  color: var(--ink);
+}
+.wr-fun {
+  display: inline-flex;
+  gap: 6px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* ── Penghargaan ──────────────────────────────────────────────────────────── */
+.wr-awards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.wr-award {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fffdf7;
+  color: #1d1d3a;
+  text-align: left;
+  box-shadow: 0 16px 28px -22px rgba(0, 0, 0, 0.55);
+  transform: translate3d(0, 22px, 0) rotate(calc(var(--r, 0deg) * 3)) scale(0.96);
+}
+.wr-scene.in .wr-award {
+  transform: rotate(var(--r, 0deg));
+}
+.wr-award-medal {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pc, var(--ink));
+  box-shadow:
+    0 0 0 4px #fffdf7,
+    0 0 0 6px color-mix(in srgb, var(--pc, var(--ink)) 50%, transparent);
+}
+.wr-award-title {
+  font: 700 25px/1.05 var(--hand);
+  color: var(--pc, var(--ink));
+}
+.wr-award-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 13px var(--mono);
+  margin: 2px 0;
+}
+
+/* ── Tebak siapa ──────────────────────────────────────────────────────────── */
+.wr-guess {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  cursor: auto;
+}
+.wr-guess-steps {
+  display: flex;
+  gap: 6px;
+}
+.wr-guess-steps i {
+  width: 26px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+.wr-guess-steps i.now {
+  background: var(--ink);
+}
+.wr-guess-steps i.ok {
+  background: #3f9c8a;
+}
+.wr-guess-steps i.no {
+  background: #e07a5f;
+}
+.wr-guess-card {
+  position: relative;
+  width: 100%;
+  padding: 26px 20px 18px;
+  border-radius: 8px;
+  background: #fffdf7;
+  color: #1d1d3a;
+  box-shadow: 0 18px 30px -22px rgba(0, 0, 0, 0.5);
+}
+.wr-guess-card p {
+  margin: 0;
+  font: 19px/1.55 var(--serif);
+}
+.wr-guess-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.wr-guess-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 92px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--paper);
+  color: var(--text);
+  font: 13px var(--mono);
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    opacity 0.25s ease;
+}
+.wr-guess-opt:active {
+  transform: scale(0.96);
+}
+.wr-guess-opt.right {
+  border-color: #3f9c8a;
+  background: color-mix(in srgb, #3f9c8a 16%, var(--paper));
+  transform: scale(1.06);
+}
+.wr-guess-opt.wrong {
+  border-color: #e07a5f;
+  background: color-mix(in srgb, #e07a5f 14%, var(--paper));
+}
+.wr-guess-opt.dim {
+  opacity: 0.45;
+}
+.wr-guess-after {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+.wr-guess-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Untuk berikutnya ─────────────────────────────────────────────────────── */
+.wr-next-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.wr-next-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--paper);
+  text-align: left;
+  box-shadow: 0 12px 24px -20px rgba(0, 0, 0, 0.45);
+}
+.wr-next-item .grow {
+  flex: 1 1 200px;
+}
+.wr-next-item .btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Surat: tombol kirim ──────────────────────────────────────────────────── */
+.wr-letter-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.wr-letter-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}

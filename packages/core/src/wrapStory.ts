@@ -10,6 +10,7 @@ import { MOODS } from './content/chapterTitles';
 import type { DropKind, MediaRef, MoodCode, SongRef } from './domain';
 import { excerpt, tokenize, wordCounts, type WordCount } from './text';
 import { type DayKey, dayName, eachDay, formatClock, monthName, monthRange, parseDay, weekRange, yearRange, zonedTimeToUtc } from './time';
+import { type AwardsScene, awardsScene, funNote, type GuessScene, guessScene, type NextScene, nextScene, type YouScene, youScene } from './wrapExtras';
 import { buildWrap, moodTally, songTally, type WrapCard, type WrapDrop, type WrapInput, type WrapScope } from './wrap';
 
 export interface StoryPerson {
@@ -69,7 +70,11 @@ export type StoryScene =
   | { type: 'fire'; current: number; longest: number; togetherDays: number; totalDays: number; perMember: { userId: string; days: number }[] }
   | { type: 'extra'; card: WrapCard }
   | { type: 'quiet'; text: string }
-  | { type: 'letter'; to: string; paragraphs: string[]; signoff: string };
+  | { type: 'letter'; to: string; toUserIds: string[]; paragraphs: string[]; signoff: string }
+  | YouScene
+  | AwardsScene
+  | GuessScene
+  | NextScene;
 
 export interface WrapStory {
   scope: WrapScope;
@@ -160,6 +165,9 @@ export function buildWrapStory(input: WrapInput): WrapStory {
     return { scope: input.scope, period: input.period, title: base.title, label: base.label, people, scenes };
   }
 
+  // ── Kamu minggu ini ───────────────────────────────────────────────────────
+  if (viewer && people.some((p) => p.userId === viewer)) scenes.push(youScene(input.scope, viewer, drops, seal(viewer).length));
+
   // ── Angka-angka ───────────────────────────────────────────────────────────
   const textDrops = drops.filter((d) => TEXT_KINDS.includes(d.kind) && d.payload.text?.trim());
   const wordTotal = textDrops.reduce((a, d) => a + tokenize(d.payload.text!).length, 0);
@@ -170,10 +178,10 @@ export function buildWrapStory(input: WrapInput): WrapStory {
     { value: filledDays.size, label: `dari ${days.length} hari terisi`, doodle: 'tunas' },
     { value: drops.length, label: 'hal kecil dititipkan', doodle: 'amplop' },
   ];
-  if (wordTotal) tally.push({ value: wordTotal, label: 'kata ditulis', note: wordTotal > 500 ? 'cukup untuk satu cerpen' : wordTotal > 150 ? 'cukup untuk sepucuk surat' : undefined, doodle: 'pena' });
-  if (photoTotal) tally.push({ value: photoTotal, label: 'foto ditempel', doodle: 'kamera' });
-  if (songs.length) tally.push({ value: songs.length, label: 'lagu diputar', doodle: 'kaset' });
-  if (hugTotal) tally.push({ value: hugTotal, label: 'pelukan dikirim', doodle: 'pelukan' });
+  if (wordTotal) tally.push({ value: wordTotal, label: 'kata ditulis', note: funNote('words', wordTotal), doodle: 'pena' });
+  if (photoTotal) tally.push({ value: photoTotal, label: 'foto ditempel', note: funNote('photos', photoTotal), doodle: 'kamera' });
+  if (songs.length) tally.push({ value: songs.length, label: 'lagu diputar', note: funNote('songs', songs.length), doodle: 'kaset' });
+  if (hugTotal) tally.push({ value: hugTotal, label: 'pelukan dikirim', note: funNote('hugs', hugTotal), doodle: 'pelukan' });
   scenes.push({ type: 'tally', items: tally });
 
   // ── Hari demi hari ────────────────────────────────────────────────────────
@@ -294,6 +302,8 @@ export function buildWrapStory(input: WrapInput): WrapStory {
       return pick ? { userId: p.userId, dropId: pick.id, day: pick.day, text: excerpt(pick.payload.text!, 200), hugs: warmth(pick) } : null;
     })
     .filter((x): x is NonNullable<typeof x> => !!x);
+  const guess = guessScene(people, textDrops, `${input.circle.id}:${input.period}`, new Set(quotes.map((q) => q.dropId)));
+  if (guess) scenes.push(guess);
   if (quotes.length) scenes.push({ type: 'quotes', items: quotes });
 
   // ── Pelukan ───────────────────────────────────────────────────────────────
@@ -313,6 +323,10 @@ export function buildWrapStory(input: WrapInput): WrapStory {
     const top = pairs[0]!;
     scenes.push({ type: 'hugs', total: hugTotal, pairs, caption: `${top.count} pelukan dari ${nameOf(top.from)} untuk tulisan ${nameOf(top.to)}.` });
   }
+
+  // ── Penghargaan ───────────────────────────────────────────────────────────
+  const awards = awardsScene(people, inRange.filter((d) => d.kind !== 'auto'), Object.fromEntries(people.map((p) => [p.userId, seal(p.userId)])));
+  if (awards) scenes.push(awards);
 
   // ── Lagu ──────────────────────────────────────────────────────────────────
   if (songs.length) scenes.push({ type: 'songs', songs: songs.slice(0, 8) });
@@ -357,6 +371,20 @@ export function buildWrapStory(input: WrapInput): WrapStory {
 
   // ── Surat penutup ─────────────────────────────────────────────────────────
   scenes.push(letterFor(input, { drops, textDrops, people, others, viewer, sync, quotes, pairMap, moods, perMember, filledDays: filledDays.size, totalDays: days.length, counts, photoTotal }));
+
+  // ── Untuk berikutnya ──────────────────────────────────────────────────────
+  const next = nextScene(input.scope, {
+    viewerId: viewer,
+    people,
+    drops,
+    seals: input.seals,
+    end: r.end,
+    peak: perMember.length ? peak : undefined,
+    sharedWord: people.length > 1 ? counts.find((w) => w.authors >= 2)?.word : undefined,
+    streak: input.streak?.current,
+    oneOther: others.length === 1 ? others[0] : undefined,
+  });
+  if (next) scenes.push(next);
 
   return { scope: input.scope, period: input.period, title: base.title, label: base.label, people, scenes };
 }
@@ -440,5 +468,5 @@ function letterFor(
   };
   p.push(closing[input.scope]);
 
-  return { type: 'letter', to, paragraphs: p, signoff: me ? `— ${me.name}` : '— aku' };
+  return { type: 'letter', to, toUserIds: f.others.map((o) => o.userId), paragraphs: p, signoff: me ? `— ${me.name}` : '— aku' };
 }
