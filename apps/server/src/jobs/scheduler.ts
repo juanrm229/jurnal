@@ -18,6 +18,20 @@ async function once(s: Services, key: string): Promise<boolean> {
 }
 import { remindMeets } from '../routes/meets';
 
+/**
+ * Kabar Wrap dikirim sekali per orang, bukan per lingkaran. Bila orang itu hanya
+ * punya satu lingkaran aktif, sertakan id-nya supaya ketukan langsung membuka
+ * wrap-nya; bila lebih, aplikasi menawarkan pilihan lingkaran.
+ */
+async function onlyCircle(s: Services, userId: string): Promise<{ circleId?: string }> {
+  const rows = await s.db
+    .select({ id: schema.circles.id })
+    .from(schema.circleMembers)
+    .innerJoin(schema.circles, eq(schema.circles.id, schema.circleMembers.circleId))
+    .where(and(eq(schema.circleMembers.userId, userId), eq(schema.circleMembers.state, 'active'), eq(schema.circles.status, 'active')));
+  return rows.length === 1 ? { circleId: rows[0]!.id } : {};
+}
+
 export async function runJobs(s: Services): Promise<void> {
   const now = s.now();
   await deliverDueLetters(s);
@@ -49,14 +63,14 @@ export async function runJobs(s: Services): Promise<void> {
     const p = localParts(u.tz, now);
     const today = userToday(u, now);
     if (weekday(today) === 0 && p.hour >= 19 && (await once(s, `wrap-w:${u.id}:${isoWeek(today)}`))) {
-      await pushTo(s, [u.id], { body: say(COPY.notifications.weeklyWrapReady), data: { type: 'wrap', scope: 'week', period: isoWeek(today) } }, 'notifyWraps');
+      await pushTo(s, [u.id], { body: say(COPY.notifications.weeklyWrapReady), data: { type: 'wrap', scope: 'week', period: isoWeek(today), ...(await onlyCircle(s, u.id)) } }, 'notifyWraps');
     }
     const { end } = monthRange(monthKey(today));
     if (today === end && p.hour >= 19 && (await once(s, `bab:${u.id}:${monthKey(today)}`))) {
       await pushTo(s, [u.id], { body: say(COPY.notifications.chapterCeremony), data: { type: 'chapter', month: monthKey(today) } }, 'notifyWraps');
     }
     if (p.day === 1 && p.hour >= 9 && (await once(s, `wrap-m:${u.id}:${monthKey(today)}`))) {
-      await pushTo(s, [u.id], { body: 'Bulan Kita sudah siap dibuka.', data: { type: 'wrap', scope: 'month', period: prevMonth(monthKey(today)) } }, 'notifyWraps');
+      await pushTo(s, [u.id], { body: 'Bulan Kita sudah siap dibuka.', data: { type: 'wrap', scope: 'month', period: prevMonth(monthKey(today)), ...(await onlyCircle(s, u.id)) } }, 'notifyWraps');
     }
   }
 

@@ -1,4 +1,4 @@
-import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthKey, nightQuestionFor, penHolderFor, prevMonth, type SceneWire } from '@sehari/core';
+import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, monthName, nightQuestionFor, penHolderFor, wrapMonthFor, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { openCircleText, useCircle, useMe, useToday } from '@/lib/data';
@@ -33,6 +33,7 @@ export default function CircleHome() {
   if (!circle) return <Growing />;
 
   const week = isoWeek(today);
+  const wrapMonth = wrapMonthFor(today);
   const scene = scenes.data?.find((s) => s.week === week);
   const holderId = scene?.penHolderId ?? penHolderFor(circle.active.map((m) => m.userId), week, circle.id);
   const holder = circle.members.find((m) => m.userId === holderId);
@@ -142,7 +143,7 @@ export default function CircleHome() {
         <span className="label">cerita kita</span>
         <div className="row wrap">
           <Link className="pill" to={`/wrap/${id}/week/${week}`}><Doodle id="amplop" size={18} /> minggu kita</Link>
-          <Link className="pill" to={`/wrap/${id}/month/${prevMonth(monthKey(today))}`}><Doodle id="pena" size={18} /> bulan kita</Link>
+          <Link className="pill" to={`/wrap/${id}/month/${wrapMonth}`}><Doodle id="pena" size={18} /> bulan kita · {monthName(Number(wrapMonth.slice(5))).toLowerCase()}</Link>
           <Link className="pill" to={`/wrap/${id}/year/${today.slice(0, 4)}`}><Doodle id="buku" size={18} /> tahun kita</Link>
           {circle.kind === 'moment' ? <Link className="pill" to={`/wrap/${id}/moment/${id}`}><Doodle id="kado" size={18} /> wrap acara</Link> : null}
         </div>

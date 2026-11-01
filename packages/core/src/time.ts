@@ -269,6 +269,15 @@ export function formatMonth(month: MonthKey): string {
   return `${monthName(m)} ${y}`;
 }
 
+/**
+ * Bulan yang dibuka tombol "Bulan Kita": seminggu pertama masih bulan lalu
+ * (wrap-nya baru jadi), setelah itu bulan yang sedang berjalan.
+ */
+export function wrapMonthFor(today: DayKey): MonthKey {
+  const key = monthKey(today);
+  return parseDay(today).day <= 7 ? prevMonth(key) : key;
+}
+
 /** "Hari ini", "Kemarin", "3 hari lalu", lalu tanggal. */
 export function relativeDay(key: DayKey, today: DayKey): string {
   const d = diffDays(today, key);

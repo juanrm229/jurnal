@@ -22,7 +22,8 @@ function route(data: Record<string, unknown> | undefined) {
   const t = data.type;
   if ((t === 'partner_sealed' || t === 'capsules_open') && data.circleId && data.day) router.push(`/l/${data.circleId}/hari/${data.day}`);
   else if (t === 'letter' || t === 'time_capsule') router.push('/surat');
-  else if (t === 'wrap' && data.scope) router.push('/kenangan');
+  else if (t === 'wrap' && data.scope && data.period && data.circleId) router.push(`/wrap/${data.circleId}/${data.scope}/${data.period}`);
+  else if (t === 'wrap' && data.scope && data.period) router.push(`/lingkaran?wrap=${data.scope}&periode=${data.period}`);
   else if (t === 'chapter') router.push('/lingkaran');
   else if (t === 'sunset') router.push('/segel');
   else if (t === 'morning') router.push('/hari-ini');

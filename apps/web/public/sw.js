@@ -80,8 +80,10 @@ function routeFor(d) {
     case 'test':
       return '/aku';
     case 'wrap':
+      if (d.scope && d.period && d.circleId) return `/wrap/${d.circleId}/${d.scope}/${d.period}`;
+      return d.scope && d.period ? `/lingkaran?wrap=${encodeURIComponent(d.scope)}&periode=${encodeURIComponent(d.period)}` : '/lingkaran';
     case 'chapter':
-      return '/lingkaran';
+      return d.circleId ? `/l/${d.circleId}/kitab` : '/lingkaran';
     default:
       return '/hari';
   }

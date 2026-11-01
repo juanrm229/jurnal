@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  wrapMonthFor,
   backupIdentity,
   buildWrap,
   coverageOn,
@@ -34,6 +35,12 @@ import {
 } from '../src';
 
 describe('waktu', () => {
+  it('tombol Bulan Kita: minggu pertama bulan lalu, sesudahnya bulan berjalan', () => {
+    expect(wrapMonthFor('2026-11-01')).toBe('2026-10');
+    expect(wrapMonthFor('2026-11-07')).toBe('2026-10');
+    expect(wrapMonthFor('2026-11-08')).toBe('2026-11');
+    expect(wrapMonthFor('2027-01-03')).toBe('2026-12');
+  });
   it('menghitung hari di WIB/WITA/WIT', () => {
     const at = new Date('2026-10-21T16:30:00Z'); // 23.30 WIB, 00.30 WITA
     expect(todayIn('Asia/Jakarta', at)).toBe('2026-10-21');
