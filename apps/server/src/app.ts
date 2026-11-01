@@ -96,6 +96,9 @@ export function createApp(s: Services) {
     } }));
     app.get('*', async (c, next) => {
       if (c.req.path.startsWith('/v1/') || c.req.path.startsWith('/admin')) return next();
+      // Berkas yang tidak ada (mis. potongan JS versi lama setelah deploy) harus 404,
+      // bukan index.html: kalau tidak, peramban memuat HTML sebagai JS dan layar kosong.
+      if (c.req.path.startsWith('/assets/') || /\.(js|mjs|css|map|json|png|jpe?g|svg|webp|woff2?)$/.test(c.req.path)) return c.notFound();
       const html = await readFile(path.join(root, 'index.html'), 'utf8').catch(() => null);
       return html ? c.html(html) : next();
     });

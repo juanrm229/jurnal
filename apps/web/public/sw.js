@@ -1,5 +1,5 @@
 /* Sehari service worker: cangkang aplikasi luring + notifikasi push. */
-const CACHE = 'sehari-v4';
+const CACHE = 'sehari-v5';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -42,7 +42,8 @@ self.addEventListener('fetch', (e) => {
         (hit) =>
           hit ||
           fetch(req).then((res) => {
-            if (res.ok) {
+            // Jangan simpan halaman HTML sebagai berkas aset (dulu terjadi saat aset lama sudah hilang).
+            if (res.ok && !(res.headers.get('content-type') || '').includes('text/html')) {
               const copy = res.clone();
               caches.open(CACHE).then((c) => c.put(req, copy));
             }

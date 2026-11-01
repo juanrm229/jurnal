@@ -1,7 +1,8 @@
-import { type ComponentType, lazy, Suspense, useEffect } from 'react';
+import { Component, type ComponentType, lazy, type ReactNode, Suspense, useEffect } from 'react';
 import { useKeyMaintenance } from './lib/data';
 import { bersihkanLencana, refreshPushToken } from './lib/push';
 import { match, navigate, ParamsProvider, usePath } from './lib/router';
+import { isChunkError, reloadOnce } from './lib/reload';
 import { useSession } from './lib/session';
 import { useThemeSync } from './lib/theme';
 import { Growing } from './ui/kit';
@@ -10,7 +11,50 @@ import Landing from './pages/Landing';
 
 const PAGES = import.meta.glob<{ default: ComponentType }>(['./pages/**/*.tsx', '!./pages/Landing.tsx']);
 const Missing = () => <Growing label="halaman ini belum ada" />;
-const page = (name: string) => lazy(() => PAGES[`./pages/${name}.tsx`]?.() ?? Promise.resolve({ default: Missing }));
+const page = (name: string) =>
+  lazy((): Promise<{ default: ComponentType }> => {
+    const load = PAGES[`./pages/${name}.tsx`];
+    if (!load) return Promise.resolve({ default: Missing });
+    return load().catch((e: unknown) => {
+      // Versi lama setelah deploy: muat ulang supaya mengambil versi baru.
+      if (isChunkError(e) && reloadOnce()) return new Promise<never>(() => {});
+      throw e;
+    });
+  });
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (e) => {
+    if (reloadOnce()) e.preventDefault();
+  });
+}
+
+/** Jangan pernah layar kosong: tangkap galat halaman dan tawarkan muat ulang. */
+class PageErrorBoundary extends Component<{ children: ReactNode; resetKey: string }, { error: unknown }> {
+  state = { error: null as unknown };
+  static getDerivedStateFromError(error: unknown) {
+    return { error };
+  }
+  componentDidCatch(error: unknown) {
+    console.error('halaman gagal', error);
+    if (isChunkError(error)) reloadOnce();
+  }
+  componentDidUpdate(prev: { resetKey: string }) {
+    if (prev.resetKey !== this.props.resetKey && this.state.error) this.setState({ error: null });
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <main className="screen">
+        <div className="col center" style={{ alignItems: 'center', textAlign: 'center', gap: 14, paddingTop: '22vh' }}>
+          <h1 className="h2" style={{ fontSize: 20 }}>Halaman ini gagal dimuat</h1>
+          <p className="soft small" style={{ maxWidth: 340, margin: 0 }}>Mungkin aplikasinya baru saja diperbarui. Muat ulang sekali, ya.</p>
+          <button className="btn auto" onClick={() => location.reload()}>muat ulang</button>
+          <a className="tiny soft" href="/hari">ke halaman hari ini</a>
+        </div>
+      </main>
+    );
+  }
+}
 
 /** [pola, komponen, butuh sesi siap?, tampilkan tab bar?] */
 const ROUTES: [string, ComponentType, boolean, boolean][] = [
@@ -130,11 +174,13 @@ export function App() {
     if (!params) continue;
     const body = (
       <ParamsProvider value={params}>
-        <Suspense fallback={<Growing />}>
-          <div key={pattern} className="route-in">
-            <Comp />
-          </div>
-        </Suspense>
+        <PageErrorBoundary resetKey={path}>
+          <Suspense fallback={<Growing />}>
+            <div key={pattern} className="route-in">
+              <Comp />
+            </div>
+          </Suspense>
+        </PageErrorBoundary>
         {tabs && status === 'ready' ? <TabBar path={path} /> : null}
       </ParamsProvider>
     );
