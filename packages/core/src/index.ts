@@ -70,3 +70,4 @@ export * as tangga from './tangga';
 export * as saudagar from './saudagar';
 export * as petasan from './petasan';
 export * as hanabi from './hanabi';
+export * from './wrapStory';
