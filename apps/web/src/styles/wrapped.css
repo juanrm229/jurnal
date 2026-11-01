@@ -1373,3 +1373,128 @@
   align-items: center;
   gap: 6px;
 }
+
+/* ── Rol ──────────────────────────────────────────────────────────────────── */
+.wr-rolls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+.wr-roll-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wr-roll-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wr-roll-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 4px 12px;
+  scrollbar-width: none;
+}
+.wr-roll-shot {
+  flex: 0 0 auto;
+  width: 120px;
+}
+
+/* ── Dibanding ────────────────────────────────────────────────────────────── */
+.wr-compare {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wr-compare-head,
+.wr-compare-row {
+  display: grid;
+  grid-template-columns: 74px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  font: 12px var(--mono);
+  text-align: left;
+}
+.wr-compare-head span {
+  opacity: 0.6;
+}
+.wr-compare-bar {
+  position: relative;
+  height: 26px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.wr-compare-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--w, 0) * 100%);
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+  transform-origin: left;
+  transform: scaleX(0.02);
+  transition: transform 1.1s cubic-bezier(0.2, 0.9, 0.2, 1) 0.3s;
+}
+.wr-compare-bar.now i {
+  background: var(--ink);
+}
+.wr-scene.in .wr-compare-bar i {
+  transform: none;
+}
+.wr-compare-bar b {
+  position: relative;
+  padding-left: 8px;
+  font-weight: 600;
+  mix-blend-mode: difference;
+  color: #fff;
+}
+.wr-compare-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  justify-content: center;
+}
+.wr-chip-person {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Wajah-wajah ──────────────────────────────────────────────────────────── */
+.wr-faces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: 440px;
+}
+.wr-face {
+  position: relative;
+  width: 86px;
+  transform: translate3d(0, 22px, 0) rotate(calc(var(--r, 0deg) * 3)) scale(0.8);
+}
+.wr-scene.in .wr-face {
+  transform: rotate(var(--r, 0deg));
+}
+.wr-face .wr-photo {
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 4px #fffdf7,
+    0 0 0 6px var(--pc, var(--ink));
+}
+.wr-face-emoji {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  font-size: 28px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+.wr-plant {
+  display: grid;
+  place-items: center;
+}

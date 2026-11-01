@@ -368,6 +368,22 @@ export const scenes = pgTable(
   (t) => [primaryKey({ columns: [t.circleId, t.week] })],
 );
 
+/**
+ * Rol Minggu Ini: tiap anggota memilih sampai lima foto favorit seminggu.
+ * Hanya id Drop yang disimpan; fotonya tetap terenkripsi seperti biasa.
+ */
+export const weekRolls = pgTable(
+  'week_rolls',
+  {
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    week: text('week').notNull(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    dropIds: jsonb('drop_ids').$type<string[]>().notNull().default([]),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.circleId, t.week, t.userId] })],
+);
+
 export const volumes = pgTable(
   'volumes',
   {

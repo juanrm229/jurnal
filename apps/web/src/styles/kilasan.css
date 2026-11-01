@@ -623,3 +623,97 @@
     animation: none;
   }
 }
+
+/* ── Rol Minggu Ini ───────────────────────────────────────────────────────── */
+.rl-entry.hot {
+  background: var(--sticky-blue);
+}
+.rl-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+.rl-title .hand {
+  font-size: 28px;
+  color: var(--ink);
+}
+.rl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.rl-pick {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1;
+  transition: transform 0.2s ease;
+}
+.rl-pick.on {
+  transform: scale(0.94);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+.rl-shot {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.rl-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rl-n {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: #fff;
+  font: 600 14px var(--mono);
+}
+.rl-who {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.rl-strip {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+.rl-strip .rl-shot {
+  flex: 0 0 auto;
+  width: 84px;
+  height: 84px;
+  border-radius: 6px;
+  background: #fffdf8;
+  border: 4px solid #fffdf8;
+  box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.5);
+}
+.rl-strip .rl-s0 {
+  transform: rotate(-2deg);
+}
+.rl-strip .rl-s1 {
+  transform: rotate(2deg);
+}
+.rl-shot.locked {
+  background: var(--pill);
+}

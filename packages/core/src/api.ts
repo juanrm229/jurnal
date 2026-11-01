@@ -519,6 +519,15 @@ export interface ChapterWire {
   proposals: { id: string; userId: string; titleEnc: string; votes: string[] }[];
 }
 
+/** Rol Minggu Ini: sampai lima foto favorit seminggu. Kosong = hapus pilihan. */
+export const rollBody = z.object({ dropIds: z.array(id).max(5) });
+export interface RollWire {
+  userId: string;
+  week: string;
+  dropIds: string[];
+  updatedAt: string;
+}
+
 export const sceneBody = z.object({ titleEnc: z.string().max(2000).optional(), cardId: z.string().max(80).optional() });
 export interface SceneWire {
   week: string;

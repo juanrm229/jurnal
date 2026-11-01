@@ -10,6 +10,7 @@ import { MOODS } from './content/chapterTitles';
 import type { DropKind, MediaRef, MoodCode, SongRef } from './domain';
 import { excerpt, tokenize, wordCounts, type WordCount } from './text';
 import { type DayKey, dayName, eachDay, formatClock, monthName, monthRange, parseDay, weekRange, yearRange, zonedTimeToUtc } from './time';
+import { type CompareScene, compareScene, type FacesScene, facesScene, type PlantScene, plantScene, type RollScene, rollScene } from './wrapWeekly';
 import { type AwardsScene, awardsScene, funNote, type GuessScene, guessScene, type NextScene, nextScene, type YouScene, youScene } from './wrapExtras';
 import { buildWrap, moodTally, songTally, type WrapCard, type WrapDrop, type WrapInput, type WrapScope } from './wrap';
 
@@ -72,6 +73,10 @@ export type StoryScene =
   | { type: 'quiet'; text: string }
   | { type: 'letter'; to: string; toUserIds: string[]; paragraphs: string[]; signoff: string }
   | YouScene
+  | RollScene
+  | CompareScene
+  | FacesScene
+  | PlantScene
   | AwardsScene
   | GuessScene
   | NextScene;
@@ -182,7 +187,15 @@ export function buildWrapStory(input: WrapInput): WrapStory {
   if (photoTotal) tally.push({ value: photoTotal, label: 'foto ditempel', note: funNote('photos', photoTotal), doodle: 'kamera' });
   if (songs.length) tally.push({ value: songs.length, label: 'lagu diputar', note: funNote('songs', songs.length), doodle: 'kaset' });
   if (hugTotal) tally.push({ value: hugTotal, label: 'pelukan dikirim', note: funNote('hugs', hugTotal), doodle: 'pelukan' });
+  const snaps = inRange.filter((d) => d.flash === 'snap').length;
+  const kangens = inRange.filter((d) => d.flash === 'kangen').length;
+  if (snaps) tally.push({ value: snaps, label: 'kilasan dikirim', doodle: 'kamera' });
+  if (kangens) tally.push({ value: kangens, label: 'kali saling kangen', note: kangens >= 5 ? 'sering sekali, dan itu manis' : undefined, doodle: 'hati-dua' });
   scenes.push({ type: 'tally', items: tally });
+
+  // ── Dibanding periode sebelumnya ──────────────────────────────────────────
+  const compare = compareScene(input, inRange);
+  if (compare) scenes.push(compare);
 
   // ── Hari demi hari ────────────────────────────────────────────────────────
   const dayEntry = (key: string, top: string, bottom: string, inKey: (d: DayKey) => boolean): StoryDay => {
@@ -282,8 +295,15 @@ export function buildWrapStory(input: WrapInput): WrapStory {
   }
 
   // ── Foto ──────────────────────────────────────────────────────────────────
+  // Rol pilihan kalian sendiri lebih dulu; kalau belum ada yang memilih, pilihan otomatis.
+  const roll = rollScene(input, drops);
   const photoCard = base.cards.find((c) => c.type === 'photos');
-  if (photoCard && photoCard.type === 'photos') scenes.push({ type: 'photos', title: photoCard.title, total: photoTotal, items: photoCard.items });
+  if (roll) scenes.push(roll);
+  else if (photoCard && photoCard.type === 'photos') scenes.push({ type: 'photos', title: photoCard.title, total: photoTotal, items: photoCard.items });
+
+  // ── Wajah-wajah ───────────────────────────────────────────────────────────
+  const faces = facesScene(inRange);
+  if (faces) scenes.push(faces);
 
   // ── Kata ──────────────────────────────────────────────────────────────────
   const texts = textDrops.map((d) => ({ authorId: d.authorId, day: d.day, text: d.payload.text! }));
@@ -365,12 +385,14 @@ export function buildWrapStory(input: WrapInput): WrapStory {
     if (['roles', 'lines', 'chapters', 'places', 'motif', 'genre'].includes(c.type)) scenes.push({ type: 'extra', card: c });
   }
 
-  // ── Api ───────────────────────────────────────────────────────────────────
+  // ── Tanaman & api ─────────────────────────────────────────────────────────
   const s = base.cards.find((c) => c.type === 'streak');
+  const plant = plantScene(input, s && s.type === 'streak' ? s.togetherDays : 0);
+  if (plant) scenes.push(plant);
   if (s && s.type === 'streak') scenes.push({ type: 'fire', current: s.current, longest: s.longest, togetherDays: s.togetherDays, totalDays: days.length, perMember: s.perMember });
 
   // ── Surat penutup ─────────────────────────────────────────────────────────
-  scenes.push(letterFor(input, { drops, textDrops, people, others, viewer, sync, quotes, pairMap, moods, perMember, filledDays: filledDays.size, totalDays: days.length, counts, photoTotal }));
+  scenes.push(letterFor(input, { drops, textDrops, people, others, viewer, sync, quotes, pairMap, moods, perMember, filledDays: filledDays.size, totalDays: days.length, counts, photoTotal, kangens }));
 
   // ── Untuk berikutnya ──────────────────────────────────────────────────────
   const next = nextScene(input.scope, {
@@ -406,6 +428,7 @@ function letterFor(
     totalDays: number;
     counts: WordCount[];
     photoTotal: number;
+    kangens?: number;
   },
 ): StoryScene {
   const thisP = SCOPE_THIS[input.scope];
@@ -457,6 +480,7 @@ function letterFor(
     p.push(`Ada kalimat dari ${f.people.find((x) => x.userId === q.userId)?.name ?? 'kalian'} yang masih tertinggal di kepalaku: “${q.text}”`);
   }
 
+  if (f.kangens && !solo) p.push(f.kangens === 1 ? `Sekali, di tengah hari, salah satu dari kita mengirim “kangen”. Satu ketukan kecil, tapi sampai.` : `${f.kangens} kali kita saling mengirim “kangen” ${thisP}. Tanpa kata, tapi semuanya sampai.`);
   if (f.photoTotal) p.push(`${f.photoTotal} foto membuat ${thisP} punya warna. Bukan foto yang bagus-bagus. Justru itu yang paling bagus.`);
   if (f.moods[0]) p.push(`Kalau ${thisP} harus diberi satu warna, aku pilih ${f.moods[0].label}.`);
 

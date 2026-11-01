@@ -12,6 +12,7 @@ import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useRef,
 import { useMediaUrl } from '@/lib/media';
 import { navigate } from '@/lib/router';
 import { Avatar, Doodle, Flame } from '@/ui/kit';
+import { PlantArt } from '@/pages/circles/Plant';
 
 export interface WrappedCtx {
   meId: string;
@@ -786,6 +787,142 @@ function Letter({ s, circleId }: { s: Extract<StoryScene, { type: 'letter' }>; c
   );
 }
 
+/** Rol pilihan kalian sendiri, dengan judul adegan dari pemegang pena. */
+function Roll({ s, ctx }: { s: Extract<StoryScene, { type: 'roll' }>; ctx: WrappedCtx }) {
+  let n = 0;
+  return (
+    <>
+      <Kicker>rol pilihan kalian</Kicker>
+      {s.title ? (
+        <R n={1} as="h2" className="wr-title wr-hand" style={{ fontSize: 'clamp(34px, 10vw, 52px)' }}>
+          “{s.title}”
+        </R>
+      ) : null}
+      <div className="wr-rolls">
+        {s.items.map((it) => (
+          <div key={it.userId} className="wr-roll-row">
+            <R n={(n += 1)} className="wr-roll-who">
+              <Person id={it.userId} ctx={ctx} size={24} />
+              <span className="tiny soft">memilih {it.shots.length}</span>
+            </R>
+            <div className="wr-roll-strip">
+              {it.shots.map((sh, i) => (
+                <R key={sh.dropId} n={(n += 1)} className="wr-polaroid wr-roll-shot" style={{ '--r': `${((i * 41) % 9) - 4}deg` } as CSSProperties}>
+                  <Photo media={sh.media} style={{ aspectRatio: 1 }} />
+                  <div className="wr-polaroid-cap">
+                    <span>{sh.caption ?? ''}</span>
+                    <span className="soft">{formatDayLong(sh.day, false)}</span>
+                  </div>
+                </R>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Dibanding periode sebelumnya. */
+function Compare({ s, ctx }: { s: Extract<StoryScene, { type: 'compare' }>; ctx: WrappedCtx }) {
+  const max = Math.max(1, ...s.rows.flatMap((r) => [r.before, r.now]));
+  return (
+    <>
+      <Kicker>dibanding {s.before}</Kicker>
+      <R n={1} as="p" className="wr-lead">
+        {s.headline}
+      </R>
+      <div className="wr-compare">
+        <R n={2} className="wr-compare-head">
+          <span />
+          <span>{s.before}</span>
+          <span>{s.now}</span>
+        </R>
+        {s.rows.map((r, i) => (
+          <R key={r.label} n={3 + i} className="wr-compare-row">
+            <span className="wr-compare-label">{r.label}</span>
+            <span className="wr-compare-bar before">
+              <i style={{ '--w': r.before / max } as CSSProperties} />
+              <b>{r.before}</b>
+            </span>
+            <span className="wr-compare-bar now">
+              <i style={{ '--w': r.now / max } as CSSProperties} />
+              <b>{r.now}</b>
+            </span>
+          </R>
+        ))}
+      </div>
+      {s.people.length > 1 ? (
+        <div className="wr-compare-people">
+          {s.people.map((p, i) => (
+            <R key={p.userId} n={4 + s.rows.length + i} className="wr-chip-person">
+              <Person id={p.userId} ctx={ctx} size={22} />
+              <span className="tiny">
+                {p.before} → <b>{p.now}</b>
+                {p.now > p.before ? ' ↑' : p.now < p.before ? ' ↓' : ''}
+              </span>
+            </R>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+const FACE_EMOJI: Record<string, string> = { senyum: '😊', ketawa: '😂', kaget: '😮', terharu: '🥹', sayang: '😍', semangat: '👍' };
+
+/** Wajah-wajah: kolase Reaksi Wajah. */
+function Faces({ s, ctx }: { s: Extract<StoryScene, { type: 'faces' }>; ctx: WrappedCtx }) {
+  return (
+    <>
+      <Kicker>wajah-wajah yang membalas</Kicker>
+      <div className="wr-faces">
+        {s.items.map((f, i) => (
+          <R key={`${f.dropId}-${f.userId}`} n={1 + (i % 12)} className="wr-face" style={{ '--r': `${((i * 29) % 13) - 6}deg`, '--pc': ctx.colorOf(f.userId) } as CSSProperties}>
+            <Photo media={f.media} style={{ aspectRatio: 1, borderRadius: '50%' }} />
+            <span className="wr-face-emoji">{FACE_EMOJI[f.expression] ?? '😊'}</span>
+          </R>
+        ))}
+      </div>
+      {s.top ? (
+        <R n={14} as="p" className="wr-caption">
+          Ekspresi paling sering: <b>{s.top.expression}</b> {FACE_EMOJI[s.top.expression]} ({s.top.count}×). Setiap wajah dihitung sebagai pelukan.
+        </R>
+      ) : null}
+    </>
+  );
+}
+
+/** Tanaman Berdua di akhir periode. */
+function PlantSc({ s }: { s: Extract<StoryScene, { type: 'plant' }> }) {
+  const p = s.state;
+  return (
+    <>
+      <Kicker>tanaman kita</Kicker>
+      <R n={1} className="wr-plant">
+        <PlantArt state={p} size={220} />
+      </R>
+      <R n={2} as="h2" className="wr-song-title wr-hand" style={{ fontSize: 40 }}>
+        {p.stage.name}
+      </R>
+      <R n={3} as="p" className="wr-caption">
+        {s.together ? `${s.together} hari disegel bersama di periode ini.` : 'Belum ada hari yang disegel bersama di periode ini.'} {p.next && p.toNext !== undefined ? `${p.toNext} hari lagi jadi ${p.next.name}.` : ''}
+      </R>
+      <R n={4} className="wr-best-facts">
+        <span>
+          <b>{p.sinceDays}</b> hari bersama
+        </span>
+        <span>
+          <b>{p.togetherDays}</b> disegel berdua
+        </span>
+        <span>
+          <b>{p.anniversary.inDays}</b> hari ke hari jadi
+        </span>
+      </R>
+    </>
+  );
+}
+
 /** Kartu "kamu minggu ini": persona dan angka milik pembaca sendiri. */
 function You({ s, on, ctx, scope }: { s: Extract<StoryScene, { type: 'you' }>; on: boolean; ctx: WrappedCtx; scope: WrapStory['scope'] }) {
   const word = scope === 'week' ? 'minggu ini' : scope === 'month' ? 'bulan ini' : scope === 'year' ? 'tahun ini' : 'di acara ini';
@@ -1020,6 +1157,10 @@ const TONE: Partial<Record<StoryScene['type'], string>> = {
   awards: 'var(--sticky-yellow)',
   guess: 'var(--sticky-blue)',
   next: 'var(--sticky-green)',
+  roll: 'var(--paper)',
+  compare: 'var(--sticky-blue)',
+  faces: 'var(--sticky-peach)',
+  plant: 'var(--sticky-green)',
 };
 
 export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: WrappedCtx; end: (nav: { toStart: () => void; back: () => void }) => ReactNode; onClose: () => void }) {
@@ -1093,6 +1234,14 @@ export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: W
         return <Letter s={s} circleId={ctx.circleId} />;
       case 'you':
         return <You s={s} on={on} ctx={ctx} scope={story.scope} />;
+      case 'roll':
+        return <Roll s={s} ctx={ctx} />;
+      case 'compare':
+        return <Compare s={s} ctx={ctx} />;
+      case 'faces':
+        return <Faces s={s} ctx={ctx} />;
+      case 'plant':
+        return <PlantSc s={s} />;
       case 'awards':
         return <Awards s={s} ctx={ctx} />;
       case 'guess':

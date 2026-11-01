@@ -9,6 +9,7 @@ import { excerpt, useCircleWorks } from '@/lib/works';
 import { countdown, fmtWhen, useCircleMeets } from '@/lib/meets';
 import { Cover } from '@/pages/karya/Cover';
 import { PlantCard } from './Plant';
+import { RollCard } from './RollCard';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
 
@@ -123,6 +124,7 @@ export default function CircleHome() {
             </span>
           </Link>
           {sceneTitle ? <p className="hand center" style={{ fontSize: 26 }}>adegan minggu ini: {sceneTitle}</p> : null}
+          <RollCard circleId={id} week={week} members={circle.active.length} />
           {sharedCard ? (
             <Link to={`/hari?${new URLSearchParams({ prompt: sharedCard.body, cardId: sharedCard.id, kind: sharedCard.kind === 'tantangan' ? 'photo' : 'card', circleId: circle.id })}`} className="sticky row mt" style={{ background: 'var(--sticky-yellow)', alignItems: 'flex-start', gap: 12 }}>
               <Doodle id={sharedCard.doodle ?? 'kartu'} size={30} />
