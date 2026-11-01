@@ -368,6 +368,22 @@ export const scenes = pgTable(
   (t) => [primaryKey({ columns: [t.circleId, t.week] })],
 );
 
+/** Tanggal Penting buatan anggota lingkaran. Judul terenkripsi untuk lingkaran. */
+export const importantDates = pgTable(
+  'important_dates',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    titleEnc: text('title_enc').notNull(),
+    month: integer('month').notNull(),
+    day: integer('day').notNull(),
+    year: integer('year'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('important_dates_circle_idx').on(t.circleId)],
+);
+
 /**
  * Rol Minggu Ini: tiap anggota memilih sampai lima foto favorit seminggu.
  * Hanya id Drop yang disimpan; fotonya tetap terenkripsi seperti biasa.

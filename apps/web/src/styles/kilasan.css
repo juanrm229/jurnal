@@ -717,3 +717,347 @@
 .rl-shot.locked {
   background: var(--pill);
 }
+
+/* ── Pertanyaan hari ini & kuis ───────────────────────────────────────────── */
+.qa-q {
+  margin: 2px 0 6px;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.qa-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 6px 0 10px;
+}
+.qa-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.55;
+}
+.qa-who.done {
+  opacity: 1;
+}
+.qa-tick {
+  font: 600 12px var(--mono);
+  color: var(--ink);
+}
+.qa-input {
+  width: 100%;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+.qa-answers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.qa-answer {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+}
+.qa-answer p {
+  margin: 6px 0 0;
+  font: 16px/1.5 var(--serif);
+}
+.qa-answer.pending {
+  background: transparent;
+  border: 1.5px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+}
+.quiz .qa-answers {
+  grid-template-columns: 1fr;
+}
+.qz-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.qz-opt {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  background: var(--paper);
+  color: var(--text);
+  font: 13px/1.3 var(--mono);
+  text-align: left;
+  cursor: pointer;
+}
+.qz-opt.small {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.qz-opt.on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+.qz-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  font: 12px var(--mono);
+}
+.qz-result .ok {
+  color: #2f8a6e;
+}
+.qz-result .no {
+  color: #c0563c;
+}
+
+/* ── Tanggal Penting ──────────────────────────────────────────────────────── */
+.dt-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ink) 7%, var(--paper));
+}
+.dt-next.today {
+  background: var(--sticky-yellow);
+}
+.dt-title {
+  font: 700 24px/1.1 var(--hand);
+  color: var(--ink);
+}
+.dt-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  font: 11px var(--mono);
+}
+.dt-count b {
+  font: 600 30px/1 var(--serif-display);
+  color: var(--ink);
+}
+.dt-count .dt-word {
+  font: 700 24px var(--hand);
+}
+.dt-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dt-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dt-x {
+  border: 0;
+  background: none;
+  color: var(--text);
+  opacity: 0.4;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.dt-more {
+  border: 0;
+  background: none;
+  padding: 6px 0 0;
+  cursor: pointer;
+}
+
+/* ── Perapian: halaman lingkaran ──────────────────────────────────────────── */
+.ch-scene {
+  max-width: 340px;
+  margin: -6px auto -14px;
+}
+.ch-scene svg,
+.ch-scene img {
+  max-height: 170px;
+  width: 100%;
+}
+.ch-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.ch-actions .btn {
+  flex: 1 1 auto;
+}
+.ch-actions .ch-invite {
+  flex: 0 0 auto;
+  width: auto;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+.ch-block {
+  margin-top: 16px;
+}
+.ch-list {
+  padding: 6px 16px;
+}
+.ch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  color: inherit;
+  text-decoration: none;
+}
+.ch-row + .ch-row {
+  border-top: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+}
+.ch-row.rl-entry.hot {
+  background: none;
+}
+.ch-row.rl-entry.hot b {
+  color: var(--ink);
+}
+
+/* Kartu "kita": tanaman + api */
+.kt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.kt-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.kt-head {
+  flex: 1;
+  min-width: 0;
+}
+.kt-line {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.kt-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.kt-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  text-align: center;
+  min-height: 64px;
+}
+.kt-stats > div.today {
+  background: var(--sticky-yellow);
+}
+.kt-stats b {
+  font: 600 24px/1 var(--serif-display);
+  color: var(--ink);
+}
+.kt-stats span {
+  font: 11px/1.3 var(--mono);
+}
+.kt-flame {
+  display: inline-flex;
+}
+.kt-sub {
+  margin: 0;
+  line-height: 1.5;
+}
+.kt-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+}
+.kt-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+.kt-member {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Kartu "hari ini bersama": pertanyaan & kuis bertab */
+.tt-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: -4px -4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 7%, var(--paper));
+}
+.tt-tabs button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: 12.5px var(--mono);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tt-tabs button.on {
+  background: var(--card, #fff);
+  color: var(--ink);
+  box-shadow: 0 2px 8px -4px rgba(0, 0, 0, 0.25);
+}
+.tt .qa-q {
+  margin-top: 0;
+}
+
+/* ── Perapian: halaman hari ini ───────────────────────────────────────────── */
+.today-nav {
+  gap: 4px;
+}
+.today-chips {
+  display: inline-flex;
+  gap: 2px;
+}
+@media (max-width: 400px) {
+  .today-chips > :nth-child(n + 2) {
+    display: none;
+  }
+}
+
+/* ── Perapian: kilasan & rol ──────────────────────────────────────────────── */
+.kl-actions + p {
+  margin: 10px 0 18px !important;
+  line-height: 1.5;
+}
+.rl .row.mt .btn {
+  white-space: nowrap;
+}
+@media (max-width: 400px) {
+  .rl .row.mt {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rl .row.mt .btn {
+    width: 100%;
+  }
+}
+.qa textarea.qa-input {
+  min-height: 72px;
+  max-height: 180px;
+}
+.kt-flame span {
+  font-weight: 600;
+}

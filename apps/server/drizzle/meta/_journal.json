@@ -113,6 +113,13 @@
       "when": 1793560748690,
       "tag": "0015_freezing_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793563445285,
+      "tag": "0016_bright_payback",
+      "breakpoints": true
     }
   ]
 }

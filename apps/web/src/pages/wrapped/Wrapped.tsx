@@ -871,6 +871,37 @@ function Compare({ s, ctx }: { s: Extract<StoryScene, { type: 'compare' }>; ctx:
 
 const FACE_EMOJI: Record<string, string> = { senyum: '😊', ketawa: '😂', kaget: '😮', terharu: '🥹', sayang: '😍', semangat: '👍' };
 
+/** Seberapa kenal: skor Kuis Seberapa Kenal. */
+function Kenal({ s, ctx, on }: { s: Extract<StoryScene, { type: 'kenal' }>; ctx: WrappedCtx; on: boolean }) {
+  return (
+    <>
+      <Kicker>seberapa kenal</Kicker>
+      <R n={1} as="p" className="wr-lead">
+        {s.days} kuis kecil, {s.items.reduce((a, x) => a + x.total, 0)} tebakan.
+      </R>
+      <div className="wr-hugs">
+        {s.items.map((it, i) => (
+          <R key={it.userId} n={2 + i} className="wr-kenal">
+            <Person id={it.userId} ctx={ctx} size={28} />
+            <span className="wr-kenal-score">
+              <b>
+                <CountUp value={it.correct} on={on} />
+              </b>
+              /{it.total}
+            </span>
+            <span className="wr-hand wr-kenal-label">{it.label}</span>
+          </R>
+        ))}
+      </div>
+      {s.best && s.best.correct ? (
+        <R n={3 + s.items.length} as="p" className="wr-caption">
+          {ctx.name(s.best.from)} paling tahu tentang {ctx.name(s.best.to)}: {s.best.correct} dari {s.best.total} tebakan tepat.
+        </R>
+      ) : null}
+    </>
+  );
+}
+
 /** Wajah-wajah: kolase Reaksi Wajah. */
 function Faces({ s, ctx }: { s: Extract<StoryScene, { type: 'faces' }>; ctx: WrappedCtx }) {
   return (
@@ -1160,6 +1191,7 @@ const TONE: Partial<Record<StoryScene['type'], string>> = {
   roll: 'var(--paper)',
   compare: 'var(--sticky-blue)',
   faces: 'var(--sticky-peach)',
+  kenal: 'var(--sticky-yellow)',
   plant: 'var(--sticky-green)',
 };
 
@@ -1240,6 +1272,8 @@ export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: W
         return <Compare s={s} ctx={ctx} />;
       case 'faces':
         return <Faces s={s} ctx={ctx} />;
+      case 'kenal':
+        return <Kenal s={s} ctx={ctx} on={on} />;
       case 'plant':
         return <PlantSc s={s} />;
       case 'awards':

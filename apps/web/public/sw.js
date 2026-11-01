@@ -62,6 +62,9 @@ function routeFor(d) {
     case 'reaction':
     case 'footnote':
       return d.circleId && d.day ? `/l/${d.circleId}/hari/${d.day}` : '/hari';
+    case 'question':
+    case 'dates':
+      return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
     case 'roll':
       if (d.circleId) return d.week ? `/l/${d.circleId}/rol/${d.week}` : `/l/${d.circleId}/rol`;
       return d.week ? `/lingkaran?rol=${encodeURIComponent(d.week)}` : '/lingkaran';

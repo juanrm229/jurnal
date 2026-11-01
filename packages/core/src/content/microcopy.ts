@@ -259,6 +259,10 @@ export const COPY = {
     whenLetterOpened: (name: string) => `${name} baru saja membuka suratmu. Mungkin hari ini ia membutuhkannya.`,
     chapterCeremony: 'Bulan ini selesai. Saatnya memberi judul bab bersama.',
     friendWriting: (name: string) => `${name} mulai mengisi halaman hari ini.`,
+    friendAnswered: (name: string, quiz: boolean) =>
+      quiz ? `${name} sudah menjawab kuis hari ini. Jawab juga, lalu lihat seberapa kenal kalian.` : `${name} sudah menjawab pertanyaan hari ini. Jawab dulu, baru lihat jawabannya.`,
+    dateSoon: (days: number) => (days === 0 ? 'Hari ini tanggal penting kalian. Buka Sehari untuk merayakannya kecil-kecilan.' : `${days} hari lagi ada tanggal penting kalian. Masih sempat menyiapkan sesuatu.`),
+    birthdaySoon: (name: string, today: boolean) => (today ? `Hari ini ulang tahun ${name}. Kirim sesuatu yang kecil tapi sampai.` : `Besok ulang tahun ${name}. Mau menyiapkan surat atau kilasan?`),
     rollPicked: (name: string) => `${name} sudah memilih rol minggu ini. Giliranmu?`,
     rollOpen: 'Rol minggu ini dibuka. Pilih lima favorit seminggu, sebelum jadi Minggu Kita.',
     flashSnap: (name: string) => `${name} mengirim kilasan. Intip sebentar?`,

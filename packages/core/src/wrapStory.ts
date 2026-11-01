@@ -10,7 +10,7 @@ import { MOODS } from './content/chapterTitles';
 import type { DropKind, MediaRef, MoodCode, SongRef } from './domain';
 import { excerpt, tokenize, wordCounts, type WordCount } from './text';
 import { type DayKey, dayName, eachDay, formatClock, monthName, monthRange, parseDay, weekRange, yearRange, zonedTimeToUtc } from './time';
-import { type CompareScene, compareScene, type FacesScene, facesScene, type PlantScene, plantScene, type RollScene, rollScene } from './wrapWeekly';
+import { type KenalScene, kenalScene, type CompareScene, compareScene, type FacesScene, facesScene, type PlantScene, plantScene, type RollScene, rollScene } from './wrapWeekly';
 import { type AwardsScene, awardsScene, funNote, type GuessScene, guessScene, type NextScene, nextScene, type YouScene, youScene } from './wrapExtras';
 import { buildWrap, moodTally, songTally, type WrapCard, type WrapDrop, type WrapInput, type WrapScope } from './wrap';
 
@@ -74,6 +74,7 @@ export type StoryScene =
   | { type: 'letter'; to: string; toUserIds: string[]; paragraphs: string[]; signoff: string }
   | YouScene
   | RollScene
+  | KenalScene
   | CompareScene
   | FacesScene
   | PlantScene
@@ -324,6 +325,8 @@ export function buildWrapStory(input: WrapInput): WrapStory {
     .filter((x): x is NonNullable<typeof x> => !!x);
   const guess = guessScene(people, textDrops, `${input.circle.id}:${input.period}`, new Set(quotes.map((q) => q.dropId)));
   if (guess) scenes.push(guess);
+  const kenal = kenalScene(inRange);
+  if (kenal) scenes.push(kenal);
   if (quotes.length) scenes.push({ type: 'quotes', items: quotes });
 
   // ── Pelukan ───────────────────────────────────────────────────────────────

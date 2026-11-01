@@ -10,6 +10,8 @@ import { countdown, fmtWhen, useCircleMeets } from '@/lib/meets';
 import { Cover } from '@/pages/karya/Cover';
 import { PlantCard } from './Plant';
 import { RollCard } from './RollCard';
+import { TogetherToday } from './Questions';
+import { DatesCard } from './Dates';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
 
@@ -56,7 +58,7 @@ export default function CircleHome() {
           </Link>
         }
       />
-      <div style={{ maxWidth: 420, margin: '0 auto -10px' }}>
+      <div className="ch-scene">
         <Scene id={circle.status === 'memorial' ? 'langit-malam' : (SCENE_FOR[circle.kind] ?? 'taman-tahun')} />
       </div>
 
@@ -72,59 +74,69 @@ export default function CircleHome() {
         </div>
       ) : null}
 
-      {circle.kind !== 'moment' && circle.status !== 'memorial' ? (
-        <div className="mt">
-          <PlantCard circle={circle} />
-        </div>
-      ) : null}
-
-      <div className="card mt">
-        <div className="row between" style={{ alignItems: 'flex-start' }}>
-          <div>
-            <span className="label">api bersama</span>
-            <Flame level={circle.streak.flame} days={circle.streak.current} size={36} />
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div className="tiny soft">terpanjang {circle.streak.longest} · {circle.streak.togetherDays} hari bersama</div>
-            {circle.streak.next ? <div className="tiny ink-soft">{circle.streak.next.remaining} hari lagi ke {circle.streak.next.name}</div> : null}
-          </div>
-        </div>
-        <div className="row wrap mt" style={{ gap: 12 }}>
-          {circle.members
-            .filter((m) => m.state !== 'left')
-            .map((m) => (
-              <div key={m.userId} className="col center" style={{ alignItems: 'center', width: 64, gap: 2 }}>
-                <Avatar doodle={m.doodle} size={44} sealed={circle.todaySealed[m.userId]} dim={m.state === 'remembered'} />
-                <span className={`tiny ${m.userId === me.user.id ? 'ink' : ''}`} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 64 }}>{m.userId === me.user.id ? 'kamu' : m.penName}</span>
-                <span className="tiny soft">{m.state === 'remembered' ? 'dikenang' : circle.todaySealed[m.userId] ? 'tersegel' : '·'}</span>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      <div className="col mt">
+      {/* Aksi utama di atas: hal pertama yang paling sering dilakukan. */}
+      <div className="ch-actions">
         <Link to={`/l/${id}/hari/${today}`} className="btn">
           <Doodle id="buku-terbuka" size={22} color="currentColor" /> buka hari ini bersama
         </Link>
         {!frozen && room ? (
-          <Link to={`/l/${id}/undang`} className="btn ghost">
-            <Doodle id="ui-qr" size={20} color="currentColor" /> {circle.kind === 'moment' ? 'QR & tautan untuk tamu' : 'undang'}
+          <Link to={`/l/${id}/undang`} className="btn ghost ch-invite" aria-label={circle.kind === 'moment' ? 'QR & tautan untuk tamu' : 'undang'}>
+            <Doodle id="ui-qr" size={20} color="currentColor" /> {circle.kind === 'moment' ? 'QR tamu' : 'undang'}
           </Link>
         ) : null}
       </div>
 
+      {circle.kind !== 'moment' && circle.status !== 'memorial' ? (
+        <div className="ch-block">
+          <PlantCard circle={circle} />
+        </div>
+      ) : (
+        <div className="card ch-block">
+          <div className="row between" style={{ alignItems: 'flex-start' }}>
+            <div>
+              <span className="label">api bersama</span>
+              <Flame level={circle.streak.flame} days={circle.streak.current} size={36} />
+            </div>
+            <div className="tiny soft" style={{ textAlign: 'right' }}>
+              terpanjang {circle.streak.longest} · {circle.streak.togetherDays} hari bersama
+            </div>
+          </div>
+          <div className="row wrap mt" style={{ gap: 12 }}>
+            {circle.members
+              .filter((m) => m.state !== 'left')
+              .map((m) => (
+                <div key={m.userId} className="col center" style={{ alignItems: 'center', width: 64, gap: 2 }}>
+                  <Avatar doodle={m.doodle} size={40} sealed={circle.todaySealed[m.userId]} dim={m.state === 'remembered'} />
+                  <span className={`tiny ${m.userId === me.user.id ? 'ink' : ''}`} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 64 }}>{m.userId === me.user.id ? 'kamu' : m.penName}</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {circle.kind !== 'moment' && !frozen ? (
+        <section className="section">
+          <span className="label">hari ini bersama</span>
+          <TogetherToday circle={circle} q={q} quiz />
+        </section>
+      ) : null}
+
       {circle.kind !== 'moment' ? (
         <section className="section">
           <span className="label">minggu ini</span>
-          <Link to={`/l/${id}/kitab`} className="card row" style={{ gap: 12 }}>
-            <Doodle id="pena" size={30} />
-            <span>
-              <span className="small" style={{ display: 'block' }}>Pena minggu ini dipegang <b className="ink">{holder?.userId === me.user.id ? 'kamu' : (holder?.penName ?? '…')}</b>.</span>
-              <span className="tiny soft">Pemegang pena memberi judul adegan dan memilih kartu bersama.</span>
-            </span>
-          </Link>
-          {sceneTitle ? <p className="hand center" style={{ fontSize: 26 }}>adegan minggu ini: {sceneTitle}</p> : null}
-          <RollCard circleId={id} week={week} members={circle.active.length} />
+          <div className="card ch-list">
+            <Link to={`/l/${id}/kitab`} className="ch-row">
+              <Doodle id="pena" size={26} />
+              <span className="grow">
+                <span className="small" style={{ display: 'block' }}>
+                  Pena dipegang <b className="ink">{holder?.userId === me.user.id ? 'kamu' : (holder?.penName ?? '…')}</b>
+                </span>
+                <span className="tiny soft">{sceneTitle ? <span className="hand ink" style={{ fontSize: 20 }}>“{sceneTitle}”</span> : 'memberi judul adegan & memilih kartu bersama'}</span>
+              </span>
+              <Doodle id="ui-panah-kanan" size={16} />
+            </Link>
+            <RollCard circleId={id} week={week} members={circle.active.length} />
+          </div>
           {sharedCard ? (
             <Link to={`/hari?${new URLSearchParams({ prompt: sharedCard.body, cardId: sharedCard.id, kind: sharedCard.kind === 'tantangan' ? 'photo' : 'card', circleId: circle.id })}`} className="sticky row mt" style={{ background: 'var(--sticky-yellow)', alignItems: 'flex-start', gap: 12 }}>
               <Doodle id={sharedCard.doodle ?? 'kartu'} size={30} />
@@ -134,12 +146,12 @@ export default function CircleHome() {
               </span>
             </Link>
           ) : null}
-          {q ? (
-            <Link to={`/hari?${new URLSearchParams({ prompt: q.text, questionId: q.id, kind: 'answer', circleId: circle.id })}`} className="card row mt" style={{ gap: 12 }}>
-              <Doodle id="bulan" size={30} />
-              <span className="small">{q.text}</span>
-            </Link>
-          ) : null}
+        </section>
+      ) : null}
+
+      {circle.kind !== 'moment' && circle.status === 'active' ? (
+        <section className="section">
+          <DatesCard circle={circle} />
         </section>
       ) : null}
 

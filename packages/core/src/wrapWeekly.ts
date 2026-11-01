@@ -3,6 +3,7 @@
  * dengan periode sebelumnya, wajah-wajah (Reaksi Wajah), dan Tanaman Berdua.
  */
 import type { FaceExpression, MediaRef } from './domain';
+import { kenalLabel, quizScores } from './kenal';
 import { type PlantState, plantFor } from './plant';
 import { tokenize } from './text';
 import type { DayKey } from './time';
@@ -27,6 +28,26 @@ export interface FacesScene {
   type: 'faces';
   items: { userId: string; expression: FaceExpression; media: MediaRef; dropId: string }[];
   top?: { expression: FaceExpression; count: number };
+}
+
+export interface KenalScene {
+  type: 'kenal';
+  items: { userId: string; correct: number; total: number; label: string }[];
+  best?: { from: string; to: string; correct: number; total: number };
+  days: number;
+}
+
+/** Seberapa kenal: skor tebakan Kuis Seberapa Kenal di periode ini. */
+export function kenalScene(drops: WrapDrop[]): KenalScene | null {
+  const answers = drops
+    .filter((d) => d.payload.quiz && d.questionId?.startsWith('kenal:'))
+    .map((d) => ({ authorId: d.authorId, day: d.day, questionId: d.questionId!, choice: d.payload.quiz!.choice, guesses: d.payload.quiz!.guesses ?? {} }));
+  const s = quizScores(answers);
+  const items = Object.entries(s.byGuesser)
+    .map(([userId, v]) => ({ userId, ...v, label: kenalLabel(v.correct, v.total) }))
+    .sort((a, b) => b.correct / b.total - a.correct / a.total);
+  if (!items.length) return null;
+  return { type: 'kenal', items, best: s.pairs[0], days: new Set(answers.map((a) => a.day)).size };
 }
 
 export interface PlantScene {

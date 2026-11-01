@@ -5,7 +5,13 @@
 import { addDays, COPY, dayName, type FootnoteWire, formatDayLong, getCity, type LockedDrop, openEnvelope, type ReactionKind, sealableDays, sealEnvelope, yellowing } from '@sehari/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Page, type PageItem, withLayouts } from '@/editor/Page';
+import { Page, type PageItem } from '@/editor/Page';
+
+/**
+ * Tinggi minimum tiap halaman. Setiap halaman memanjang mengikuti isinya
+ * sendiri; halaman yang pendek tidak ikut dipanjangkan menyamai halaman lain.
+ */
+const PAGE_MIN_H = 1000;
 import { api } from '@/lib/api';
 import { FaceButton, FaceRow } from '@/pages/kilasan/Faces';
 import { newDropId, qk, useCircle, useCircleDay, useKeyring, useMe, useOpenDrops, useReact, useToday } from '@/lib/data';
@@ -101,7 +107,6 @@ export default function Together() {
   // Halamanku dulu (kiri), lalu yang lain.
   const ordered = [...pages].sort((a, b) => (a.member.userId === me.user.id ? -1 : b.member.userId === me.user.id ? 1 : 0));
   // Halaman berdampingan dibuat sama tinggi.
-  const pageH = Math.max(1200, ...ordered.map((p) => withLayouts(p.items).reduce((m, it) => Math.max(m, it.layout.y + (it.payload.kind === 'photo' ? it.layout.w * 1.1 : 260)), 0) + 260));
   const go = (i: number) => {
     const n = Math.max(0, Math.min(ordered.length - 1, i));
     if (n === idx) return;
@@ -215,7 +220,7 @@ export default function Together() {
                 items={p.items}
                 viewerId={me.user.id}
                 aged={aged}
-                minHeight={pageH}
+                minHeight={PAGE_MIN_H}
                 margins={`${p.member.userId}:${day}`}
                 mood={p.items.find((x) => x.payload.mood)?.payload.mood}
                 head={
@@ -317,7 +322,16 @@ function ReactBar({ x, y, mine, onReact, onNote, extra }: { x: number; y: number
 
 function LockedNote({ locked, who }: { locked: LockedDrop[]; who: string }) {
   const l = locked[0]!;
-  const why = l.reason === 'time_capsule' ? `kapsul waktu · terbuka ${l.unlockOn ? formatDayLong(l.unlockOn) : 'nanti'}` : l.reason === 'secret_card' ? 'kartu rahasia · terbuka setelah kamu menjawab' : l.reason === 'split' ? 'mode pisah' : 'terbuka setelah kamu menyegel';
+  const why =
+    l.reason === 'time_capsule'
+      ? `kapsul waktu · terbuka ${l.unlockOn ? formatDayLong(l.unlockOn) : 'nanti'}`
+      : l.reason === 'secret_card'
+        ? 'kartu rahasia · terbuka setelah kamu menjawab'
+        : l.reason === 'answer_first'
+          ? 'jawab pertanyaannya dulu, atau segel halamanmu'
+          : l.reason === 'split'
+            ? 'mode pisah'
+            : 'terbuka setelah kamu menyegel';
   return (
     <div data-paper="1" style={{ position: 'absolute', left: '12%', right: '12%', bottom: '6%', pointerEvents: 'none' }}>
       <div className="card col center" style={{ alignItems: 'center', transform: 'rotate(-1.5deg)', background: 'color-mix(in srgb, var(--ink) 8%, var(--card))' }}>

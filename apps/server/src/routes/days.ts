@@ -255,6 +255,22 @@ async function kabarMenulis(s: Services, user: UserRow, input: DropInput) {
   }
 }
 
+/** Kabar jawaban: ke rekan yang belum menjawab pertanyaan yang sama hari itu. Tanpa isi. */
+async function kabarJawab(s: Services, user: UserRow, input: DropInput) {
+  const qid = input.meta!.questionId!;
+  const sudah = await s.db
+    .select({ authorId: drops.authorId })
+    .from(drops)
+    .where(and(eq(drops.day, input.day), eq(drops.kind, 'answer'), sql`${drops.meta}->>'questionId' = ${qid}`));
+  const dijawab = new Set(sudah.map((x) => x.authorId));
+  // Jawaban kedua dari orang yang sama tidak mengabari lagi.
+  if (sudah.filter((x) => x.authorId === user.id).length > 1) return;
+  for (const cid of [...new Set(input.circleIds)]) {
+    const tujuan = (await rekanAktif(s, [cid], user.id)).filter((u) => !dijawab.has(u));
+    await pushTo(s, tujuan, { body: say(COPY.notifications.friendAnswered, user.penName ?? 'Seseorang', qid.startsWith('kenal:')), data: { type: 'question', circleId: cid, day: input.day } }, 'notifyActivity');
+  }
+}
+
 /** Kabar kilasan: langsung ke rekan di lingkaran tujuan (kilasan memang tidak menunggu segel). */
 async function kabarKilasan(s: Services, user: UserRow, input: DropInput) {
   const name = user.penName ?? 'Seseorang';
@@ -274,6 +290,7 @@ export function dayRoutes(s: Services) {
     const [lama] = await s.db.select({ id: drops.id }).from(drops).where(eq(drops.id, input.id));
     const id = await createDrop(s, user, input);
     if (!lama && input.meta?.flash) await kabarKilasan(s, user, input).catch((e) => console.warn('kabar kilasan gagal', e));
+    else if (!lama && input.kind === 'answer' && input.meta?.questionId) await kabarJawab(s, user, input).catch((e) => console.warn('kabar jawab gagal', e));
     else if (!lama) await kabarMenulis(s, user, input).catch((e) => console.warn('kabar menulis gagal', e));
     return c.json({ id }, 201);
   });

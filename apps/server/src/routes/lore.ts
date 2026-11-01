@@ -29,6 +29,8 @@ import {
   proposalBody,
   rollBody,
   type RollWire,
+  importantDateBody,
+  type ImportantDateWire,
   sceneBody,
   type SceneWire,
   startExpeditionBody,
@@ -50,7 +52,7 @@ import { newId, randomUnit } from '../lib/ids';
 
 const {
   chapters, chapterProposals, chapterVotes, scenes, volumes, genreVotes, expeditions, tokens, constellations,
-  dictionary, motifs, diceRolls, circleMembers, capsules, dropCircles, drops, letters, weekRolls,
+  dictionary, motifs, diceRolls, circleMembers, capsules, dropCircles, drops, letters, weekRolls, importantDates,
 } = schema;
 
 async function activeMembers(s: Services, circleId: string) {
@@ -179,6 +181,37 @@ export function loreRoutes(s: Services) {
         target: [scenes.circleId, scenes.week],
         set: { titleEnc: input.titleEnc ?? existing?.titleEnc ?? null, cardId: input.cardId ?? existing?.cardId ?? null },
       });
+    return c.json({ ok: true });
+  });
+
+  // ── Tanggal Penting ───────────────────────────────────────────────────────
+
+  r.get('/:id/dates', async (c) => {
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    const rows = await s.db.select().from(importantDates).where(eq(importantDates.circleId, circle.id));
+    const out: ImportantDateWire[] = rows.map((x) => ({ id: x.id, authorId: x.authorId, titleEnc: x.titleEnc, month: x.month, day: x.day, year: x.year, createdAt: x.createdAt.toISOString() }));
+    return c.json(out);
+  });
+
+  r.post('/:id/dates', async (c) => {
+    const input = await body(c, importantDateBody);
+    const user = c.get('user');
+    const { circle, member } = await requireMember(s, c.req.param('id'), user.id);
+    if (member.state !== 'active') throw forbidden('Kamu bukan anggota aktif lingkaran ini.');
+    const maxDay = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][input.month - 1]!;
+    if (input.day > maxDay) throw bad('bad_date', 'Tanggal itu tidak ada.');
+    const n = await s.db.select({ id: importantDates.id }).from(importantDates).where(eq(importantDates.circleId, circle.id));
+    if (n.length >= 60) throw conflict('too_many', 'Tanggal penting lingkaran ini sudah banyak sekali.');
+    const id = newId();
+    await s.db.insert(importantDates).values({ id, circleId: circle.id, authorId: user.id, titleEnc: input.titleEnc, month: input.month, day: input.day, year: input.year ?? null });
+    return c.json({ id }, 201);
+  });
+
+  r.delete('/:id/dates/:dateId', async (c) => {
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    await s.db.delete(importantDates).where(and(eq(importantDates.id, c.req.param('dateId')), eq(importantDates.circleId, circle.id)));
     return c.json({ ok: true });
   });
 

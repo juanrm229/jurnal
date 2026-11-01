@@ -3,7 +3,7 @@
  * mengingatkan Upacara Tutup Bab, menutup Kapsul Momen, dan bersih-bersih.
  * Pengingat senja & kartu pagi dijadwalkan di perangkat (notifikasi lokal).
  */
-import { addDays, COPY, isoWeek, localParts, monthKey, monthRange, prevMonth, weekday } from '@sehari/core';
+import { addDays, COPY, isoWeek, localParts, monthKey, monthRange, nextOccurrence, prevMonth, weekday } from '@sehari/core';
 import { and, eq, isNotNull, isNull, lt, lte } from 'drizzle-orm';
 import { say, type Services } from '../context';
 import { schema } from '../db';
@@ -30,6 +30,42 @@ async function onlyCircle(s: Services, userId: string): Promise<{ circleId?: str
     .innerJoin(schema.circles, eq(schema.circles.id, schema.circleMembers.circleId))
     .where(and(eq(schema.circleMembers.userId, userId), eq(schema.circleMembers.state, 'active'), eq(schema.circles.status, 'active')));
   return rows.length === 1 ? { circleId: rows[0]!.id } : {};
+}
+
+/**
+ * Tanggal Penting: pengingat H-7 & hari-H untuk tanggal buatan sendiri (tanpa
+ * judul, karena judulnya terenkripsi), dan H-1 & hari-H untuk ulang tahun teman
+ * se-lingkaran. Sekali per orang per kejadian, mulai jam 08.00 waktu setempat.
+ */
+async function remindDates(s: Services, u: { id: string }, today: string) {
+  const mine = await s.db
+    .select({ circleId: schema.circleMembers.circleId })
+    .from(schema.circleMembers)
+    .innerJoin(schema.circles, eq(schema.circles.id, schema.circleMembers.circleId))
+    .where(and(eq(schema.circleMembers.userId, u.id), eq(schema.circleMembers.state, 'active'), eq(schema.circles.status, 'active')));
+  for (const { circleId } of mine) {
+    const dates = await s.db.select().from(schema.importantDates).where(eq(schema.importantDates.circleId, circleId));
+    for (const d of dates) {
+      const n = nextOccurrence(d.month, d.day, today);
+      if (n.inDays !== 7 && n.inDays !== 0) continue;
+      if (!(await once(s, `date:${d.id}:${u.id}:${n.date}:${n.inDays}`))) continue;
+      await pushTo(s, [u.id], { body: say(COPY.notifications.dateSoon, n.inDays), data: { type: 'dates', circleId } }, 'notifyWraps');
+    }
+    const friends = await s.db
+      .select({ id: schema.users.id, penName: schema.users.penName, birthday: schema.users.birthday })
+      .from(schema.circleMembers)
+      .innerJoin(schema.users, eq(schema.users.id, schema.circleMembers.userId))
+      .where(and(eq(schema.circleMembers.circleId, circleId), eq(schema.circleMembers.state, 'active'), isNull(schema.users.deletedAt)));
+    for (const f of friends) {
+      const b = f.id !== u.id && f.birthday && /^(\d{2})-(\d{2})$/.exec(f.birthday);
+      if (!b) continue;
+      const n = nextOccurrence(Number(b[1]), Number(b[2]), today);
+      if (n.inDays > 1) continue;
+      // Satu kabar per teman per hari, walau kalian berbagi beberapa lingkaran.
+      if (!(await once(s, `bday:${f.id}:${u.id}:${n.date}:${n.inDays}`))) continue;
+      await pushTo(s, [u.id], { body: say(COPY.notifications.birthdaySoon, f.penName ?? 'temanmu', n.inDays === 0), data: { type: 'dates', circleId } }, 'notifyWraps');
+    }
+  }
 }
 
 export async function runJobs(s: Services): Promise<void> {
@@ -62,6 +98,7 @@ export async function runJobs(s: Services): Promise<void> {
   for (const u of users) {
     const p = localParts(u.tz, now);
     const today = userToday(u, now);
+    if (p.hour >= 8) await remindDates(s, u, today);
     // Minggu sore: rol dibuka, sebelum Minggu Kita jadi jam tujuh malam.
     if (weekday(today) === 0 && p.hour >= 16 && (await once(s, `roll:${u.id}:${isoWeek(today)}`))) {
       await pushTo(s, [u.id], { body: say(COPY.notifications.rollOpen), data: { type: 'roll', week: isoWeek(today), ...(await onlyCircle(s, u.id)) } }, 'notifyWraps');

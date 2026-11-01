@@ -175,7 +175,7 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
             return [];
           }
         });
-        out.push({ id: d.wire.id, authorId: d.wire.authorId, day: d.wire.day, kind: d.wire.kind, payload: d.payload, reactions: d.wire.reactions, flash: d.wire.meta.flash, faces });
+        out.push({ id: d.wire.id, authorId: d.wire.authorId, day: d.wire.day, kind: d.wire.kind, payload: d.payload, reactions: d.wire.reactions, flash: d.wire.meta.flash, questionId: d.wire.meta.questionId, faces });
       }
       return out;
     };
