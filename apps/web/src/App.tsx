@@ -142,6 +142,8 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/kenangan', page('Kenangan'), true, true],
   ['/wrap/:circleId/:scope/:period', page('Wrap'), true, false],
   ['/kilasan', page('kilasan/Kilasan'), true, false],
+  ['/l/:id/rol', page('circles/Rol'), true, false],
+  ['/l/:id/rol/:week', page('circles/Rol'), true, false],
   ['/kilasan/jepret', page('kilasan/Jepret'), true, false],
   ['/surat', page('letters/Letters'), true, false],
   ['/surat/tulis', page('letters/Write'), true, false],

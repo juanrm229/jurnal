@@ -6,7 +6,7 @@
  * isi pribadi (angka streak, palet mood, judul bab, lagu tema).
  */
 import { type ChapterFeatures, MOODS, suggestChapterTitles } from './content/chapterTitles';
-import type { CircleKind, DropKind, DropPayload, MediaRef, MoodCode, ReactionKind, SongRef } from './domain';
+import type { CircleKind, DropKind, DropPayload, FaceExpression, FlashKind, MediaRef, MoodCode, ReactionKind, SongRef } from './domain';
 import { hashString } from './rituals';
 import type { StreakSummary } from './streak';
 import { type AuthoredText, excerpt, topWords, type WordCount } from './text';
@@ -30,6 +30,10 @@ export interface WrapDrop {
   kind: DropKind;
   payload: DropPayload;
   reactions: { kind: ReactionKind; userId: string }[];
+  /** Kilasan (terlihat sebelum segel). */
+  flash?: FlashKind;
+  /** Reaksi Wajah yang sudah dibuka. */
+  faces?: { userId: string; expression: FaceExpression; media: MediaRef }[];
 }
 
 export interface WrapMember {
@@ -58,6 +62,14 @@ export interface WrapInput {
   viewerId?: string;
   /** Hari ini menurut pembaca; menentukan apakah streak "saat ini" relevan. */
   today?: DayKey;
+  /** Hari lingkaran dibuat (untuk tanaman & hari bersama). */
+  createdDay?: DayKey;
+  /** Rol Minggu Ini: pilihan foto tiap anggota. */
+  rolls?: { userId: string; dropIds: string[] }[];
+  /** Judul adegan dari pemegang pena. */
+  sceneTitle?: string;
+  /** Periode sebelumnya (minggu/bulan lalu) untuk perbandingan. */
+  previous?: { drops: WrapDrop[] };
 }
 
 export type WrapCard =

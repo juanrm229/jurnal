@@ -16,7 +16,9 @@ export default function Circles() {
   const wrapScope = search.get('wrap') ?? '';
   const wrapPeriod = search.get('periode') ?? '';
   const pickWrap = !!WRAP_TITLE[wrapScope] && !!wrapPeriod;
-  const hrefFor = (id: string) => (pickWrap ? `/wrap/${id}/${wrapScope}/${encodeURIComponent(wrapPeriod)}` : `/l/${id}`);
+  const rolWeek = search.get('rol') ?? '';
+  const pickRol = /^\d{4}-W\d{2}$/.test(rolWeek);
+  const hrefFor = (id: string) => (pickWrap ? `/wrap/${id}/${wrapScope}/${encodeURIComponent(wrapPeriod)}` : pickRol ? `/l/${id}/rol/${rolWeek}` : `/l/${id}`);
   return (
     <main className="screen">
       <div className="row between mt">
@@ -26,6 +28,15 @@ export default function Circles() {
         </Link>
       </div>
       <p className="small soft">Kecil, dipilih, dan intim. Paling banyak delapan orang.</p>
+      {pickRol && live.length ? (
+        <div className="sticky row mt" style={{ background: 'var(--sticky-blue)', gap: 12, alignItems: 'center' }}>
+          <Doodle id="kamera" size={30} />
+          <span className="grow small">
+            <b className="ink">Rol minggu ini</b> dibuka. Pilih lingkarannya, lalu lima foto favoritmu.
+          </span>
+          <Link to="/lingkaran" className="tiny soft">tutup</Link>
+        </div>
+      ) : null}
       {pickWrap && live.length ? (
         <div className="sticky row mt" style={{ background: 'var(--sticky-yellow)', gap: 12, alignItems: 'center' }}>
           <Doodle id={wrapScope === 'week' ? 'amplop' : wrapScope === 'month' ? 'pena' : 'buku'} size={30} />

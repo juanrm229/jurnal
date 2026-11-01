@@ -114,4 +114,38 @@ describe('wrapped cerita', () => {
     expect(new Set(a.items.map((x) => x.title)).size).toBe(4);
     expect(a.items.find((x) => x.userId === 'd')!.title).toBe('Penonton Setia');
   });
+
+  it('rol, dibanding minggu lalu, wajah-wajah, tanaman, dan kilasan', () => {
+    const media = { id: 'm', key: 'k', mime: 'image/jpeg' } as never;
+    const snap = { ...drop('s1', 'r', '2026-10-27', 12, 0, { media: [media], text: 'kopi' }, [], 'photo'), flash: 'snap' as const, faces: [{ userId: 'j', expression: 'ketawa' as const, media }] };
+    const kangen = { ...drop('k1', 'j', '2026-10-27', 13, 0, { sticker: 'hati-dua' }, [], 'sticker'), flash: 'kangen' as const };
+    const st = buildWrapStory({
+      scope: 'week',
+      period: '2026-W44',
+      circle: { id: 'c', kind: 'duo' },
+      members,
+      drops: [...drops, snap, kangen],
+      seals: { j: ['2026-10-26'], r: ['2026-10-26'] },
+      viewerId: 'j',
+      today: '2026-11-01',
+      createdDay: '2026-10-01',
+      streak: { current: 1, longest: 3, togetherDays: 8, today: { day: '2026-11-01', active: 2, sealed: 0, frozen: 0, fraction: 0, counts: false }, pendingToday: false, flame: 'warm', warmth: 0.6, reached: [] },
+      rolls: [{ userId: 'r', dropIds: ['s1', 'j2'] }],
+      sceneTitle: 'Minggu Hujan',
+      previous: { drops: [drop('p1', 'j', '2026-10-20', 9, 0, { text: 'minggu lalu sepi' })] },
+    });
+    const get = <T extends string>(t: T) => st.scenes.find((x) => x.type === t) as Extract<(typeof st.scenes)[number], { type: T }> | undefined;
+    const roll = get('roll')!;
+    expect(roll.title).toBe('Minggu Hujan');
+    expect(roll.items.map((x) => x.userId)).toEqual(['r']);
+    expect(roll.items[0]!.shots.map((x) => [x.dropId, x.caption])).toEqual([['s1', 'kopi'], ['j2', undefined]]);
+    expect(get('photos')).toBeUndefined();
+    expect(get('compare')!.headline).toMatch(/lebih ramai dari minggu lalu/);
+    expect(get('faces')!.top).toEqual({ expression: 'ketawa', count: 1 });
+    expect(get('plant')!.state.stage.key).toBe('kuncup');
+    const t = get('tally')!.items;
+    expect(t.find((x) => x.label === 'kilasan dikirim')!.value).toBe(1);
+    expect(t.find((x) => x.label === 'kali saling kangen')!.value).toBe(1);
+    expect(get('letter')!.paragraphs.join(' ')).toContain('mengirim “kangen”');
+  });
 });

@@ -19,6 +19,12 @@ import {
   type WrapInput,
   type WrapMember,
   type WrapScope,
+  type FacePayload,
+  isoWeek,
+  openEnvelope,
+  prevMonth,
+  type RollWire,
+  type SceneWire,
   todayIn,
   weekRange,
   yearRange,
@@ -26,7 +32,7 @@ import {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { api } from '@/lib/api';
-import { type CircleView, openCircleText, qk, useCalendar, useCircles, useMe, useOpenDrops } from '@/lib/data';
+import { type CircleView, openCircleText, qk, useCalendar, useCircleRange, useCircles, useKeyring, useMe, useOpenDrops } from '@/lib/data';
 
 export const SCOPES: WrapScope[] = ['week', 'month', 'year', 'moment'];
 
@@ -120,10 +126,32 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
   });
 
   const opened = useOpenDrops(dropQs.wires);
+  const ring = useKeyring();
+
+  // Rol & judul adegan (Minggu Kita), dan periode sebelumnya untuk perbandingan.
+  const rolls = useQuery({
+    queryKey: ['rolls', circleId, period],
+    queryFn: () => api.get<RollWire[]>(`/circles/${circleId}/rolls/${period}`),
+    enabled: enabled && scope === 'week',
+  });
+  const scenes = useQuery({
+    queryKey: ['scenes', circleId],
+    queryFn: () => api.get<SceneWire[]>(`/circles/${circleId}/scenes`),
+    enabled: enabled && scope === 'week',
+  });
+  const prevRange = range && (scope === 'week' || scope === 'month') ? (scope === 'week' ? weekRange(isoWeek(addDays(range.start, -1))) : monthRange(prevMonth(period))) : null;
+  const prevQ = useCircleRange(circleId, prevRange?.start ?? '', prevRange?.end ?? '', enabled && !!prevRange);
+  const prevOpened = useOpenDrops(prevQ.data?.drops);
 
   const loading =
     circlesLoading ||
-    (enabled && (dropQs.loading || cal.isLoading || (wantsLore && chapters.isLoading) || (scope === 'year' && (volumes.isLoading || motifs.isLoading))));
+    (enabled &&
+      (dropQs.loading ||
+        cal.isLoading ||
+        (wantsLore && chapters.isLoading) ||
+        (scope === 'year' && (volumes.isLoading || motifs.isLoading)) ||
+        (scope === 'week' && (rolls.isLoading || scenes.isLoading)) ||
+        (!!prevRange && prevQ.isLoading)));
   const failed = dropQs.error ?? cal.error;
 
   const built = useMemo(() => {
@@ -133,13 +161,25 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
       .filter((m) => m.state !== 'left' || (m.leftDay != null && m.leftDay >= range.start))
       .map((m) => ({ userId: m.userId, name: m.penName }));
 
-    const drops: WrapDrop[] = [];
-    const seen = new Set<string>();
-    for (const d of opened) {
-      if (!d.payload || seen.has(d.wire.id)) continue;
-      seen.add(d.wire.id);
-      drops.push({ id: d.wire.id, authorId: d.wire.authorId, day: d.wire.day, kind: d.wire.kind, payload: d.payload, reactions: d.wire.reactions });
-    }
+    const toWrap = (list: typeof opened): WrapDrop[] => {
+      const out: WrapDrop[] = [];
+      const seen = new Set<string>();
+      for (const d of list) {
+        if (!d.payload || seen.has(d.wire.id)) continue;
+        seen.add(d.wire.id);
+        const faces = (d.wire.faces ?? []).flatMap((f) => {
+          try {
+            const media = ring ? openEnvelope<FacePayload>(f.envelope as never, ring).media : null;
+            return media ? [{ userId: f.userId, expression: f.expression, media }] : [];
+          } catch {
+            return [];
+          }
+        });
+        out.push({ id: d.wire.id, authorId: d.wire.authorId, day: d.wire.day, kind: d.wire.kind, payload: d.payload, reactions: d.wire.reactions, flash: d.wire.meta.flash, faces });
+      }
+      return out;
+    };
+    const drops = toWrap(opened);
 
     const seals: Record<string, string[]> = {};
     for (const day of cal.data ?? []) for (const u of day.sealed) (seals[u] ??= []).push(day.day);
@@ -182,11 +222,18 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
       motifs: motifList,
       viewerId: me.user.id,
       today: todayIn(me.user.tz, new Date(), true),
+      createdDay: circle.createdDay,
+      rolls: scope === 'week' ? (rolls.data ?? []).map((r) => ({ userId: r.userId, dropIds: r.dropIds })) : undefined,
+      sceneTitle: (() => {
+        const sc = scope === 'week' ? scenes.data?.find((x) => x.week === period) : undefined;
+        return sc?.titleEnc ? openCircleText(circle, sc.titleEnc, '') || undefined : undefined;
+      })(),
+      previous: prevRange ? { drops: toWrap(prevOpened) } : undefined,
     };
     const wrap = buildWrap(input);
     const suggestedTitle = scope === 'month' && !chapterTitle && drops.length ? suggestTitlesFor(input)[0] : undefined;
     return { input, wrap, quiet: drops.length === 0, suggestedTitle };
-  }, [circle, range?.start, range?.end, blocked, loading, failed, opened, cal.data, chapters.data, volumes.data, motifs.data, scope, period, me.user.id]);
+  }, [circle, range?.start, range?.end, blocked, loading, failed, opened, cal.data, chapters.data, volumes.data, motifs.data, scope, period, me.user.id, ring, rolls.data, scenes.data, prevOpened, prevRange?.start]);
 
   if (circlesLoading) return { status: 'loading' };
   if (!circle || !SCOPES.includes(scope as WrapScope) || !range) return circle || !circlesLoading ? { status: 'invalid' } : { status: 'loading' };

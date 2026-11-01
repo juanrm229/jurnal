@@ -19,6 +19,7 @@ import {
   isIdulFitri,
   isoWeek,
   ceremonyOpen,
+  COPY,
   monthKey,
   monthsSince,
   monthRange,
@@ -26,6 +27,8 @@ import {
   type MotifWire,
   penHolderFor,
   proposalBody,
+  rollBody,
+  type RollWire,
   sceneBody,
   type SceneWire,
   startExpeditionBody,
@@ -38,15 +41,16 @@ import {
 } from '@sehari/core';
 import { and, asc, eq, gte, isNotNull, lte, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { type AppEnv, body, type Services } from '../context';
+import { type AppEnv, body, say, type Services } from '../context';
 import { schema } from '../db';
-import { circleSummaries, type CircleRow, requireMember, sealedInCircles, userToday } from '../lib/domain';
+import { circleSummaries, type CircleRow, pushTo, requireMember, sealedInCircles, userToday } from '../lib/domain';
+import { dropsInCircle, filterForCircle } from '../lib/visibility';
 import { bad, conflict, forbidden, notFound, paymentRequired } from '../lib/errors';
 import { newId, randomUnit } from '../lib/ids';
 
 const {
   chapters, chapterProposals, chapterVotes, scenes, volumes, genreVotes, expeditions, tokens, constellations,
-  dictionary, motifs, diceRolls, circleMembers, capsules, dropCircles, drops, letters,
+  dictionary, motifs, diceRolls, circleMembers, capsules, dropCircles, drops, letters, weekRolls,
 } = schema;
 
 async function activeMembers(s: Services, circleId: string) {
@@ -175,6 +179,46 @@ export function loreRoutes(s: Services) {
         target: [scenes.circleId, scenes.week],
         set: { titleEnc: input.titleEnc ?? existing?.titleEnc ?? null, cardId: input.cardId ?? existing?.cardId ?? null },
       });
+    return c.json({ ok: true });
+  });
+
+  // ── Rol Minggu Ini ────────────────────────────────────────────────────────
+
+  r.get('/:id/rolls/:week', async (c) => {
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    const week = c.req.param('week');
+    if (!/^\d{4}-W\d{2}$/.test(week)) throw bad('bad_week', 'Minggu tidak valid.');
+    const rows = await s.db.select().from(weekRolls).where(and(eq(weekRolls.circleId, circle.id), eq(weekRolls.week, week)));
+    const out: RollWire[] = rows.filter((x) => x.dropIds.length).map((x) => ({ userId: x.userId, week: x.week, dropIds: x.dropIds, updatedAt: x.updatedAt.toISOString() }));
+    return c.json(out);
+  });
+
+  r.put('/:id/rolls/:week', async (c) => {
+    const input = await body(c, rollBody);
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    const week = c.req.param('week');
+    if (!/^\d{4}-W\d{2}$/.test(week)) throw bad('bad_week', 'Minggu tidak valid.');
+    const { start, end } = weekRange(week);
+    if (start > userToday(user, s.now())) throw bad('future_week', 'Minggu itu belum datang.');
+    const ids = [...new Set(input.dropIds)];
+    if (ids.length) {
+      // Hanya foto di lingkaran ini, di minggu itu, yang memang terlihat olehmu.
+      const rows = (await dropsInCircle(s, circle.id, start, end)).filter((d) => ids.includes(d.id));
+      const { visible } = await filterForCircle(s, user, circle, rows);
+      const ok = new Set(visible.filter((d) => d.kind === 'photo' && d.mediaIds.length).map((d) => d.id));
+      if (ids.some((x) => !ok.has(x))) throw bad('roll_drop', 'Pilih foto dari minggu ini di lingkaran ini.');
+    }
+    const [lama] = await s.db.select().from(weekRolls).where(and(eq(weekRolls.circleId, circle.id), eq(weekRolls.week, week), eq(weekRolls.userId, user.id)));
+    await s.db
+      .insert(weekRolls)
+      .values({ circleId: circle.id, week, userId: user.id, dropIds: ids })
+      .onConflictDoUpdate({ target: [weekRolls.circleId, weekRolls.week, weekRolls.userId], set: { dropIds: ids, updatedAt: s.now() } });
+    if (!lama?.dropIds.length && ids.length) {
+      const rekan = (await activeMembers(s, circle.id)).map((m) => m.userId).filter((x) => x !== user.id);
+      await pushTo(s, rekan, { body: say(COPY.notifications.rollPicked, user.penName ?? 'Seseorang'), data: { type: 'roll', circleId: circle.id, week } }, 'notifyWraps');
+    }
     return c.json({ ok: true });
   });
 

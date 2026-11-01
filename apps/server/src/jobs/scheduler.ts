@@ -62,6 +62,10 @@ export async function runJobs(s: Services): Promise<void> {
   for (const u of users) {
     const p = localParts(u.tz, now);
     const today = userToday(u, now);
+    // Minggu sore: rol dibuka, sebelum Minggu Kita jadi jam tujuh malam.
+    if (weekday(today) === 0 && p.hour >= 16 && (await once(s, `roll:${u.id}:${isoWeek(today)}`))) {
+      await pushTo(s, [u.id], { body: say(COPY.notifications.rollOpen), data: { type: 'roll', week: isoWeek(today), ...(await onlyCircle(s, u.id)) } }, 'notifyWraps');
+    }
     if (weekday(today) === 0 && p.hour >= 19 && (await once(s, `wrap-w:${u.id}:${isoWeek(today)}`))) {
       await pushTo(s, [u.id], { body: say(COPY.notifications.weeklyWrapReady), data: { type: 'wrap', scope: 'week', period: isoWeek(today), ...(await onlyCircle(s, u.id)) } }, 'notifyWraps');
     }
