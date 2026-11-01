@@ -259,6 +259,8 @@ export const COPY = {
     whenLetterOpened: (name: string) => `${name} baru saja membuka suratmu. Mungkin hari ini ia membutuhkannya.`,
     chapterCeremony: 'Bulan ini selesai. Saatnya memberi judul bab bersama.',
     friendWriting: (name: string) => `${name} mulai mengisi halaman hari ini.`,
+    flashSnap: (name: string) => `${name} mengirim kilasan. Intip sebentar?`,
+    flashKangen: (name: string) => `${name} sedang memikirkanmu.`,
     friendReacted: (name: string, what: string) => `${name} ${what} di halamanmu.`,
     friendFootnote: (name: string) => `${name} menulis catatan kaki di halamanmu.`,
     friendFootnoteReply: (name: string) => `${name} ikut menulis catatan kaki di halaman yang kamu komentari.`,

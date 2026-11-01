@@ -76,6 +76,21 @@ export const GUIDE: GuideChapter[] = [
     try: { label: 'buka halaman hari ini', to: '/hari?niat=1' },
   },
   {
+    id: 'kilasan',
+    title: 'Kilasan & kangen',
+    doodle: 'kamera',
+    lead: 'Cuplikan siang hari. Satu-satunya yang langsung terlihat lingkaranmu sebelum halaman disegel.',
+    steps: [
+      'Di atas halaman hari ini, ketuk “jepret”. Kamera belakang dulu, lalu kamera depan otomatis, digabung jadi satu foto.',
+      'Tulis sedikit (boleh kosong), pilih lingkaran, lalu kirim. Kilasan langsung muncul di halaman hari ini mereka.',
+      'Kilasanmu otomatis menempel sebagai polaroid di halamanmu. Cerita lengkapnya tetap menunggu kalian menyegel.',
+      'Ketuk “kangen” untuk memberi tahu mereka kamu sedang memikirkan mereka. Tanpa kata, paling banyak tiga kali sehari.',
+      'Kilasan teman bisa dipeluk atau dibalas kangen.',
+    ],
+    tip: 'Kalau kamera tidak bisa dibuka, pilih foto dari galeri. Isinya tetap terenkripsi seperti halaman jurnal.',
+    try: { label: 'jepret kilasan', to: '/kilasan/jepret' },
+  },
+  {
     id: 'segel',
     title: 'Segel & buka bersama',
     doodle: 'segel-lilin',

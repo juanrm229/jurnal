@@ -192,7 +192,18 @@ export interface PageLayout {
 }
 
 /** Metadata yang memang terlihat server (tidak sensitif) untuk aturan & hitungan. */
+/**
+ * Kilasan: satu-satunya isi yang terlihat lingkaran sebelum hari disegel.
+ * - snap: foto kilat (boleh dua kamera), caption singkat
+ * - kangen: tanda "aku sedang memikirkanmu", berupa stiker kecil di halaman
+ */
+export type FlashKind = 'snap' | 'kangen';
+
+/** Batas harian kilasan per orang, supaya tetap terasa istimewa. */
+export const FLASH_DAILY_LIMIT: Record<FlashKind, number> = { snap: 12, kangen: 3 };
+
 export interface DropMeta {
+  flash?: FlashKind;
   questionId?: string;
   cardId?: string;
   expeditionId?: string;

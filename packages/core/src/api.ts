@@ -341,6 +341,7 @@ export const createDropBody = z.object({
   mediaIds: z.array(id).max(10).default([]),
   meta: z
     .object({
+      flash: z.enum(['snap', 'kangen']).optional(),
       questionId: z.string().max(80).optional(),
       cardId: z.string().max(80).optional(),
       expeditionId: z.string().max(80).optional(),

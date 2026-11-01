@@ -1,0 +1,353 @@
+/* ── Kilasan: strip di halaman hari ini ───────────────────────────────────── */
+.fs {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  margin: 0 -2px 6px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.fs::-webkit-scrollbar {
+  display: none;
+}
+.fs-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--text);
+  cursor: pointer;
+}
+.fs-ring {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  background:
+    linear-gradient(var(--paper), var(--paper)) padding-box,
+    conic-gradient(from 200deg, var(--ink), #e07a5f, #d9a21b, var(--ink)) border-box;
+  border: 2.5px solid transparent;
+}
+.fs-ring img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.fs-ring.kangen {
+  background:
+    linear-gradient(#fdeef1, #fdeef1) padding-box,
+    conic-gradient(from 0deg, #e07a9a, #f6c9d0, #e07a9a) border-box;
+}
+.fs-ring.add {
+  background: color-mix(in srgb, var(--ink) 9%, var(--paper));
+  border: 2px dashed color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.fs-ring.add.soft {
+  background: #fdeef1;
+  border-color: #e07a9a;
+}
+.fs-ring.more {
+  background: transparent;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 25%, transparent);
+}
+.fs-av {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.fs-name {
+  max-width: 64px;
+  font: 11px var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Kilasan: umpan ───────────────────────────────────────────────────────── */
+.kl-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.kl-big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 10px;
+  border-radius: 20px;
+  border: 0;
+  background: var(--ink);
+  color: #fff;
+  font: 14px var(--mono);
+  cursor: pointer;
+  box-shadow: 0 14px 28px -18px var(--ink);
+}
+.kl-big svg {
+  color: #fff;
+  stroke: #fff;
+}
+.kl-big.soft {
+  background: #fdeef1;
+  color: #9b2f52;
+  box-shadow: none;
+}
+.kl-big.soft svg {
+  color: #9b2f52;
+  stroke: #9b2f52;
+}
+.kl-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+}
+.kl-card {
+  border-radius: 18px;
+  background: var(--card, #fff);
+  padding: 12px;
+  box-shadow: 0 16px 34px -26px rgba(0, 0, 0, 0.5);
+  scroll-margin: 90px;
+  transition: box-shadow 0.4s ease;
+}
+.kl-card.focus {
+  box-shadow:
+    0 0 0 3px var(--ink),
+    0 16px 34px -26px rgba(0, 0, 0, 0.5);
+}
+.kl-card.kangen {
+  background: linear-gradient(160deg, #fdeef1, #fff7f0);
+  color: #3a1d28;
+}
+.kl-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.kl-photo {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  max-height: 72vh;
+}
+.kl-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.kl-caption {
+  margin: 10px 2px 0;
+  font: 700 22px/1.2 var(--hand);
+  color: var(--ink);
+}
+.kl-kangen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 0 10px;
+}
+.kl-kangen-text {
+  font: 700 26px/1.1 var(--hand);
+  color: #9b2f52;
+  text-align: center;
+}
+.kl-foot {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* ── Jepret: layar kamera ─────────────────────────────────────────────────── */
+.jp {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0d0d12;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.jp-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
+}
+.jp-title {
+  font: 14px var(--mono);
+  letter-spacing: 0.12em;
+}
+.jp-icon {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+.jp-dual {
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: 12px var(--mono);
+}
+.jp-dual.on {
+  background: #fff;
+  color: #0d0d12;
+}
+.jp-cam {
+  position: relative;
+  flex: 1;
+  margin: 0 10px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #1b1b22;
+  min-height: 60vh;
+}
+.jp-cam video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.jp-cam video.mirror {
+  transform: scaleX(-1);
+}
+.jp-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  font: 13px var(--mono);
+  white-space: nowrap;
+}
+.jp-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0.85;
+}
+.jp-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 18px 20px calc(env(safe-area-inset-bottom) + 22px);
+}
+.jp-side {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+}
+.jp-shutter {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.jp-shutter span {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+.jp-shutter:active span {
+  transform: scale(0.88);
+}
+.jp-shutter:disabled {
+  opacity: 0.5;
+}
+.jp-review {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 18px calc(env(safe-area-inset-bottom) + 20px);
+}
+.jp-polaroid {
+  width: min(100%, 420px);
+  background: #fffdf8;
+  padding: 10px 10px 6px;
+  border-radius: 4px;
+  transform: rotate(-1.2deg);
+  box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.8);
+}
+.jp-polaroid img {
+  width: 100%;
+  max-height: 58vh;
+  object-fit: cover;
+  display: block;
+  border-radius: 2px;
+}
+.jp-caption {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 10px 4px 6px;
+  font: 700 24px var(--hand);
+  color: #2a14d6;
+  outline: none;
+}
+.jp-caption::placeholder {
+  color: rgba(42, 20, 214, 0.4);
+}
+.jp-to {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.jp-actions {
+  display: flex;
+  gap: 10px;
+}
+.jp .btn.ghost.jp-ghost {
+  color: #fff;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.jp-note {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  max-width: 320px;
+  margin: 0;
+}
+.jp-nocam {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
