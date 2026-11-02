@@ -6,7 +6,6 @@
   padding: 4px 2px 12px;
   margin: 0 -2px 6px;
   scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
 }
 .fs::-webkit-scrollbar {
   display: none;

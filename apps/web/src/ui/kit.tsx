@@ -4,6 +4,7 @@ import { type CSSProperties, type ReactNode, createContext, memo, useCallback, u
 import { API_URL } from '@/lib/api';
 import { back } from '@/lib/router';
 import { sound, useSoundPrefs } from '@/lib/sound';
+import { createPortal } from 'react-dom';
 
 // ── Doodle ──────────────────────────────────────────────────────────────────
 
@@ -166,7 +167,9 @@ export function Sheet({ open, onClose, children, title }: { open: boolean; onClo
     };
   }, [open]);
   if (!open) return null;
-  return (
+  // Dirender langsung ke <body>: lembar tidak boleh terjebak di dalam wadah yang
+  // bisa digulir atau bertumpuk (di Safari iPhone ia bisa tergambar di belakang halaman).
+  return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal onClick={(e) => e.stopPropagation()}>
         <span className="sheet-grab" aria-hidden />
@@ -178,7 +181,8 @@ export function Sheet({ open, onClose, children, title }: { open: boolean; onClo
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

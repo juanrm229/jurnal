@@ -9,7 +9,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   scroll-snap-type: y proximity;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   background: var(--paper);
   color: var(--text);
