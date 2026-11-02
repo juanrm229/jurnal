@@ -217,6 +217,24 @@ export function loreRoutes(s: Services) {
 
   // ── Rol Minggu Ini ────────────────────────────────────────────────────────
 
+  /** Rol untuk satu rentang minggu (Bulan Kita, Tahun Kita, Film Bulan Ini). */
+  r.get('/:id/rolls', async (c) => {
+    const user = c.get('user');
+    const { circle } = await requireMember(s, c.req.param('id'), user.id);
+    const from = c.req.query('from') ?? '';
+    const to = c.req.query('to') ?? '';
+    if (!/^\d{4}-W\d{2}$/.test(from) || !/^\d{4}-W\d{2}$/.test(to) || from > to) throw bad('bad_week', 'Rentang minggu tidak valid.');
+    const rows = await s.db
+      .select()
+      .from(weekRolls)
+      .where(and(eq(weekRolls.circleId, circle.id), gte(weekRolls.week, from), lte(weekRolls.week, to)));
+    const out: RollWire[] = rows
+      .filter((x) => x.dropIds.length)
+      .sort((a, b) => (a.week < b.week ? -1 : 1))
+      .map((x) => ({ userId: x.userId, week: x.week, dropIds: x.dropIds, updatedAt: x.updatedAt.toISOString() }));
+    return c.json(out);
+  });
+
   r.get('/:id/rolls/:week', async (c) => {
     const user = c.get('user');
     const { circle } = await requireMember(s, c.req.param('id'), user.id);

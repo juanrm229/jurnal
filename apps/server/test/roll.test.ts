@@ -59,4 +59,12 @@ describe('rol minggu ini', () => {
     await runJobs(env.services);
     expect(env.pusher.sent.filter((m) => m.data?.type === 'roll' && m.body.includes('dibuka'))).toHaveLength(2);
   });
+
+  it('rol untuk rentang minggu', async () => {
+    await raka.ok('PUT', `/v1/circles/${duo}/rolls/${WEEK}`, { dropIds: photos.slice(0, 2) });
+    const list = await naya.ok('GET', `/v1/circles/${duo}/rolls?from=2026-W40&to=2026-W48`);
+    expect(list.map((r: { week: string; userId: string }) => [r.week, r.userId])).toEqual([[WEEK, raka.userId]]);
+    expect(await naya.ok('GET', `/v1/circles/${duo}/rolls?from=2026-W45&to=2026-W48`)).toHaveLength(0);
+    expect((await naya.req('GET', `/v1/circles/${duo}/rolls?from=2026-W48&to=2026-W40`)).status).toBe(400);
+  });
 });

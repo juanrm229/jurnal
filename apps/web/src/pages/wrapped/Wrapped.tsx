@@ -13,6 +13,7 @@ import { useMediaUrl } from '@/lib/media';
 import { navigate } from '@/lib/router';
 import { Avatar, Doodle, Flame } from '@/ui/kit';
 import { PlantArt } from '@/pages/circles/Plant';
+import { FilmScene } from './Film';
 
 export interface WrappedCtx {
   meId: string;
@@ -871,6 +872,195 @@ function Compare({ s, ctx }: { s: Extract<StoryScene, { type: 'compare' }>; ctx:
 
 const FACE_EMOJI: Record<string, string> = { senyum: '😊', ketawa: '😂', kaget: '😮', terharu: '🥹', sayang: '😍', semangat: '👍' };
 
+/** Grafik mood sebulan: satu garis per orang, terang di atas, berat di bawah. */
+function MoodLine({ s, ctx }: { s: Extract<StoryScene, { type: 'moodline' }>; ctx: WrappedCtx }) {
+  const W = 320;
+  const H = 170;
+  const pad = 12;
+  const x = (i: number) => pad + (i / Math.max(1, s.days.length - 1)) * (W - pad * 2);
+  const y = (v: number) => H / 2 - (v / 2) * (H / 2 - pad);
+  const paths = s.series.map((ser) => {
+    // Garis dihaluskan (rata-rata 3 hari yang terisi di sekitarnya) supaya terbaca
+    // sebagai arah, bukan gerigi; titik asli tetap digambar kecil.
+    const known = ser.points.map((v, i) => [i, v] as const).filter((p): p is readonly [number, number] => p[1] !== null);
+    const smooth = known.map(([i], k) => {
+      const win = known.slice(Math.max(0, k - 1), k + 2).map((p) => p[1]);
+      return [i, win.reduce((a, b) => a + b, 0) / win.length] as const;
+    });
+    let d = '';
+    smooth.forEach(([i, v], k) => {
+      const px = x(i);
+      const py = y(v);
+      if (k === 0) d += `M${px.toFixed(1)},${py.toFixed(1)} `;
+      else {
+        const [pi, pv] = smooth[k - 1]!;
+        const mx = (x(pi) + px) / 2;
+        d += `C${mx.toFixed(1)},${y(pv).toFixed(1)} ${mx.toFixed(1)},${py.toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)} `;
+      }
+    });
+    return { userId: ser.userId, d, pts: ser.points.map((v, i) => (v === null ? null : [x(i), y(v)] as const)).filter((p): p is readonly [number, number] => !!p) };
+  });
+  const dayIdx = (d?: string) => (d ? s.days.indexOf(d) : -1);
+  return (
+    <>
+      <Kicker>naik-turun hati sebulan</Kicker>
+      <R n={1} className="wr-moodline">
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="grafik mood harian">
+          <line x1={pad} x2={W - pad} y1={H / 2} y2={H / 2} className="wr-ml-mid" />
+          <text x={pad} y={14} className="wr-ml-cap">lebih terang</text>
+          <text x={pad} y={H - 4} className="wr-ml-cap">lebih berat</text>
+          {dayIdx(s.brightest) >= 0 ? <line x1={x(dayIdx(s.brightest))} x2={x(dayIdx(s.brightest))} y1={pad} y2={H - pad} className="wr-ml-mark hi" /> : null}
+          {dayIdx(s.heaviest) >= 0 ? <line x1={x(dayIdx(s.heaviest))} x2={x(dayIdx(s.heaviest))} y1={pad} y2={H - pad} className="wr-ml-mark lo" /> : null}
+          {paths.map((p) => (
+            <g key={p.userId} style={{ color: ctx.colorOf(p.userId) } as CSSProperties}>
+              <path d={p.d} className="wr-ml-line" />
+              {p.pts.map(([cx, cy], i) => (
+                <circle key={i} cx={cx} cy={cy} r={2.2} className="wr-ml-dot" />
+              ))}
+            </g>
+          ))}
+        </svg>
+      </R>
+      <R n={2} className="wr-legend">
+        {s.series.map((ser) => (
+          <span key={ser.userId} className="row" style={{ gap: 6 }}>
+            <i className="wr-dot on" style={{ '--pc': ctx.colorOf(ser.userId) } as CSSProperties} />
+            {ctx.name(ser.userId)}
+          </span>
+        ))}
+      </R>
+      <R n={3} as="p" className="wr-caption">
+        {s.brightest ? `Hari paling terang: ${fmtDay(s.brightest)}.` : ''} {s.heaviest ? `Hari paling berat: ${fmtDay(s.heaviest)} — semoga tidak sendirian melewatinya.` : ''}
+      </R>
+    </>
+  );
+}
+
+/** Minggu-minggu dalam sebulan, dengan foto sampul dari rol. */
+function Weeks({ s }: { s: Extract<StoryScene, { type: 'weeks' }> }) {
+  return (
+    <>
+      <Kicker>minggu demi minggu</Kicker>
+      <div className="wr-weeks">
+        {s.items.map((w, i) => (
+          <R key={w.week} n={1 + i} className={`wr-week${w.week === s.best ? ' best' : ''}${w.count ? '' : ' empty'}`}>
+            <span className="wr-week-cover">{w.photo ? <Photo media={w.photo} style={{ aspectRatio: 1 }} /> : <Doodle id="awan" size={30} />}</span>
+            <span className="wr-week-body">
+              <b>minggu ke-{i + 1}</b>
+              <span className="tiny soft">
+                {formatDayLong(w.start, false)} – {formatDayLong(w.end, false)}
+              </span>
+              <span className="tiny">
+                {w.count} hal kecil · {w.hugs} pelukan
+              </span>
+            </span>
+            {w.week === s.best ? <Doodle id="kilau" size={20} className="wr-week-star" /> : null}
+          </R>
+        ))}
+      </div>
+      {s.best ? (
+        <R n={s.items.length + 2} as="p" className="wr-caption">
+          Minggu ke-{s.items.findIndex((w) => w.week === s.best) + 1} jadi minggu terbaik bulan ini.
+        </R>
+      ) : null}
+    </>
+  );
+}
+
+function NewWords({ s }: { s: Extract<StoryScene, { type: 'newWords' }> }) {
+  return (
+    <>
+      <Kicker>kata-kata baru bulan ini</Kicker>
+      <R n={1} as="p" className="wr-lead">
+        Belum pernah muncul bulan lalu. Bahasa kalian bertambah.
+      </R>
+      <div className="wr-cloud">
+        {s.words.map((w, i) => (
+          <R key={w} n={2 + i} as="span" className="wr-ribbon wr-new" style={{ '--r': `${((i * 13) % 7) - 3}deg` } as CSSProperties}>
+            {w}
+          </R>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Montase dua belas bulan. */
+function Montage({ s, ctx }: { s: Extract<StoryScene, { type: 'montage' }>; ctx: WrappedCtx }) {
+  return (
+    <>
+      <Kicker>dua belas bulan, dua belas potong</Kicker>
+      <div className="wr-montage">
+        {s.months.map((m, i) => (
+          <R key={m.month} n={1 + i} className={`wr-mtile${m.count ? '' : ' empty'}`} style={{ '--r': `${((i * 37) % 7) - 3}deg` } as CSSProperties}>
+            <span className="wr-mtile-photo">{m.photo ? <Photo media={m.photo} style={{ aspectRatio: 1 }} /> : <Doodle id={m.count ? 'pena' : 'kabut'} size={22} />}</span>
+            <b>{m.name}</b>
+            {m.line ? <span className="wr-mtile-line" style={{ color: ctx.colorOf(m.line.userId) }}>{m.line.text}</span> : <span className="tiny soft">{m.count ? `${m.count} hal kecil` : 'kabut'}</span>}
+          </R>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function Journey({ s }: { s: Extract<StoryScene, { type: 'journey' }> }) {
+  return (
+    <>
+      <Kicker>perjalanan kata</Kicker>
+      <div className="wr-journey">
+        <R n={1} className="wr-journey-col">
+          <span className="tiny soft">{s.earlyLabel}</span>
+          {s.early.map((w) => (
+            <span key={w} className="wr-hand wr-journey-w old">
+              {w}
+            </span>
+          ))}
+        </R>
+        <R n={2} className="wr-journey-arrow" aria-hidden>
+          →
+        </R>
+        <R n={3} className="wr-journey-col">
+          <span className="tiny soft">{s.lateLabel}</span>
+          {s.late.map((w) => (
+            <span key={w} className="wr-hand wr-journey-w">
+              {w}
+            </span>
+          ))}
+        </R>
+      </div>
+      <R n={4} as="p" className="wr-caption">
+        Dulu kita sering menulis “{s.early[0]}”. Sekarang lebih sering “{s.late[0]}”.
+      </R>
+    </>
+  );
+}
+
+function FutureLetter({ s, ctx }: { s: Extract<StoryScene, { type: 'futureLetter' }>; ctx: WrappedCtx }) {
+  const q = (extra: Record<string, string>) => `/surat/tulis?${new URLSearchParams({ kind: 'future', deliverOn: s.openOn, ...extra })}`;
+  return (
+    <>
+      <R n={0}>
+        <Doodle id="jam-pasir" size={64} />
+      </R>
+      <Kicker n={1}>surat untuk {s.year}</Kicker>
+      <R n={2} as="h2" className="wr-title" style={{ fontSize: 'clamp(30px, 9vw, 44px)' }}>
+        Tulis untuk kita setahun lagi
+      </R>
+      <R n={3} as="p" className="wr-lead">
+        Surat ini terkunci rapat dan baru terbuka di malam buka kapsul, 31 Desember {s.year}. Tidak ada yang bisa membacanya sebelum itu, termasuk kamu.
+      </R>
+      <R n={4} className="wr-letter-actions" style={{ gap: 10 }}>
+        <button className="btn auto" onClick={() => navigate(q({ circleId: ctx.circleId }))} data-testid="future-circle">
+          <Doodle id="amplop" size={18} color="currentColor" /> untuk kita
+        </button>
+        <button className="btn ghost auto" onClick={() => navigate(q({ self: '1' }))}>
+          untuk diriku sendiri
+        </button>
+      </R>
+    </>
+  );
+}
+
 /** Seberapa kenal: skor Kuis Seberapa Kenal. */
 function Kenal({ s, ctx, on }: { s: Extract<StoryScene, { type: 'kenal' }>; ctx: WrappedCtx; on: boolean }) {
   return (
@@ -1192,6 +1382,13 @@ const TONE: Partial<Record<StoryScene['type'], string>> = {
   compare: 'var(--sticky-blue)',
   faces: 'var(--sticky-peach)',
   kenal: 'var(--sticky-yellow)',
+  moodline: 'var(--paper)',
+  weeks: 'var(--sticky-blue)',
+  newWords: 'var(--sticky-green)',
+  montage: 'var(--paper)',
+  journey: 'var(--sticky-peach)',
+  futureLetter: 'color-mix(in srgb, var(--ink) 10%, var(--paper))',
+  film: '#14131c',
   plant: 'var(--sticky-green)',
 };
 
@@ -1274,6 +1471,20 @@ export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: W
         return <Faces s={s} ctx={ctx} />;
       case 'kenal':
         return <Kenal s={s} ctx={ctx} on={on} />;
+      case 'moodline':
+        return <MoodLine s={s} ctx={ctx} />;
+      case 'weeks':
+        return <Weeks s={s} />;
+      case 'newWords':
+        return <NewWords s={s} />;
+      case 'montage':
+        return <Montage s={s} ctx={ctx} />;
+      case 'journey':
+        return <Journey s={s} />;
+      case 'futureLetter':
+        return <FutureLetter s={s} ctx={ctx} />;
+      case 'film':
+        return <FilmScene s={s} ctx={ctx} />;
       case 'plant':
         return <PlantSc s={s} />;
       case 'awards':

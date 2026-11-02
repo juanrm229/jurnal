@@ -115,7 +115,9 @@ export const GUIDE: GuideChapter[] = [
       'Langit Lingkaran: tiap hari bersama menjadi bintang, hari penting bisa dijadikan rasi.',
       'Kitab: bab per bulan dengan judul yang dipilih bersama, bisa dicetak menjadi buku.',
       'Lemari Benda, Dadu Kenangan, Ekspedisi tujuh hari, Kamus kalian, dan Puisi Temuan.',
-      'Wrap mingguan, bulanan, dan tahunan diputar seperti story.',
+      'Wrap mingguan, bulanan, dan tahunan digulir adegan demi adegan: rol pilihan kalian, wajah-wajah, kuis, dan tanaman.',
+      'Bulan Kita: grafik naik-turun hati, minggu demi minggu, kata baru, dan Film Bulan Ini dari rol kalian, bisa disimpan jadi video.',
+      'Tahun Kita: montase dua belas bulan, perjalanan kata, Film Tahun Ini, dan surat yang baru terbuka di malam buka kapsul tahun depan.',
     ],
   },
   {

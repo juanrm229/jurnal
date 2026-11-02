@@ -67,7 +67,7 @@ export interface WrapInput {
   /** Hari lingkaran dibuat (untuk tanaman & hari bersama). */
   createdDay?: DayKey;
   /** Rol Minggu Ini: pilihan foto tiap anggota. */
-  rolls?: { userId: string; dropIds: string[] }[];
+  rolls?: { userId: string; dropIds: string[]; week?: string }[];
   /** Judul adegan dari pemegang pena. */
   sceneTitle?: string;
   /** Periode sebelumnya (minggu/bulan lalu) untuk perbandingan. */
