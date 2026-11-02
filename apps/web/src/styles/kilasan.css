@@ -1060,3 +1060,110 @@
 .kt-flame span {
   font-weight: 600;
 }
+
+/* ── Susulan dari galeri ──────────────────────────────────────────────────── */
+.ss-intro {
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+.ss-done {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.ss-head {
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.ss-kind {
+  margin-top: 2px;
+  font: 11.5px var(--mono);
+}
+.ss-kind.ok {
+  color: var(--ink);
+}
+.ss-kind.memory {
+  color: #3f9c8a;
+}
+.ss-kind.no {
+  color: #c0563c;
+}
+.ss-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.ss-date input {
+  font: 12px var(--mono);
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--card-edge);
+  background: var(--card);
+  color: var(--text);
+}
+.ss-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.ss-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--pill);
+}
+.ss-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ss-x {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.ss-guess {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fdee8a;
+  color: #1d1d3a;
+  font: 600 12px var(--mono);
+}
+
+/* Cap "disusulkan" di polaroid */
+.polaroid {
+  position: relative;
+}
+.susul-stamp {
+  position: absolute;
+  right: 6%;
+  bottom: 14%;
+  padding: 0.2em 0.6em;
+  border: 2px solid rgba(63, 156, 138, 0.85);
+  border-radius: 6px;
+  color: rgba(63, 156, 138, 0.95);
+  background: rgba(255, 255, 255, 0.75);
+  font: 600 clamp(9px, 2.2vw, 13px) var(--mono);
+  letter-spacing: 0.08em;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}

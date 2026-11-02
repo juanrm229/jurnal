@@ -6,6 +6,8 @@ import {
   COPY,
   createDropBody,
   updateDropBody,
+  BACKFILL_MAX_DAYS,
+  BACKFILL_PER_DAY,
   diffDays,
   FACE_EXPRESSIONS,
   faceBody,
@@ -76,10 +78,24 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
   const now = s.now();
   const today = userToday(user, now);
   const allowedDays = sealableDays(user.tz, now);
-  if (!allowedDays.includes(input.day)) throw bad('day_closed', 'Hari itu sudah lewat. Drop hanya untuk hari ini.');
+  const backfill = !!input.meta?.backfill;
+  if (backfill) {
+    // Kenangan susulan: hanya foto, hanya untuk hari yang sudah lewat jendela susulan biasa.
+    const age = diffDays(today, input.day);
+    if (allowedDays.includes(input.day) || age < 1) throw bad('backfill_recent', 'Hari itu masih bisa ditulis seperti biasa di halamannya.');
+    if (age > BACKFILL_MAX_DAYS) throw bad('backfill_old', 'Kenangan susulan paling jauh setahun ke belakang.');
+    if (input.kind !== 'photo' || !input.mediaIds.length) throw bad('backfill_kind', 'Kenangan susulan berupa foto.');
+    if (input.audience !== 'circle' || !input.circleIds.length) throw bad('backfill_audience', 'Kenangan susulan untuk lingkaran.');
+    if (input.meta?.flash) throw bad('backfill_kind', 'Kilasan hanya untuk hari ini.');
+    const [row] = await s.db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(drops)
+      .where(and(eq(drops.authorId, user.id), eq(drops.day, input.day), sql`${drops.meta}->>'backfill' = 'true'`, sql`${drops.id} <> ${input.id}`));
+    if ((row?.n ?? 0) >= BACKFILL_PER_DAY) throw conflict('backfill_limit', `Paling banyak ${BACKFILL_PER_DAY} kenangan susulan untuk satu hari.`);
+  } else if (!allowedDays.includes(input.day)) throw bad('day_closed', 'Hari itu sudah lewat. Drop hanya untuk hari ini.');
 
   // Kilasan boleh setelah menyegel: ia memang pengecualian dari segel (cuplikan, bukan halaman).
-  if (!opts.sealing && !LATE_KINDS.has(input.kind) && !input.meta?.flash && (await pageLocked(s, user.id, input.day, input.pageCircleId))) {
+  if (!opts.sealing && !LATE_KINDS.has(input.kind) && !input.meta?.flash && !backfill && (await pageLocked(s, user.id, input.day, input.pageCircleId))) {
     throw conflict('sealed', 'Halaman ini sudah disegel. Sampai jumpa besok.');
   }
 
@@ -123,7 +139,7 @@ export async function createDrop(s: Services, user: UserRow, input: DropInput, o
     // Halaman utama tidak boleh sampai ke lingkaran yang punya halaman sendiri,
     // atau yang halamannya hari ini sudah tersegel terpisah.
     const own = await s.db.select().from(circleMembers).where(and(eq(circleMembers.userId, user.id), inArray(circleMembers.circleId, circleIds)));
-    const sealedSep = opts.sealing || input.meta?.flash ? new Set<string>() : await sealedPages(s, user.id, input.day);
+    const sealedSep = opts.sealing || input.meta?.flash || backfill ? new Set<string>() : await sealedPages(s, user.id, input.day);
     if (own.some((m) => m.ownPage) || circleIds.some((c) => sealedSep.has(c))) {
       throw conflict('own_page', 'Lingkaran itu punya halaman sendiri hari ini. Muat ulang halaman, ya.');
     }
@@ -495,13 +511,18 @@ export function dayRoutes(s: Services) {
     if (!isDayKey(day)) throw bad('bad_day', 'Tanggal tidak valid.');
     const { circle } = await requireMember(s, c.req.param('id'), user.id);
     const members = await s.db.select().from(circleMembers).where(eq(circleMembers.circleId, circle.id));
-    const ids = members.filter((m) => day >= m.joinedDay && (!m.leftDay || day <= m.leftDay)).map((m) => m.userId);
+    const rows = await dropsInCircle(s, circle.id, day, day);
+    // Kenangan susulan boleh jatuh sebelum seseorang bergabung (bahkan sebelum lingkaran lahir):
+    // pemiliknya tetap mendapat halaman di hari itu.
+    const memoryAuthors = new Set(rows.filter((d) => d.meta?.backfill).map((d) => d.authorId));
+    const ids = members
+      .filter((m) => (day >= m.joinedDay && (!m.leftDay || day <= m.leftDay)) || (m.state === 'active' && day < m.joinedDay && memoryAuthors.has(m.userId)))
+      .map((m) => m.userId);
     const sealedBy = (await sealedInCircles(s, [circle.id], ids, { from: day, to: day })).get(circle.id)!;
     const caps = ids.filter((id) => sealedBy.get(id)?.has(day)).map((userId) => ({ userId }));
     const frz = ids.length
       ? await s.db.select().from(freezes).where(and(inArray(freezes.userId, ids), eq(freezes.kind, 'used'), eq(freezes.day, day)))
       : [];
-    const rows = await dropsInCircle(s, circle.id, day, day);
     const { visible, locked } = await filterForCircle(s, user, circle, rows);
     const [visit] = await s.db.select().from(visits).where(and(eq(visits.circleId, circle.id), eq(visits.day, day)));
     const out: CircleDay = {

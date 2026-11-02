@@ -159,6 +159,8 @@ export interface DayCover {
   frozen: number;
   fraction: number;
   together: boolean;
+  /** Foto kenangan susulan di hari itu (mengusir kabut, tanpa api). */
+  backfill: number;
 }
 
 /** Sama dengan aturan streak di @sehari/core: bersama = ≥2 aktif, cukup tersegel, minimal satu segel sungguhan. */
@@ -175,6 +177,7 @@ export function coverFor(circle: Pick<CircleView, 'members' | 'kind'>, day: DayK
     frozen,
     fraction: active ? Math.min(1, covered / active) : 0,
     together: active >= 2 && covered >= needed && sealed > 0,
+    backfill: cal?.backfill ?? 0,
   };
 }
 

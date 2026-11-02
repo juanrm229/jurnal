@@ -706,6 +706,7 @@ export default function Today() {
       <Sheet open={sheet === 'more'} onClose={() => setSheet(null)} title="tambahkan">
         <div className="tile-grid">
           <Tile icon="ui-mikrofon" label="cerita suara" sub="rekam bebas, bisa jadi tulisan" onClick={() => setSheet('voice')} />
+          <Tile icon="ui-foto" label="susulan dari galeri" sub="isi hari yang terlewat dengan foto-fotonya" onClick={() => navigate('/susulan')} />
           <Tile icon="pena" label="karya" sub="esai, cerpen, puisi: ruang menulis yang tenang" onClick={() => navigate('/karya')} />
           <Tile icon="dadu" label="Ruang Main" sub="SIDIK, Titip Surat, dan game bersama lainnya" onClick={() => navigate('/main')} />
           <Tile icon="kamera" label="photobox" sub="strip foto lucu, sendiri atau berdua" onClick={() => navigate('/photobox')} />

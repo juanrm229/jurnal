@@ -70,7 +70,8 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
       }
     }
     // Kilasan sengaja terlihat sebelum segel: cuplikan siang hari. Ceritanya tetap di halaman tersegel.
-    const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule' && !d.meta?.flash;
+    // Kenangan susulan juga tidak menunggu segel: harinya sudah lama lewat.
+    const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule' && !d.meta?.flash && !d.meta?.backfill;
     if (needsSeal && !sealed.has(d.day)) {
       locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'not_sealed', unlockOn: null });
       continue;

@@ -23,7 +23,7 @@ import {
   rotateCircleBody,
   updateCircleBody,
 } from '@sehari/core';
-import { and, eq, gte, inArray, isNotNull, lte } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNotNull, lte, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { type AppEnv, body, say, type Services } from '../context';
@@ -46,7 +46,7 @@ import {
 import { ApiError, bad, conflict, forbidden, notFound, paymentRequired } from '../lib/errors';
 import { newId, newToken, safeEqual } from '../lib/ids';
 
-const { circles, circleMembers, circleKeys, invites, nicknames, capsules, freezes, dropCircles, users } = schema;
+const { circles, circleMembers, circleKeys, invites, nicknames, capsules, freezes, dropCircles, drops, users } = schema;
 
 export function maxMembers(kind: CircleKind, tier: string | null): number {
   if (kind === 'moment') return isFreeAll() ? MOMENT_TIERS.besar.maxGuests : (MOMENT_TIERS[(tier ?? 'coba') as MomentTier]?.maxGuests ?? 8);
@@ -381,8 +381,9 @@ export function circleRoutes(s: Services) {
         .from(freezes)
         .where(and(inArray(freezes.userId, ids), eq(freezes.kind, 'used'), gte(freezes.day, from), lte(freezes.day, to))),
       s.db
-        .select({ day: dropCircles.day })
+        .select({ day: dropCircles.day, backfill: sql<string | null>`${drops.meta}->>'backfill'` })
         .from(dropCircles)
+        .innerJoin(drops, eq(drops.id, dropCircles.dropId))
         .where(and(eq(dropCircles.circleId, circle.id), gte(dropCircles.day, from), lte(dropCircles.day, to))),
     ]);
     const map = new Map<string, CircleCalendarDay>();
@@ -393,7 +394,11 @@ export function circleRoutes(s: Services) {
     };
     for (const x of seals) if (inCircle(x.userId, x.day)) get(x.day).sealed.push(x.userId);
     for (const x of frz) if (x.day && inCircle(x.userId, x.day)) get(x.day).frozen.push(x.userId);
-    for (const x of counts) get(x.day).dropCount++;
+    for (const x of counts) {
+      const d = get(x.day);
+      d.dropCount++;
+      if (x.backfill === 'true') d.backfill = (d.backfill ?? 0) + 1;
+    }
     return c.json([...map.values()].sort((a, b) => (a.day < b.day ? -1 : 1)));
   });
 
