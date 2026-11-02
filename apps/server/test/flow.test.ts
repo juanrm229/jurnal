@@ -58,9 +58,10 @@ describe('duo & segel timbal balik', () => {
     expect(sealed.circles[0].allSealed).toBe(false);
     expect(env.pusher.sent.some((m) => m.body.includes('Naya') && m.data?.type === 'partner_sealed')).toBe(true);
 
+    // Raka masih menulis: halamannya tetap miliknya sampai ia menyegel.
     const after = await naya.ok('GET', `/v1/circles/${duoId}/days/${DAY}`);
-    const rakaDrop = after.drops.find((d: any) => d.authorId === raka.userId);
-    expect(naya.open(rakaDrop).text).toBe('kopi pagi di balkon');
+    expect(after.drops.every((d: any) => d.authorId === naya.userId)).toBe(true);
+    expect(after.locked[0].reason).toBe('writing');
 
     // Raka belum menyegel: milik Naya masih tertutup baginya.
     const rakaView = await raka.ok('GET', `/v1/circles/${duoId}/days/${DAY}`);
@@ -72,6 +73,9 @@ describe('duo & segel timbal balik', () => {
     expect(r2.circles[0].streak.current).toBe(1);
     const open = await raka.ok('GET', `/v1/circles/${duoId}/days/${DAY}`);
     expect(open.drops).toHaveLength(2);
+    const nayaOpen = await naya.ok('GET', `/v1/circles/${duoId}/days/${DAY}`);
+    const rakaDrop = nayaOpen.drops.find((d: any) => d.authorId === raka.userId);
+    expect(naya.open(rakaDrop).text).toBe('kopi pagi di balkon');
   });
 
   it('setelah disegel tidak bisa menambah Drop biasa', async () => {
@@ -271,6 +275,9 @@ describe('kartu rahasia', () => {
     env.setNow('2026-11-01T05:00:00Z');
     const b = naya.dropBody('2026-11-01', { kind: 'card', text: 'jawaban naya' }, { circleId: duoId });
     await naya.ok('POST', '/v1/drops', { ...b, meta: { cardId: secret.id } });
+    // Kartu sudah terjawab berdua, tapi halaman Raka baru terbuka setelah ia menyegel.
+    expect((await naya.ok('GET', `/v1/circles/${duoId}/days/${d}`)).locked.find((l: any) => l.id === a.id)?.reason).toBe('writing');
+    await raka.ok('POST', `/v1/days/${d}/seal`, { tz: raka.tz });
     const after = await naya.ok('GET', `/v1/circles/${duoId}/days/${d}`);
     expect(after.drops.some((x: any) => x.id === a.id)).toBe(true);
   });
@@ -287,6 +294,7 @@ describe('mode pisah, kenangan, blokir', () => {
     await a.ok('POST', '/v1/drops', a.dropBody(d, { text: 'dari A' }, { circleId: duo.id }));
     await b.ok('POST', '/v1/drops', b.dropBody(d, { text: 'dari B' }, { circleId: duo.id }));
     await b.ok('POST', `/v1/days/${d}/seal`, { tz: b.tz });
+    await a.ok('POST', `/v1/days/${d}/seal`, { tz: a.tz });
     expect((await b.ok('GET', `/v1/circles/${duo.id}/days/${d}`)).drops).toHaveLength(2);
     await a.ok('POST', `/v1/circles/${duo.id}/split`);
     const after = await b.ok('GET', `/v1/circles/${duo.id}/days/${d}`);

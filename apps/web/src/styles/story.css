@@ -650,6 +650,40 @@
 .public-card-tilt:hover {
   transform: rotate(0) translateY(-3px);
 }
+.public-card-tilt {
+  animation: pc-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes pc-in {
+  from { transform: rotate(-4deg) translateY(10px) scale(0.96); opacity: 0; }
+  to { transform: rotate(-1.5deg); opacity: 1; }
+}
+.pc-styles {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+.pc-style {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-soft, inherit);
+  transition: border-color 0.2s, transform 0.2s;
+}
+.pc-style .public-card {
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft, 0 2px 8px rgba(0, 0, 0, 0.12));
+}
+.pc-style.on {
+  border-color: var(--ink);
+  color: var(--ink);
+  transform: translateY(-2px);
+}
 .public-card {
   display: block;
   border-radius: 18px;

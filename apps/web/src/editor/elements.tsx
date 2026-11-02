@@ -258,6 +258,7 @@ function PhotoEl({ item, scale }: { item: PageItem; scale: number }) {
     <div className="polaroid" style={{ '--ar': ar, '--tint': m?.tint ?? '#d9d6cf' } as CSSProperties}>
       <span className="tape" />
       {url ? <img src={url} alt="" draggable={false} /> : <div className="ph" />}
+      {item.payload.tags?.includes('susulan') ? <span className="susul-stamp">disusulkan</span> : null}
       {item.payload.text ? <div className="cap" style={{ fontSize: Math.max(12, 36 * scale) }}>{item.payload.text}</div> : null}
     </div>
   );

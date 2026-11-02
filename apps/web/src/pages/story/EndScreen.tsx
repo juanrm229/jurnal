@@ -9,7 +9,7 @@ import { navigate } from '@/lib/router';
 import { shareOrCopy } from '@/lib/share';
 import { Doodle, Section, Sticky } from '@/ui/kit';
 import { openSong, PROVIDER_LABEL } from './cards';
-import { PublicCard, sharePublicCard } from './PublicCard';
+import { CARD_STYLES, type CardStyle, PublicCard, sharePublicCard } from './PublicCard';
 
 export function songListText(songs: (SongRef & { count: number })[], title: string): string {
   return [`${title} — OST Sehari`, '', ...songs.map((s, i) => `${i + 1}. ${s.title} — ${s.artist}${s.url ? `\n   ${s.url}` : ''}`)].join('\n');
@@ -36,13 +36,14 @@ export function EndScreen({
   const [ostNote, setOstNote] = useState<string | null>(null);
   const [link, setLink] = useState<PublicWrapWire | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [style, setStyle] = useState<CardStyle>('poster');
   const year = wrap.scope === 'year' ? Number(wrap.period) : null;
 
   const shareImage = async () => {
     setBusy('share');
     setNote(null);
     try {
-      const r = await sharePublicCard(wrap.public, `${wrap.title} · ${wrap.label}`);
+      const r = await sharePublicCard(wrap.public, `${wrap.title} · ${wrap.label}`, style);
       if (r === 'downloaded') setNote('Gambar kartu tersimpan di unduhan.');
     } catch (e) {
       setNote((e as Error).message || 'Kartunya belum bisa dibuat. Coba sekali lagi.');
@@ -83,11 +84,25 @@ export function EndScreen({
           simpan & bagikan
         </h1>
 
-        <Section title="kartu publik">
+        <Section title="kartu untuk dibagikan">
           <div className="center">
-            <div className="public-card-tilt">
-              <PublicCard data={wrap.public} width={260} />
+            <div className="public-card-tilt" key={style}>
+              <PublicCard data={wrap.public} width={260} style={style} />
             </div>
+          </div>
+          <div className="pc-styles" role="radiogroup" aria-label="gaya kartu">
+            {CARD_STYLES.map((st) => (
+              <button
+                key={st.id}
+                role="radio"
+                aria-checked={style === st.id}
+                className={`pc-style${style === st.id ? ' on' : ''}`}
+                onClick={() => setStyle(st.id)}
+                data-testid={`card-style-${st.id}`}>
+                <PublicCard data={wrap.public} width={64} style={st.id} />
+                <span className="tiny">{st.name}</span>
+              </button>
+            ))}
           </div>
           <div className="row mt" style={{ alignItems: 'flex-start' }}>
             <Doodle id="ui-gembok" size={20} />

@@ -8,7 +8,7 @@ import { circleDayNumber, COPY, dayName, eachDay, formatDayLong, monthName, pars
 import { gardenDoodleFor } from '@sehari/doodles';
 import { memo, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type CircleView, useCalendar, useCircle, useMe, useToday } from '@/lib/data';
-import { navigate, useParams } from '@/lib/router';
+import { Link, navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, ErrorNote, Growing, Header, Screen, Sticky } from '@/ui/kit';
 import { calendarMap, coverFor, type DayCover, LoreHero, mix, YearSwitch } from './board';
 
@@ -36,6 +36,10 @@ export default function Papan() {
   const thisYear = Number(today.slice(0, 4));
   const [year, setYear] = useState(thisYear);
   const cal = useCalendar(id, `${year}-01-01`, `${year}-12-31`);
+  // Kenangan susulan bisa jatuh setahun ke belakang, termasuk sebelum lingkaran lahir.
+  const bornYear = circle ? Number(circle.createdDay.slice(0, 4)) : thisYear;
+  const prevCal = useCalendar(circle ? id : '', `${bornYear - 1}-01-01`, `${bornYear - 1}-12-31`);
+  const prevHasMemories = !!prevCal.data?.some((d) => d.backfill);
   const [picked, setPicked] = useState<Tile | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const noteRef = useRef<HTMLDivElement>(null);
@@ -45,7 +49,10 @@ export default function Papan() {
     if (!circle) return [];
     const map = calendarMap(cal.data);
     // Papan dimulai di hari lingkaran lahir; hari sebelumnya bukan kabut, hanya belum ada.
-    const from = circle.createdDay > `${year}-01-01` ? circle.createdDay : `${year}-01-01`;
+    // Kenangan susulan sebelum hari itu memperpanjang jalannya ke belakang.
+    let from = circle.createdDay > `${year}-01-01` ? circle.createdDay : `${year}-01-01`;
+    const firstMemory = cal.data?.find((d) => d.backfill)?.day;
+    if (firstMemory && firstMemory < from) from = firstMemory;
     if (from > `${year}-12-31`) return [];
     return eachDay(from, `${year}-12-31`).map((day) => {
       const n = circleDayNumber(circle.createdDay, day);
@@ -77,7 +84,7 @@ export default function Papan() {
         <Growing />
       </Screen>
     );
-  const minYear = Number(circle.createdDay.slice(0, 4));
+  const minYear = bornYear - (prevHasMemories ? 1 : 0);
   const together = tiles.filter((t) => t.cover.together).length;
   const ahead = tiles.filter((t) => !t.past && !t.isToday).length;
   const ageToday = circleDayNumber(circle.createdDay, today);
@@ -89,7 +96,7 @@ export default function Papan() {
   };
   const onTile = (t: Tile) => {
     if (t.special || t.isToday) return showNote(t);
-    if (t.past && !t.before) navigate(`/l/${id}/hari/${t.day}`);
+    if (t.past && (!t.before || t.cover.backfill)) navigate(`/l/${id}/hari/${t.day}`);
     else showNote(t);
   };
 
@@ -131,7 +138,7 @@ export default function Papan() {
         <Growing label="menggambar papan…" />
       ) : (
         <div ref={boardRef} className="rise">
-          {year === minYear && circle.createdDay > `${year}-01-01` ? (
+          {year === bornYear && circle.createdDay > `${year}-01-01` ? (
             <div className="row" style={{ justifyContent: 'center', marginBottom: 8, gap: 6 }}>
               <Doodle id="tunas" size={22} draw />
               <span className="tiny ink-soft">jalan dimulai {formatDayLong(circle.createdDay)}, hari lingkaran ini lahir</span>
@@ -145,6 +152,11 @@ export default function Papan() {
 
       <Legend />
       <p className="tiny soft center mt">tidak ada yang kalah di papan ini. petak yang berkabut tetap bagian dari jalan.</p>
+      <p className="center" style={{ marginTop: 8 }}>
+        <Link to="/susulan" className="pill">
+          <Doodle id="ui-foto" size={16} color="currentColor" /> susulkan dari galeri
+        </Link>
+      </p>
     </Screen>
   );
 }
@@ -238,13 +250,14 @@ function Board({ tiles, circle, onTile, onTodayY }: { tiles: Tile[]; circle: Cir
 const TileView = memo(function TileView({ tile, size, circleId, onPress }: { tile: Tile; size: number; circleId: string; onPress: (t: Tile) => void }) {
   const { cover, past, isToday, before, special } = tile;
   const { day: dom, month } = parseDay(tile.day);
-  const fog = past && !before && cover.fraction === 0;
+  const fog = past && (!before || cover.backfill > 0) && cover.fraction === 0;
   const bg = cover.together ? mix('var(--card)', 'var(--pill)', 0.35 + cover.fraction * 0.65) : cover.fraction > 0 ? mix('var(--card)', 'var(--pill)', 0.25) : 'var(--card)';
   const border = isToday || special ? 'var(--ink)' : cover.together ? 'var(--ink-soft)' : 'var(--card-edge)';
 
   let content: ReactNode;
   // Benih tanaman sama di semua perangkat untuk lingkaran & hari yang sama.
   if (cover.together) content = <Doodle id={gardenDoodleFor(`${circleId}:${tile.day}`).id} size={size * 0.78} sw={2.2} />;
+  else if (fog && cover.backfill) content = <Doodle id="kamera" size={size * 0.58} color="var(--ink-soft)" />;
   else if (fog) content = <Doodle id="kabut" size={size * 0.62} color="var(--fog)" />;
   else if (cover.fraction > 0) content = <span style={{ width: 7, height: 7, borderRadius: 4, border: '1.5px solid var(--ink)', background: mix('var(--card)', 'var(--ink)', cover.fraction * 0.5) }} />;
   else if (isToday) content = <span className="tiny ink">{dom}</span>;
@@ -255,7 +268,7 @@ const TileView = memo(function TileView({ tile, size, circleId, onPress }: { til
       className={`lore-tile ${isToday ? 'today' : ''}`}
       onClick={() => onPress(tile)}
       title={formatDayLong(tile.day)}
-      aria-label={`${formatDayLong(tile.day)}${cover.together ? ', tersegel bersama' : fog ? `, ${COPY.streak.fog}` : ''}${special ? `, petak ${special.name}` : ''}`}
+      aria-label={`${formatDayLong(tile.day)}${cover.together ? ', tersegel bersama' : fog && cover.backfill ? ', kenangan susulan' : fog ? `, ${COPY.streak.fog}` : ''}${special ? `, petak ${special.name}` : ''}`}
       style={{
         width: size,
         height: size,
@@ -280,7 +293,7 @@ const TileView = memo(function TileView({ tile, size, circleId, onPress }: { til
 function TileNote({ tile, circle, meId, onClose, onOpen }: { tile: Tile; circle: CircleView; meId: string; onClose: () => void; onOpen: () => void }) {
   const sp = tile.special ? SPECIAL[tile.special.code] : undefined;
   const n = circleDayNumber(circle.createdDay, tile.day);
-  const canOpen = (tile.past || tile.isToday) && !tile.before;
+  const canOpen = (tile.past || tile.isToday) && (!tile.before || tile.cover.backfill > 0);
   let body: string;
   if (tile.special && sp) {
     body =
@@ -290,6 +303,8 @@ function TileNote({ tile, circle, meId, onClose, onOpen }: { tile: Tile; circle:
   } else if (tile.isToday) {
     const sealedN = Object.values(circle.todaySealed).filter(Boolean).length;
     body = `Bidak ${circle.active.map((m) => (m.userId === meId ? 'kamu' : m.penName)).join(', ')} berdiri di petak ini. ${COPY.seal.circleProgress(sealedN, circle.active.length)}`;
+  } else if (tile.before && tile.cover.backfill) {
+    body = 'Kenangan susulan dari sebelum lingkaran ini lahir. Jalan kalian ternyata sudah dimulai lebih awal.';
   } else if (tile.before) {
     body = 'Lingkaran ini belum lahir di hari itu. Jalannya dimulai nanti.';
   } else {
@@ -336,6 +351,7 @@ function Legend() {
       {item(<Doodle id="tunas" size={20} />, 'tersegel bersama')}
       {item(<span style={{ width: 7, height: 7, borderRadius: 4, border: '1.5px solid var(--ink)' }} />, 'sebagian menitipkan')}
       {item(<Doodle id="kabut" size={18} color="var(--fog)" />, COPY.streak.fog)}
+      {item(<Doodle id="kamera" size={18} color="var(--ink-soft)" />, 'kenangan susulan')}
       {item(<span style={{ width: 3, height: 3, borderRadius: 2, background: 'var(--ink-soft)' }} />, 'hari yang akan datang')}
       {item(<span style={{ width: 14, height: 14, borderRadius: 4, border: '1.5px dashed var(--ink)' }} />, 'petak istimewa')}
     </div>

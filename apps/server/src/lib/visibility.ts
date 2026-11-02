@@ -31,6 +31,12 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
   const settings = circleSettings(circle);
   const blocked = await blockedWith(s, viewer.id);
   const sealed = await viewerSealed(s, viewer.id, circle.id, rows.map((r) => r.day));
+  // Halaman yang masih ditulis tetap milik penulisnya sampai ia menyegelnya.
+  const authors = [...new Set(rows.map((r) => r.authorId).filter((u) => u !== viewer.id))];
+  const days = rows.map((r) => r.day).sort();
+  const authorSealed = authors.length
+    ? (await sealedInCircles(s, [circle.id], authors, { from: days[0], to: days[days.length - 1] })).get(circle.id)!
+    : new Map<string, Set<string>>();
   const recips = await s.db
     .select()
     .from(dropRecipients)
@@ -70,7 +76,8 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
       }
     }
     // Kilasan sengaja terlihat sebelum segel: cuplikan siang hari. Ceritanya tetap di halaman tersegel.
-    const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule' && !d.meta?.flash;
+    // Kenangan susulan juga tidak menunggu segel: harinya sudah lama lewat.
+    const needsSeal = settings.revealMode === 'after_seal' && circle.kind !== 'moment' && d.audience !== 'time_capsule' && !d.meta?.flash && !d.meta?.backfill;
     if (needsSeal && !sealed.has(d.day)) {
       locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'not_sealed', unlockOn: null });
       continue;
@@ -81,6 +88,11 @@ export async function filterForCircle(s: Services, viewer: UserRow, circle: Circ
         locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'secret_card', unlockOn: null });
         continue;
       }
+    }
+    // Jawaban pertanyaan hari ini adalah kiriman yang disengaja, tidak menunggu segel penulisnya.
+    if (needsSeal && d.kind !== 'answer' && !authorSealed.get(d.authorId)?.has(d.day)) {
+      locked.push({ id: d.id, authorId: d.authorId, kind: 'locked', reason: 'writing', unlockOn: null });
+      continue;
     }
     visible.push(d);
   }

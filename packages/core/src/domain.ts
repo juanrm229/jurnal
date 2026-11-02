@@ -216,8 +216,16 @@ export const FACE_EXPRESSIONS: { id: FaceExpression; label: string; emoji: strin
   { id: 'semangat', label: 'semangat', emoji: '👍' },
 ];
 
+/**
+ * Kenangan susulan: foto dari galeri untuk hari yang sudah lewat jendela susulan
+ * (lebih dari 7 hari). Terlihat lingkaran tanpa segel, tidak menambah api.
+ */
+export const BACKFILL_MAX_DAYS = 366;
+export const BACKFILL_PER_DAY = 12;
+
 export interface DropMeta {
   flash?: FlashKind;
+  backfill?: boolean;
   questionId?: string;
   cardId?: string;
   expeditionId?: string;

@@ -344,6 +344,7 @@ export const createDropBody = z.object({
   meta: z
     .object({
       flash: z.enum(['snap', 'kangen']).optional(),
+      backfill: z.boolean().optional(),
       questionId: z.string().max(80).optional(),
       cardId: z.string().max(80).optional(),
       expeditionId: z.string().max(80).optional(),
@@ -414,7 +415,7 @@ export interface LockedDrop {
   id: string;
   authorId: string;
   kind: 'locked';
-  reason: 'not_sealed' | 'time_capsule' | 'split' | 'secret_card' | 'answer_first';
+  reason: 'not_sealed' | 'writing' | 'time_capsule' | 'split' | 'secret_card' | 'answer_first';
   unlockOn: DayKey | null;
   /** Untuk 'answer_first': pertanyaan yang perlu kamu jawab dulu. */
   questionId?: string;
@@ -461,6 +462,8 @@ export interface CircleCalendarDay {
   sealed: string[];
   frozen: string[];
   dropCount: number;
+  /** Foto kenangan susulan di hari itu. */
+  backfill?: number;
 }
 
 export const reactionParams = z.object({ kind: z.enum(['hug', 'me_too', 'candle', 'here']) });

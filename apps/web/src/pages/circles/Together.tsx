@@ -331,12 +331,14 @@ function LockedNote({ locked, who }: { locked: LockedDrop[]; who: string }) {
           ? 'jawab pertanyaannya dulu, atau segel halamanmu'
           : l.reason === 'split'
             ? 'mode pisah'
-            : 'terbuka setelah kamu menyegel';
+            : l.reason === 'writing'
+              ? 'masih ditulis · terbuka setelah disegel'
+              : 'terbuka setelah kamu menyegel';
   return (
     <div data-paper="1" style={{ position: 'absolute', left: '12%', right: '12%', bottom: '6%', pointerEvents: 'none' }}>
       <div className="card col center" style={{ alignItems: 'center', transform: 'rotate(-1.5deg)', background: 'color-mix(in srgb, var(--ink) 8%, var(--card))' }}>
         <Doodle id="amplop" size={48} className="breathe" />
-        <div className="small">{who} · {locked.length} hal tersegel</div>
+        <div className="small">{who} · {locked.length} hal {l.reason === 'writing' ? 'menunggu' : 'tersegel'}</div>
         <div className="tiny soft">{why}</div>
       </div>
     </div>

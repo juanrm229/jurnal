@@ -1502,7 +1502,7 @@ export function Wrapped({ story, ctx, end, onClose }: { story: WrapStory; ctx: W
   };
 
   return (
-    <div className={`wr wr-${story.scope}`} ref={root} data-testid="wrapped">
+    <div className={`wr wr-scope-${story.scope}`} ref={root} data-testid="wrapped">
       <header className="wr-bar">
         <div className="wr-progress" aria-hidden>
           {Array.from({ length: total }, (_, i) => (
