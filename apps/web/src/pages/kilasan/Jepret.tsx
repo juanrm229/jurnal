@@ -1,6 +1,8 @@
 /**
  * Jepret: kilasan foto. Kamera belakang lalu kamera depan, digabung menjadi
  * satu foto (wajahmu di pojok), seperti melihat dua sisi satu detik yang sama.
+ * Kamera depan tidak menjepret diam-diam: ada hitung mundur 3-2-1 yang terlihat,
+ * rana bisa ditekan kapan pun kamu sudah siap, dan selfie boleh dilewati.
  * Kalau kamera tidak bisa dibuka, pilih foto dari galeri.
  */
 import { useEffect, useRef, useState } from 'react';
@@ -107,6 +109,9 @@ export default function Jepret() {
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [flashFx, setFlashFx] = useState(false);
+  const [count, setCount] = useState<number | null>(null);
+  const [backThumb, setBackThumb] = useState<string | null>(null);
+  const frontRun = useRef(0);
   const picked = chosen ?? defaultFlashCircles(circles);
 
   const start = async (facing: 'environment' | 'user', next: Stage) => {
@@ -138,6 +143,9 @@ export default function Jepret() {
   }, [preview]);
 
   const finish = async (canvas: HTMLCanvasElement) => {
+    frontRun.current++;
+    setCount(null);
+    setBackThumb(null);
     stop(stream.current);
     stream.current = null;
     const b = await toBlob(canvas);
@@ -146,24 +154,51 @@ export default function Jepret() {
     setStage('review');
   };
 
+  const blink = () => {
+    setFlashFx(true);
+    window.setTimeout(() => setFlashFx(false), 260);
+  };
+
+  /** Jepret kamera depan sekarang (dari hitung mundur atau dari rana). */
+  const shootFront = () => {
+    const v = video.current;
+    if (!v || !mainShot.current || stage !== 'front') return;
+    blink();
+    if (v.readyState < 2 || !v.videoWidth) return finish(mainShot.current);
+    return finish(compose(mainShot.current, grab(v, true)));
+  };
+
   const shoot = async () => {
     const v = video.current;
     if (!v) return;
-    setFlashFx(true);
-    window.setTimeout(() => setFlashFx(false), 260);
-    if (stage === 'back') {
-      mainShot.current = grab(v, false);
-      if (!dual) return finish(mainShot.current);
-      await start('user', 'front');
-      // Tunggu kamera depan benar-benar mengalirkan gambar (di iPhone bisa lebih
-      // dari sedetik), beri waktu menyesuaikan cahaya, lalu jepret otomatis.
-      // Kalau tidak siap dalam 4 detik, pakai foto belakang saja.
-      const ready = await framesReady(video.current, 4000);
-      await new Promise((r) => window.setTimeout(r, 700));
-      if (!video.current || !ready) return finish(mainShot.current);
-      const inset = grab(video.current, true);
-      return finish(compose(mainShot.current!, inset));
+    if (stage === 'front') return shootFront();
+    if (stage !== 'back') return;
+    blink();
+    mainShot.current = grab(v, false);
+    if (!dual) return finish(mainShot.current);
+    setBackThumb(mainShot.current.toDataURL('image/jpeg', 0.6));
+    const run = ++frontRun.current;
+    await start('user', 'front');
+    // Tunggu kamera depan benar-benar mengalirkan gambar (di iPhone bisa lebih
+    // dari sedetik). Kalau tidak siap dalam 5 detik, pakai foto belakang saja.
+    const ready = await framesReady(video.current, 5000);
+    if (run !== frontRun.current) return;
+    if (!video.current || !ready) return finish(mainShot.current);
+    // Hitung mundur yang terlihat, supaya sempat merapikan wajah.
+    for (const n of [3, 2, 1]) {
+      setCount(n);
+      await new Promise((r) => window.setTimeout(r, 900));
+      if (run !== frontRun.current) return;
     }
+    setCount(null);
+    const fv = video.current;
+    if (!fv || !mainShot.current) return;
+    blink();
+    return finish(compose(mainShot.current, grab(fv, true)));
+  };
+
+  const skipFront = () => {
+    if (mainShot.current) void finish(mainShot.current);
   };
 
   const fromFile = (f: File | undefined) => {
@@ -174,6 +209,8 @@ export default function Jepret() {
   };
 
   const retake = () => {
+    frontRun.current++;
+    setCount(null);
     setBlob(null);
     setPreview(null);
     mainShot.current = null;
@@ -260,7 +297,13 @@ export default function Jepret() {
       ) : (
         <div className="jp-cam">
           <video ref={video} playsInline muted autoPlay className={stage === 'front' ? 'mirror' : ''} />
-          {stage === 'front' ? <div className="jp-hint">senyum… sekarang kamera depan</div> : null}
+          {stage === 'front' && backThumb ? <img className="jp-backthumb" src={backThumb} alt="" /> : null}
+          {stage === 'front' && count ? (
+            <div className="jp-count" key={count} aria-live="polite">
+              {count}
+            </div>
+          ) : null}
+          {stage === 'front' ? <div className="jp-hint">{count ? 'sudah siap? tekan rana' : 'membuka kamera depan…'}</div> : null}
           {stage === 'starting' ? <div className="jp-hint">membuka kamera…</div> : null}
           {flashFx ? <div className="jp-flash" /> : null}
         </div>
@@ -271,10 +314,16 @@ export default function Jepret() {
           <button className="jp-side" onClick={() => fileIn.current?.click()} aria-label="dari galeri">
             <Doodle id="ui-foto" size={24} color="#fff" />
           </button>
-          <button className="jp-shutter" onClick={shoot} disabled={stage !== 'back'} aria-label="jepret" data-testid="flash-shutter">
+          <button className="jp-shutter" onClick={shoot} disabled={stage !== 'back' && !(stage === 'front' && count)} aria-label="jepret" data-testid="flash-shutter">
             <span />
           </button>
-          <span style={{ width: 48 }} />
+          {stage === 'front' ? (
+            <button className="jp-side jp-skip" onClick={skipFront} aria-label="lewati selfie" data-testid="flash-skip-front">
+              lewati
+            </button>
+          ) : (
+            <span style={{ width: 48 }} />
+          )}
         </footer>
       ) : null}
       <input ref={fileIn} type="file" accept="image/*" hidden onChange={(e) => fromFile(e.target.files?.[0])} />

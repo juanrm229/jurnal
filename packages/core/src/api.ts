@@ -415,7 +415,7 @@ export interface LockedDrop {
   id: string;
   authorId: string;
   kind: 'locked';
-  reason: 'not_sealed' | 'time_capsule' | 'split' | 'secret_card' | 'answer_first';
+  reason: 'not_sealed' | 'writing' | 'time_capsule' | 'split' | 'secret_card' | 'answer_first';
   unlockOn: DayKey | null;
   /** Untuk 'answer_first': pertanyaan yang perlu kamu jawab dulu. */
   questionId?: string;

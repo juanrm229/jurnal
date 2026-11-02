@@ -240,6 +240,43 @@
   font: 13px var(--mono);
   white-space: nowrap;
 }
+.jp-backthumb {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 26%;
+  max-width: 130px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
+.jp-count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 500 min(34vw, 180px) / 1 var(--serif-display);
+  color: #fff;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: jp-count 0.9s ease-out both;
+  z-index: 2;
+}
+@keyframes jp-count {
+  from { transform: scale(1.35); opacity: 0; }
+  25% { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.92); opacity: 0.85; }
+}
+.jp-skip {
+  width: auto;
+  min-width: 48px;
+  padding: 0 12px;
+  font: 12px var(--mono);
+  color: #fff;
+}
 .jp-flash {
   position: absolute;
   inset: 0;

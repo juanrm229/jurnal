@@ -59,7 +59,8 @@ describe('jawab dulu, baru lihat', () => {
     expect((await list(sari)).locked.filter((x: { reason: string }) => x.reason === 'answer_first')).toHaveLength(2);
     await sari.ok('POST', `/v1/days/${DAY}/seal`, { tz: sari.tz });
     const l = await list(sari);
-    expect(l.locked).toHaveLength(0);
-    expect(l.drops.length).toBeGreaterThanOrEqual(3);
+    // Jawaban terbuka semua; tulisan biasa teman tetap menunggu mereka menyegel.
+    expect(l.locked.map((x: { reason: string }) => x.reason).every((r: string) => r === 'writing')).toBe(true);
+    expect(l.drops.filter((d: { kind: string }) => d.kind === 'answer').length).toBeGreaterThanOrEqual(3);
   });
 });
