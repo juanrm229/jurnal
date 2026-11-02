@@ -10,6 +10,21 @@ import { MOODS } from './content/chapterTitles';
 import type { DropKind, MediaRef, MoodCode, SongRef } from './domain';
 import { excerpt, tokenize, wordCounts, type WordCount } from './text';
 import { type DayKey, dayName, eachDay, formatClock, monthName, monthRange, parseDay, weekRange, yearRange, zonedTimeToUtc } from './time';
+import {
+  type FilmScene,
+  filmScene,
+  type FutureLetterScene,
+  type JourneyScene,
+  journeyScene,
+  type MontageScene,
+  montageScene,
+  type MoodLineScene,
+  moodLineScene,
+  type NewWordsScene,
+  newWordsScene,
+  type WeeksScene,
+  weeksScene,
+} from './wrapLong';
 import { type KenalScene, kenalScene, type CompareScene, compareScene, type FacesScene, facesScene, type PlantScene, plantScene, type RollScene, rollScene } from './wrapWeekly';
 import { type AwardsScene, awardsScene, funNote, type GuessScene, guessScene, type NextScene, nextScene, type YouScene, youScene } from './wrapExtras';
 import { buildWrap, moodTally, songTally, type WrapCard, type WrapDrop, type WrapInput, type WrapScope } from './wrap';
@@ -74,6 +89,13 @@ export type StoryScene =
   | { type: 'letter'; to: string; toUserIds: string[]; paragraphs: string[]; signoff: string }
   | YouScene
   | RollScene
+  | MoodLineScene
+  | WeeksScene
+  | NewWordsScene
+  | MontageScene
+  | JourneyScene
+  | FilmScene
+  | FutureLetterScene
   | KenalScene
   | CompareScene
   | FacesScene
@@ -236,6 +258,18 @@ export function buildWrapStory(input: WrapInput): WrapStory {
         : '',
   });
 
+  // ── Bulan: grafik mood & minggu-minggu · Tahun: montase dua belas bulan ───
+  if (input.scope === 'month') {
+    const ml = moodLineScene(input, drops, r.start, r.end);
+    if (ml) scenes.push(ml);
+    const wk = weeksScene(input, drops, r.start, r.end);
+    if (wk) scenes.push(wk);
+  }
+  if (input.scope === 'year') {
+    const mt = montageScene(input, drops, input.period);
+    if (mt) scenes.push(mt);
+  }
+
   // ── Jam kalian ────────────────────────────────────────────────────────────
   const perMember = people
     .map((p) => {
@@ -297,7 +331,7 @@ export function buildWrapStory(input: WrapInput): WrapStory {
 
   // ── Foto ──────────────────────────────────────────────────────────────────
   // Rol pilihan kalian sendiri lebih dulu; kalau belum ada yang memilih, pilihan otomatis.
-  const roll = rollScene(input, drops);
+  const roll = input.scope === 'week' ? rollScene(input, drops) : null;
   const photoCard = base.cards.find((c) => c.type === 'photos');
   if (roll) scenes.push(roll);
   else if (photoCard && photoCard.type === 'photos') scenes.push({ type: 'photos', title: photoCard.title, total: photoTotal, items: photoCard.items });
@@ -312,6 +346,14 @@ export function buildWrapStory(input: WrapInput): WrapStory {
   if (counts.length >= 3) {
     const shared = people.length > 1 ? counts.filter((w) => w.authors >= 2).slice(0, 6).map((w) => ({ word: w.word, count: w.count })) : [];
     scenes.push({ type: 'words', top: counts.slice(0, 14), shared, total: wordTotal });
+  }
+  if (input.scope === 'month') {
+    const nw = newWordsScene(input, drops);
+    if (nw) scenes.push(nw);
+  }
+  if (input.scope === 'year') {
+    const jr = journeyScene(drops);
+    if (jr) scenes.push(jr);
   }
 
   // ── Kalimat yang tertinggal ───────────────────────────────────────────────
@@ -394,6 +436,12 @@ export function buildWrapStory(input: WrapInput): WrapStory {
   if (plant) scenes.push(plant);
   if (s && s.type === 'streak') scenes.push({ type: 'fire', current: s.current, longest: s.longest, togetherDays: s.togetherDays, totalDays: days.length, perMember: s.perMember });
 
+  // ── Film Bulan/Tahun Ini ──────────────────────────────────────────────────
+  if (input.scope === 'month' || input.scope === 'year') {
+    const film = filmScene(input, drops, input.scope === 'month' ? 'Film Bulan Ini' : 'Film Tahun Ini', base.label, songs[0] ? { title: songs[0].title, artist: songs[0].artist } : undefined);
+    if (film) scenes.push(film);
+  }
+
   // ── Surat penutup ─────────────────────────────────────────────────────────
   scenes.push(letterFor(input, { drops, textDrops, people, others, viewer, sync, quotes, pairMap, moods, perMember, filledDays: filledDays.size, totalDays: days.length, counts, photoTotal, kangens }));
 
@@ -410,6 +458,8 @@ export function buildWrapStory(input: WrapInput): WrapStory {
     oneOther: others.length === 1 ? others[0] : undefined,
   });
   if (next) scenes.push(next);
+  // Tahun Kita: surat untuk diri & kalian setahun lagi, terbuka di malam buka kapsul berikutnya.
+  if (input.scope === 'year') scenes.push({ type: 'futureLetter', year: Number(input.period) + 1, openOn: `${Number(input.period) + 1}-12-31` });
 
   return { scope: input.scope, period: input.period, title: base.title, label: base.label, people, scenes };
 }

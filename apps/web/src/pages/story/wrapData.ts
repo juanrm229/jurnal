@@ -129,10 +129,13 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
   const ring = useKeyring();
 
   // Rol & judul adegan (Minggu Kita), dan periode sebelumnya untuk perbandingan.
+  // Rol: satu minggu untuk Minggu Kita; semua minggu di periode untuk Bulan & Tahun Kita.
+  const rollFrom = range ? isoWeek(range.start) : '';
+  const rollTo = range ? isoWeek(range.end) : '';
   const rolls = useQuery({
-    queryKey: ['rolls', circleId, period],
-    queryFn: () => api.get<RollWire[]>(`/circles/${circleId}/rolls/${period}`),
-    enabled: enabled && scope === 'week',
+    queryKey: scope === 'week' ? ['rolls', circleId, period] : ['rollsRange', circleId, rollFrom, rollTo],
+    queryFn: () => api.get<RollWire[]>(scope === 'week' ? `/circles/${circleId}/rolls/${period}` : `/circles/${circleId}/rolls?from=${rollFrom}&to=${rollTo}`),
+    enabled: enabled && scope !== 'moment' && !!range,
   });
   const scenes = useQuery({
     queryKey: ['scenes', circleId],
@@ -150,7 +153,8 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
         cal.isLoading ||
         (wantsLore && chapters.isLoading) ||
         (scope === 'year' && (volumes.isLoading || motifs.isLoading)) ||
-        (scope === 'week' && (rolls.isLoading || scenes.isLoading)) ||
+        (scope !== 'moment' && rolls.isLoading) ||
+        (scope === 'week' && scenes.isLoading) ||
         (!!prevRange && prevQ.isLoading)));
   const failed = dropQs.error ?? cal.error;
 
@@ -223,7 +227,7 @@ export function useWrapData(circleId: string, scope: string, period: string): Wr
       viewerId: me.user.id,
       today: todayIn(me.user.tz, new Date(), true),
       createdDay: circle.createdDay,
-      rolls: scope === 'week' ? (rolls.data ?? []).map((r) => ({ userId: r.userId, dropIds: r.dropIds })) : undefined,
+      rolls: scope !== 'moment' ? (rolls.data ?? []).map((r) => ({ userId: r.userId, dropIds: r.dropIds, week: r.week })) : undefined,
       sceneTitle: (() => {
         const sc = scope === 'week' ? scenes.data?.find((x) => x.week === period) : undefined;
         return sc?.titleEnc ? openCircleText(circle, sc.titleEnc, '') || undefined : undefined;
