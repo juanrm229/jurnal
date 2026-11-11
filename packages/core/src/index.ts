@@ -74,6 +74,7 @@ export * from './wrapStory';
 export * from './wrapExtras';
 export * from './plant';
 export * from './benih';
+export * from './kepo';
 export * from './kenal';
 export * from './dates';
 export * from './wrapLong';

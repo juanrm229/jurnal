@@ -37,6 +37,8 @@ const BASE: Item[] = [
   { group: 'momen', to: '/janji/acak', label: 'bingung mau ke mana?', hint: 'mesin acak ide kencan', icon: 'ui-dadu', keys: 'random ide date' },
   { group: 'momen', to: '/kenangan', label: 'kenangan', hint: 'taman setahun & Wrap', icon: 'ui-kenangan', keys: 'memori wrapped kalender taman' },
 
+  { group: 'momen', to: '/kepo', label: 'si kepo', hint: 'temuan pola dari jurnalmu', icon: 'ui-cari', keys: 'statistik insight pola kebiasaan analisis' },
+
   { group: 'main', to: '/main', label: 'Ruang Main', hint: 'semua permainan', icon: 'dadu', keys: 'game permainan' },
   { group: 'main', to: '/sidik', label: 'SIDIK', hint: 'detektif, ada yang berbohong', icon: 'ui-cari', keys: 'game detektif' },
   { group: 'main', to: '/main/titip', label: 'Titip Surat', hint: 'kartu deduksi', icon: 'amplop', keys: 'game love letter' },

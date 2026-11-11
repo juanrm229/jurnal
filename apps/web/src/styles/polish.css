@@ -1126,3 +1126,227 @@ button.card:active {
     top: 20%;
   }
 }
+
+/* ── Si Kepo: catatan detektif yang ditempel ─────────────────────────────── */
+.kepo-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 18px;
+}
+.kepo-lens {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.kepo-say {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.15;
+}
+.kepo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.kepo-note {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 18px 16px 14px;
+  rotate: var(--tilt, 0deg);
+  box-shadow: 0 10px 20px -14px rgba(20, 20, 40, 0.5);
+  color: var(--text);
+}
+.kepo-pin {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 54px;
+  height: 16px;
+  translate: -50% 0;
+  rotate: -2deg;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.kepo-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  color: var(--text);
+}
+.kepo-proof {
+  margin: 6px 0 0;
+  font: 11.5px/1.4 var(--mono);
+  color: var(--text-soft);
+}
+
+/* ── Beranda lingkaran: tiga ruang ───────────────────────────────────────── */
+.ch-tabs {
+  position: sticky;
+  top: 6px;
+  z-index: 20;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 14px 0 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: var(--shadow);
+}
+.ch-tabs button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-soft);
+  font: 12.5px/1.2 var(--mono);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.25s, color 0.2s, transform 0.25s var(--ease-spring);
+}
+.ch-tabs button:active {
+  transform: scale(0.95);
+}
+.ch-tabs button.on {
+  color: var(--on-ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 84%, #fff), var(--ink) 70%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--glow);
+}
+.ch-panel:not([hidden]) {
+  animation: ch-in 0.35s var(--ease-out) both;
+}
+.ch-panel > .section:first-child {
+  margin-top: 0;
+}
+@keyframes ch-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ── Pindah hari: kertas dibalik seperti buku ────────────────────────────── */
+.day-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 0 2px 8px;
+}
+.day-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 4px;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: 12px/1.3 var(--mono);
+  cursor: pointer;
+}
+.day-nav button:hover:not(:disabled) {
+  color: var(--ink);
+}
+.day-nav button.mid {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--ink);
+}
+.day-nav button:disabled {
+  color: var(--fog);
+  cursor: default;
+}
+.page-stack.turn-next,
+.page-stack.turn-prev {
+  transform-origin: 0 40%;
+  animation: page-turn-next 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.page-stack.turn-prev {
+  transform-origin: 100% 40%;
+  animation-name: page-turn-prev;
+}
+@keyframes page-turn-next {
+  from {
+    transform: perspective(1400px) rotateY(-68deg);
+    opacity: 0.2;
+    filter: brightness(0.9);
+  }
+}
+@keyframes page-turn-prev {
+  from {
+    transform: perspective(1400px) rotateY(68deg);
+    opacity: 0.2;
+    filter: brightness(0.9);
+  }
+}
+
+/* ── Kerangka kertas saat memuat ─────────────────────────────────────────── */
+.sk-top {
+  height: 44px;
+}
+.sk-chips {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.sk-chips i {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+}
+.sk-paper {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 62vh;
+  padding: 34px 26px;
+  border-radius: 6px 22px 22px 6px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.sk-paper span {
+  height: 34px;
+}
+.sk-paper b {
+  height: 14px;
+  border-radius: 8px;
+}
+.sk-chips i,
+.sk-paper b {
+  display: block;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--ink) 8%, var(--paper)) 30%, color-mix(in srgb, var(--ink) 16%, var(--paper)) 50%, color-mix(in srgb, var(--ink) 8%, var(--paper)) 70%);
+  background-size: 300% 100%;
+  animation: sk-shimmer 1.4s linear infinite;
+}
+@keyframes sk-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-stack.turn-next,
+  .page-stack.turn-prev,
+  .sk-chips i,
+  .sk-paper b,
+  .ch-panel:not([hidden]) {
+    animation: none;
+  }
+}
