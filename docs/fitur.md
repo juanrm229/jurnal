@@ -69,7 +69,9 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | **Rahasia kecil** di beranda lingkaran: **Tinta Hilang** (ciphertext hanya dilepas server saat penulis dan pembaca sama-sama membuka lingkaran), **Tukar Pena** (sebulan sekali menulis hari orang lain; terbuka setelah keduanya menulis), **Bendera Putih** (dikibarkan diam-diam 72 jam; baru dikabari saat bendera lain bertemu, lalu jadi bintang emas di langit) | `pages/circles/Berdua.tsx`, `lib/berdua.ts`, `routes/berdua.ts`, tabel `pair_notes` & `circle_presence` |
 | **Cuaca Seberang**: cuaca kota orang terdekat menetes di tepi halaman hari ini (Open-Meteo, koordinat kota) | `editor/Seberang.tsx`, `lib/weather.ts` |
 | **Si Kepo**: temuan pola setahun terakhir (jam favorit, kata paling setia, ritual hari tertentu, rasa saat hujan), dihitung di perangkat tanpa AI | `core/kepo.ts`, `pages/Kepo.tsx` (`/kepo`) |
-| Beranda lingkaran tiga ruang (hari ini · minggu ini · dunia kalian) | `pages/circles/CircleHome.tsx` |
+| **Beranda Kita satu gulungan**: dua halaman hari ini berdampingan (amplop berlak = sudah menyegel, kertas putus-putus = belum) dengan satu tindakan utama yang mengikuti keadaan; Si Benih ringkas; "dunia kalian" empat dulu, sisanya di balik "semua" | `pages/circles/CircleHome.tsx`, `pages/circles/Plant.tsx` |
+| Si Benih digambar dengan sapuan tinta (ikut tema tinta) | `ui/Benih.tsx wash` |
+| **Rak**: taman ringkas (tanaman terbaru di garis tanah + setahun dalam 12 baris yang bisa digeser jari), punggung buku untuk kitab, jurnal, karya, surat, Si Kepo; cerita kita (Wrap) pindah ke sini | `pages/Kenangan.tsx`, `pages/circles/WrapHistory.tsx` |
 | Pindah hari dengan kertas yang terbalik, dan kerangka kertas saat memuat | `pages/Today.tsx` |
 | Keadaan kosong yang bercerita (bayangan taman tiga minggu ke depan, contoh rasi) | `pages/Kenangan.tsx`, `pages/lore/Langit.tsx` |
 

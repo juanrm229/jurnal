@@ -799,39 +799,7 @@
 }
 
 /* ── Ubin & dinding ──────────────────────────────────────────────────────── */
-.rupa-tiles .t-booth {
-  grid-column: span 2;
-  background: linear-gradient(160deg, var(--pb-body-2), var(--pb-body));
-  color: var(--pb-cream);
-}
-.rupa-tiles .t-booth .ink {
-  color: var(--pb-cream);
-}
-.rupa-tiles .t-booth .soft {
-  color: rgba(255, 247, 232, 0.7);
-}
-.rt-strip {
-  position: absolute;
-  top: 6px;
-  width: 30px;
-  height: 84px;
-  border-radius: 2px;
-  background:
-    linear-gradient(135deg, #f9c78e, #c79bff) 4px 4px / 22px 16px no-repeat,
-    linear-gradient(135deg, #8fd1ff, #ffc4e1) 4px 24px / 22px 16px no-repeat,
-    linear-gradient(135deg, #b6f0a3, #f9e17a) 4px 44px / 22px 16px no-repeat,
-    linear-gradient(135deg, #ffb0b0, #ffd98f) 4px 64px / 22px 16px no-repeat,
-    #fff;
-  box-shadow: 0 10px 14px -6px rgba(0, 0, 0, 0.5);
-}
-.rt-strip.a {
-  left: calc(50% - 32px);
-  transform: rotate(-6deg);
-}
-.rt-strip.b {
-  left: calc(50% + 2px);
-  transform: rotate(5deg);
-}
+
 .pb-wall-cta {
   display: flex;
   flex-direction: column;

@@ -315,10 +315,18 @@ async function flow() {
   await a.click('[data-testid=tab-rak]');
   await a.waitForURL(/\/kenangan$/);
   await a.waitForSelector('.tabs a.on:has-text("rak")');
+  await a.waitForSelector('[data-testid=taman] .tahun-grid i.on'); // hari yang tadi disegel tumbuh di kisi
+  await a.waitForSelector('.rakbuku .spine:has-text("kitab")');
+  await shot(a, '58-rak');
   await a.click('[data-testid=tab-main]');
   await a.waitForURL(/\/main$/);
   await a.click('[data-testid=tab-kita]');
   await a.waitForURL(/\/l\/[^/]+$/); // satu lingkaran: langsung ke berandanya
+  await a.waitForSelector('[data-testid=today-pair] .pair-page.sealed'); // keduanya sudah menyegel
+  await a.waitForSelector('[data-testid=pair-cta]:has-text("buka hari ini bersama")');
+  await a.click('[data-testid=world-more]');
+  await a.waitForSelector('.world-tile:has-text("ekspedisi")');
+  await shot(a, '59-kita', true);
   await a.click('[data-testid=tab-hari-ini]');
   await a.waitForURL(/\/hari$/);
   await a.click('[data-testid=open-hadir]');

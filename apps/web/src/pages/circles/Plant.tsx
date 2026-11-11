@@ -1,13 +1,13 @@
 /** Tanaman Berdua: wajah dari api lingkaran, disiram kilasan & pelukan. */
-import { benihTalk, formatDayLong, localParts, PLANT_STAGES, plantFor, type BenihMood, type PlantState } from '@sehari/core';
-import { useMemo, useState } from 'react';
+import { benihTalk, localParts, PLANT_STAGES, plantFor, type BenihMood, type PlantState } from '@sehari/core';
+import { type CSSProperties, useMemo, useState } from 'react';
 import { type CircleView, useMe, useToday } from '@/lib/data';
 import { useFlashes } from '@/lib/flash';
 import { playedMinutesToday } from '@/lib/play';
 import { navigate } from '@/lib/router';
 import { sound } from '@/lib/sound';
 import { Benih } from '@/ui/Benih';
-import { Avatar, Doodle, Flame, Sheet } from '@/ui/kit';
+import { Doodle, Sheet } from '@/ui/kit';
 
 /** Hitung keadaan tanaman sebuah lingkaran (memakai kilasan hari ini). */
 export function usePlant(circle: CircleView): PlantState {
@@ -26,24 +26,14 @@ export function PlantArt({ state, size = 150, mood, className }: { state: PlantS
   return <Benih stage={state.stage.key} health={health} watered={state.watered} visitors={state.visitors} mood={mood} size={size} className={className} />;
 }
 
-function skyTime(h: number) {
-  if (h < 5 || h >= 19) return 'malam';
-  if (h < 10) return 'pagi';
-  if (h < 16) return 'siang';
-  return 'senja';
-}
-
 /**
- * Kartu "kita": Si Benih di panggung kecilnya (langit ikut jam), celetukannya,
- * jalan menuju tahap berikutnya, tiga angka, dan siapa yang sudah menyegel.
+ * Si Benih di beranda Kita: tokohnya di kiri, celetukannya dan jalan menuju
+ * tahap berikutnya di kanan. Angka-angka pindah ke bawah judul layar.
  */
 export function PlantCard({ circle }: { circle: CircleView }) {
   const me = useMe();
   const today = useToday();
   const p = usePlant(circle);
-  const ann = p.anniversary;
-  const s = circle.streak;
-  const members = circle.members.filter((m) => m.state !== 'left');
   const hour = localParts(me.user.tz).hour;
   const talk = useMemo(
     () =>
@@ -69,72 +59,33 @@ export function PlantCard({ circle }: { circle: CircleView }) {
     navigator.vibrate?.(10);
   };
   return (
-    <section className="card kt" data-testid="plant">
-      <div className="kt-hero" data-time={skyTime(hour)}>
-        {skyTime(hour) === 'malam' ? <span className="kt-stars" aria-hidden /> : null}
-        <span className="kt-orb" aria-hidden />
-        <span className="kt-hill" aria-hidden />
-        <button className="kt-plant" onClick={tap} aria-label="ketuk Si Benih" data-testid="benih">
-          <PlantArt key={poke} state={p} size={132} mood={talk.mood} className={poke ? 'poke' : undefined} />
-        </button>
-        <p key={n} className="kt-bubble" aria-live="polite" data-testid="benih-line">
-          {line}
-          <small>— si {p.stage.name}{n === 0 ? ' · ketuk aku' : ''}</small>
+    <section className="card bh" data-testid="plant">
+      <button className="bh-pot" onClick={tap} aria-label="ketuk Si Benih" data-testid="benih">
+        <PlantArt key={poke} state={p} size={104} mood={talk.mood} className={poke ? 'poke' : undefined} />
+      </button>
+      <div className="bh-body">
+        <p key={n} className="bh-say" aria-live="polite" data-testid="benih-line">
+          “{line}”
         </p>
-      </div>
-      <div className="kt-head">
-        <div className="kt-title">
-          <span className="pl-name hand">{p.stage.name}</span>
-          <span className="label">tanaman kita</span>
-        </div>
-        <button className="kt-grow" onClick={() => setStages(true)} aria-label="lihat perjalanan tumbuh">
-          <span className="kt-bar" aria-hidden>
-            <i style={{ width: `${Math.round(done * 100)}%` }} />
+        <button className="bh-grow" onClick={() => setStages(true)} aria-label="lihat perjalanan tumbuh">
+          <span className="bh-bar" aria-hidden>
+            <i style={{ '--w': `${Math.round(done * 100)}%` } as CSSProperties} />
           </span>
-          <span className="kt-next">
+          <span className="tiny soft">
+            si {p.stage.name}
             {p.next && p.toNext !== undefined ? (
               <>
-                <b>{p.toNext}</b> hari lagi → {p.next.name}
+                {' '}
+                · <b className="ink">{p.toNext}</b> hari lagi jadi {p.next.name}
               </>
             ) : (
-              'sudah setinggi-tingginya'
+              ' · sudah setinggi-tingginya'
             )}
           </span>
         </button>
-        <p className="small kt-line">{p.line}</p>
-      </div>
-      <div className="kt-stats">
-        <div>
-          <b>{p.sinceDays}</b>
-          <span>hari bersama</span>
-        </div>
-        <div title={`terpanjang ${s.longest} hari`}>
-          <span className="kt-flame">
-            <Flame level={s.flame} days={s.current} size={22} />
-          </span>
-          <span>hari api</span>
-        </div>
-        <div className={ann.inDays === 0 ? 'today' : ''}>
-          <b>{ann.inDays === 0 ? '🎉' : ann.inDays}</b>
-          <span>{ann.inDays === 0 ? `hari jadi ke-${ann.years}` : 'ke hari jadi'}</span>
-        </div>
-      </div>
-      <p className="tiny soft kt-sub">
-        {p.togetherDays} hari disegel berdua sejak {formatDayLong(circle.createdDay)} · api terpanjang {s.longest}
-        {s.next ? ` · ${s.next.remaining} hari lagi ke ${s.next.name}` : ''}
-      </p>
-      <div className="kt-foot">
-        <div className="kt-members">
-          {members.map((m) => (
-            <span key={m.userId} className="kt-member" title={circle.todaySealed[m.userId] ? 'sudah menyegel hari ini' : 'belum menyegel'}>
-              <Avatar doodle={m.doodle} size={30} sealed={circle.todaySealed[m.userId]} dim={m.state === 'remembered'} />
-              <span className="tiny">{m.userId === me.user.id ? 'kamu' : m.penName}</span>
-            </span>
-          ))}
-        </div>
         {!p.watered && circle.status === 'active' ? (
-          <button className="btn sm auto ghost" onClick={() => navigate('/kilasan/jepret')}>
-            <Doodle id="penyiram" size={16} color="currentColor" /> siram
+          <button className="bh-water" onClick={() => navigate('/kilasan/jepret')}>
+            <Doodle id="penyiram" size={16} color="currentColor" /> siram dengan jepretan
           </button>
         ) : null}
       </div>

@@ -684,13 +684,7 @@ button.card:active {
 }
 
 /* ── Taman yang masih kosong: bayangan tiga minggu ke depan ──────────────── */
-.garden .g-ghost {
-  display: block;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  animation: ghost-bloom 5s ease-in-out infinite;
-}
+
 @keyframes ghost-bloom {
   0%,
   100% {
@@ -698,12 +692,6 @@ button.card:active {
   }
   50% {
     opacity: 0.3;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .garden .g-ghost {
-    animation: none;
-    opacity: 0.2;
   }
 }
 
@@ -1027,51 +1015,7 @@ button.card:active {
 }
 
 /* ── Beranda lingkaran: tiga ruang ───────────────────────────────────────── */
-.ch-tabs {
-  position: sticky;
-  top: 6px;
-  z-index: 20;
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  margin: 14px 0 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--card) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(1.3);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  box-shadow: var(--shadow);
-}
-.ch-tabs button {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 999px;
-  background: none;
-  color: var(--ink-soft);
-  font: 12.5px/1.2 var(--mono);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.25s, color 0.2s, transform 0.25s var(--ease-spring);
-}
-.ch-tabs button:active {
-  transform: scale(0.95);
-}
-.ch-tabs button.on {
-  color: var(--on-ink);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 84%, #fff), var(--ink) 70%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--glow);
-}
-.ch-panel:not([hidden]) {
-  animation: ch-in 0.35s var(--ease-out) both;
-}
-.ch-panel > .section:first-child {
-  margin-top: 0;
-}
+
 @keyframes ch-in {
   from {
     opacity: 0;
@@ -1144,8 +1088,7 @@ button.card:active {
 @media (prefers-reduced-motion: reduce) {
   .page-stack.turn-next,
   .page-stack.turn-prev,
-  .sk-paper b,
-  .ch-panel:not([hidden]) {
+  .sk-paper b {
     animation: none;
   }
 }
