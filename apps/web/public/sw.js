@@ -64,6 +64,9 @@ function routeFor(d) {
       return d.circleId && d.day ? `/l/${d.circleId}/hari/${d.day}` : '/hari';
     case 'question':
     case 'dates':
+    case 'truce':
+    case 'swap':
+    case 'ink':
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
     case 'roll':
       if (d.circleId) return d.week ? `/l/${d.circleId}/rol/${d.week}` : `/l/${d.circleId}/rol`;

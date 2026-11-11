@@ -814,3 +814,39 @@ export const gameRooms = pgTable('game_rooms', {
   updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
+
+// ── Berdua: bendera putih, tukar pena, tinta hilang ─────────────────────────
+
+/**
+ * Catatan kecil yang baru "bertemu" bila kedua pihak melakukan hal yang sama.
+ * - `truce` (bendera putih): `key` = hari dikibarkan, tanpa isi. `matchedAt` terisi saat bendera lain bertemu.
+ * - `swap` (tukar pena): `key` = bulan YYYY-MM, `aboutId` = hari siapa yang ditebak, `enc` = tebakan terenkripsi.
+ * - `ink` (tinta hilang): `key` = hari ditulis, `enc` = pesan; `matchedAt` = pertama kali terbaca bersama.
+ * `enc` dienkripsi dengan kunci lingkaran; server tidak bisa membacanya.
+ */
+export const pairNotes = pgTable(
+  'pair_notes',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    kind: text('kind').$type<'truce' | 'swap' | 'ink'>().notNull(),
+    key: text('key').notNull(),
+    aboutId: text('about_id'),
+    enc: text('enc'),
+    matchedAt: ts('matched_at'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('pair_notes_circle_idx').on(t.circleId, t.kind, t.key)],
+);
+
+/** Siapa yang sedang membuka beranda lingkaran (detak tiap beberapa detik), untuk tinta hilang. */
+export const circlePresence = pgTable(
+  'circle_presence',
+  {
+    circleId: text('circle_id').notNull().references(() => circles.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    at: ts('at').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.circleId, t.userId] })],
+);

@@ -63,6 +63,8 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | **Primbon Ngawur**: ramalan konyol setelah menyegel, diramu di perangkat dari kata-kata halaman | `core/benih.ts primbon`, `editor/Seal.tsx` |
 | **Kertas Ikut Senja**: kertas menghangat menjelang matahari terbenam di kota pengguna, gelap sesudahnya (pilihan di Tema, disimpan di perangkat) | `core/astro.ts paperPhase`, `lib/theme.tsx`, `pages/me/Tema.tsx` |
 | **Kertas Kalkir**: halaman setahun / setengah tahun / sebulan / seminggu lalu tembus samar di bawah halaman hari ini | `editor/Kalkir.tsx`, `pages/Today.tsx` |
+| **Rahasia kecil** di beranda lingkaran: **Tinta Hilang** (ciphertext hanya dilepas server saat penulis dan pembaca sama-sama membuka lingkaran), **Tukar Pena** (sebulan sekali menulis hari orang lain; terbuka setelah keduanya menulis), **Bendera Putih** (dikibarkan diam-diam 72 jam; baru dikabari saat bendera lain bertemu, lalu jadi bintang emas di langit) | `pages/circles/Berdua.tsx`, `lib/berdua.ts`, `routes/berdua.ts`, tabel `pair_notes` & `circle_presence` |
+| **Cuaca Seberang**: cuaca kota orang terdekat menetes di tepi halaman hari ini (Open-Meteo, koordinat kota) | `editor/Seberang.tsx`, `lib/weather.ts` |
 | Keadaan kosong yang bercerita (bayangan taman tiga minggu ke depan, contoh rasi) | `pages/Kenangan.tsx`, `pages/lore/Langit.tsx` |
 
 ## Desain aman

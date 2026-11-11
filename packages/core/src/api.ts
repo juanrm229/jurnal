@@ -930,3 +930,71 @@ export interface BoothWire {
   frames: { userId: string; envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] }; mediaIds: string[] }[];
   createdAt: string;
 }
+
+// ── Berdua: bendera putih, tukar pena, tinta hilang ─────────────────────────
+
+/** Teks terenkripsi kunci lingkaran, bentuk "e<epoch>:<ciphertext>". */
+const circleEnc = z.string().min(4).max(24_000);
+
+/** Bendera putih berkibar diam-diam selama ini sebelum turun sendiri. */
+export const TRUCE_HOURS = 72;
+
+export interface TruceState {
+  /** Benderaku yang masih berkibar dan belum bertemu. Bendera orang lain tidak pernah terlihat. */
+  mine: { raisedAt: string; expiresAt: string } | null;
+  /** Saat-saat bendera kalian bertemu (terbaru dulu). */
+  peace: { at: string; userIds: string[] }[];
+}
+
+export const swapBody = z.object({ id, month: z.string().regex(/^\d{4}-\d{2}$/), aboutId: id, enc: circleEnc });
+
+export interface SwapWire {
+  id: string;
+  authorId: string;
+  aboutId: string;
+  /** null = masih terkunci: tulis punyamu dulu. */
+  enc: string | null;
+  createdAt: string;
+}
+
+export interface SwapState {
+  month: string;
+  mine: SwapWire | null;
+  others: SwapWire[];
+}
+
+export const inkBody = z.object({ id, day: dayKey, enc: circleEnc });
+
+export interface InkWire {
+  id: string;
+  authorId: string;
+  day: DayKey;
+  /** null = belum bisa dibaca: penulisnya sedang tidak di sini. */
+  enc: string | null;
+  /** Pertama kali terbaca bersama. */
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface InkLive {
+  /** Anggota yang sedang membuka beranda lingkaran ini (termasuk kamu). */
+  present: string[];
+  inks: InkWire[];
+}
+
+/** Detak kehadiran dianggap basi setelah sekian detik. */
+export const PRESENCE_TTL_SECONDS = 20;
+export const INK_MAX_OPEN = 5;
+
+/**
+ * Tukar pena: siapa menulis hari siapa bulan ini. Duo saling menulis; di
+ * lingkaran, tiap orang mendapat satu orang lain, bergeser tiap bulan.
+ */
+export function swapTarget(memberIds: string[], meId: string, month: string): string | null {
+  const ids = [...new Set(memberIds)].sort();
+  const i = ids.indexOf(meId);
+  if (i < 0 || ids.length < 2) return null;
+  const [y, m] = month.split('-').map(Number);
+  const shift = 1 + (((y ?? 0) * 12 + (m ?? 0)) % (ids.length - 1));
+  return ids[(i + shift) % ids.length]!;
+}
