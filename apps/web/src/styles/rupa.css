@@ -21,7 +21,7 @@
   display: block;
   width: 100%;
   object-fit: cover;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   border: 5px solid #fff;
   filter: var(--rupa-float);
   background: var(--ink-faint);
@@ -41,9 +41,9 @@
   transform: translateX(-50%) rotate(-2deg);
   background: #fff;
   color: #16161a;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
   white-space: nowrap;
   max-width: 88%;
@@ -124,7 +124,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 14px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: var(--card);
   box-shadow: var(--shadow);
   word-break: break-word;
@@ -157,7 +157,7 @@
   right: 6px;
   top: 6px;
   font: 600 12px var(--hand);
-  font-size: 18px;
+  font-size: var(--fs-lg);
   color: var(--ink);
   border: 2px solid var(--ink);
   border-radius: 8px;
@@ -179,7 +179,7 @@
 .rb-faces {
   display: flex;
   padding: 5px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--card) 85%, transparent);
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
@@ -226,7 +226,7 @@
 .rb-swatch {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   border: 2px solid transparent;
 }
 .rb-swatch.on {
@@ -315,7 +315,7 @@
   right: 0;
   display: flex;
   flex-direction: column;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text);
   text-align: center;
 }
@@ -428,7 +428,7 @@
   color: var(--text-soft);
   background: var(--paper);
   padding: 8px 10px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
   opacity: 0.55;
   pointer-events: none;
@@ -450,7 +450,7 @@
   position: relative;
   margin: 26px auto 12px;
   text-align: center;
-  font-size: 34px;
+  font-size: var(--fs-3xl);
 }
 .niat-arrow {
   position: absolute;
@@ -464,7 +464,7 @@
   border: 0;
   border-bottom: 1.5px dashed var(--pill);
   background: transparent;
-  font-size: 26px;
+  font-size: var(--fs-xl);
   resize: none;
   outline: none;
   padding: 6px 2px;
@@ -525,14 +525,14 @@
   border-radius: 14px;
   background: var(--sticky-yellow);
   color: #16161a;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   display: flex;
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
 }
 .niat-recall .rupa-hand {
-  font-size: 22px;
+  font-size: var(--fs-xl);
   color: #16161a;
 }
 
@@ -548,7 +548,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .vr-dot {
   width: 9px;
@@ -590,7 +590,7 @@
 }
 .vr-live {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--fs-xl);
   max-height: 150px;
   overflow: auto;
 }
@@ -600,7 +600,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 8px 8px 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--pill);
 }
 .vr-btn {
@@ -608,11 +608,11 @@
   align-items: center;
   gap: 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 10px 18px;
   background: var(--text);
   color: var(--paper);
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .vr-btn.stop {
   background: #ef4b3f;
@@ -641,7 +641,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .rw-label b.accent {
   color: #e2562f;
@@ -677,7 +677,7 @@
 .rw-empty {
   width: 70px;
   height: 70px;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   display: grid;
   place-items: center;
   border: 1.5px dashed var(--pill);
