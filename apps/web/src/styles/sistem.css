@@ -758,6 +758,15 @@ a.hadir-row:active {
   animation: fade var(--t-rite) ease 900ms both;
 }
 
+.head-sky {
+  white-space: nowrap;
+  animation: fade var(--t-rite) ease both;
+}
+.head-sky svg {
+  display: inline-block;
+  vertical-align: -0.25em;
+}
+
 /* "Untuk siapa": penanda yang menyembul di tepi atas kertas. */
 .for-chip {
   position: absolute;
