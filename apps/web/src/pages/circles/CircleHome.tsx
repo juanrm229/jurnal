@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, nightQuestionFor, penHolderFor, wrapHistory, type WrapPeriod, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -13,6 +14,7 @@ import { PlantCard } from './Plant';
 import { RollCard } from './RollCard';
 import { TogetherToday } from './Questions';
 import { DatesCard } from './Dates';
+import { sound } from '@/lib/sound';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing, Header } from '@/ui/kit';
 
@@ -27,10 +29,27 @@ const FEATURES: { path: string; label: string; doodle: string; hint: string }[] 
   { path: 'dadu', label: 'dadu kenangan', doodle: 'dadu', hint: 'sekali seminggu' },
 ];
 
+type Tab = 'hari' | 'minggu' | 'dunia';
+const TABS: { id: Tab; label: string; doodle: string }[] = [
+  { id: 'hari', label: 'hari ini', doodle: 'ui-hari-ini' },
+  { id: 'minggu', label: 'minggu ini', doodle: 'ui-kalender' },
+  { id: 'dunia', label: 'dunia kalian', doodle: 'peta' },
+];
+
 const SCENE_FOR: Record<string, string> = { duo: 'dua-jendela', circle: 'rumah-kecil', chosen_family: 'rumah-kecil', moment: 'taman-tahun' };
 
 export default function CircleHome() {
   const { id } = useParams<{ id: string }>();
+  // Tiga ruang supaya beranda tidak jadi gulungan panjang. Semuanya tetap terpasang
+  // (hanya disembunyikan), jadi kehadiran untuk tinta hilang tidak terputus saat pindah ruang.
+  const [tab, setTabState] = useState<Tab>(() => (sessionStorage.getItem(`chTab.${id}`) as Tab | null) ?? 'hari');
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    try {
+      sessionStorage.setItem(`chTab.${id}`, t);
+    } catch {}
+    sound.play('turn');
+  };
   const me = useMe();
   const today = useToday();
   const circle = useCircle(id);
@@ -87,6 +106,15 @@ export default function CircleHome() {
         ) : null}
       </div>
 
+      <div className="ch-tabs" role="tablist" aria-label="ruang lingkaran">
+        {TABS.map((t) => (
+          <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)} data-testid={`ch-tab-${t.id}`}>
+            <Doodle id={t.doodle} size={18} color="currentColor" /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" hidden={tab !== 'hari'} className="ch-panel">
       {circle.kind !== 'moment' && circle.status !== 'memorial' ? (
         <div className="ch-block">
           <PlantCard circle={circle} />
@@ -123,6 +151,9 @@ export default function CircleHome() {
       ) : null}
 
       <BerduaCard circle={circle} />
+      </div>
+
+      <div role="tabpanel" hidden={tab !== 'minggu'} className="ch-panel">
 
       {circle.kind !== 'moment' ? (
         <section className="section">
@@ -164,6 +195,9 @@ export default function CircleHome() {
 
       <WrapHistory circleId={id} createdDay={circle.createdDay} today={today} moment={circle.kind === 'moment'} />
 
+      </div>
+
+      <div role="tabpanel" hidden={tab !== 'dunia'} className="ch-panel">
       <section className="section">
         <span className="label">dikumpulkan bersama</span>
         <div className="rupa-tiles">
@@ -216,6 +250,7 @@ export default function CircleHome() {
           <Link className="btn soft grow" to={`/surat/tulis?circleId=${id}&kind=future`}><Doodle id="jam-pasir" size={20} /> untuk nanti</Link>
         </div>
       </section>
+      </div>
     </main>
   );
 }

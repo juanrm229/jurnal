@@ -3,6 +3,7 @@
  * seret foto ke atasnya, tempel stiker, rekam suara — lalu segel saat senja.
  */
 import {
+  addDays,
   type Audience,
   COPY,
   dailyCardFor,
@@ -11,6 +12,8 @@ import {
   type DropKind,
   type DropPayload,
   formatDayLong,
+  formatDayShort,
+  relativeDay,
   getCity,
   type MoodCode,
   nightQuestionFor,
@@ -42,12 +45,37 @@ import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { takePendingStrip } from '@/lib/photobox/booth';
 import { store } from '@/lib/storage';
-import { Avatar, Doodle, Growing, Sheet, Toggle, useToast } from '@/ui/kit';
+import { Avatar, Doodle, Sheet, Toggle, useToast } from '@/ui/kit';
 import { sound } from '@/lib/sound';
 import { openLaci } from '@/ui/Laci';
 import { countdown, fmtWhen, useMeets } from '@/lib/meets';
 
 type Item = PageItem & { draft?: boolean; pageCircleId?: string | null };
+
+/** Arah balik halaman terakhir (maju = besok), supaya kertasnya terbalik ke arah yang benar. */
+let turnDir: 'next' | 'prev' | null = null;
+
+/** Kertas kosong berkilau selagi halaman dibuka, supaya layar tidak melompat. */
+function PaperSkeleton() {
+  return (
+    <main className="screen today" style={{ maxWidth: 760 }} aria-busy aria-label="membuka halaman">
+      <div className="sk-top" />
+      <div className="sk-chips">
+        <i />
+        <i />
+        <i />
+      </div>
+      <div className="sk-paper">
+        <b style={{ width: '58%', height: 26 }} />
+        <b style={{ width: '40%' }} />
+        <span />
+        <b style={{ width: '82%' }} />
+        <b style={{ width: '74%' }} />
+        <b style={{ width: '46%' }} />
+      </div>
+    </main>
+  );
+}
 
 export default function Today() {
   const { me, identity } = useReady();
@@ -405,7 +433,7 @@ export default function Today() {
   const showNiat = editable && page === 'main' && day === today && !!q.data && !niat && !niatOff;
   const mood = pageItems.find((x) => x.payload.mood)?.payload.mood;
 
-  if (q.isLoading || !ring) return <Growing label="membuka halaman…" />;
+  if (q.isLoading || !ring) return <PaperSkeleton />;
 
   const openCaption = (it: Item) => {
     setCaptionFor(it.id);
@@ -477,6 +505,13 @@ export default function Today() {
       <Doodle id={sealed ? gardenDoodleFor(`${me.user.id}:${day}`).id : 'tunas'} size="clamp(44px, 10vw, 86px)" draw={sealed} className={sealed ? '' : 'sway'} style={{ opacity: sealed ? 1 : 0.35 }} />
     </div>
   );
+
+  const turnTo = (d: string) => {
+    if (d > today || d === day) return;
+    turnDir = d > day ? 'next' : 'prev';
+    sound.play('turn');
+    navigate(d === today ? '/hari' : `/hari/${d}`);
+  };
 
   const selectedItem = items.find((x) => x.id === selected);
 
@@ -650,7 +685,21 @@ export default function Today() {
         </div>
       ) : null}
 
-      <div ref={pageBox} className="page-stack">
+      <nav className="day-nav" aria-label="pindah hari">
+        <button onClick={() => turnTo(addDays(day, -1))} data-testid="day-prev" aria-label={`ke ${formatDayLong(addDays(day, -1))}`}>
+          <Doodle id="ui-kembali" size={14} color="currentColor" /> {relativeDay(addDays(day, -1), today) === 'kemarin' ? 'kemarin' : formatDayShort(addDays(day, -1))}
+        </button>
+        {day !== today && addDays(day, 1) !== today ? (
+          <button onClick={() => turnTo(today)} className="mid">
+            hari ini
+          </button>
+        ) : null}
+        <button onClick={() => turnTo(addDays(day, 1))} disabled={day >= today} data-testid="day-next" aria-label="ke hari berikutnya">
+          {day >= today ? 'besok belum ditulis' : addDays(day, 1) === today ? 'hari ini' : formatDayShort(addDays(day, 1))} <Doodle id="ui-panah-kanan" size={14} color="currentColor" />
+        </button>
+      </nav>
+
+      <div ref={pageBox} key={day} className={`page-stack ${turnDir ? `turn-${turnDir}` : ''}`}>
         <Page
           key={page}
           items={pageItems}

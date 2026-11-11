@@ -97,6 +97,18 @@ export default function Kenangan() {
       ) : null}
 
       <section className="section">
+        <span className="label">si kepo</span>
+        <Link to="/kepo" className="card row" style={{ gap: 12 }} data-testid="to-kepo">
+          <Doodle id="ui-cari" size={36} className="sway" />
+          <span className="grow">
+            <span className="ink" style={{ display: 'block' }}>apa kata jurnalmu tentang kamu?</span>
+            <span className="tiny soft">jam favorit, kata paling setia, rasa saat hujan. Dihitung di HP-mu.</span>
+          </span>
+          <Doodle id="ui-panah-kanan" size={16} />
+        </Link>
+      </section>
+
+      <section className="section">
         <span className="label">surat & kapsul waktu</span>
         <Link to="/surat" className="card row" style={{ gap: 12 }}>
           <Doodle id="surat-botol" size={36} />
