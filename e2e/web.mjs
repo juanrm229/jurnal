@@ -308,6 +308,30 @@ async function flow() {
     await a.waitForTimeout(1500);
     await shot(a, `50-${n}`);
   }
+  // Kerangka empat ruang: tab bawah, cari, yang hadir, dan avatar ke Aku.
+  await a.setViewportSize({ width: 400, height: 860 });
+  await a.goto(`${APP}/hari`);
+  await a.waitForSelector('.tabs a.on:has-text("hari ini")');
+  await a.click('[data-testid=tab-rak]');
+  await a.waitForURL(/\/kenangan$/);
+  await a.waitForSelector('.tabs a.on:has-text("rak")');
+  await a.click('[data-testid=tab-main]');
+  await a.waitForURL(/\/main$/);
+  await a.click('[data-testid=tab-kita]');
+  await a.waitForURL(/\/l\/[^/]+$/); // satu lingkaran: langsung ke berandanya
+  await a.click('[data-testid=tab-hari-ini]');
+  await a.waitForURL(/\/hari$/);
+  await a.click('[data-testid=open-hadir]');
+  await a.waitForSelector('.sheet a:has-text("buka bersama")');
+  await shot(a, '56-hadir');
+  await a.keyboard.press('Escape');
+  await a.click('[data-testid=open-laci]');
+  await a.fill('[data-testid=laci-input]', 'photobox');
+  await a.waitForSelector('.laci-item:has-text("photobox")');
+  await shot(a, '57-cari');
+  await a.keyboard.press('Escape');
+  await a.click('[data-testid=open-aku]');
+  await a.waitForURL(/\/aku$/);
   // Di server sungguhan (MAILTM), hapus lagi akun uji supaya tidak tertinggal.
   if (process.env.MAILTM) {
     for (const p of [a, b]) {

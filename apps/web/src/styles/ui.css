@@ -36,19 +36,7 @@ a,
 }
 
 /* ── Halaman hari ini ───────────────────────────────────── */
-.today-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 0 10px;
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: linear-gradient(var(--paper) 70%, transparent);
-  margin: 0 calc(var(--gutter) * -1);
-  padding-left: var(--gutter);
-  padding-right: calc(var(--gutter) - 6px);
-}
+
 .for-chip {
   display: flex;
   align-items: baseline;
@@ -187,20 +175,6 @@ a,
 }
 .dock-seal:disabled {
   opacity: 0.45;
-}
-.wax-mini {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ink) 65%, #fff), var(--ink) 55%, color-mix(in srgb, var(--ink) 70%, #000));
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--ink) 45%, transparent), inset 0 -2px 4px rgba(0, 0, 0, 0.25);
-  transform: rotate(-8deg);
-}
-.dock-seal:not(:disabled) .wax-mini {
-  animation: breathe 3.2s ease-in-out infinite;
 }
 
 /* ── Ubin & stiker ──────────────────────────────────────── */
@@ -359,15 +333,6 @@ a,
   from {
     opacity: 0;
     transform: rotateY(35deg) translateX(-30%);
-  }
-}
-@media (max-width: 400px) {
-  .today-top .h2 {
-    display: none;
-  }
-  .today-top .icon-btn {
-    min-width: 40px;
-    padding: 6px;
   }
 }
 

@@ -57,8 +57,11 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | --- | --- |
 | **Si Benih**: tanaman lingkaran digambar ulang sebagai satu SVG (8 tahap, pot berwajah, langit ikut jam), bisa diketuk dan bawel; cemburu pada Ruang Main, merajuk saat layu, berpesta di hari jadi | `ui/Benih.tsx`, `pages/circles/Plant.tsx`, `core/benih.ts benihTalk`, `lib/play.ts` |
 | Perjalanan Tumbuh (lembar 8 tahap, yang belum dicapai masih siluet) | `pages/circles/Plant.tsx` |
-| **Laci**: satu peluncur + pencarian untuk semua fitur (tab bar, navigasi atas hari ini, Ctrl/⌘+K) | `ui/Laci.tsx`, `ui/TabBar.tsx` |
-| Niat Pagi ringkas (strip; kertas hari ini tetap di atas) | `editor/Niat.tsx` |
+| **Empat ruang**: tab bawah yang sama di semua layar utama — Hari ini, Kita, Rak, Main; coretan tinta meluncur ke ruang aktif, layar bergeser searah letak tabnya. Aku pindah ke avatar di pojok kanan atas | `ui/TabBar.tsx`, `ui/shell.tsx`, `lib/router.tsx tabIndex` |
+| **Laci**: pencarian semua fitur + jelajah per ruang (ikon cari di pojok kanan atas, Ctrl/⌘+K) | `ui/Laci.tsx` |
+| **Sistem visual**: token huruf, radius, jarak, durasi, dan warna lak; tiga bahan (kertas, kartu, lembar); lembar bisa diseret turun | `styles/sistem.css`, `ui/kit.tsx Sheet` |
+| **Yang hadir**: avatar orang terdekat di kepala halaman (garis putus = belum menyegel, titik lak = sudah); membuka jepret, kangen, kilasan, buka bersama | `ui/Hadir.tsx` |
+| Hari ini: kertas memenuhi layar, niat pagi sebagai catatan tempel, "untuk siapa" sebagai penanda di tepi kertas, alat + segel lak di jangkauan ibu jari | `pages/Today.tsx`, `editor/Niat.tsx` |
 | **Tiup Lilin**: menyegel dengan meniup mikrofon (ambang mengikuti kebisingan ruangan; suara tidak direkam); tombol tahan tetap ada | `lib/blow.ts`, `editor/Seal.tsx` |
 | **Primbon Ngawur**: ramalan konyol setelah menyegel, diramu di perangkat dari kata-kata halaman | `core/benih.ts primbon`, `editor/Seal.tsx` |
 | **Kertas Ikut Senja**: kertas menghangat menjelang matahari terbenam di kota pengguna, gelap sesudahnya (pilihan di Tema, disimpan di perangkat) | `core/astro.ts paperPhase`, `lib/theme.tsx`, `pages/me/Tema.tsx` |

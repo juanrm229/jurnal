@@ -85,11 +85,11 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/mulai/pulihkan', page('auth/Pulihkan'), false, false],
   ['/mulai/undang', page('auth/Undang'), true, false],
   ['/j/:token', page('Join'), false, false],
-  ['/hari', page('Today'), true, false],
-  ['/hari/:day', page('Today'), true, false],
+  ['/hari', page('Today'), true, true],
+  ['/hari/:day', page('Today'), true, true],
   ['/lingkaran', page('circles/Circles'), true, true],
   ['/l/baru', page('circles/NewCircle'), true, false],
-  ['/l/:id', page('circles/CircleHome'), true, false],
+  ['/l/:id', page('circles/CircleHome'), true, true],
   ['/l/:id/hari/:day', page('circles/Together'), true, false],
   ['/l/:id/undang', page('circles/Invite'), true, false],
   ['/l/:id/atur', page('circles/CircleSettings'), true, false],
@@ -106,7 +106,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/l/:id/lagu', page('circles/Lagu'), true, false],
   ['/bagikan', page('Bagikan'), true, false],
   ['/photobox', page('photobox/Photobox'), true, false],
-  ['/main', page('main/Ruang'), false, false],
+  ['/main', page('main/Ruang'), false, true],
   ['/main/titip', page('main/titip/Titip'), false, false],
   ['/main/titip/:code/tv', page('main/titip/Tv'), false, false],
   ['/main/titip/:code', page('main/titip/Meja'), false, false],
@@ -152,7 +152,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/surat', page('letters/Letters'), true, false],
   ['/surat/tulis', page('letters/Write'), true, false],
   ['/surat/:id', page('letters/Read'), true, false],
-  ['/aku', page('me/Me'), true, true],
+  ['/aku', page('me/Me'), true, false],
   ['/aku/tema', page('me/Tema'), false, false],
   ['/aku/keamanan', page('me/Keamanan'), true, false],
   ['/aku/profil', page('me/Profil'), true, false],
@@ -215,7 +215,7 @@ export function App() {
           </Suspense>
         </PageErrorBoundary>
         {tabs && status === 'ready' ? <TabBar path={path} /> : null}
-        {needsReady && status === 'ready' ? <Laci /> : null}
+        {(needsReady || tabs) && status === 'ready' ? <Laci /> : null}
       </ParamsProvider>
     );
     return needsReady ? <Guard>{body}</Guard> : body;

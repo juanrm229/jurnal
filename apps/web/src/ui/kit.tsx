@@ -1,6 +1,6 @@
 import { type FlameLevel, MOOD_CODES, MOODS, type MoodCode } from '@sehari/core';
 import { getDoodle } from '@sehari/doodles';
-import { type CSSProperties, type ReactNode, createContext, memo, useCallback, useContext, useEffect, useState } from 'react';
+import { type CSSProperties, type PointerEvent as RPointerEvent, type ReactNode, createContext, memo, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { API_URL } from '@/lib/api';
 import { back } from '@/lib/router';
 import { sound, useSoundPrefs } from '@/lib/sound';
@@ -155,7 +155,27 @@ export function ListLink({ icon, title, sub, onClick, right }: { icon?: string; 
 
 // ── Sheet & toast ───────────────────────────────────────────────────────────
 
+const SHEET_OUT = 220;
+
+/**
+ * Lembar bawah. Naik dengan pegas, turun dengan animasi keluar, dan bisa
+ * diseret turun dari pegangannya untuk menutup.
+ */
 export function Sheet({ open, onClose, children, title }: { open: boolean; onClose: () => void; children: ReactNode; title?: string }) {
+  // Tetap terpasang sebentar setelah ditutup supaya animasi keluarnya selesai.
+  const [shown, setShown] = useState(open);
+  const last = useRef<ReactNode>(children);
+  if (open) last.current = children;
+  const panel = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ y: number; dy: number } | null>(null);
+  useEffect(() => {
+    if (open) {
+      setShown(true);
+      return;
+    }
+    const t = window.setTimeout(() => setShown(false), SHEET_OUT);
+    return () => window.clearTimeout(t);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     sound.play('open');
@@ -166,12 +186,47 @@ export function Sheet({ open, onClose, children, title }: { open: boolean; onClo
       sound.play('close');
     };
   }, [open]);
-  if (!open) return null;
+  if (!open && !shown) return null;
+
+  const move = (e: RPointerEvent) => {
+    const d = drag.current;
+    const el = panel.current;
+    if (!d || !el) return;
+    d.dy = Math.max(0, e.clientY - d.y);
+    el.style.transform = `translateY(${d.dy}px)`;
+  };
+  const drop = () => {
+    const d = drag.current;
+    const el = panel.current;
+    drag.current = null;
+    if (!d || !el) return;
+    el.classList.remove('dragging');
+    if (d.dy > 90) {
+      // Animasi keluar melanjutkan dari posisi jari.
+      onClose();
+      return;
+    }
+    el.classList.add('settling');
+    el.style.transform = '';
+    window.setTimeout(() => el.classList.remove('settling'), 320);
+  };
   // Dirender langsung ke <body>: lembar tidak boleh terjebak di dalam wadah yang
   // bisa digulir atau bertumpuk (di Safari iPhone ia bisa tergambar di belakang halaman).
   return createPortal(
-    <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal onClick={(e) => e.stopPropagation()}>
+    <div className={`sheet-backdrop ${open ? '' : 'closing'}`} onClick={onClose}>
+      <div ref={panel} className="sheet" role="dialog" aria-modal onClick={(e) => e.stopPropagation()}>
+        <span
+          className="sheet-drag"
+          aria-hidden
+          onPointerDown={(e) => {
+            drag.current = { y: e.clientY, dy: 0 };
+            panel.current?.classList.add('dragging');
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={move}
+          onPointerUp={drop}
+          onPointerCancel={drop}
+        />
         <span className="sheet-grab" aria-hidden />
         <div className="row between sheet-head">
           <span className="sheet-title">{title}</span>
@@ -179,7 +234,7 @@ export function Sheet({ open, onClose, children, title }: { open: boolean; onClo
             <Doodle id="ui-tutup" size={22} />
           </button>
         </div>
-        {children}
+        {open ? children : last.current}
       </div>
     </div>,
     document.body,

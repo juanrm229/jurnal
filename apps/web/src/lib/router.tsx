@@ -15,8 +15,25 @@ const listeners = new Set<Listener>();
 let depth = (history.state as { idx?: number } | null)?.idx ?? 0;
 window.addEventListener('popstate', () => (depth = (history.state as { idx?: number } | null)?.idx ?? 0));
 
+/** Urutan empat ruang di tab bawah; dipakai tab dan arah transisi. */
+const ROOMS: string[][] = [
+  ['/hari'],
+  ['/lingkaran', '/l/'],
+  ['/kenangan', '/karya', '/surat', '/kepo', '/wrap'],
+  ['/main', '/sidik', '/photobox', '/tentang-kita', '/kartu'],
+];
+export function tabIndex(path: string): number {
+  return ROOMS.findIndex((r) => r.some((p) => path === p || path.startsWith(p.endsWith('/') ? p : `${p}/`)));
+}
+
 export function navigate(to: string, opts: { replace?: boolean } = {}) {
   if (to === location.pathname + location.search + location.hash) return;
+  // Pindah antar-ruang: layar bergeser searah letak tabnya.
+  const from = tabIndex(location.pathname);
+  const next = tabIndex(to.split(/[?#]/)[0]!);
+  const dir = from >= 0 && next >= 0 && from !== next ? (next > from ? 'right' : 'left') : '';
+  if (dir) document.documentElement.dataset.nav = dir;
+  else delete document.documentElement.dataset.nav;
   if (opts.replace) history.replaceState({ idx: depth }, '', to);
   else history.pushState({ idx: ++depth }, '', to);
   const run = () => {

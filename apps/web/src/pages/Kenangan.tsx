@@ -9,6 +9,7 @@ import { openDrop, qk, useCircles, useKeyring, useLetters, useMe, useMyDays, use
 import { Link, navigate } from '@/lib/router';
 import { Scene } from '@/ui/art';
 import { Doodle, ListLink } from '@/ui/kit';
+import { ScreenTitle } from '@/ui/shell';
 
 /** Kenangan: taman tahunan milikmu, hari ini di tahun-tahun lalu, surat, dan cerita per lingkaran. */
 export default function Kenangan() {
@@ -33,8 +34,7 @@ export default function Kenangan() {
 
   return (
     <main className="screen">
-      <h1 className="display ink mt" style={{ margin: '12px 0 4px' }}>kenangan</h1>
-      <p className="small soft">Satu tanaman untuk setiap hari yang disegel. Hari yang terlewat hanya kabut.</p>
+      <ScreenTitle title="rak" sub="Satu tanaman untuk setiap hari yang disegel. Hari yang terlewat hanya kabut." />
       <div style={{ maxWidth: 420, margin: '-6px auto -18px' }}>
         <Scene id="taman-tahun" speed={1.6} />
       </div>
@@ -130,6 +130,7 @@ export default function Kenangan() {
         {circles.filter((c) => c.kind !== 'moment').map((x) => (
           <ListLink key={x.id} icon="rak-buku" title={`kitab ${x.name}`} sub="bab, adegan, dan jilid yang bisa dicetak" onClick={() => navigate(`/l/${x.id}/kitab`)} />
         ))}
+        <ListLink icon="pena" title="karya" sub="esai, cerpen, puisi: tulisan panjangmu" onClick={() => navigate('/karya')} />
         <ListLink icon="buku" title="jurnal pribadi" sub="halaman-halamanmu, termasuk yang “hanya aku”" onClick={() => navigate(`/hari/${today}`)} />
       </section>
     </main>

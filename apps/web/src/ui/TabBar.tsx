@@ -1,28 +1,49 @@
-import { Link } from '@/lib/router';
+/**
+ * Empat ruang: Hari ini (menulis), Kita (bersama), Rak (mengenang), Main (bermain).
+ * Tab yang sama hadir di setiap layar utama; coretan tinta meluncur ke ruang aktif.
+ */
+import type { CSSProperties } from 'react';
+import { useCircles } from '@/lib/data';
+import { Link, tabIndex } from '@/lib/router';
 import { Doodle } from './kit';
-import { openLaci } from './Laci';
 
 const TABS = [
   { to: '/hari', label: 'hari ini', icon: 'ui-hari-ini' },
-  { to: '/lingkaran', label: 'lingkaran', icon: 'ui-lingkaran' },
-  { to: '/karya', label: 'karya', icon: 'pena' },
-  { to: '/kenangan', label: 'kenangan', icon: 'ui-kenangan' },
-  { to: '/aku', label: 'aku', icon: 'ui-aku' },
-];
+  { to: '/lingkaran', label: 'kita', icon: 'ui-lingkaran' },
+  { to: '/kenangan', label: 'rak', icon: 'buku' },
+  { to: '/main', label: 'main', icon: 'dadu' },
+] as const;
+
+const buzz = () => {
+  try {
+    navigator.vibrate?.(8);
+  } catch {
+    /* tidak semua perangkat bergetar */
+  }
+};
 
 export function TabBar({ path }: { path: string }) {
+  const { circles } = useCircles();
+  const mine = circles.filter((c) => c.status === 'active' && c.me?.state === 'active');
+  // Satu lingkaran: tab Kita langsung membukanya.
+  const kita = mine.length === 1 ? `/l/${mine[0]!.id}` : '/lingkaran';
+  const at = tabIndex(path);
   return (
-    <nav className="tabbar" aria-label="navigasi">
-      {TABS.map((t) => (
-        <Link key={t.to} to={t.to} className={path.startsWith(t.to) ? 'on' : ''} aria-current={path.startsWith(t.to) ? 'page' : undefined}>
-          <Doodle id={t.icon} size={24} color="currentColor" />
-          {t.label}
-        </Link>
-      ))}
-      <button type="button" className="tabbar-laci" onClick={openLaci} aria-label="laci: cari semua fitur" data-testid="open-laci">
-        <Doodle id="ui-cari" size={24} color="currentColor" />
-        laci
-      </button>
+    <nav className="tabs" aria-label="ruang">
+      <span className="tabs-ink" style={{ '--i': Math.max(0, at) } as CSSProperties} data-none={at < 0 ? 1 : undefined} aria-hidden>
+        <svg viewBox="0 0 30 8" key={at}>
+          <path d="M2 5.2C7 2.4 11.5 6.6 16 4.4S24.5 2.6 28 4.6" pathLength={1} fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" />
+        </svg>
+      </span>
+      {TABS.map((t, i) => {
+        const on = i === at;
+        return (
+          <Link key={t.to} to={i === 1 ? kita : t.to} className={on ? 'on' : ''} aria-current={on ? 'page' : undefined} onClick={buzz} data-testid={`tab-${t.label.replace(' ', '-')}`}>
+            <Doodle key={on ? 'on' : 'off'} id={t.icon} size={24} color="currentColor" draw={on} />
+            {t.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

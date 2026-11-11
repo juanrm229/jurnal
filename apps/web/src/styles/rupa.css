@@ -445,15 +445,7 @@
     translate: 0 -8px;
   }
 }
-.niat-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-}
-.niat-brand {
-  font-size: 22px;
-}
+
 .niat-ask {
   position: relative;
   margin: 26px auto 12px;

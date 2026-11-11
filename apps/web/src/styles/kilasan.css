@@ -1420,18 +1420,6 @@
 }
 
 /* ── Perapian: halaman hari ini ───────────────────────────────────────────── */
-.today-nav {
-  gap: 4px;
-}
-.today-chips {
-  display: inline-flex;
-  gap: 2px;
-}
-@media (max-width: 400px) {
-  .today-chips > :nth-child(n + 2) {
-    display: none;
-  }
-}
 
 /* ── Perapian: kilasan & rol ──────────────────────────────────────────────── */
 .kl-actions + p {
