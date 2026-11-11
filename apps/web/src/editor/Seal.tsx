@@ -2,12 +2,14 @@
  * Upacara segel: kalimat terakhir, warna hari, lalu tahan tombol lilin.
  * Halaman masuk amplop, tutupnya terlipat, lilin dicap — dan hari ini selesai.
  */
-import { COPY, type MoodCode, MOODS, type SealResult } from '@sehari/core';
-import { useEffect, useRef, useState } from 'react';
+import { COPY, type MoodCode, MOODS, primbon, type SealResult } from '@sehari/core';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { useBlow } from '@/lib/blow';
+import { store } from '@/lib/storage';
 import { type CircleView, nowParts, useSeal } from '@/lib/data';
 import { useReady } from '@/lib/session';
 import { sound } from '@/lib/sound';
-import { Confetti, Doodle, MoodPicker, Toggle } from '@/ui/kit';
+import { Confetti, Doodle, MoodPicker, Toggle, useToast } from '@/ui/kit';
 
 const MILESTONE: Record<string, { name: string; line: string; doodle: string }> = {
   gerbang: { ...COPY.streak.milestone7, doodle: 'rumah' },
@@ -18,7 +20,27 @@ const MILESTONE: Record<string, { name: string; line: string; doodle: string }> 
 
 const HOLD_MS = 1200;
 
-export function SealCeremony({ day, circles, pageCircleId, niat, onClose, onSealed, onOpen }: { day: string; circles: CircleView[]; pageCircleId?: string; niat?: string; onClose: () => void; onSealed: () => void; onOpen: (circleId: string) => void }) {
+/** Lilin yang apinya ikut goyang saat ditiup. */
+function Candle({ level, out }: { level: number; out: boolean }) {
+  return (
+    <svg className={`candle ${out ? 'out' : ''}`} viewBox="0 0 120 170" width="120" height="170" aria-hidden style={{ '--blow': level } as CSSProperties}>
+      <ellipse cx="60" cy="160" rx="40" ry="6" fill="var(--ink)" opacity=".1" />
+      <g className="candle-flame">
+        <path d="M60 18 C74 40 80 52 60 72 C40 52 46 40 60 18Z" fill="#f8b84a" stroke="var(--ink)" strokeWidth="2.4" strokeLinejoin="round" />
+        <path d="M60 40 C67 52 68 58 60 68 C52 58 53 52 60 40Z" fill="#fff3c4" />
+      </g>
+      <g className="candle-smoke">
+        <path d="M60 66 q-10 -12 0 -22 q10 -10 0 -22" fill="none" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" opacity=".5" />
+      </g>
+      <path d="M60 70 v10" stroke="#3b2418" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M40 80 h40 v70 q0 6 -6 6 h-28 q-6 0 -6 -6Z" fill="color-mix(in srgb, var(--ink) 14%, #fffaf0)" stroke="var(--ink)" strokeWidth="2.4" strokeLinejoin="round" />
+      <path d="M40 92 q8 10 14 0 q5 -7 10 2 q6 10 16 -2" fill="none" stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" opacity=".6" />
+      <path d="M48 100 v36" stroke="#fff" strokeWidth="5" strokeLinecap="round" opacity=".5" />
+    </svg>
+  );
+}
+
+export function SealCeremony({ day, circles, pageCircleId, niat, texts, onClose, onSealed, onOpen }: { day: string; circles: CircleView[]; pageCircleId?: string; niat?: string; /** Tulisan di halaman, untuk Primbon Ngawur (tidak keluar dari perangkat). */ texts?: string[]; onClose: () => void; onSealed: () => void; onOpen: (circleId: string) => void }) {
   const { me } = useReady();
   const seal = useSeal();
   const [line, setLine] = useState('');
@@ -29,6 +51,27 @@ export function SealCeremony({ day, circles, pageCircleId, niat, onClose, onSeal
   const [err, setErr] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const hold = useRef<{ t0: number; raf: number } | null>(null);
+  const toast = useToast();
+  // Cara menyegel: tahan tombol, atau tiup lilinnya (pilihan terakhir diingat).
+  const [blowMode, setBlowMode] = useState(() => store.get('sealBlow') === '1');
+  const goRef = useRef<() => void>(() => {});
+  const blow = useBlow(blowMode && phase === 'write', () => {
+    navigator.vibrate?.([10, 40, 10]);
+    window.setTimeout(() => goRef.current(), 650);
+  });
+  useEffect(() => {
+    if (blow.state !== 'denied') return;
+    setBlowMode(false);
+    store.del('sealBlow');
+    toast('Mikrofon tidak bisa dipakai. Tahan tombolnya saja, ya.');
+  }, [blow.state]);
+  const chooseBlow = (on: boolean) => {
+    setBlowMode(on);
+    if (on) store.set('sealBlow', '1');
+    else store.del('sealBlow');
+  };
+  const fortune = useMemo(() => primbon([...(texts ?? []), line], `${me.user.id}:${day}:${pageCircleId ?? ''}`), [phase === 'done']);
+  const [torn, setTorn] = useState(false);
 
   useEffect(() => () => cancelAnimationFrame(hold.current?.raf ?? 0), []);
 
@@ -65,6 +108,8 @@ export function SealCeremony({ day, circles, pageCircleId, niat, onClose, onSeal
       setPhase('write');
     }
   };
+
+  goRef.current = () => void go();
 
   const start = () => {
     const t0 = performance.now();
@@ -137,26 +182,44 @@ export function SealCeremony({ day, circles, pageCircleId, niat, onClose, onSeal
             </div>
             {circles.length ? <Toggle label="kalimat terakhir hanya untukku" value={priv} onChange={setPriv} /> : null}
             {err ? <div className="small" style={{ color: 'var(--danger, #b3261e)' }}>{err}</div> : null}
-            <div className="col center" style={{ alignItems: 'center', gap: 10 }}>
-              <button
-                className="hold-btn"
-                aria-label="tahan untuk menyegel"
-                onPointerDown={start}
-                onPointerUp={stop}
-                onPointerLeave={stop}
-                onPointerCancel={stop}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') void go();
-                }}
-                onContextMenu={(e) => e.preventDefault()}>
-                <svg className="ring" viewBox="0 0 100 100" aria-hidden>
-                  <circle cx="50" cy="50" r="46" fill="none" stroke="var(--ink)" strokeOpacity=".18" strokeWidth="3" />
-                  <circle cx="50" cy="50" r="46" fill="none" stroke="var(--ink)" strokeWidth="3.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - progress} />
-                </svg>
-                <Doodle id="segel-lilin" size={58} color="var(--on-ink)" sw={2.6} style={{ transform: `scale(${1 + progress * 0.15})` }} />
-              </button>
-              <span className="small ink-soft">tahan untuk menyegel</span>
-            </div>
+            {blowMode ? (
+              <div className="col center blow" style={{ alignItems: 'center', gap: 6 }} data-testid="blow" data-state={blow.state}>
+                <Candle level={blow.level} out={blow.state === 'out'} />
+                <span className="hand ink" style={{ fontSize: 26 }} aria-live="polite">
+                  {blow.state === 'out' ? 'padam. selamat malam, hari ini.' : blow.state === 'asking' ? 'izinkan mikrofon dulu, ya…' : 'tiup lilinnya untuk menyegel'}
+                </span>
+                <span className="tiny soft center" style={{ maxWidth: 300 }}>
+                  Dekatkan HP, tiup pelan ke mikrofon. Suaramu tidak direkam, hanya kencangnya angin yang dibaca.
+                </span>
+                <button className="pill" onClick={() => chooseBlow(false)}>
+                  pakai tombol saja
+                </button>
+              </div>
+            ) : (
+              <div className="col center" style={{ alignItems: 'center', gap: 10 }}>
+                <button
+                  className="hold-btn"
+                  aria-label="tahan untuk menyegel"
+                  onPointerDown={start}
+                  onPointerUp={stop}
+                  onPointerLeave={stop}
+                  onPointerCancel={stop}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') void go();
+                  }}
+                  onContextMenu={(e) => e.preventDefault()}>
+                  <svg className="ring" viewBox="0 0 100 100" aria-hidden>
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--ink)" strokeOpacity=".18" strokeWidth="3" />
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--ink)" strokeWidth="3.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - progress} />
+                  </svg>
+                  <Doodle id="segel-lilin" size={58} color="var(--on-ink)" sw={2.6} style={{ transform: `scale(${1 + progress * 0.15})` }} />
+                </button>
+                <span className="small ink-soft">tahan untuk menyegel</span>
+                <button className="pill" onClick={() => chooseBlow(true)} data-testid="blow-on">
+                  <Doodle id="lilin" size={16} color="currentColor" /> atau tiup lilinnya
+                </button>
+              </div>
+            )}
           </>
         ) : null}
 
@@ -195,6 +258,20 @@ export function SealCeremony({ day, circles, pageCircleId, niat, onClose, onSeal
                 </button>
               );
             })}
+            <button className={`primbon ${torn ? 'torn' : ''}`} onClick={() => { if (!torn) { setTorn(true); sound.play('turn'); navigator.vibrate?.(14); } }} data-testid="primbon" aria-label={torn ? undefined : 'sobek primbon hari ini'}>
+              <span className="primbon-head">
+                <Doodle id="ui-bintang-rasi" size={18} color="currentColor" /> primbon ngawur · {fortune.weton}
+              </span>
+              {torn ? (
+                <>
+                  <span className="primbon-text hand">{fortune.text}</span>
+                  <span className="primbon-foot">{fortune.lucky}</span>
+                  <span className="primbon-foot dim">{fortune.words.length ? 'diramu di HP-mu dari kata-katamu hari ini · 100% tidak akurat' : '100% tidak akurat'}</span>
+                </>
+              ) : (
+                <span className="primbon-text hand">sobek di sini untuk ramalan besok ✂</span>
+              )}
+            </button>
             <button className="btn" onClick={onClose}>selesai</button>
           </div>
         ) : null}

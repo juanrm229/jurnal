@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useSession } from '@/lib/session';
-import { currentTheme, INKS, PAPERS, setTheme } from '@/lib/theme';
+import { currentTheme, INKS, PAPERS, phaseNow, setTheme, sunsetLabel } from '@/lib/theme';
 import { Scene } from '@/ui/art';
-import { Doodle, Header } from '@/ui/kit';
+import { Doodle, Header, Toggle } from '@/ui/kit';
 
 const SAMPLE = ['bunga-matahari', 'kucing-tidur', 'kopi-susu', 'sepeda', 'bulan', 'surat-botol', 'kupu-kupu', 'kereta', 'payung-terbuka', 'hati-dua'];
 
@@ -15,10 +15,13 @@ export default function Tema() {
     setT(next);
     setTheme(next, !!me);
   };
+  const darkPaper = PAPERS.find((p) => p.id === t.paper)?.dark;
+  const senja = sunsetLabel();
+  const phase = phaseNow();
   return (
     <main className="screen">
       <Header title="tema" sub="tinta & kertas" />
-      <div key={`${t.ink}${t.paper}`} style={{ maxWidth: 420, margin: '0 auto' }}>
+      <div key={`${t.ink}${t.paper}${t.auto}`} style={{ maxWidth: 420, margin: '0 auto' }}>
         <Scene id="taman-tahun" speed={2.2} />
       </div>
       <section className="section">
@@ -41,6 +44,26 @@ export default function Tema() {
               <span className="paper-dot" style={{ background: p.color }} /> {p.name}
             </button>
           ))}
+        </div>
+      </section>
+      <section className="section">
+        <span className="label">langit</span>
+        <div className="card" data-testid="tema-senja">
+          <Toggle
+            label="kertas ikut senja"
+            hint={
+              darkPaper
+                ? 'Kertas malam sudah gelap sepanjang hari. Pilih kertas terang untuk memakainya.'
+                : `Kertas menghangat menjelang matahari terbenam${senja ? ` (${senja} di kotamu)` : ''}, menggelap sesudahnya, lalu terang lagi saat matahari terbit.`
+            }
+            value={!!t.auto && !darkPaper}
+            onChange={(v) => pick({ ...t, auto: v })}
+          />
+          {t.auto && !darkPaper ? (
+            <p className="tiny soft" style={{ margin: '8px 0 0' }}>
+              Sekarang: {phase === 'siang' ? 'siang, kertas seperti pilihanmu' : phase === 'senja' ? 'senja, kertas sedang menghangat' : 'malam, kertas beristirahat'}.
+            </p>
+          ) : null}
         </div>
       </section>
       <div className="card row wrap mt" style={{ justifyContent: 'center', gap: 14 }}>

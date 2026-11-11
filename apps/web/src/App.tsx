@@ -4,8 +4,10 @@ import { bersihkanLencana, refreshPushToken } from './lib/push';
 import { match, navigate, ParamsProvider, usePath } from './lib/router';
 import { isChunkError, reloadOnce } from './lib/reload';
 import { useSession } from './lib/session';
+import { trackPlay } from './lib/play';
 import { useThemeSync } from './lib/theme';
 import { Growing } from './ui/kit';
+import { Laci } from './ui/Laci';
 import { TabBar } from './ui/TabBar';
 import Landing from './pages/Landing';
 
@@ -191,6 +193,12 @@ export function App() {
   const { path } = usePath();
   const { status } = useSession();
   useThemeSync();
+  useEffect(() => {
+    trackPlay(path);
+    const vis = () => trackPlay(path);
+    document.addEventListener('visibilitychange', vis);
+    return () => document.removeEventListener('visibilitychange', vis);
+  }, [path]);
 
   if (path === '/' || path === '') return <Landing />;
   for (const [pattern, Comp, needsReady, tabs] of ROUTES) {
@@ -206,6 +214,7 @@ export function App() {
           </Suspense>
         </PageErrorBoundary>
         {tabs && status === 'ready' ? <TabBar path={path} /> : null}
+        {needsReady && status === 'ready' ? <Laci /> : null}
       </ParamsProvider>
     );
     return needsReady ? <Guard>{body}</Guard> : body;

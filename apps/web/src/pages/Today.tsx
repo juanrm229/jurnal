@@ -28,6 +28,7 @@ import { defaultWidth, Page, type PageItem, PAGE_W } from '@/editor/Page';
 import { PrintSheet } from '@/editor/PrintSheet';
 import { NiatCard, niatSkipped, rememberNiat, skipNiat } from '@/editor/Niat';
 import { SealCeremony } from '@/editor/Seal';
+import { KalkirChip, KalkirLayer, useKalkir } from '@/editor/Kalkir';
 import { MoodSheet, PromptSheet, SilentSheet, SongSheet, StickerSheet, VoiceSheet } from '@/editor/Sheets';
 import { TEXT_SIZES } from '@/editor/elements';
 import { FILLS, isSpecial, LINES, specialWidth } from '@/editor/stickers';
@@ -42,6 +43,7 @@ import { takePendingStrip } from '@/lib/photobox/booth';
 import { store } from '@/lib/storage';
 import { Avatar, Doodle, Growing, Sheet, Toggle, useToast } from '@/ui/kit';
 import { sound } from '@/lib/sound';
+import { openLaci } from '@/ui/Laci';
 import { countdown, fmtWhen, useMeets } from '@/lib/meets';
 
 type Item = PageItem & { draft?: boolean; pageCircleId?: string | null };
@@ -393,6 +395,9 @@ export default function Today() {
   useEffect(() => {
     if (niat) rememberNiat(day, niat);
   }, [niat, day]);
+  // Kertas kalkir: halaman lama tembus samar di bawah halaman utama hari ini.
+  const [kalkirOn, setKalkirOn] = useState(() => store.get('kalkirOff') !== '1');
+  const ghost = useKalkir(day, me.user.id, day === today && page === 'main');
   const showNiat = editable && page === 'main' && day === today && !!q.data && !niat && !niatOff;
   const mood = pageItems.find((x) => x.payload.mood)?.payload.mood;
 
@@ -498,14 +503,21 @@ export default function Today() {
               <TogetherChip key={c.id} c={c} meId={me.user.id} day={day} />
             ))}
           </span>
-          <Link to="/lingkaran" className="icon-btn" aria-label="lingkaran">
+          <Link to="/lingkaran" className="nav-i">
             <Doodle id="ui-lingkaran" size={22} />
+            <span>lingkaran</span>
           </Link>
-          <Link to="/kenangan" className="icon-btn" aria-label="kenangan">
+          <Link to="/kenangan" className="nav-i">
             <Doodle id="ui-kenangan" size={22} />
+            <span>kenangan</span>
           </Link>
-          <Link to="/aku" className="icon-btn" aria-label="aku">
-            <Avatar doodle={me.user.doodle} size={30} />
+          <button type="button" className="nav-i" onClick={openLaci} data-testid="open-laci">
+            <Doodle id="ui-cari" size={22} />
+            <span>laci</span>
+          </button>
+          <Link to="/aku" className="nav-i" aria-label="aku">
+            <Avatar doodle={me.user.doodle} size={24} />
+            <span>aku</span>
           </Link>
         </div>
       </header>
@@ -606,6 +618,19 @@ export default function Today() {
         </button>
       ) : null}
 
+      {ghost ? (
+        <KalkirChip
+          ghost={ghost}
+          on={kalkirOn}
+          onToggle={() => {
+            setKalkirOn(!kalkirOn);
+            if (kalkirOn) store.set('kalkirOff', '1');
+            else store.del('kalkirOff');
+          }}
+          onOpen={() => navigate(`/hari/${ghost.day}`)}
+        />
+      ) : null}
+
       <div ref={pageBox} className="page-stack">
         <Page
           key={page}
@@ -629,6 +654,7 @@ export default function Today() {
           onCreateAt={(x, y) => addText(x, y)}
           onFiles={(files, x, y) => void addPhotos(files, x, y)}
           head={head}
+          under={ghost && kalkirOn ? <KalkirLayer ghost={ghost} /> : null}
           sealed={sealed}
           mood={mood}
           margins={`${me.user.id}:${day}:${page}`}
@@ -883,6 +909,7 @@ export default function Today() {
           circles={pageCircle ? [pageCircle] : active.filter((c) => mainCircleIds.includes(c.id))}
           pageCircleId={pageCircle?.id}
           niat={pageCircle ? undefined : niat}
+          texts={pageItems.map((x) => x.payload.text ?? '').filter(Boolean)}
           onClose={() => setSealing(false)}
           onSealed={() => {
             loaded.current = null;

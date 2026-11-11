@@ -41,6 +41,21 @@ export function NiatCard({ day, onSave, onSkip }: { day: string; onSave: (text: 
   const past = niatHistory().filter((x) => x.day !== day);
   const h = new Date().getHours();
   const send = () => text.trim() && onSave(text.trim());
+  // Ringkas dulu: kertas hari ini tetap jadi hal pertama yang terlihat.
+  const [open, setOpen] = useState(false);
+  if (!open)
+    return (
+      <div className="niat-strip rise" aria-label="niat pagi">
+        <button className="niat-strip-main" onClick={() => setOpen(true)} data-testid="niat-open">
+          <Doodle id="matahari-kecil" size={24} />
+          <span className="rupa-hand">{greeting(h)} satu pikiran baik untuk hari ini?</span>
+          <span className="niat-strip-go">tanam</span>
+        </button>
+        <button className="icon-btn" onClick={onSkip} aria-label="lewati niat hari ini">
+          <Doodle id="ui-tutup" size={14} />
+        </button>
+      </div>
+    );
   return (
     <section className="niat rise" aria-label="niat pagi">
       {past.slice(0, 4).map((n, i) => (
@@ -51,7 +66,7 @@ export function NiatCard({ day, onSave, onSkip }: { day: string; onSave: (text: 
       ))}
       <div className="niat-top">
         <span className="rupa-hand niat-brand">sehari.</span>
-        <button className="icon-btn" onClick={onSkip} aria-label="lewati niat hari ini">
+        <button className="icon-btn" onClick={() => setOpen(false)} aria-label="ciutkan">
           <Doodle id="ui-tutup" size={16} />
         </button>
       </div>
@@ -69,6 +84,7 @@ export function NiatCard({ day, onSave, onSkip }: { day: string; onSave: (text: 
         maxLength={140}
         value={text}
         placeholder="pikiran pertama saat bangun = benih untuk seharian…"
+        autoFocus
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {

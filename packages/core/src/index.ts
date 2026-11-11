@@ -73,6 +73,7 @@ export * as hanabi from './hanabi';
 export * from './wrapStory';
 export * from './wrapExtras';
 export * from './plant';
+export * from './benih';
 export * from './kenal';
 export * from './dates';
 export * from './wrapLong';

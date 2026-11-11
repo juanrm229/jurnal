@@ -1,5 +1,6 @@
 import { Link } from '@/lib/router';
 import { Doodle } from './kit';
+import { openLaci } from './Laci';
 
 const TABS = [
   { to: '/hari', label: 'hari ini', icon: 'ui-hari-ini' },
@@ -18,6 +19,10 @@ export function TabBar({ path }: { path: string }) {
           {t.label}
         </Link>
       ))}
+      <button type="button" className="tabbar-laci" onClick={openLaci} aria-label="laci: cari semua fitur" data-testid="open-laci">
+        <Doodle id="ui-cari" size={24} color="currentColor" />
+        laci
+      </button>
     </nav>
   );
 }
