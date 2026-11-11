@@ -248,7 +248,7 @@ export const CHAPTERS = [
         run: async (h) => {
           await h.tap('.dock-seal');
           await sleep(700);
-          await h.type('.seal-overlay input.field', 'hujan yang baik.');
+          await h.type('.seal-overlay .seal-line', 'hujan yang baik.');
           await h.point('.hold-btn');
           await h.$('.hold-btn').focus();
           await h.page.keyboard.press('Enter');

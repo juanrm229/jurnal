@@ -74,7 +74,7 @@ export async function partner(browser, inviteUrl, tag) {
       await p.setInputFiles('input[type=file][accept="image/*"]', 'e2e/tutorial/assets/kopi.jpg');
       await sleep(2500);
       await p.click('.dock-seal');
-      await p.fill('.seal-overlay input.field', line);
+      await p.fill('.seal-overlay .seal-line', line);
       await p.focus('.hold-btn');
       await p.keyboard.press('Enter');
       await p.waitForSelector('text=selesai', { timeout: 20000 });

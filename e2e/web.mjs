@@ -174,7 +174,7 @@ async function flow() {
   // Segel keduanya
   for (const [p, n] of [[a, 'a'], [b, 'b']]) {
     await p.click('.dock-seal');
-    await p.fill('.seal-overlay input.field', n === 'a' ? 'hujan yang baik.' : 'besok lebih ringan.');
+    await p.fill('.seal-overlay .seal-line', n === 'a' ? 'hujan yang baik.' : 'besok lebih ringan.');
     await shot(p, `30-seal-${n}`);
     await p.focus('.hold-btn');
     await p.keyboard.press('Enter');

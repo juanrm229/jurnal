@@ -35,7 +35,7 @@ const write = async (p, text) => {
 };
 const seal = async (p) => {
   await p.click('.dock-seal');
-  await p.fill('.seal-overlay input.field', 'selesai.');
+  await p.fill('.seal-overlay .seal-line', 'selesai.');
   await p.focus('.hold-btn');
   await p.keyboard.press('Enter');
   await p.waitForSelector('text=selesai', { timeout: 20000 });
