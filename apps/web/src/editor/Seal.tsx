@@ -2,7 +2,7 @@
  * Upacara segel: kalimat terakhir, warna hari, lalu tahan tombol lilin.
  * Halaman masuk amplop, tutupnya terlipat, lilin dicap — dan hari ini selesai.
  */
-import { COPY, type MoodCode, MOODS, primbon, type SealResult } from '@sehari/core';
+import { COPY, dayName, formatDayLong, type MoodCode, MOODS, primbon, type SealResult } from '@sehari/core';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { useBlow } from '@/lib/blow';
 import { store } from '@/lib/storage';
@@ -135,13 +135,18 @@ export function SealCeremony({ day, circles, pageCircleId, niat, texts, onClose,
   const milestone = result?.circles.find((x) => x.milestone)?.milestone;
 
   return (
-    <div className="seal-overlay" role="dialog" aria-modal aria-label={COPY.seal.cta}>
-      <div style={{ width: 'min(460px, 100%)' }} className="col gap-lg">
-        {phase === 'write' ? (
-          <button className="icon-btn" style={{ alignSelf: 'flex-end' }} aria-label="tutup" onClick={onClose}>
-            <Doodle id="ui-tutup" size={22} />
-          </button>
-        ) : null}
+    <div className="seal-overlay" data-phase={phase} style={{ '--hold': progress } as CSSProperties} role="dialog" aria-modal aria-label={COPY.seal.cta}>
+      <div className="col gap-lg seal-col">
+        <div className="seal-top">
+          <span className="label">
+            {phase === 'done' ? 'tersegel' : 'menyegel'} {dayName(day)}, {formatDayLong(day, false).toLowerCase()}
+          </span>
+          {phase === 'write' ? (
+            <button className="icon-btn" aria-label="tutup" onClick={onClose}>
+              <Doodle id="ui-tutup" size={22} />
+            </button>
+          ) : null}
+        </div>
 
         <div className={`envelope ${phase !== 'write' ? 'closing stamped' : ''}`}>
           <div className="back" />
@@ -173,10 +178,10 @@ export function SealCeremony({ day, circles, pageCircleId, niat, texts, onClose,
                 </p>
               ) : null}
               <span className="label">{COPY.seal.lastLinePrompt.toLowerCase()}</span>
-              <input className="field hand" style={{ fontSize: 28 }} value={line} maxLength={200} onChange={(e) => setLine(e.target.value)} placeholder={COPY.seal.lastLinePlaceholder} autoFocus />
+              <input className="seal-line hand" value={line} maxLength={200} onChange={(e) => setLine(e.target.value)} placeholder={COPY.seal.lastLinePlaceholder} autoFocus />
               <span className="tiny soft">Setahun lagi, kalimat-kalimat ini menjadi puisi panjang yang kalian tulis tanpa sadar.</span>
             </div>
-            <div className="col gap-sm rise" style={{ animationDelay: '.08s' }}>
+            <div className="col gap-sm rise seal-moods" style={{ animationDelay: '.08s' }}>
               <span className="label">warna hari ini</span>
               <MoodPicker value={mood} onChange={setMood} compact />
             </div>
@@ -209,8 +214,8 @@ export function SealCeremony({ day, circles, pageCircleId, niat, texts, onClose,
                   }}
                   onContextMenu={(e) => e.preventDefault()}>
                   <svg className="ring" viewBox="0 0 100 100" aria-hidden>
-                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--ink)" strokeOpacity=".18" strokeWidth="3" />
-                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--ink)" strokeWidth="3.5" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - progress} />
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--lak)" strokeOpacity=".2" strokeWidth="3" />
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--lak)" strokeWidth="4" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - progress} />
                   </svg>
                   <Doodle id="segel-lilin" size={58} color="var(--on-ink)" sw={2.6} style={{ transform: `scale(${1 + progress * 0.15})` }} />
                 </button>
@@ -227,7 +232,7 @@ export function SealCeremony({ day, circles, pageCircleId, niat, texts, onClose,
 
         {phase === 'done' && result ? <Confetti /> : null}
         {phase === 'done' && result ? (
-          <div className="col gap-lg rise">
+          <div className="col gap-lg seal-done">
             <div className="center">
               <div className="title ink">{COPY.seal.sealed}</div>
               {line ? <div className="hand" style={{ fontSize: 28 }}>“{line}”</div> : null}

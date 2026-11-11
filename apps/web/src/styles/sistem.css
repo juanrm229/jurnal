@@ -1127,9 +1127,9 @@ a.hadir-row:active {
 }
 /* Cap "tersegel" di kaki kertas: ditekan seperti stempel. */
 .stamp-in {
-  animation: stamp 620ms cubic-bezier(0.2, 1.5, 0.4, 1) 500ms both;
+  animation: stamp-press 620ms cubic-bezier(0.2, 1.5, 0.4, 1) 500ms both;
 }
-@keyframes stamp {
+@keyframes stamp-press {
   from {
     opacity: 0;
     transform: scale(2.6) rotate(-14deg);
@@ -1150,6 +1150,192 @@ a.hadir-row:active {
     opacity: 0;
     transform: translateY(-18px) scale(0.92);
   }
+}
+
+/* ── Upacara segel: puncak hari itu ────────────────────────────────────── */
+.seal-overlay {
+  align-items: flex-start;
+  background: var(--paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: calc(env(safe-area-inset-top) + 8px) var(--gutter) calc(env(safe-area-inset-bottom) + 24px);
+}
+/* Selagi ditahan, ruangan meredup ke arah amplop. */
+.seal-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 30%, transparent 30%, color-mix(in srgb, var(--lak) 26%, transparent));
+  opacity: var(--hold, 0);
+}
+.seal-col {
+  position: relative;
+  width: min(420px, 100%);
+  margin: auto;
+}
+.seal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--tap);
+}
+.seal-overlay .envelope {
+  width: min(280px, 72vw);
+  /* Ditahan: amplop mendekat dan sedikit bergetar. */
+  transform: scale(calc(1 + var(--hold, 0) * 0.06)) rotate(calc(var(--hold, 0) * -1.5deg));
+  animation: env-in 720ms var(--ease-spring) 200ms both;
+}
+@keyframes env-in {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) rotate(-8deg) scale(0.86);
+  }
+}
+.seal-overlay[data-phase='write'] .envelope .letter {
+  transform: translateY(calc(-26% + var(--hold, 0) * 30%));
+  transition: transform 120ms linear;
+}
+.seal-overlay[data-phase='done'] .envelope {
+  animation: env-rest 900ms var(--ease-spring) both;
+}
+@keyframes env-rest {
+  from {
+    transform: scale(1.06) rotate(-1.5deg);
+  }
+  to {
+    transform: scale(0.82) rotate(-3deg);
+  }
+}
+.seal-overlay .envelope .back {
+  border-width: 1.5px;
+  border-radius: 8px;
+}
+/* Tutup amplop yang masih terbuka butuh ruang di atasnya. */
+.seal-overlay[data-phase='write'] .envelope {
+  margin-top: 104px;
+}
+.seal-overlay .envelope.closing .letter {
+  opacity: 0;
+  transition:
+    transform 0.9s cubic-bezier(0.5, 0, 0.2, 1),
+    opacity 0.3s ease 1s;
+}
+.seal-overlay[data-phase='done']::before {
+  opacity: 0.35;
+  transition: opacity 1.2s ease;
+}
+/* Lak di amplop: merah, dan saat ditekan melepas satu riak. */
+.seal-overlay .wax {
+  border-radius: 52% 48% 50% 50% / 49% 52% 48% 51%;
+  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--lak) 72%, #fff), var(--lak) 50%, var(--lak-deep));
+  box-shadow:
+    0 6px 14px -4px var(--lak),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+}
+.seal-overlay .envelope.stamped::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 26%;
+  aspect-ratio: 1;
+  margin: -13% 0 0 -13%;
+  border-radius: 50%;
+  border: 2px solid var(--lak);
+  opacity: 0;
+  z-index: 5;
+  animation: lak-ripple 900ms var(--ease-out) 1.95s both;
+}
+@keyframes lak-ripple {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(4.5);
+  }
+}
+/* Kalimat terakhir: satu garis tinta, bukan kotak. */
+.seal-line {
+  width: 100%;
+  border: 0;
+  border-bottom: 1.5px solid var(--ink);
+  border-radius: 0;
+  background: none;
+  padding: 2px 0 6px;
+  font-size: var(--fs-2xl);
+  color: var(--text);
+  outline: none;
+  caret-color: var(--lak);
+  transition: border-color var(--t-move), box-shadow var(--t-move);
+}
+.seal-line:focus {
+  box-shadow: 0 2px 0 0 var(--ink);
+}
+.seal-line::placeholder {
+  color: var(--text-soft);
+  opacity: 0.55;
+}
+/* Sepuluh warna dalam satu baris. */
+.seal-moods > .row {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 4px !important;
+}
+.seal-moods > .row > button > span:first-child {
+  width: clamp(22px, 7.4vw, 30px) !important;
+  height: clamp(22px, 7.4vw, 30px) !important;
+}
+/* Tombol tahan: lak yang ditekan, makin lama makin dalam. */
+.seal-overlay .hold-btn {
+  width: 112px;
+  height: 112px;
+  border-radius: 52% 48% 50% 50% / 49% 52% 48% 51%;
+  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--lak) 72%, #fff), var(--lak) 50%, var(--lak-deep));
+  color: #fff;
+  box-shadow:
+    inset 0 -4px 8px rgba(0, 0, 0, 0.22),
+    inset 0 2px 3px rgba(255, 255, 255, 0.28),
+    0 calc(16px - var(--hold, 0) * 12px) calc(30px - var(--hold, 0) * 20px) -12px var(--lak);
+  transform: scale(calc(1 - var(--hold, 0) * 0.1));
+  animation:
+    seal-in 720ms var(--ease-spring) 420ms both,
+    wax-wobble 6s ease-in-out 1.2s infinite alternate;
+}
+.seal-overlay .hold-btn svg.ring {
+  inset: -12px;
+  width: calc(100% + 24px);
+  height: calc(100% + 24px);
+}
+.seal-overlay .pill {
+  background: none;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* Sesudah tersegel: hasilnya muncul satu per satu. */
+.seal-done > * {
+  animation: sheet-body 560ms var(--ease-out) both;
+}
+.seal-done > :nth-child(1) {
+  animation-delay: 200ms;
+}
+.seal-done > :nth-child(2) {
+  animation-delay: 380ms;
+}
+.seal-done > :nth-child(3) {
+  animation-delay: 520ms;
+}
+.seal-done > :nth-child(n + 4) {
+  animation-delay: 660ms;
+}
+.seal-done .title {
+  font-family: var(--serif-display);
+  font-size: var(--fs-2xl);
+  color: var(--lak);
 }
 
 /* ── Kerangka kertas saat memuat ───────────────────────────────────────── */
@@ -1358,7 +1544,7 @@ a.hadir-row:active {
   border-radius: 52% 48% 50% 50% / 49% 52% 48% 51%;
   background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--lak) 70%, #fff), var(--lak) 55%, var(--lak-deep));
   box-shadow: 0 2px 4px -1px var(--lak);
-  animation: stamp 560ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+  animation: stamp-press 560ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
   animation-delay: calc(900ms + var(--n, 0) * 120ms);
 }
 /* Semua sudah menyegel: dua halaman saling condong. */

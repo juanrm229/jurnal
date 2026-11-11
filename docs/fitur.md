@@ -61,6 +61,7 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | **Laci**: pencarian semua fitur + jelajah per ruang (ikon cari di pojok kanan atas, Ctrl/⌘+K) | `ui/Laci.tsx` |
 | **Sistem visual**: token huruf, radius, jarak, durasi, dan warna lak; tiga bahan (kertas, kartu, lembar); lembar bisa diseret turun | `styles/sistem.css`, `ui/kit.tsx Sheet` |
 | **Yang hadir**: avatar orang terdekat di kepala halaman (garis putus = belum menyegel, titik lak = sudah); membuka jepret, kangen, kilasan, buka bersama | `ui/Hadir.tsx` |
+| **Upacara segel**: amplop utuh di tengah, kalimat terakhir di satu garis tinta, tombol tahan dari lak (ruangan meredup dan amplop mendekat selagi ditahan), riak saat lak ditekan, hasil muncul berurutan | `editor/Seal.tsx`, `styles/sistem.css` |
 | Hari ini: kertas memenuhi layar, niat pagi sebagai catatan tempel, "untuk siapa" sebagai penanda di tepi kertas, alat + segel lak di jangkauan ibu jari | `pages/Today.tsx`, `editor/Niat.tsx` |
 | **Tiup Lilin**: menyegel dengan meniup mikrofon (ambang mengikuti kebisingan ruangan; suara tidak direkam); tombol tahan tetap ada | `lib/blow.ts`, `editor/Seal.tsx` |
 | **Primbon Ngawur**: ramalan konyol setelah menyegel, diramu di perangkat dari kata-kata halaman | `core/benih.ts primbon`, `editor/Seal.tsx` |
