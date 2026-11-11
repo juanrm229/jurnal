@@ -5,6 +5,7 @@
 import type { CSSProperties } from 'react';
 import { useCircles } from '@/lib/data';
 import { Link, tabIndex } from '@/lib/router';
+import { store } from '@/lib/storage';
 import { Doodle } from './kit';
 
 const TABS = [
@@ -26,7 +27,9 @@ export function TabBar({ path }: { path: string }) {
   const { circles } = useCircles();
   const mine = circles.filter((c) => c.status === 'active' && c.me?.state === 'active');
   // Satu lingkaran: tab Kita langsung membukanya.
-  const kita = mine.length === 1 ? `/l/${mine[0]!.id}` : '/lingkaran';
+  // Beberapa lingkaran: kembali ke yang terakhir dibuka (pemindahnya ada di atas berandanya).
+  const last = mine.find((c) => c.id === store.get('lastCircle'));
+  const kita = mine.length === 1 ? `/l/${mine[0]!.id}` : last ? `/l/${last.id}` : '/lingkaran';
   const at = tabIndex(path);
   return (
     <nav className="tabs" aria-label="ruang">

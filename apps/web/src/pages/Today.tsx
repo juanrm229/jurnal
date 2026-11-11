@@ -25,7 +25,7 @@ import {
   zoneLabel,
 } from '@sehari/core';
 import { gardenDoodleFor } from '@sehari/doodles';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultWidth, Page, type PageItem, PAGE_W } from '@/editor/Page';
 import { PrintSheet } from '@/editor/PrintSheet';
@@ -38,6 +38,7 @@ import { TEXT_SIZES } from '@/editor/elements';
 import { FILLS, isSpecial, LINES, specialWidth } from '@/editor/stickers';
 import { DockBtn, EmptyPage, Tile, useKeyboardInset } from '@/editor/dock';
 import { api } from '@/lib/api';
+import { currentWeather } from '@/lib/weather';
 import { buildDropBody, type CircleView, type DraftDrop, newDropId, nowParts, openDrop, qk, updateDrop, useCircles, useKeyring, useMe, useMyDay, useToday } from '@/lib/data';
 import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
@@ -49,6 +50,8 @@ import { Hadir } from '@/ui/Hadir';
 import { TopActions } from '@/ui/shell';
 import { sound } from '@/lib/sound';
 import { countdown, fmtWhen, useMeets } from '@/lib/meets';
+
+const SKY_ICON: Record<string, string> = { cerah: 'matahari', berawan: 'awan', kabut: 'awan', gerimis: 'hujan', hujan: 'hujan', badai: 'petir', salju: 'awan' };
 
 type Item = PageItem & { draft?: boolean; pageCircleId?: string | null };
 
@@ -430,6 +433,8 @@ export default function Today() {
   const seberang = useSeberang(active, me.user.cityId, day === today);
   const showNiat = editable && page === 'main' && day === today && !!q.data && !niat && !niatOff;
   const mood = pageItems.find((x) => x.payload.mood)?.payload.mood;
+  // Cuaca di kotamu sendiri (koordinat kota, bukan lokasi perangkat), hanya untuk hari ini.
+  const sky = useQuery({ queryKey: ['weather', me.user.cityId ?? '-'], queryFn: async () => (await currentWeather(me.user.cityId)) ?? null, enabled: day === today && !!city, staleTime: 30 * 60_000, retry: false }).data;
 
   if (q.isLoading || !ring) return <PaperSkeleton />;
 
@@ -498,6 +503,12 @@ export default function Today() {
           #{dayOfYear(day)} · {city ? `${city.name} · ` : ''}
           {zoneLabel(me.user.tz)}
           {sunsetLabel ? ` · senja ${sunsetLabel}` : ''}
+          {sky ? (
+            <span className="head-sky" data-testid="head-sky">
+              {' · '}
+              <Doodle id={SKY_ICON[sky.code] ?? 'awan'} size="1.25em" color="currentColor" /> {sky.label} {Math.round(sky.tempC)}°
+            </span>
+          ) : null}
         </div>
       </div>
       <Doodle id={sealed ? gardenDoodleFor(`${me.user.id}:${day}`).id : 'tunas'} size="clamp(44px, 10vw, 86px)" draw={sealed} className={sealed ? '' : 'sway'} style={{ opacity: sealed ? 1 : 0.35 }} />
@@ -655,7 +666,7 @@ export default function Today() {
         {editable ? (
           <button className="for-chip" onClick={() => setSheet('audience')} title={`${pageItems.filter((x) => !x.draft).length} hal di kapsul`}>
             <Doodle id={!pageCircle && defaultAudience === 'self' ? 'ui-gembok' : 'ui-lingkaran'} size={14} color="currentColor" />
-            <span>{pageCircle ? `khusus ${pageCircle.name}` : defaultAudience === 'self' ? 'hanya aku' : `untuk ${names}`}</span>
+            <span>{pageCircle ? `khusus ${pageCircle.name}` : defaultAudience === 'self' ? 'hanya aku' : circleIds.length > 1 ? `untuk ${circleIds.length} lingkaran` : `untuk ${names}`}</span>
           </button>
         ) : null}
         {showNiat ? (

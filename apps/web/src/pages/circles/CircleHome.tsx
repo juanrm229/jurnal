@@ -4,7 +4,7 @@
  * satu tindakan utama yang mengikuti keadaan, lalu Si Benih, pertanyaan malam,
  * minggu ini, dan dunia kalian.
  */
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import { CIRCLE_KIND_LABEL, COPY, findCard, isoWeek, nightQuestionFor, penHolderFor, wrapHistory, type SceneWire } from '@sehari/core';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -20,6 +20,7 @@ import { RollCard } from './RollCard';
 import { TogetherToday } from './Questions';
 import { DatesCard } from './Dates';
 import { sound } from '@/lib/sound';
+import { store } from '@/lib/storage';
 import { Avatar, Doodle, Flame, Growing } from '@/ui/kit';
 import { ScreenTitle } from '@/ui/shell';
 
@@ -47,6 +48,9 @@ export default function CircleHome() {
   const { circles } = useCircles();
   const scenes = useQuery({ queryKey: ['scenes', id], queryFn: () => api.get<SceneWire[]>(`/circles/${id}/scenes`), enabled: !!circle });
   const [all, setAll] = useState(false);
+  useEffect(() => {
+    if (circle) store.set('lastCircle', id);
+  }, [id, !!circle]);
   if (!circle) return <Growing />;
 
   const mine = circles.filter((c) => c.status === 'active' && c.me?.state === 'active');
