@@ -6,7 +6,7 @@
 import { formatDayShort } from '@sehari/core';
 import { type CSSProperties, useState } from 'react';
 import { store } from '@/lib/storage';
-import { Doodle } from '@/ui/kit';
+import { Doodle, Sheet } from '@/ui/kit';
 
 export interface NiatNote {
   day: string;
@@ -36,40 +36,51 @@ function greeting(h: number) {
   return 'malam.';
 }
 
-export function NiatCard({ day, onSave, onSkip }: { day: string; onSave: (text: string) => void; onSkip: () => void }) {
+export function NiatCard({ day, onSave, onSkip, compact }: { day: string; onSave: (text: string) => void; onSkip: () => void; /** Kertas sudah berisi: cukup penanda kecil di tepi atas. */ compact?: boolean }) {
   const [text, setText] = useState('');
   const past = niatHistory().filter((x) => x.day !== day);
   const h = new Date().getHours();
   const send = () => text.trim() && onSave(text.trim());
-  // Ringkas dulu: kertas hari ini tetap jadi hal pertama yang terlihat.
+  // Catatan tempel di atas kertas; lembar tulisnya baru terbuka saat diketuk.
   const [open, setOpen] = useState(false);
-  if (!open)
-    return (
-      <div className="niat-strip rise" aria-label="niat pagi">
-        <button className="niat-strip-main" onClick={() => setOpen(true)} data-testid="niat-open">
-          <Doodle id="matahari-kecil" size={24} />
-          <span className="rupa-hand">{greeting(h)} satu pikiran baik untuk hari ini?</span>
-          <span className="niat-strip-go">tanam</span>
-        </button>
-        <button className="icon-btn" onClick={onSkip} aria-label="lewati niat hari ini">
-          <Doodle id="ui-tutup" size={14} />
-        </button>
-      </div>
-    );
   return (
-    <section className="niat rise" aria-label="niat pagi">
+    <>
+      {compact ? (
+        <button className="niat-tab" onClick={() => setOpen(true)} data-testid="niat-open" data-paper="1">
+          <Doodle id="matahari-kecil" size={14} color="currentColor" />
+          <span>niat {greeting(h).replace('.', '')}?</span>
+        </button>
+      ) : (
+        <div className="niat-note" aria-label="niat pagi" data-paper="1">
+          <button className="niat-note-main" onClick={() => setOpen(true)} data-testid="niat-open">
+            <small>niat {greeting(h).replace('.', '')}</small>
+            <span className="rupa-hand">satu pikiran baik untuk hari ini?</span>
+            <span className="niat-note-go">tanam</span>
+          </button>
+          <button className="niat-note-x" onClick={onSkip} aria-label="lewati niat hari ini">
+            <Doodle id="ui-tutup" size={12} color="currentColor" />
+          </button>
+        </div>
+      )}
+      <Sheet open={open} onClose={() => setOpen(false)} title="niat hari ini">
+        <NiatForm past={past} h={h} text={text} setText={setText} send={send} />
+        <button className="btn ghost sm" style={{ marginTop: 12 }} onClick={onSkip}>
+          lewati hari ini
+        </button>
+      </Sheet>
+    </>
+  );
+}
+
+function NiatForm({ past, h, text, setText, send }: { past: NiatNote[]; h: number; text: string; setText: (t: string) => void; send: () => void }) {
+  return (
+    <section className="niat" aria-label="niat pagi">
       {past.slice(0, 4).map((n, i) => (
         <span key={n.day} className="niat-float" style={{ ...SPOTS[i], animationDelay: `${i * 0.6}s` }} aria-hidden>
           <b>{formatDayShort(n.day)}</b>
           {n.text.slice(0, 46)}
         </span>
       ))}
-      <div className="niat-top">
-        <span className="rupa-hand niat-brand">sehari.</span>
-        <button className="icon-btn" onClick={() => setOpen(false)} aria-label="ciutkan">
-          <Doodle id="ui-tutup" size={16} />
-        </button>
-      </div>
       <div className="niat-ask">
         <Doodle id="panah-lengkung" size={44} className="niat-arrow" />
         <span className="rupa-hand">

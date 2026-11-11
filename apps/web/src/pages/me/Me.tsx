@@ -4,7 +4,7 @@ import { useMe } from '@/lib/data';
 import { navigate } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { currentTheme, INKS, PAPERS } from '@/lib/theme';
-import { Avatar, Doodle, ListLink, Toggle, useToast } from '@/ui/kit';
+import { Avatar, Doodle, Header, ListLink, Toggle, useToast } from '@/ui/kit';
 import { sound, useSoundPrefs } from '@/lib/sound';
 import { pushState, subscribePush, testPush } from '@/lib/push';
 import { useInstall } from '@/lib/install';
@@ -21,7 +21,7 @@ export default function Me() {
 
   return (
     <main className="screen">
-      <h1 className="display ink mt" style={{ margin: '12px 0 12px' }}>aku</h1>
+      <Header title="aku" backTo="/hari" />
       <button className="card row" style={{ width: '100%', textAlign: 'left', gap: 14 }} onClick={() => navigate('/aku/profil')}>
         <Avatar doodle={me.user.doodle} size={58} sealed />
         <span className="grow">

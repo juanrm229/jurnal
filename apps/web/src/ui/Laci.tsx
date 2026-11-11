@@ -1,9 +1,9 @@
 /**
- * Laci: satu pintu untuk semua yang ada di Sehari. Ketik untuk mencari,
- * atau buka dari tab bar. Pencarian berjalan di perangkat (hanya nama fitur
+ * Laci: pencarian untuk semua yang ada di Sehari. Ketik untuk mencari, atau
+ * jelajahi per ruang. Dibuka dari ikon cari di pojok kanan atas dan Ctrl/⌘+K. Pencarian berjalan di perangkat (hanya nama fitur
  * dan lingkaran yang sudah terbuka di sini).
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { useCircles, useToday } from '@/lib/data';
 import { navigate } from '@/lib/router';
 import { store } from '@/lib/storage';
@@ -35,7 +35,7 @@ const BASE: Item[] = [
   { group: 'momen', to: '/photobox', label: 'photobox', hint: 'strip foto, sendiri atau berdua', icon: 'bingkai-polaroid', keys: 'photobooth strip selfie' },
   { group: 'momen', to: '/janji', label: 'janji temu', hint: 'kencan & kumpul kecil', icon: 'tangan-bergandeng', keys: 'date kencan ketemu jadwal' },
   { group: 'momen', to: '/janji/acak', label: 'bingung mau ke mana?', hint: 'mesin acak ide kencan', icon: 'ui-dadu', keys: 'random ide date' },
-  { group: 'momen', to: '/kenangan', label: 'kenangan', hint: 'taman setahun & Wrap', icon: 'ui-kenangan', keys: 'memori wrapped kalender taman' },
+  { group: 'momen', to: '/kenangan', label: 'rak & kenangan', hint: 'taman setahun & Wrap', icon: 'ui-kenangan', keys: 'memori wrapped kalender taman' },
 
   { group: 'momen', to: '/kepo', label: 'si kepo', hint: 'temuan pola dari jurnalmu', icon: 'ui-cari', keys: 'statistik insight pola kebiasaan analisis' },
 
@@ -82,9 +82,9 @@ const CIRCLE: { path: (day: string) => string; label: string; hint: string; icon
 const GROUPS: Record<string, string> = { menulis: 'menulis', momen: 'momen', main: 'main bareng', aku: 'aku & pengaturan' };
 const RECENT = 'laciRecent';
 
-function Row({ it, onGo }: { it: Item; onGo: (it: Item) => void }) {
+function Row({ it, onGo, n = 0 }: { it: Item; onGo: (it: Item) => void; n?: number }) {
   return (
-    <button className="laci-item" onClick={() => onGo(it)}>
+    <button className="laci-item" style={{ '--n': Math.min(n, 12) } as CSSProperties} onClick={() => onGo(it)}>
       <span className="laci-ico">
         <Doodle id={it.icon} size={24} />
       </span>
@@ -101,6 +101,8 @@ export function Laci() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string | null>(null);
+  /** Ruang yang sedang dijelajahi: id lingkaran, atau kunci GROUPS. */
+  const [room, setRoom] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const { circles } = useCircles();
   const today = useToday();
@@ -108,6 +110,7 @@ export function Laci() {
   useEffect(() => {
     const show = () => {
       setQ('');
+      setRoom(null);
       setOpen(true);
     };
     const key = (e: KeyboardEvent) => {
@@ -157,7 +160,7 @@ export function Laci() {
   };
 
   return (
-    <Sheet open={open} onClose={() => setOpen(false)} title="laci">
+    <Sheet open={open} onClose={() => setOpen(false)} title="cari">
       <div className="laci" data-testid="laci">
         <label className="laci-search">
           <Doodle id="ui-cari" size={20} />
@@ -174,7 +177,7 @@ export function Laci() {
         </label>
         {needle ? (
           found.length ? (
-            <div className="laci-grid">{found.map((it) => <Row key={it.to} it={it} onGo={go} />)}</div>
+            <div className="laci-grid">{found.map((it, n) => <Row key={it.to} it={it} onGo={go} n={n} />)}</div>
           ) : (
             <p className="small soft center" style={{ margin: '18px 0' }}>
               Tidak ada yang bernama “{q.trim()}” di laci. Coba kata lain, misalnya “foto” atau “main”.
@@ -185,32 +188,27 @@ export function Laci() {
             {recent.length ? (
               <>
                 <span className="label">baru dibuka</span>
-                <div className="laci-grid">{recent.map((it) => <Row key={it.to} it={it} onGo={go} />)}</div>
+                <div className="laci-grid">{recent.map((it, n) => <Row key={it.to} it={it} onGo={go} n={n} />)}</div>
               </>
             ) : null}
-            {circle ? (
-              <>
-                <div className="row between" style={{ gap: 8 }}>
-                  <span className="label">{mine.length > 1 ? 'lingkaran' : circle.name}</span>
-                  {mine.length > 1 ? (
-                    <span className="laci-circles">
-                      {mine.map((c) => (
-                        <button key={c.id} className={`pill ${c.id === circle.id ? 'active' : ''}`} onClick={() => setSel(c.id)}>
-                          <Doodle id={c.doodle} size={16} color="currentColor" /> {c.name}
-                        </button>
-                      ))}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="laci-grid">{circleItems(circle.id, circle.name).map((it) => <Row key={it.to} it={it} onGo={go} />)}</div>
-              </>
+            <span className="label">jelajahi</span>
+            <div className="laci-rooms" role="tablist" aria-label="jelajahi ruang">
+              {mine.map((c) => (
+                <button key={c.id} role="tab" aria-selected={room === c.id} className={`pill ${room === c.id ? 'active' : ''}`} onClick={() => { setSel(c.id); setRoom(room === c.id ? null : c.id); }}>
+                  <Doodle id={c.doodle} size={16} color="currentColor" /> {c.name}
+                </button>
+              ))}
+              {Object.entries(GROUPS).map(([g, title]) => (
+                <button key={g} role="tab" aria-selected={room === g} className={`pill ${room === g ? 'active' : ''}`} onClick={() => setRoom(room === g ? null : g)} data-testid={`laci-room-${g}`}>
+                  {title}
+                </button>
+              ))}
+            </div>
+            {room && circle && room === circle.id ? (
+              <div className="laci-grid" key={room}>{circleItems(circle.id, circle.name).map((it, n) => <Row key={it.to} it={it} onGo={go} n={n} />)}</div>
+            ) : room && GROUPS[room] ? (
+              <div className="laci-grid" key={room}>{BASE.filter((x) => x.group === room).map((it, n) => <Row key={it.to} it={it} onGo={go} n={n} />)}</div>
             ) : null}
-            {Object.entries(GROUPS).map(([g, title]) => (
-              <div key={g} className="col" style={{ gap: 8 }}>
-                <span className="label">{title}</span>
-                <div className="laci-grid">{BASE.filter((x) => x.group === g).map((it) => <Row key={it.to} it={it} onGo={go} />)}</div>
-              </div>
-            ))}
           </>
         )}
       </div>

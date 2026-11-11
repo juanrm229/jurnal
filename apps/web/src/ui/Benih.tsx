@@ -1,5 +1,5 @@
 /**
- * Si Benih: tanaman lingkaran, digambar tangan dengan tinta dan cat air.
+ * Si Benih: tanaman lingkaran, digambar tangan dengan garis tinta dan sapuan tinta pudar.
  * Satu SVG untuk semua tahap, dari benih yang mengintip sampai pohon berlampu,
  * dengan pot yang punya wajah (dan pendapat).
  */
@@ -8,12 +8,23 @@ import type { CSSProperties, ReactNode } from 'react';
 
 type StageKey = PlantStage['key'];
 
+/**
+ * Sapuan tinta: tiap warna asli digambar ulang sebagai campuran tinta dan
+ * kertas, makin gelap warnanya makin pekat tintanya. Si Benih jadi sekeluarga
+ * dengan doodle lain dan ikut berganti saat tema tinta diganti.
+ */
+function wash(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return `color-mix(in srgb, var(--ink) ${Math.round(7 + (1 - lum) * 44)}%, var(--card))`;
+}
+
 const BASE = { x: 100, y: 151 };
-const LEAF = '#7fbf6a';
-const LEAF_DEEP = '#5a9c4e';
-const POT = '#dc8a62';
-const POT_DEEP = '#c06c45';
-const SOIL = '#6b4429';
+const LEAF = wash('#7fbf6a');
+const LEAF_DEEP = wash('#5a9c4e');
+const POT = wash('#dc8a62');
+const POT_DEEP = wash('#c06c45');
+const SOIL = wash('#6b4429');
 
 interface Stem {
   h: number;
@@ -47,7 +58,7 @@ function Leaf({ x, y, size, angle, flip, i = 0, deep }: { x: number; y: number; 
   );
 }
 
-function Flower({ x, y, r, petals, color, core = '#f6c84c', spin = 0 }: { x: number; y: number; r: number; petals: number; color: string; core?: string; spin?: number }) {
+function Flower({ x, y, r, petals, color, core = wash('#f6c84c'), spin = 0 }: { x: number; y: number; r: number; petals: number; color: string; core?: string; spin?: number }) {
   return (
     <g transform={`translate(${x} ${y})`}>
       <g className="bn-bloom">
@@ -65,11 +76,11 @@ function Sunflower({ x, y, r }: { x: number; y: number; r: number }) {
     <g transform={`translate(${x} ${y})`}>
       <g className="bn-bloom">
         {Array.from({ length: 14 }, (_, k) => (
-          <path key={k} d={`M0 ${-r * 0.42} Q${r * 0.24} ${-r * 0.78} 0 ${-r * 1.1} Q${-r * 0.24} ${-r * 0.78} 0 ${-r * 0.42}Z`} fill={k % 2 ? '#f4b63a' : '#f8cf52'} className="bn-ink thin" transform={`rotate(${(360 / 14) * k})`} />
+          <path key={k} d={`M0 ${-r * 0.42} Q${r * 0.24} ${-r * 0.78} 0 ${-r * 1.1} Q${-r * 0.24} ${-r * 0.78} 0 ${-r * 0.42}Z`} fill={k % 2 ? wash('#f4b63a') : wash('#f8cf52')} className="bn-ink thin" transform={`rotate(${(360 / 14) * k})`} />
         ))}
-        <circle r={r * 0.5} fill="#8a5a35" className="bn-ink" />
+        <circle r={r * 0.5} fill={wash('#8a5a35')} className="bn-ink" />
         {[[-0.18, -0.14], [0.16, -0.18], [0, 0.04], [-0.22, 0.16], [0.2, 0.18]].map(([dx, dy], k) => (
-          <circle key={k} cx={r * dx!} cy={r * dy!} r={r * 0.045} fill="#5d3a1f" />
+          <circle key={k} cx={r * dx!} cy={r * dy!} r={r * 0.045} fill={wash('#5d3a1f')} />
         ))}
       </g>
     </g>
@@ -80,7 +91,7 @@ function Bud({ x, y, r }: { x: number; y: number; r: number }) {
   return (
     <g transform={`translate(${x} ${y})`}>
       <g className="bn-bloom">
-        <path d={`M0 ${r * 0.5} C${-r * 0.9} ${r * 0.1} ${-r * 0.5} ${-r * 0.9} 0 ${-r * 1.25} C${r * 0.5} ${-r * 0.9} ${r * 0.9} ${r * 0.1} 0 ${r * 0.5}Z`} fill="#f4a3be" className="bn-ink" />
+        <path d={`M0 ${r * 0.5} C${-r * 0.9} ${r * 0.1} ${-r * 0.5} ${-r * 0.9} 0 ${-r * 1.25} C${r * 0.5} ${-r * 0.9} ${r * 0.9} ${r * 0.1} 0 ${r * 0.5}Z`} fill={wash('#f4a3be')} className="bn-ink" />
         <path d={`M${-r * 0.72} ${-r * 0.1} Q${-r * 0.3} ${r * 0.75} 0 ${r * 0.5} Q${r * 0.3} ${r * 0.75} ${r * 0.72} ${-r * 0.1} Q0 ${r * 0.3} ${-r * 0.72} ${-r * 0.1}Z`} fill={LEAF_DEEP} className="bn-ink" />
       </g>
     </g>
@@ -100,16 +111,16 @@ function Tree({ lights }: { lights?: boolean }) {
   ].map(([x, y, r]) => [x!, y! , r! * k] as [number, number, number]);
   const blossoms: [number, number][] = [[76, top - 18], [124, top - 30], [98, top - 52], [112, top - 6], [86, top - 40]];
   const bulbs: [number, number, string][] = [
-    [62, top - 6, '#f6c84c'],
-    [78, top + 4, '#f48aa9'],
-    [96, top + 8, '#7cc3ee'],
-    [114, top + 6, '#f6c84c'],
-    [130, top - 2, '#a6e08a'],
-    [142, top - 14, '#f48aa9'],
+    [62, top - 6, wash('#f6c84c')],
+    [78, top + 4, wash('#f48aa9')],
+    [96, top + 8, wash('#7cc3ee')],
+    [114, top + 6, wash('#f6c84c')],
+    [130, top - 2, wash('#a6e08a')],
+    [142, top - 14, wash('#f48aa9')],
   ];
   return (
     <>
-      <path d={`M93 ${BASE.y} C95 ${BASE.y - 24} 92 ${BASE.y - 40} 96 ${top + 6} L104 ${top + 6} C108 ${BASE.y - 40} 105 ${BASE.y - 24} 108 ${BASE.y}Z`} fill="#a9744a" className="bn-ink" />
+      <path d={`M93 ${BASE.y} C95 ${BASE.y - 24} 92 ${BASE.y - 40} 96 ${top + 6} L104 ${top + 6} C108 ${BASE.y - 40} 105 ${BASE.y - 24} 108 ${BASE.y}Z`} fill={wash('#a9744a')} className="bn-ink" />
       <path d={`M97 ${BASE.y - 34} Q84 ${BASE.y - 46} 78 ${top + 2}`} className="bn-ink" fill="none" />
       <path d={`M104 ${BASE.y - 30} Q116 ${BASE.y - 42} 122 ${top + 4}`} className="bn-ink" fill="none" />
       <g className="bn-canopy">
@@ -117,11 +128,11 @@ function Tree({ lights }: { lights?: boolean }) {
           <circle key={`o${i}`} cx={x} cy={y} r={r} fill={LEAF} className="bn-ink" />
         ))}
         {puffs.map(([x, y, r], i) => (
-          <circle key={`f${i}`} cx={x} cy={y} r={r - 1.6} fill={i % 2 ? LEAF : '#8cc878'} />
+          <circle key={`f${i}`} cx={x} cy={y} r={r - 1.6} fill={i % 2 ? LEAF : wash('#8cc878')} />
         ))}
         <path d={`M78 ${top - 30} q6 -8 14 -4 M112 ${top - 22} q7 -6 13 0 M92 ${top - 12} q6 -6 12 -1`} className="bn-ink thin" fill="none" opacity=".55" />
         {blossoms.map(([x, y], i) => (
-          <Flower key={i} x={x} y={y} r={7} petals={5} color={i % 2 ? '#fbd0de' : '#f7a9c2'} spin={i * 20} />
+          <Flower key={i} x={x} y={y} r={7} petals={5} color={i % 2 ? wash('#fbd0de') : wash('#f7a9c2')} spin={i * 20} />
         ))}
         {lights ? (
           <>
@@ -131,8 +142,8 @@ function Tree({ lights }: { lights?: boolean }) {
             ))}
             <g transform={`translate(${112} ${top - 60 * k})`}>
               <g className="bn-bird">
-              <path d="M0 0 c4 -8 14 -8 16 0 c0 6 -6 9 -12 8 l-6 3 z" fill="#7cc3ee" className="bn-ink thin" />
-              <path d="M16 -1 l5 1 l-5 2" fill="#f4b63a" className="bn-ink thin" />
+              <path d="M0 0 c4 -8 14 -8 16 0 c0 6 -6 9 -12 8 l-6 3 z" fill={wash('#7cc3ee')} className="bn-ink thin" />
+              <path d="M16 -1 l5 1 l-5 2" fill={wash('#f4b63a')} className="bn-ink thin" />
               <circle cx="11.5" cy="-1.5" r="1.1" fill="var(--ink)" />
               </g>
             </g>
@@ -155,7 +166,7 @@ function Growth({ stage }: { stage: StageKey }) {
   if (stage === 'benih')
     return (
       <g className="bn-seedling">
-        <path d={`M86 ${BASE.y - 1} C86 ${BASE.y - 22} 114 ${BASE.y - 22} 114 ${BASE.y - 1}Z`} fill="#a9744a" className="bn-ink" />
+        <path d={`M86 ${BASE.y - 1} C86 ${BASE.y - 22} 114 ${BASE.y - 22} 114 ${BASE.y - 1}Z`} fill={wash('#a9744a')} className="bn-ink" />
         <path d={`M99 ${BASE.y - 16} l-3 6 l5 3 l-3 5`} className="bn-ink thin" fill="none" />
         <path d={`M100 ${BASE.y - 17} q0 -9 7 -12`} className="bn-ink" fill="none" stroke={LEAF_DEEP} />
         <Leaf x={107} y={BASE.y - 29} size={11} angle={-30} />
@@ -192,7 +203,7 @@ function Growth({ stage }: { stage: StageKey }) {
       <>
         <path d={`M${b.x} ${b.y} q-18 -6 -25 -24`} className="bn-ink" fill="none" stroke={LEAF_DEEP} />
         <Bud x={b.x - 25} y={b.y - 28} r={8} />
-        <Flower x={tip.x} y={tip.y - 4} r={25} petals={6} color="#f7a9c2" />
+        <Flower x={tip.x} y={tip.y - 4} r={25} petals={6} color={wash('#f7a9c2')} />
       </>
     );
   } else if (stage === 'matahari') {
@@ -203,7 +214,7 @@ function Growth({ stage }: { stage: StageKey }) {
     crown = (
       <>
         <path d={`M${BASE.x - 24} ${BASE.y} q-4 -18 2 -30`} className="bn-ink" fill="none" stroke={LEAF_DEEP} />
-        <Flower x={BASE.x - 22} y={BASE.y - 34} r={12} petals={5} color="#cfe3ff" />
+        <Flower x={BASE.x - 22} y={BASE.y - 34} r={12} petals={5} color={wash('#cfe3ff')} />
         <Sunflower x={tip.x} y={tip.y - 6} r={27} />
       </>
     );
@@ -262,8 +273,8 @@ function Face({ mood, mini }: { mood: BenihMood; mini: boolean }) {
         <circle cx={R} cy={y} r={mini ? 4.4 : 3} className="bn-eye" />
         {mini ? null : (
           <>
-            <circle cx={L + 1} cy={y - 1.1} r="0.9" fill="#fff" />
-            <circle cx={R + 1} cy={y - 1.1} r="0.9" fill="#fff" />
+            <circle cx={L + 1} cy={y - 1.1} r="0.9" fill="var(--card)" />
+            <circle cx={R + 1} cy={y - 1.1} r="0.9" fill="var(--card)" />
           </>
         )}
       </g>
@@ -271,9 +282,9 @@ function Face({ mood, mini }: { mood: BenihMood; mini: boolean }) {
   if (mini) return <g>{eyes}</g>;
   const mouth =
     mood === 'girang' || mood === 'pesta' ? (
-      <path d="M94 194 q6 8 12 0 z" fill="#8f2f3f" className="bn-face-line" />
+      <path d="M94 194 q6 8 12 0 z" fill={wash('#8f2f3f')} className="bn-face-line" />
     ) : mood === 'tidur' ? (
-      <ellipse cx="100" cy="196" rx="2.4" ry="3" fill="#8f2f3f" />
+      <ellipse cx="100" cy="196" rx="2.4" ry="3" fill={wash('#8f2f3f')} />
     ) : mood === 'haus' ? (
       <ellipse cx="100" cy="196.5" rx="3.2" ry="2.4" fill="none" className="bn-face-line" />
     ) : mood === 'ngambek' ? (
@@ -287,13 +298,13 @@ function Face({ mood, mini }: { mood: BenihMood; mini: boolean }) {
     <g>
       {mood === 'ngambek' ? null : (
         <>
-          <ellipse cx="79" cy="194" rx="5" ry="3.2" fill="#f7a9c2" opacity={mood === 'girang' || mood === 'pesta' ? 0.95 : 0.6} />
-          <ellipse cx="121" cy="194" rx="5" ry="3.2" fill="#f7a9c2" opacity={mood === 'girang' || mood === 'pesta' ? 0.95 : 0.6} />
+          <ellipse cx="79" cy="194" rx="5" ry="3.2" fill={wash('#f7a9c2')} opacity={mood === 'girang' || mood === 'pesta' ? 0.95 : 0.6} />
+          <ellipse cx="121" cy="194" rx="5" ry="3.2" fill={wash('#f7a9c2')} opacity={mood === 'girang' || mood === 'pesta' ? 0.95 : 0.6} />
         </>
       )}
       {eyes}
       {mouth}
-      {mood === 'haus' ? <path d="M127 176 q-4 7 0 9 q4 -2 0 -9z" fill="#8fcdf2" className="bn-ink thin bn-sweat" /> : null}
+      {mood === 'haus' ? <path d="M127 176 q-4 7 0 9 q4 -2 0 -9z" fill={wash('#8fcdf2')} className="bn-ink thin bn-sweat" /> : null}
     </g>
   );
 }
@@ -335,9 +346,9 @@ export function Benih({ stage, health = 'segar', mood, watered, visitors, size =
       {locked ? null : <Face mood={m} mini={mini} />}
       {m === 'pesta' && !locked ? (
         <g className="bn-hat">
-          <path d="M132 150 L146 122 L156 150Z" fill="#f6c84c" className="bn-ink" />
-          <path d="M137 140 l14 0 M141 131 l8 0" stroke="#f48aa9" strokeWidth="3" strokeLinecap="round" />
-          <circle cx="146" cy="120" r="4" fill="#f48aa9" className="bn-ink thin" />
+          <path d="M132 150 L146 122 L156 150Z" fill={wash('#f6c84c')} className="bn-ink" />
+          <path d="M137 140 l14 0 M141 131 l8 0" stroke={wash('#f48aa9')} strokeWidth="3" strokeLinecap="round" />
+          <circle cx="146" cy="120" r="4" fill={wash('#f48aa9')} className="bn-ink thin" />
         </g>
       ) : null}
       {m === 'tidur' && !locked && !mini ? (
@@ -350,15 +361,15 @@ export function Benih({ stage, health = 'segar', mood, watered, visitors, size =
       {watered && !locked ? (
         <g className="bn-drops">
           {[78, 100, 122].map((x, i) => (
-            <path key={x} d={`M${x} 8 q-5 9 0 12 q5 -3 0 -12z`} fill="#8fcdf2" className="bn-ink thin" style={{ '--i': i } as CSSProperties} />
+            <path key={x} d={`M${x} 8 q-5 9 0 12 q5 -3 0 -12z`} fill={wash('#8fcdf2')} className="bn-ink thin" style={{ '--i': i } as CSSProperties} />
           ))}
         </g>
       ) : null}
       {visitors && !locked ? (
         <g className="bn-fly">
           <g transform="translate(158 60)">
-            <path d="M0 0 C-12 -14 -18 2 0 4 C-14 8 -8 18 0 6Z" fill="#f7a9c2" className="bn-ink thin bn-wing" />
-            <path d="M0 0 C12 -14 18 2 0 4 C14 8 8 18 0 6Z" fill="#fbd0de" className="bn-ink thin bn-wing r" />
+            <path d="M0 0 C-12 -14 -18 2 0 4 C-14 8 -8 18 0 6Z" fill={wash('#f7a9c2')} className="bn-ink thin bn-wing" />
+            <path d="M0 0 C12 -14 18 2 0 4 C14 8 8 18 0 6Z" fill={wash('#fbd0de')} className="bn-ink thin bn-wing r" />
             <path d="M0 -3 v12" className="bn-ink thin" />
           </g>
         </g>

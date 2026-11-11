@@ -5,6 +5,7 @@ import { useCircles } from '@/lib/data';
 import { Link, usePath } from '@/lib/router';
 import { Scene } from '@/ui/art';
 import { Avatar, Doodle, Flame, Growing } from '@/ui/kit';
+import { ScreenTitle } from '@/ui/shell';
 import { PlantMini } from './Plant';
 
 export default function Circles() {
@@ -21,13 +22,15 @@ export default function Circles() {
   const hrefFor = (id: string) => (pickWrap ? `/wrap/${id}/${wrapScope}/${encodeURIComponent(wrapPeriod)}` : pickRol ? `/l/${id}/rol/${rolWeek}` : `/l/${id}`);
   return (
     <main className="screen">
-      <div className="row between mt">
-        <h1 className="display ink" style={{ margin: 0 }}>lingkaran</h1>
-        <Link to="/l/baru" className="pill active">
-          <Doodle id="ui-tambah" size={16} color="currentColor" /> baru
-        </Link>
-      </div>
-      <p className="small soft">Kecil, dipilih, dan intim. Paling banyak delapan orang.</p>
+      <ScreenTitle
+        title="kita"
+        sub="Kecil, dipilih, dan intim. Paling banyak delapan orang."
+        right={
+          <Link to="/l/baru" className="pill active">
+            <Doodle id="ui-tambah" size={16} color="currentColor" /> baru
+          </Link>
+        }
+      />
       {pickRol && live.length ? (
         <div className="sticky row mt" style={{ background: 'var(--sticky-blue)', gap: 12, alignItems: 'center' }}>
           <Doodle id="kamera" size={30} />

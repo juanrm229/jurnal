@@ -4,9 +4,10 @@
  * sedang disiapkan.
  */
 import { useState } from 'react';
-import { navigate } from '@/lib/router';
+import { Link, navigate } from '@/lib/router';
 import { callGame } from '@/lib/sidik';
-import { Doodle, Header, useToast } from '@/ui/kit';
+import { Doodle, useToast } from '@/ui/kit';
+import { ScreenTitle } from '@/ui/shell';
 
 const GAMES: { id: string; nama: string; asal?: string; doodle: string; orang: string; kata: string; to?: string }[] = [
   { id: 'titip', nama: 'Titip Surat', asal: 'gaya Love Letter', doodle: 'amplop', orang: '2–6', kata: 'Kartu deduksi: tebak isi tangan lawan, bertahan sampai kartu terakhir.', to: '/main/titip' },
@@ -18,6 +19,13 @@ const GAMES: { id: string; nama: string; asal?: string; doodle: string; orang: s
   { id: 'istana', nama: 'Rahasia Istana', asal: 'gaya Secret Hitler', doodle: 'gembok-hati', orang: '5–10', kata: 'Kubu tersembunyi, undang-undang, dan pemimpin yang tak boleh terpilih.' },
   { id: 'kembang-api', nama: 'Kembang Api', asal: 'gaya Hanabi', doodle: 'kembang-api', orang: '2–5', kata: 'Kooperatif: kamu melihat kartu semua orang kecuali kartumu. Nyalakan pertunjukan bersama.', to: '/main/kembang' },
   { id: 'tambang', nama: 'Tambang', asal: 'gaya Saboteur', doodle: 'peta', orang: '3–10', kata: 'Gali jalan menuju emas. Di antara penambang ada penyabot.' },
+];
+
+/** Yang bukan permainan meja, tapi tetap urusan bermain. */
+const LAIN = [
+  { to: '/photobox', nama: 'photobox', doodle: 'bingkai-polaroid' },
+  { to: '/tentang-kita', nama: 'tentang kita', doodle: 'gelembung-kata' },
+  { to: '/kartu', nama: 'kartu ucapan', doodle: 'amplop' },
 ];
 
 export default function RuangMain() {
@@ -38,7 +46,7 @@ export default function RuangMain() {
   };
   return (
     <main className="screen sd-screen rm-screen">
-      <Header title="Ruang Main" sub="permainan bersama, satu HP per orang" backTo="/hari" />
+      <ScreenTitle title="main" sub="Permainan bersama, satu HP per orang." />
       <section className="rm-hero">
         <Doodle id="dadu" size={64} draw />
         <p className="sd-hero-sub">Kumpul, buka meja, dan main bersama. Teman tanpa akun Sehari bisa ikut lewat QR atau kode.</p>
@@ -63,6 +71,15 @@ export default function RuangMain() {
             </span>
             {g.to ? <Doodle id="ui-panah-kanan" size={18} color="currentColor" /> : <span className="rm-segera">segera</span>}
           </button>
+        ))}
+      </div>
+      <span className="label" style={{ display: 'block', marginTop: 28 }}>juga di ruang ini</span>
+      <div className="rm-lain" style={{ marginTop: 8 }}>
+        {LAIN.map((x) => (
+          <Link key={x.to} to={x.to} className="card">
+            <Doodle id={x.doodle} size={34} />
+            {x.nama}
+          </Link>
         ))}
       </div>
     </main>

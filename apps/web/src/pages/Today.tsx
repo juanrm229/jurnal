@@ -26,7 +26,7 @@ import {
 } from '@sehari/core';
 import { gardenDoodleFor } from '@sehari/doodles';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultWidth, Page, type PageItem, PAGE_W } from '@/editor/Page';
 import { PrintSheet } from '@/editor/PrintSheet';
 import { NiatCard, niatSkipped, rememberNiat, skipNiat } from '@/editor/Niat';
@@ -38,16 +38,16 @@ import { TEXT_SIZES } from '@/editor/elements';
 import { FILLS, isSpecial, LINES, specialWidth } from '@/editor/stickers';
 import { DockBtn, EmptyPage, Tile, useKeyboardInset } from '@/editor/dock';
 import { api } from '@/lib/api';
-import { FlashStrip } from '@/pages/kilasan/FlashStrip';
 import { buildDropBody, type CircleView, type DraftDrop, newDropId, nowParts, openDrop, qk, updateDrop, useCircles, useKeyring, useMe, useMyDay, useToday } from '@/lib/data';
 import { primeMedia, uploadBytes, uploadPhoto } from '@/lib/media';
 import { Link, navigate, useParams, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { takePendingStrip } from '@/lib/photobox/booth';
 import { store } from '@/lib/storage';
-import { Avatar, Doodle, Sheet, Toggle, useToast } from '@/ui/kit';
+import { Doodle, Sheet, Toggle, useToast } from '@/ui/kit';
+import { Hadir } from '@/ui/Hadir';
+import { TopActions } from '@/ui/shell';
 import { sound } from '@/lib/sound';
-import { openLaci } from '@/ui/Laci';
 import { countdown, fmtWhen, useMeets } from '@/lib/meets';
 
 type Item = PageItem & { draft?: boolean; pageCircleId?: string | null };
@@ -59,9 +59,7 @@ let turnDir: 'next' | 'prev' | null = null;
 function PaperSkeleton() {
   return (
     <main className="screen today" style={{ maxWidth: 760 }} aria-busy aria-label="membuka halaman">
-      <div className="sk-top" />
-      <div className="sk-chips">
-        <i />
+      <div className="sk-top">
         <i />
         <i />
       </div>
@@ -516,6 +514,7 @@ export default function Today() {
   const selectedItem = items.find((x) => x.id === selected);
 
   const tools = selectedItem && !selectedItem.draft && !selectedItem.pending ? toolsFor(selectedItem) : null;
+  const context = editable && !!(tools || editing);
   const names = active.filter((c) => circleIds.includes(c.id)).map((c) => c.name).join(' · ');
   const susulan = mainSealed ? sepCircles.filter((c) => !ownPageIds.has(c.id) && !sealedCircles.includes(c.id)) : [];
   const toggleOwnPage = async (c: CircleView, on: boolean) => {
@@ -531,33 +530,24 @@ export default function Today() {
 
   return (
     <main className="screen today" style={{ maxWidth: 760 }}>
-      <header className="today-top">
-        <Link to="/" className="row" aria-label="beranda">
-          <Doodle id="tunas" size={26} />
-          <span className="h2">sehari</span>
-        </Link>
-        <div className="row today-nav">
-          <span className="today-chips">
-            {active.slice(0, 2).map((c) => (
-              <TogetherChip key={c.id} c={c} meId={me.user.id} day={day} />
-            ))}
-          </span>
-          <Link to="/lingkaran" className="nav-i">
-            <Doodle id="ui-lingkaran" size={22} />
-            <span>lingkaran</span>
-          </Link>
-          <Link to="/kenangan" className="nav-i">
-            <Doodle id="ui-kenangan" size={22} />
-            <span>kenangan</span>
-          </Link>
-          <button type="button" className="nav-i" onClick={openLaci} data-testid="open-laci">
-            <Doodle id="ui-cari" size={22} />
-            <span>laci</span>
+      <header className="top">
+        <div className="daysw" data-dir={turnDir ?? undefined}>
+          <button onClick={() => turnTo(addDays(day, -1))} data-testid="day-prev" aria-label={`ke ${formatDayLong(addDays(day, -1))}`}>
+            <Doodle id="ui-kembali" size={16} color="currentColor" />
           </button>
-          <Link to="/aku" className="nav-i" aria-label="aku">
-            <Avatar doodle={me.user.doodle} size={24} />
-            <span>aku</span>
-          </Link>
+          <button className="daysw-label" onClick={() => turnTo(today)} disabled={day === today} style={{ opacity: 1 }} aria-label={day === today ? 'hari ini' : 'kembali ke hari ini'}>
+            <span className="daysw-main" key={day}>
+              {day === today ? 'hari ini' : relativeDay(day, today) === 'kemarin' ? 'kemarin' : formatDayShort(day)}
+            </span>
+            {day !== today ? <span className="daysw-back">ke hari ini</span> : null}
+          </button>
+          <button onClick={() => turnTo(addDays(day, 1))} disabled={day >= today} data-testid="day-next" aria-label={day >= today ? 'besok belum ditulis' : 'ke hari berikutnya'}>
+            <Doodle id="ui-panah-kanan" size={16} color="currentColor" />
+          </button>
+        </div>
+        <div className="top-right">
+          <Hadir circles={active} meId={me.user.id} day={day} today={today} />
+          <TopActions />
         </div>
       </header>
 
@@ -567,8 +557,6 @@ export default function Today() {
           <Link to="/hari" className="pill">hari ini</Link>
         </div>
       ) : null}
-
-      {day === today ? <FlashStrip /> : null}
 
       <MeetBanner />
 
@@ -635,28 +623,6 @@ export default function Today() {
         </div>
       ) : null}
 
-      {showNiat ? (
-        <NiatCard
-          day={day}
-          onSkip={() => {
-            skipNiat(day);
-            setNiatOff(true);
-          }}
-          onSave={(text) => {
-            rememberNiat(day, text);
-            void create({ ...base('intent', { x: 90, y: 210, rot: -1.2 }), text, style: { font: 'hand', size: 54 } });
-          }}
-        />
-      ) : null}
-
-      {editable ? (
-        <button className="for-chip" onClick={() => setSheet('audience')}>
-          <span className="tiny ink-soft">{pageCircle ? 'halaman khusus' : 'untuk'}</span>
-          <span className="small ink">{pageCircle ? pageCircle.name : defaultAudience === 'self' ? '🔒 hanya aku' : names}</span>
-          <span className="tiny soft">· {pageItems.filter((x) => !x.draft).length} hal di kapsul</span>
-        </button>
-      ) : null}
-
       {ghost || seberang ? (
         <div className="page-chips">
           {seberang ? (
@@ -685,21 +651,27 @@ export default function Today() {
         </div>
       ) : null}
 
-      <nav className="day-nav" aria-label="pindah hari">
-        <button onClick={() => turnTo(addDays(day, -1))} data-testid="day-prev" aria-label={`ke ${formatDayLong(addDays(day, -1))}`}>
-          <Doodle id="ui-kembali" size={14} color="currentColor" /> {relativeDay(addDays(day, -1), today) === 'kemarin' ? 'kemarin' : formatDayShort(addDays(day, -1))}
-        </button>
-        {day !== today && addDays(day, 1) !== today ? (
-          <button onClick={() => turnTo(today)} className="mid">
-            hari ini
+      <div ref={pageBox} key={day} className={`page-stack ${turnDir ? `turn-${turnDir}` : ''} ${showNiat && !pageItems.length ? 'has-niat' : ''}`}>
+        {editable ? (
+          <button className="for-chip" onClick={() => setSheet('audience')} title={`${pageItems.filter((x) => !x.draft).length} hal di kapsul`}>
+            <Doodle id={!pageCircle && defaultAudience === 'self' ? 'ui-gembok' : 'ui-lingkaran'} size={14} color="currentColor" />
+            <span>{pageCircle ? `khusus ${pageCircle.name}` : defaultAudience === 'self' ? 'hanya aku' : `untuk ${names}`}</span>
           </button>
         ) : null}
-        <button onClick={() => turnTo(addDays(day, 1))} disabled={day >= today} data-testid="day-next" aria-label="ke hari berikutnya">
-          {day >= today ? 'besok belum ditulis' : addDays(day, 1) === today ? 'hari ini' : formatDayShort(addDays(day, 1))} <Doodle id="ui-panah-kanan" size={14} color="currentColor" />
-        </button>
-      </nav>
-
-      <div ref={pageBox} key={day} className={`page-stack ${turnDir ? `turn-${turnDir}` : ''}`}>
+        {showNiat ? (
+          <NiatCard
+            compact={pageItems.length > 0}
+            day={day}
+            onSkip={() => {
+              skipNiat(day);
+              setNiatOff(true);
+            }}
+            onSave={(text) => {
+              rememberNiat(day, text);
+              void create({ ...base('intent', { x: 90, y: 210, rot: -1.2 }), text, style: { font: 'hand', size: 54 } });
+            }}
+          />
+        ) : null}
         <Page
           key={page}
           items={pageItems}
@@ -734,9 +706,9 @@ export default function Today() {
           empty={<EmptyPage />}
           foot={
             sealed ? (
-              <div data-paper="1" style={{ position: 'absolute', left: 0, right: 0, bottom: 30, textAlign: 'center', pointerEvents: 'none' }}>
-                <Doodle id="segel-lilin" size={56} />
-                <div className="tiny ink-soft">tersegel</div>
+              <div data-paper="1" className="stamp-in" style={{ position: 'absolute', left: 0, right: 0, bottom: 30, textAlign: 'center', pointerEvents: 'none' }}>
+                <Doodle id="segel-lilin" size={56} color="var(--lak)" />
+                <div className="tiny" style={{ color: 'var(--lak)' }}>tersegel</div>
               </div>
             ) : null
           }
@@ -747,8 +719,8 @@ export default function Today() {
 
       {editable ? (
         <>
-          <div style={{ height: 120 }} />
-          <nav className={`dock ${tools || editing ? 'context' : ''}`} style={{ bottom: `calc(env(safe-area-inset-bottom) + 12px + ${kb}px)` }} aria-label="alat halaman">
+          <div style={{ height: 96 }} />
+          <nav className={`dock ${context ? 'context' : 'rest'}`} style={{ '--kb': `${kb}px` } as CSSProperties} aria-label="alat halaman">
             {editing ? (
               <>
                 <span className="dock-hint small">menulis…</span>
@@ -766,24 +738,42 @@ export default function Today() {
               </>
             ) : (
               <>
-                <DockBtn icon="ui-teks" label="tulis" onClick={() => { const c = viewCenter(560, 170); addText(c.x, c.y); }} />
-                <DockBtn icon="ui-foto" label="foto" onClick={() => fileInput.current?.click()} />
-                <DockBtn icon="kilau" label="stiker" onClick={() => setSheet('sticker')} />
-                <DockBtn icon="ui-tambah" label="lainnya" onClick={() => setSheet('more')} />
-                <span className="grow" />
-                <button className="dock-seal" disabled={!pageItems.some((x) => !x.draft)} onClick={() => { setSelected(null); setSealing(true); }} aria-label={COPY.seal.cta}>
-                  <span className="wax-mini">
-                    <Doodle id="tunas" size={24} color="var(--on-ink)" sw={3} />
+                <div className="rail">
+                  <DockBtn icon="ui-teks" label="tulis" onClick={() => { const c = viewCenter(560, 170); addText(c.x, c.y); }} />
+                  <DockBtn icon="ui-foto" label="foto" onClick={() => fileInput.current?.click()} />
+                  <DockBtn icon="kilau" label="stiker" onClick={() => setSheet('sticker')} />
+                  <DockBtn icon="ui-tambah" label="lainnya" onClick={() => setSheet('more')} />
+                </div>
+                <button
+                  className="dock-seal"
+                  disabled={!pageItems.some((x) => !x.draft)}
+                  onClick={(e) => {
+                    // Upacara segel melebar dari titik tombol lak.
+                    const r = e.currentTarget.getBoundingClientRect();
+                    document.documentElement.style.setProperty('--seal-x', `${Math.round(r.left + r.width / 2)}px`);
+                    document.documentElement.style.setProperty('--seal-y', `${Math.round(r.top + r.height / 2)}px`);
+                    try {
+                      navigator.vibrate?.(14);
+                    } catch {
+                      /* tidak semua perangkat bergetar */
+                    }
+                    setSelected(null);
+                    setSealing(true);
+                  }}
+                  aria-label={COPY.seal.cta}>
+                  <span className="lak">
+                    <Doodle id="tunas" size={30} color="currentColor" sw={3} />
                   </span>
-                  <span className="tiny">segel</span>
+                  <span className="dock-seal-label">segel</span>
                 </button>
               </>
             )}
           </nav>
+          <DockFlag on={context} />
           <input ref={fileInput} type="file" accept="image/*" multiple hidden onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; if (f.length) void addPhotos(f); }} />
         </>
       ) : (
-        <div className="mt-lg col" style={{ paddingBottom: 100 }}>
+        <div className="mt-lg col" style={{ padding: '0 6px' }}>
           {sealed
             ? active.filter((c) => (pageCircle ? c.id === pageCircle.id : sealedCircles.includes(c.id) && !ownPageIds.has(c.id) && !withPage.has(c.id))).map((c) => (
                 <Link key={c.id} to={`/l/${c.id}/hari/${day}`} className="btn soft">
@@ -796,9 +786,6 @@ export default function Today() {
               <Doodle id="ui-unduh" size={22} /> simpan halaman (PDF / teks)
             </button>
           ) : null}
-          <Link to="/kenangan" className="btn ghost">
-            <Doodle id="ui-kenangan" size={22} /> ke kenangan
-          </Link>
         </div>
       )}
 
@@ -995,17 +982,16 @@ export default function Today() {
   );
 }
 
-function TogetherChip({ c, meId, day }: { c: CircleView; meId: string; day: string }) {
-  const others = c.others;
-  if (!others.length) return null;
-  return (
-    <Link to={`/l/${c.id}/hari/${day}`} className="row card flat" style={{ padding: '4px 10px 4px 4px', borderRadius: 999, gap: 4 }} title={c.name}>
-      {others.slice(0, 3).map((m) => (
-        <Avatar key={m.userId} doodle={m.doodle} size={26} sealed={c.todaySealed[m.userId]} title={`${m.penName}${c.todaySealed[m.userId] ? ' · tersegel' : ''}`} />
-      ))}
-      <span className="tiny ink">{c.todaySealed[meId] ? '✓' : c.streak.current || ''}</span>
-    </Link>
-  );
+/** Selagi alat konteks tampil, tab bawah menyingkir (lihat sistem.css). */
+function DockFlag({ on }: { on: boolean }) {
+  useEffect(() => {
+    if (on) document.documentElement.dataset.dock = 'context';
+    else delete document.documentElement.dataset.dock;
+    return () => {
+      delete document.documentElement.dataset.dock;
+    };
+  }, [on]);
+  return null;
 }
 
 /** Janji temu dalam 2 hari ke depan muncul di atas halaman. */

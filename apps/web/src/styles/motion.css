@@ -118,16 +118,6 @@
   transform: scale(0.97);
 }
 
-/* Tab aktif */
-.tabbar a.on {
-  animation: tab-on 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both;
-}
-@keyframes tab-on {
-  from {
-    transform: scale(0.86);
-  }
-}
-
 /* Kartu & ubin terangkat halus */
 .card.press,
 .tile,
