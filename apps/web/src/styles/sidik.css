@@ -8,13 +8,13 @@
 .sd-label {
   display: block;
   margin: 18px 0 8px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.14em;
   color: var(--ink-soft);
 }
 .sd-big-line {
   font-family: var(--serif-display);
-  font-size: 28px;
+  font-size: var(--fs-2xl);
   font-weight: 420;
   text-align: center;
   margin: 4px 0 6px;
@@ -73,7 +73,7 @@
   max-width: 100%;
   font-family: var(--serif-display);
   font-weight: 420;
-  font-size: 18px;
+  font-size: var(--fs-lg);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -144,7 +144,7 @@
   gap: 4px;
   width: 70px;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .sd-player.acted .sd-face {
   border-color: var(--ink);
@@ -204,7 +204,7 @@
 }
 .sd-rank b {
   font-family: var(--hand);
-  font-size: 26px;
+  font-size: var(--fs-xl);
   line-height: 1;
 }
 .sd-rank-bar {
@@ -227,7 +227,7 @@
   grid-template-columns: 40px 1fr;
   gap: 10px;
   align-items: start;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-soft);
 }
 .sd-how b {
@@ -249,7 +249,7 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .sd-role-chip.team-jahat {
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--danger) 55%, transparent), var(--shadow);
@@ -297,7 +297,7 @@
 }
 .sd-story-card b {
   font-family: var(--hand);
-  font-size: 24px;
+  font-size: var(--fs-xl);
   line-height: 1;
 }
 .sd-story-card p {
@@ -323,7 +323,7 @@
 }
 .sd-join-title {
   font-family: var(--hand);
-  font-size: 34px;
+  font-size: var(--fs-3xl);
   line-height: 1;
   margin: 0;
   color: var(--text);
@@ -361,7 +361,7 @@
 }
 .sd-name {
   text-align: center;
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .sd-join .btn {
   width: 100%;
@@ -408,7 +408,7 @@
 .sd-wait {
   text-align: center;
   font-family: var(--hand);
-  font-size: 26px;
+  font-size: var(--fs-xl);
   color: var(--ink-soft);
   margin-top: 24px;
   animation: sd-breathe 2.4s ease-in-out infinite;
@@ -458,7 +458,7 @@
   align-items: center;
   gap: 10px;
   font-family: var(--hand);
-  font-size: 40px;
+  font-size: var(--fs-3xl);
   line-height: 1;
   font-weight: 500;
   margin: 8px 0 12px;
@@ -466,7 +466,7 @@
 }
 .sd-file-text {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.7;
   min-height: 7em;
   color: var(--text);
@@ -477,7 +477,7 @@
 .sd-file-facts {
   display: grid;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 12px 0;
   border-top: 1.5px dashed var(--pill);
 }
@@ -499,7 +499,7 @@
   grid-template-columns: 30px 1fr;
   align-items: center;
   gap: 2px 8px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 8px;
   border-radius: 14px;
   background: color-mix(in srgb, var(--ink) 7%, var(--card));
@@ -554,7 +554,7 @@
   line-height: 1;
 }
 .sd-role-hint {
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .sd-role-front {
   transform: rotateY(180deg);
@@ -597,12 +597,12 @@
 }
 .sd-role-power,
 .sd-role-goal {
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .sd-secret {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background: rgba(255, 255, 255, 0.55);
 }
 :root[data-dark='1'] .sd-secret {
@@ -638,7 +638,7 @@
   grid-row: span 2;
 }
 .sd-sus-name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
@@ -661,7 +661,7 @@
   align-items: center;
   gap: 3px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--pill);
   color: var(--ink);
   font-size: 10.5px;
@@ -691,7 +691,7 @@
   font: 600 10px var(--mono);
   color: #fff;
   background: var(--danger);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 1px 7px;
 }
 .sd-mark {
@@ -699,7 +699,7 @@
   bottom: 6px;
   right: 10px;
   font-family: var(--hand);
-  font-size: 26px;
+  font-size: var(--fs-xl);
   line-height: 1;
   color: var(--ink);
 }
@@ -718,7 +718,7 @@
   background: color-mix(in srgb, var(--card) 70%, transparent);
 }
 .sd-stamp.big {
-  font-size: 20px;
+  font-size: var(--fs-lg);
   animation: sd-stamp 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
   animation-delay: inherit;
 }
@@ -773,7 +773,7 @@
 }
 .sd-night-title {
   font-family: var(--hand);
-  font-size: 40px;
+  font-size: var(--fs-3xl);
   text-align: center;
   margin: 0 0 4px;
 }
@@ -815,11 +815,11 @@
   align-items: center;
   gap: 6px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 6px 12px 6px 6px;
   background: var(--pill);
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .sd-pick-players button.on,
 .sd-offers button.on {
@@ -838,14 +838,14 @@
 }
 .sd-pick-players.big button {
   padding: 8px 14px 8px 8px;
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
 .sd-offers {
   display: grid;
   gap: 6px;
 }
 .sd-offers button {
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   padding: 10px 12px;
   text-align: left;
 }
@@ -854,7 +854,7 @@
   position: relative;
   margin-top: 18px;
   min-height: 62px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 0;
   background: var(--pill);
   color: var(--ink);
@@ -900,7 +900,7 @@
   justify-content: center;
   gap: 8px;
   font-family: var(--hand);
-  font-size: 40px;
+  font-size: var(--fs-3xl);
   color: var(--ink);
   margin: 4px 0 16px;
 }
@@ -927,7 +927,7 @@
 .sd-envelope p {
   margin: 6px 0 0;
   font-family: var(--hand);
-  font-size: 24px;
+  font-size: var(--fs-xl);
   line-height: 1.15;
 }
 .sd-envelope.k-event,
@@ -958,7 +958,7 @@
 
 /* ── Diskusi ── */
 .sd-day-hint {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-soft);
   text-align: center;
   margin: 0 0 10px;
@@ -968,7 +968,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   padding: 4px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: var(--pill);
   margin-bottom: 12px;
 }
@@ -980,7 +980,7 @@
   border: 0;
   border-radius: 14px;
   padding: 8px 4px;
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   background: none;
   color: var(--ink);
   display: flex;
@@ -1000,7 +1000,7 @@
   display: grid;
   gap: 4px;
   padding: 12px 14px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: var(--card);
   box-shadow: var(--shadow);
 }
@@ -1041,7 +1041,7 @@
   opacity: 0.7;
 }
 .sd-clue-text {
-  font-size: 13.5px;
+  font-size: var(--fs-sm);
 }
 .sd-clue-actions {
   display: flex;
@@ -1142,7 +1142,7 @@
 }
 .sd-culprit-card b {
   font-family: var(--hand);
-  font-size: 40px;
+  font-size: var(--fs-3xl);
   line-height: 1;
 }
 .sd-culprit-card .sd-face {
@@ -1161,7 +1161,7 @@
 .sd-culprit-traits span {
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #f1efe9;
 }
 .sd-end-story {
@@ -1183,10 +1183,10 @@
   gap: 2px;
   width: 96px;
   padding: 10px 4px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: var(--card);
   box-shadow: var(--shadow);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   text-align: center;
   animation: sd-env 0.5s both;
 }
@@ -1213,7 +1213,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--hand);
-  font-size: 24px;
+  font-size: var(--fs-xl);
   color: var(--ink);
 }
 .sd-replay-line {
@@ -1221,7 +1221,7 @@
   grid-template-columns: 22px 1fr;
   gap: 8px;
   align-items: start;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   animation: sd-env 0.5s both;
 }
 .sd-replay-line.k-tamper,
@@ -1235,7 +1235,7 @@
 .sd-tv {
   min-height: 100vh;
   padding: 24px 36px;
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .sd-tv-top {
   display: grid;
@@ -1255,7 +1255,7 @@
 .sd-tv-top .sd-timer {
   width: 80px;
   height: 80px;
-  font-size: 22px;
+  font-size: var(--fs-xl);
 }
 .sd-tv-lobby {
   display: flex;
@@ -1292,13 +1292,13 @@
 .sd-tv-story {
   font-family: var(--serif);
   font-style: italic;
-  font-size: 22px;
+  font-size: var(--fs-xl);
 }
 .sd-tv-hint {
   position: fixed;
   right: 24px;
   bottom: 14px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-soft);
 }
 

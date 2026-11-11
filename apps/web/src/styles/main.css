@@ -62,7 +62,7 @@
 }
 .rm-game b {
   font-family: var(--serif-display);
-  font-size: 20px;
+  font-size: var(--fs-lg);
   font-weight: 480;
 }
 .rm-game .tiny {
@@ -82,7 +82,7 @@
 .rm-segera {
   flex: none;
   font-family: var(--hand);
-  font-size: 20px;
+  font-size: var(--fs-lg);
   color: var(--ink-soft);
   rotate: -6deg;
 }
@@ -129,7 +129,7 @@ button.ts-kartu:not(.mati):hover,
   width: 92px;
   padding: 20px 6px 8px;
   gap: 2px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
 }
 .ts-segel {
   position: absolute;
@@ -148,7 +148,7 @@ button.ts-kartu:not(.mati):hover,
 .kecil > .ts-segel {
   width: 22px;
   height: 22px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   top: 6px;
   left: 6px;
 }
@@ -162,15 +162,15 @@ button.ts-kartu:not(.mati):hover,
 .ts-nama {
   font-family: var(--serif-display);
   font-weight: 520;
-  font-size: 16px;
+  font-size: var(--fs-md);
   line-height: 1.1;
 }
 .kecil .ts-nama {
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .ts-efek {
   font-family: var(--hand);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   line-height: 1.05;
   color: hsl(var(--h) 35% 30%);
 }
@@ -194,7 +194,7 @@ button.ts-kartu:not(.mati):hover,
   place-items: center;
   width: 64px;
   height: 90px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background:
     linear-gradient(155deg, transparent 49%, #fff3 50% 51%, transparent 52%),
     linear-gradient(25deg, transparent 49%, #fff3 50% 51%, transparent 52%),
@@ -290,7 +290,7 @@ button.ts-kartu:not(.mati):hover,
   flex: 1;
 }
 .ts-kursi-nama b {
-  font-size: 14px;
+  font-size: var(--fs-md);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -341,14 +341,14 @@ button.ts-kursi:disabled {
   top: -8px;
   right: 8px;
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--ink);
   color: var(--on-ink);
   font: 600 11px var(--mono);
 }
 .ts-mikir {
   font-family: var(--hand);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   line-height: 1;
   color: var(--ink);
   animation: sd-breathe 1.6s ease-in-out infinite;
@@ -358,7 +358,7 @@ button.ts-kursi:disabled {
   align-items: center;
   gap: 3px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--fog);
   font: 600 10px var(--mono);
   color: var(--text);
@@ -373,7 +373,7 @@ button.ts-kursi:disabled {
   gap: 12px;
   align-items: center;
   padding: 12px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: color-mix(in srgb, var(--ink) 6%, var(--paper));
 }
 .ts-tumpukan {
@@ -401,13 +401,13 @@ button.ts-kursi:disabled {
   align-items: flex-start;
   gap: 6px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.35;
   color: var(--text-soft);
 }
 .ts-kj.baru {
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--fs-md);
   animation: ts-masuk 0.35s ease both;
 }
 @keyframes ts-masuk {
@@ -420,7 +420,7 @@ button.ts-kursi:disabled {
   display: block;
   font-style: normal;
   font-family: var(--hand);
-  font-size: 19px;
+  font-size: var(--fs-lg);
   line-height: 1.1;
   color: var(--ink);
 }
@@ -451,7 +451,7 @@ button.ts-kursi:disabled {
   display: grid;
   grid-template-columns: 18px 1fr auto;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .ts-sisa-baris b {
   color: hsl(var(--h) 52% 34%);
@@ -490,13 +490,13 @@ button.ts-kursi:disabled {
   scrollbar-width: none;
 }
 .ts-aku-atas b {
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .ts-status {
   margin: 0;
   text-align: center;
   font-family: var(--hand);
-  font-size: 23px;
+  font-size: var(--fs-xl);
   line-height: 1.1;
   color: var(--ink);
 }
@@ -547,7 +547,7 @@ button.ts-kursi:disabled {
   gap: 0;
   padding: 6px 8px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background: hsl(var(--h) 70% 93%);
   color: hsl(var(--h) 52% 30%);
   font: inherit;
@@ -558,7 +558,7 @@ button.ts-kursi:disabled {
   font: 700 15px var(--serif-display);
 }
 .ts-tebak button span {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   line-height: 1.1;
 }
 .ts-tebak button i {
@@ -586,7 +586,7 @@ button.ts-kursi:disabled {
   display: flex;
   gap: 6px;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-md);
   line-height: 1.35;
 }
 .ts-riwayat p.ronde {
@@ -625,7 +625,7 @@ button.ts-kursi:disabled {
   background: radial-gradient(circle at 50% 0, var(--sticky-peach), var(--card) 60%);
 }
 .ts-layar .sd-big-line {
-  font-size: 24px;
+  font-size: var(--fs-xl);
 }
 .ts-layar .sd-whisper {
   margin: 0;
@@ -656,7 +656,7 @@ button.ts-kursi:disabled {
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: color-mix(in srgb, var(--ink) 5%, var(--paper));
 }
 .ts-klasemen > span.baru {
@@ -678,7 +678,7 @@ button.ts-kursi:disabled {
   grid-template-columns: 30px 1fr;
   gap: 10px;
   padding: 12px 12px 12px 44px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: hsl(var(--h) 70% 95%);
   color: hsl(var(--h) 52% 30%);
 }
@@ -762,7 +762,7 @@ button.ts-kursi:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 22px;
+  font-size: var(--fs-xl);
 }
 .ts-tv-atas b {
   display: flex;
@@ -777,7 +777,7 @@ button.ts-kursi:disabled {
   gap: 14px;
 }
 .ts-tv-kursi .ts-kursi-nama b {
-  font-size: 20px;
+  font-size: var(--fs-lg);
 }
 .ts-tv-tengah {
   display: flex;
@@ -791,7 +791,7 @@ button.ts-kursi:disabled {
 }
 .ts-tv-kejadian p {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-lg);
   color: var(--text-soft);
 }
 .ts-tv-kejadian p.baru {
@@ -823,7 +823,7 @@ button.ts-kursi:disabled {
   height: 104px;
   padding: 0;
   border: 0;
-  border-radius: 11px;
+  border-radius: var(--r-card);
   background: var(--w);
   color: #fff;
   box-shadow: inset 0 0 0 4px #fff, 0 1px 0 #0002, 0 8px 18px -8px color-mix(in srgb, var(--w) 70%, #000);
@@ -855,7 +855,7 @@ button.st-kartu {
   rotate: 28deg;
 }
 .kecil .st-oval {
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .st-sudut {
   position: absolute;
@@ -911,7 +911,7 @@ button.st-kartu:not(:disabled):not(.pilih):hover {
   position: absolute;
   top: -12px;
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #ffd84a;
   color: #16161a;
   font: 700 11px var(--mono);
@@ -924,7 +924,7 @@ button.st-kartu:not(:disabled):not(.pilih):hover {
   width: 70px;
   height: 104px;
   border: 0;
-  border-radius: 11px;
+  border-radius: var(--r-card);
   background: radial-gradient(ellipse at 50% 50%, #e5483c 0 34%, transparent 35%), #1d1d24;
   box-shadow: inset 0 0 0 4px #fff, 3px 3px 0 -1px #1d1d24, 3px 3px 0 1px #fff, 6px 6px 0 -1px #1d1d24, 0 10px 20px -8px #0008;
   color: #fff;
@@ -989,7 +989,7 @@ button.st-belakang {
   min-width: 0;
 }
 .st-kursi-nama b {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 .st-kursi-nama em {
@@ -1020,7 +1020,7 @@ button.st-belakang {
 }
 .st-badge {
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--fog);
   font: 700 10px var(--mono);
 }
@@ -1035,7 +1035,7 @@ button.st-belakang {
   right: -4px;
   padding: 4px 10px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--danger);
   color: #fff;
   font: 700 13px var(--mono);
@@ -1103,7 +1103,7 @@ button.st-belakang {
   position: absolute;
   bottom: -10px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--warna);
   color: #fff;
   font: 700 11px var(--mono);
@@ -1124,7 +1124,7 @@ button.st-belakang {
 .st-kejadian {
   grid-column: 1 / -1;
   margin: 6px 0 0;
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text);
   text-align: center;
 }
@@ -1178,7 +1178,7 @@ button.st-belakang {
 .st-pilih-warna button {
   min-height: 64px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   background: var(--w);
   color: #fff;
   font: 700 18px var(--serif-display);
@@ -1196,7 +1196,7 @@ button.st-belakang {
   gap: 4px;
   padding: 14px 12px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   background: var(--card);
   color: var(--text);
   box-shadow: var(--shadow);
@@ -1215,16 +1215,16 @@ button.st-belakang {
 }
 .st-preset b {
   font-family: var(--serif-display);
-  font-size: 16px;
+  font-size: var(--fs-md);
 }
 .st-aturan-list {
   display: grid;
   gap: 8px;
 }
 .st-aturan-list > span {
-  font-size: 14px;
+  font-size: var(--fs-md);
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background: color-mix(in srgb, var(--ink) 5%, var(--paper));
 }
 .st-aturan-list > span.mati {
@@ -1286,21 +1286,21 @@ button.st-belakang {
   align-items: center;
   gap: 5px;
   padding: 4px 9px 4px 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--card);
   box-shadow: inset 0 0 0 2px var(--c), var(--shadow);
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .tg-chip.giliran {
   background: color-mix(in srgb, var(--c) 22%, var(--card));
   box-shadow: inset 0 0 0 3px var(--c), 0 6px 14px -6px var(--c);
 }
 .tg-chip b {
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .tg-pos {
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--c);
   color: #fff;
   font: 700 12px var(--mono);
@@ -1428,10 +1428,10 @@ button.st-belakang {
   gap: 6px;
   margin: 0;
   padding: 6px 10px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background: var(--sticky-blue);
   color: #16161a;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .tg-aku {
   gap: 8px;
@@ -1442,7 +1442,7 @@ button.st-belakang {
 }
 .tg-lempar {
   min-height: 60px;
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .tg-tangan {
   display: flex;
@@ -1458,7 +1458,7 @@ button.st-belakang {
   width: 84px;
   padding: 10px 6px 8px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--sticky-yellow);
   color: #16161a;
   font: inherit;
@@ -1470,7 +1470,7 @@ button.st-belakang {
   background: var(--sticky-peach);
 }
 .tg-kartu b {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   line-height: 1.1;
   text-align: center;
 }
@@ -1550,7 +1550,7 @@ button.tg-kartu {
 .tg-pratinjau {
   margin: 14px 0 0;
   text-align: center;
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
 .tg-dorong {
   display: flex;
@@ -1570,7 +1570,7 @@ button.tg-kartu {
   width: 30%;
   padding: 8px 4px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--card);
   font: inherit;
   cursor: pointer;
@@ -1588,7 +1588,7 @@ button.tg-kartu {
 .tg-tv-samping {
   display: grid;
   gap: 18px;
-  font-size: 22px;
+  font-size: var(--fs-xl);
 }
 .tg-tv-judul {
   display: flex;
@@ -1620,7 +1620,7 @@ button.tg-kartu {
   align-items: center;
   gap: 5px;
   padding: 3px 10px 3px 3px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--card);
   box-shadow: inset 0 0 0 2px var(--c), var(--shadow);
 }
@@ -1629,7 +1629,7 @@ button.tg-kartu {
   line-height: 1.1;
 }
 .sg-chip-isi b {
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .sg-chip-isi span {
   font: 600 11px var(--mono);
@@ -1646,10 +1646,10 @@ button.tg-kartu {
   padding: 6px 16px 6px 6px;
 }
 .sg-chip.besar .sg-chip-isi b {
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .sg-chip.besar .sg-chip-isi span {
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
 .sg-wajah {
   border-radius: 50%;
@@ -1664,7 +1664,7 @@ button.tg-kartu {
   aspect-ratio: 1;
   gap: 1px;
   padding: 1px;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background: #16161a;
   box-shadow: 0 14px 30px -12px #0006;
   overflow: hidden;
@@ -1805,7 +1805,7 @@ button.tg-kartu {
 }
 .sg-pot {
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #ffd84a;
   font: 700 12px var(--mono);
 }
@@ -1826,7 +1826,7 @@ button.tg-kartu {
   min-width: 18px;
   height: 18px;
   margin-left: 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--danger);
   color: #fff;
   font: 700 11px var(--mono);
@@ -1838,7 +1838,7 @@ button.tg-kartu {
   max-width: 320px;
   margin: 0 auto;
   padding: 0 0 10px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: #fffdf6;
   color: #16161a;
   box-shadow: 0 0 0 2px #16161a, 0 10px 20px -10px #0006;
@@ -1864,7 +1864,7 @@ button.tg-kartu {
   width: calc(100% - 24px);
   margin: 0 12px;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .sg-akta td {
   padding: 2px 0;
@@ -1903,7 +1903,7 @@ button.tg-kartu {
   width: min(86vw, 340px);
   padding: 20px 18px;
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   background: #ffe6a8;
   color: #16161a;
   box-shadow: 0 0 0 3px #16161a, 0 24px 50px -10px #0008;
@@ -1950,7 +1950,7 @@ button.tg-kartu {
 }
 .sg-tawaran {
   padding: 10px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--sticky-yellow);
   color: #16161a;
 }
@@ -1961,7 +1961,7 @@ button.tg-kartu {
   display: grid;
   gap: 6px;
   padding: 10px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: color-mix(in srgb, var(--ink) 5%, var(--paper));
 }
 .sg-paket .sd-label {
@@ -2036,7 +2036,7 @@ button.tg-kartu {
   height: 120px;
   padding: 0 4px 8px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: #fffdf6;
   color: var(--k);
   box-shadow: inset 0 0 0 3px var(--k), 0 8px 16px -8px #0007;
@@ -2143,7 +2143,7 @@ button.kp-belakang {
   align-items: center;
   gap: 6px;
   padding: 3px 10px 3px 3px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--card);
   box-shadow: var(--shadow);
 }
@@ -2152,7 +2152,7 @@ button.kp-belakang {
   line-height: 1.1;
 }
 .kp-chip-isi b {
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 .kp-chip-isi span {
   font: 500 11px var(--mono);
@@ -2166,10 +2166,10 @@ button.kp-belakang {
   text-decoration: line-through;
 }
 .kp-pemain.besar .kp-chip-isi b {
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .kp-pemain.besar .kp-chip-isi span {
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .kp-tengah {
   --panas: 0;
@@ -2197,7 +2197,7 @@ button.kp-belakang {
   place-items: center;
   width: 84px;
   height: 120px;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   border: 2px dashed var(--fog);
   color: var(--text-soft);
   font-size: 11px;
@@ -2215,7 +2215,7 @@ button.kp-belakang {
 }
 .kp-kejadian {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.3;
 }
 .kp-ogah {
@@ -2226,7 +2226,7 @@ button.kp-belakang {
   align-items: center;
   gap: 10px;
   padding: 12px 12px 14px;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   background: var(--sticky-yellow);
   color: #16161a;
   box-shadow: 0 10px 24px -10px #0007;
@@ -2396,7 +2396,7 @@ button.kp-belakang {
   height: 48px;
 }
 .kb-kartu.kecil .kb-n {
-  font-size: 16px;
+  font-size: var(--fs-md);
 }
 button.kb-kartu {
   cursor: pointer;
@@ -2434,7 +2434,7 @@ button.kb-kartu {
   align-items: center;
   gap: 2px;
   padding: 1px 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #ffd84a;
   color: #16161a;
   font: 700 10px var(--mono);
@@ -2450,7 +2450,7 @@ button.kb-kartu {
   grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
   gap: 6px;
   padding: 12px 10px 10px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: radial-gradient(ellipse at 50% 0, #2a2350, #0f0f1a 75%);
 }
 .kb-api-tiang {
@@ -2540,11 +2540,11 @@ button.kb-kartu {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .kb-nama em {
   font-family: var(--hand);
-  font-size: 17px;
+  font-size: var(--fs-lg);
   font-style: normal;
   color: var(--ink);
 }
@@ -2574,7 +2574,7 @@ button.kb-kartu {
   min-height: 40px;
   padding: 0 12px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-card);
   background: var(--w, #16161a);
   color: #fff;
   font: 700 14px var(--mono);

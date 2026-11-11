@@ -273,44 +273,7 @@ a,
 }
 
 /* ── Buka bersama di HP ─────────────────────────────────── */
-.pager-tabs {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 4px 2px 12px;
-  position: sticky;
-  top: 0;
-  z-index: 12;
-  background: linear-gradient(var(--paper) 75%, transparent);
-}
-.pager-tabs::-webkit-scrollbar {
-  display: none;
-}
-.pager-tabs button {
-  flex: 1 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: var(--r-pill);
-  padding: 6px 14px 6px 6px;
-  background: var(--card);
-  color: var(--ink);
-  box-shadow: 0 0 0 1px var(--card-edge);
-  min-height: 44px;
-  transition: background 0.2s, color 0.2s;
-}
-.pager-tabs button i {
-  font-style: normal;
-  font-size: var(--fs-xs);
-  opacity: 0.7;
-  margin-left: auto;
-}
-.pager-tabs button.on {
-  background: var(--ink);
-  color: var(--on-ink);
-}
+
 .pager {
   touch-action: pan-y;
   perspective: 1600px;
