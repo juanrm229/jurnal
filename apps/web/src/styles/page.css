@@ -107,7 +107,7 @@
   display: flex;
   gap: 2px;
   padding: 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--text);
   color: var(--paper);
   box-shadow: var(--shadow-lift);
@@ -119,9 +119,9 @@
   border: 0;
   background: none;
   color: inherit;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
 }
 .el-toolbar button:hover {
   background: rgba(255, 255, 255, 0.14);
@@ -314,10 +314,10 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 10px;
+  font-size: var(--fs-xs);
   padding: 6px 8px;
   min-width: 56px;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
 }
 .toolbar button:hover {
   background: rgba(255, 255, 255, 0.12);
@@ -349,7 +349,7 @@
 .envelope .back {
   position: absolute;
   inset: 0;
-  border-radius: 10px;
+  border-radius: var(--r-card);
   background: color-mix(in srgb, var(--ink) 9%, var(--card));
   border: 2px solid var(--ink);
 }
@@ -507,7 +507,7 @@
   display: flex;
   gap: 4px;
   padding: 5px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--text);
   color: var(--paper);
   box-shadow: var(--shadow-lift);
@@ -518,9 +518,9 @@
   border: 0;
   background: none;
   color: inherit;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   display: flex;
   gap: 4px;
   align-items: center;
@@ -539,9 +539,9 @@
 .react-badges span {
   background: var(--ink);
   color: var(--on-ink);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   padding: 2px 6px 2px 4px;
-  font-size: 10px;
+  font-size: var(--fs-xs);
   display: flex;
   align-items: center;
   gap: 2px;
@@ -550,7 +550,7 @@
 .footnote {
   font-family: var(--hand);
   color: var(--ink);
-  font-size: 20px;
+  font-size: var(--fs-lg);
   line-height: 1.05;
   transform: rotate(-2deg);
   margin-top: 6px;

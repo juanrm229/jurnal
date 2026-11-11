@@ -120,7 +120,7 @@
   align-items: flex-start;
   gap: 4px;
   padding: 14px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: var(--card);
   border: 1.5px solid var(--card-edge);
   color: var(--text);
@@ -130,7 +130,7 @@
 .tk-rel b {
   font-family: var(--serif-display);
   font-weight: 500;
-  font-size: 18px;
+  font-size: var(--fs-lg);
 }
 .tk-rel.on {
   border-color: var(--ink);
@@ -156,7 +156,7 @@
   border: 0;
   background: none;
   color: inherit;
-  font-size: 18px;
+  font-size: var(--fs-lg);
   line-height: 1;
   opacity: 0.6;
 }
@@ -175,7 +175,7 @@
   align-items: center;
   gap: 4px;
   padding: 12px 6px;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   border: 1.5px solid var(--card-edge);
   background: var(--card);
   color: var(--text);
@@ -187,7 +187,7 @@
   border-color: var(--ink);
 }
 .tk-dots::before {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 3px;
   color: var(--tk-accent, var(--ink));
 }
@@ -215,7 +215,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   border: 1.5px solid transparent;
   background: var(--tk-bg);
   color: var(--tk-fg);
@@ -240,7 +240,7 @@
 .tk-start {
   width: 100%;
   min-height: 56px;
-  font-size: 18px;
+  font-size: var(--fs-lg);
   margin-top: 8px;
 }
 
@@ -257,7 +257,7 @@
 .tk-progress {
   width: min(220px, 60vw);
   height: 5px;
-  border-radius: 99px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--ink) 12%, transparent);
   overflow: hidden;
 }
@@ -270,13 +270,13 @@
 }
 .tk-turn {
   margin: 6px 0 10px;
-  font-size: 15px;
+  font-size: var(--fs-md);
   color: var(--text-soft);
 }
 .tk-turn b {
   color: var(--ink);
   font-family: var(--hand);
-  font-size: 24px;
+  font-size: var(--fs-xl);
   font-weight: 700;
 }
 .tk-card {
@@ -318,7 +318,7 @@
   align-items: center;
   gap: 6px;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -344,7 +344,7 @@
   border-left: 2px solid var(--tk-accent);
   font-family: var(--serif);
   font-style: italic;
-  font-size: 18px;
+  font-size: var(--fs-lg);
   color: var(--tk-fg);
   animation: rise 0.35s ease both;
 }
@@ -362,12 +362,12 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 16px;
+  border-radius: var(--r-sheet);
   border: 1.5px solid color-mix(in srgb, var(--tk-accent) 30%, transparent);
   background: color-mix(in srgb, #fff 55%, transparent);
   color: var(--tk-fg);
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: var(--fs-md);
   text-align: left;
   transition: transform 0.2s, border-color 0.2s, background 0.2s;
 }
@@ -386,7 +386,7 @@
   background: var(--tk-accent);
   color: #fff;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .tk-tebak,
 .tk-renung {
@@ -407,7 +407,7 @@
 }
 .tk-clock {
   font-family: var(--mono);
-  font-size: 34px;
+  font-size: var(--fs-3xl);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
@@ -433,14 +433,14 @@
 }
 .tk-bar .btn {
   min-height: 52px;
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
 .tk-bar .btn.soft {
   flex: none;
   padding-inline: 16px;
 }
 .tk-renung .btn {
-  font-size: 15px;
+  font-size: var(--fs-md);
 }
 .tk-fav {
   color: var(--text-soft);
@@ -464,20 +464,20 @@
   flex-direction: column;
   align-items: center;
   padding: 14px 8px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   background: var(--card);
   border: 1px solid var(--card-edge);
   text-align: center;
 }
 .tk-stats b {
   font-family: var(--serif-display);
-  font-size: 30px;
+  font-size: var(--fs-2xl);
   font-weight: 500;
   color: var(--ink);
 }
 .tk-fav-card {
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: var(--r-sheet);
   border: 1px solid var(--card-edge);
 }
 .tk-fav-card span {
@@ -488,7 +488,7 @@
 .tk-fav-card p {
   margin: 4px 0 0;
   font-family: var(--serif-display);
-  font-size: 18px;
+  font-size: var(--fs-lg);
   line-height: 1.35;
   color: var(--tk-fg);
 }
