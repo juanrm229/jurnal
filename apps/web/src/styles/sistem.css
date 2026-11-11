@@ -1945,6 +1945,225 @@ a.hadir-row:active {
   margin-bottom: -3px;
 }
 
+/* ── Halaman bersama: kepala dan kertas yang sama dengan Hari ini ──────── */
+.screen.bersama {
+  padding-top: env(safe-area-inset-top);
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.bersama-top .daysw-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: 0 4px;
+}
+.bersama-of {
+  font-size: var(--fs-xs);
+  color: var(--text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bersama-top .icon-btn:disabled {
+  opacity: 0.22;
+}
+.bersama-date {
+  margin: 2px 6px 10px;
+  font-size: var(--fs-2xl);
+  line-height: 1.05;
+  animation: ink-write 900ms cubic-bezier(0.5, 0, 0.2, 1) 160ms both;
+}
+.bersama-people {
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0 6px 12px;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: none;
+  border: 0;
+}
+.bersama-people::-webkit-scrollbar {
+  display: none;
+}
+.bersama-people > button {
+  flex: 1 1 0;
+  min-width: 132px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  box-shadow: none;
+  animation: pop-in 480ms var(--ease-spring) both;
+  animation-delay: calc(120ms + var(--n, 0) * 70ms);
+  transition: border-color var(--t-move), background var(--t-move), transform var(--t-tap) var(--ease-spring);
+}
+.bersama-people > button:active {
+  transform: scale(0.97);
+}
+.bersama-people.pager-tabs > button.on {
+  border-color: var(--ink);
+  background: var(--ink-faint);
+  color: var(--text);
+}
+.bersama-face {
+  position: relative;
+  flex: none;
+  display: grid;
+}
+.bersama-face .avatar {
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--ink) 40%, transparent) !important;
+}
+.sealed > .bersama-face::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--lak);
+  border: 2px solid var(--card);
+  animation: pop-in 520ms var(--ease-spring) 420ms both;
+}
+.bersama-who {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.bersama-who b {
+  font-weight: 500;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bersama-who i {
+  font-style: normal;
+  font-size: var(--fs-xs);
+  color: var(--text-soft);
+}
+.sealed > .bersama-who i {
+  color: var(--lak);
+}
+.bersama .page {
+  border-radius: var(--r-sheet);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 30px 60px -28px rgba(20, 20, 50, 0.3);
+}
+.bersama .book.open .pager,
+.bersama .book.open .spread {
+  animation: paper-lay 720ms var(--ease-out) both;
+  transform-origin: 50% 0;
+}
+.bersama .page-tape {
+  display: none;
+}
+
+/* ── Main: kerangka bersama semua permainan ────────────────────────────── */
+.rm-daftar {
+  gap: var(--sp-3);
+}
+.rm-game {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: none;
+  padding: var(--sp-4);
+  /* Dibagikan seperti kartu ke meja. */
+  animation: card-deal 620ms var(--ease-spring) both;
+  transition: transform var(--t-move) var(--ease-spring), border-color var(--t-tap), box-shadow var(--t-move);
+}
+.rm-game:nth-child(1) { animation-delay: 80ms; }
+.rm-game:nth-child(2) { animation-delay: 140ms; }
+.rm-game:nth-child(3) { animation-delay: 200ms; }
+.rm-game:nth-child(4) { animation-delay: 260ms; }
+.rm-game:nth-child(5) { animation-delay: 320ms; }
+.rm-game:nth-child(6) { animation-delay: 380ms; }
+.rm-game:nth-child(n + 7) { animation-delay: 440ms; }
+@keyframes card-deal {
+  from {
+    opacity: 0;
+    transform: translate(-40px, 30px) rotate(-7deg) scale(0.92);
+  }
+}
+.rm-game:not(.segera):active {
+  transform: scale(0.98) rotate(-0.4deg);
+}
+@media (hover: hover) {
+  .rm-game:not(.segera):hover {
+    transform: translateY(-3px) rotate(-0.4deg);
+    border-color: color-mix(in srgb, var(--ink) 35%, var(--line));
+    box-shadow: var(--shadow);
+  }
+  .rm-game:not(.segera):hover > svg:first-of-type {
+    transform: rotate(-8deg) scale(1.08);
+  }
+}
+.rm-game > svg:first-of-type {
+  color: var(--ink);
+  transition: transform var(--t-move) var(--ease-spring);
+}
+.rm-game .sd-tape {
+  display: none;
+}
+.rm-game.segera {
+  border-style: dashed;
+  box-shadow: none;
+}
+.rm-hero {
+  animation: title-in var(--t-rite) var(--ease-out) both;
+}
+/* Beranda tiap permainan. */
+.sd-hero-title {
+  font-size: clamp(52px, 17vw, 76px);
+  animation: ink-write 1000ms cubic-bezier(0.5, 0, 0.2, 1) 120ms both;
+}
+.sd-hero-sub {
+  animation: fade var(--t-rite) ease 700ms both;
+}
+.sd-home-actions {
+  animation: title-in var(--t-rite) var(--ease-out) 380ms both;
+}
+.sd-joincode .field {
+  border-radius: var(--r-card);
+}
+.sd-code-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sheet);
+  box-shadow: none;
+  animation: note-stick 620ms var(--ease-spring) both;
+}
+.sd-code {
+  animation: ink-write 900ms cubic-bezier(0.5, 0, 0.2, 1) 300ms both;
+}
+.sd-rank {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 12px 22px -14px rgba(0, 0, 0, 0.25);
+  animation: note-stick 620ms var(--ease-spring) 500ms both;
+}
+.sd-avatars button {
+  box-shadow: none;
+  border: 1.5px solid var(--line);
+  transition: transform var(--t-tap) var(--ease-spring), border-color var(--t-tap);
+}
+.sd-avatars button:active {
+  transform: scale(0.88);
+}
+.sd-avatars button.on {
+  border-color: var(--ink);
+  background: var(--ink-faint);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dock-seal::before,
   .dock-seal::after {

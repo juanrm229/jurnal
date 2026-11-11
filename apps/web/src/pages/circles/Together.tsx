@@ -2,9 +2,9 @@
  * Satu hari di lingkaran: buku terbuka. Halaman tiap orang berdampingan,
  * sampulnya terbuka pelan saat semuanya sudah tersegel.
  */
-import { addDays, COPY, dayName, type FootnoteWire, formatDayLong, getCity, type LockedDrop, openEnvelope, type ReactionKind, sealableDays, sealEnvelope, yellowing } from '@sehari/core';
+import { addDays, COPY, dayName, type FootnoteWire, formatDayLong, formatDayShort, getCity, relativeDay, type LockedDrop, openEnvelope, type ReactionKind, sealableDays, sealEnvelope, yellowing } from '@sehari/core';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { Page, type PageItem } from '@/editor/Page';
 
 /**
@@ -15,12 +15,12 @@ const PAGE_MIN_H = 1000;
 import { api } from '@/lib/api';
 import { FaceButton, FaceRow } from '@/pages/kilasan/Faces';
 import { newDropId, qk, useCircle, useCircleDay, useKeyring, useMe, useOpenDrops, useReact, useToday } from '@/lib/data';
-import { Link, navigate, useParams } from '@/lib/router';
+import { back, Link, navigate, useParams } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { claimTokens, tokenCandidates } from '@/lib/tokens';
 import { Scene } from '@/ui/art';
 import { sound } from '@/lib/sound';
-import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
+import { Avatar, Doodle, Growing, Sheet, useToast } from '@/ui/kit';
 
 const REACTIONS: { kind: ReactionKind; label: string; doodle: string }[] = [
   { kind: 'hug', label: 'peluk', doodle: 'ui-peluk' },
@@ -137,34 +137,48 @@ export default function Together() {
   };
 
   return (
-    <main className="screen wide" onClick={() => setTap(null)}>
-      <Header
-        title={`${dayName(day)}, ${formatDayLong(day)}`}
-        sub={circle.name}
-        backTo={`/l/${id}`}
-        right={
-          <div className="row" style={{ gap: 0 }}>
-            <button className="icon-btn" aria-label="hari sebelumnya" onClick={() => navigate(`/l/${id}/hari/${addDays(day, -1)}`, { replace: true })}>
-              <Doodle id="ui-kembali" size={20} />
-            </button>
-            {day < today ? (
-              <button className="icon-btn" aria-label="hari berikutnya" onClick={() => navigate(`/l/${id}/hari/${addDays(day, 1)}`, { replace: true })}>
-                <Doodle id="ui-panah-kanan" size={20} />
-              </button>
-            ) : null}
-          </div>
-        }
-      />
+    <main className="screen wide bersama" onClick={() => setTap(null)}>
+      <header className="top bersama-top">
+        <div className="daysw">
+          <button onClick={() => back(`/l/${id}`)} aria-label="kembali">
+            <Doodle id="ui-kembali" size={18} color="currentColor" />
+          </button>
+          <span className="daysw-label">
+            <span className="daysw-main" key={day}>
+              {day === today ? 'hari ini' : relativeDay(day, today) === 'kemarin' ? 'kemarin' : formatDayShort(day)}
+            </span>
+            <span className="bersama-of">{circle.name}</span>
+          </span>
+        </div>
+        <div className="top-right">
+          <button className="icon-btn" aria-label="hari sebelumnya" onClick={() => navigate(`/l/${id}/hari/${addDays(day, -1)}`, { replace: true })}>
+            <Doodle id="ui-kembali" size={18} />
+          </button>
+          <button className="icon-btn" aria-label="hari berikutnya" disabled={day >= today} onClick={() => navigate(`/l/${id}/hari/${addDays(day, 1)}`, { replace: true })}>
+            <Doodle id="ui-panah-kanan" size={18} />
+          </button>
+        </div>
+      </header>
 
-      <div className="row wrap" style={{ justifyContent: 'center', gap: 16, margin: '6px 0 14px' }}>
-        {data.members.map((m) => {
-          const info = circle.members.find((x) => x.userId === m.userId);
+      <p className="bersama-date hand" key={day}>
+        {dayName(day)}, {formatDayLong(day, false).toLowerCase()}
+      </p>
+
+      {/* Satu baris orang: siapa yang sudah menyegel, dan (di HP) halaman siapa yang sedang dibuka. */}
+      <div className={`bersama-people ${narrow && ordered.length > 1 ? 'pager-tabs' : ''}`} role={narrow ? 'tablist' : undefined}>
+        {ordered.map((p, i) => {
+          const m = p.member;
+          const on = narrow && i === idx;
           return (
-            <div key={m.userId} className="col center" style={{ alignItems: 'center', gap: 2 }}>
-              <Avatar doodle={info?.doodle ?? 'tunas'} size={40} sealed={m.sealed} />
-              <span className={`tiny ${m.sealed ? 'ink' : 'soft'}`}>{name(m.userId)}</span>
-              <span className="tiny soft">{m.sealed ? 'tersegel' : m.frozen ? 'istirahat' : `${m.dropCount} hal`}</span>
-            </div>
+            <button key={m.userId} role={narrow ? 'tab' : undefined} aria-selected={narrow ? on : undefined} className={`${on ? 'on' : ''} ${m.sealed ? 'sealed' : ''}`} style={{ '--n': i } as CSSProperties} onClick={() => narrow && go(i)}>
+              <span className="bersama-face">
+                <Avatar doodle={p.info?.doodle ?? 'tunas'} size={34} />
+              </span>
+              <span className="bersama-who">
+                <b>{name(m.userId)}</b>
+                <i>{m.sealed ? 'tersegel' : m.frozen ? 'istirahat' : p.locked.length ? 'terkunci' : `${m.dropCount} hal`}</i>
+              </span>
+            </button>
           );
         })}
       </div>
@@ -192,17 +206,6 @@ export default function Together() {
           <div className="hand" style={{ fontSize: 34 }}>{circle.name}</div>
           <div className="tiny">{formatDayLong(day)}</div>
         </div>
-        {narrow && ordered.length > 1 ? (
-          <div className="pager-tabs" role="tablist">
-            {ordered.map((p, i) => (
-              <button key={p.member.userId} role="tab" aria-selected={i === idx} className={i === idx ? 'on' : ''} onClick={() => go(i)}>
-                <Avatar doodle={p.info?.doodle ?? 'tunas'} size={30} sealed={p.member.sealed} />
-                <span>{name(p.member.userId)}</span>
-                <i>{p.items.length || (p.locked.length ? '🔒' : '·')}</i>
-              </button>
-            ))}
-          </div>
-        ) : null}
         <div
           className={narrow ? 'pager' : 'spread'}
           onPointerDown={(e) => (swipe.current = { x: e.clientX, y: e.clientY, t: Date.now() })}
