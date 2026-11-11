@@ -27,6 +27,9 @@ export default function Kenangan() {
   const left = year === thisYear ? all.filter((d) => d > today).length : 0;
   const firstYear = Number(me.user.createdAt.slice(0, 4));
   const [hover, setHover] = useState<string | null>(null);
+  // Taman yang masih kosong: tiga minggu ke depan dibayangkan samar.
+  const preview = year === thisYear && !!days.data && sealed.size < 7;
+  const previewUntil = addDays(today, 21);
 
   return (
     <main className="screen">
@@ -58,12 +61,22 @@ export default function Kenangan() {
                 onMouseEnter={() => setHover(d)}
                 onFocus={() => setHover(d)}
                 aria-label={`${formatDayLong(d)}${s ? ' · tersegel' : ''}`}>
-                {s ? <Doodle id={gardenDoodleFor(gardenSeedFor(me.user.id, d)).id} size="100%" sw={3} /> : frozen.has(d) ? <Doodle id="kabut" size="80%" color="var(--ink-soft)" /> : <i />}
+                {s ? (
+                  <Doodle id={gardenDoodleFor(gardenSeedFor(me.user.id, d)).id} size="100%" sw={3} />
+                ) : frozen.has(d) ? (
+                  <Doodle id="kabut" size="80%" color="var(--ink-soft)" />
+                ) : preview && d > today && d <= previewUntil ? (
+                  <span className="g-ghost" style={{ animationDelay: `${(i % 21) * 0.09}s` }}>
+                    <Doodle id={gardenDoodleFor(gardenSeedFor(me.user.id, d)).id} size="100%" sw={3} />
+                  </span>
+                ) : (
+                  <i />
+                )}
               </button>
             );
           })}
         </div>
-        <p className="tiny soft center" style={{ marginTop: 12, minHeight: 16 }}>{hover ? formatDayLong(hover) : 'ketuk sebuah hari untuk membukanya lagi'}</p>
+        <p className="tiny soft center" style={{ marginTop: 12, minHeight: 16 }}>{hover ? formatDayLong(hover) : preview ? 'bayangan samar itu tamanmu tiga minggu lagi, kalau tiap hari disegel' : 'ketuk sebuah hari untuk membukanya lagi'}</p>
       </div>
 
       <WeekPiles today={today} />

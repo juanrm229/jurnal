@@ -25,11 +25,15 @@ export function navigate(to: string, opts: { replace?: boolean } = {}) {
   };
   // Pindah halaman dengan transisi tampilan (peramban yang mendukung): halaman
   // lama memudar dan terangkat, halaman baru naik pelan, tab bar tetap diam.
-  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => { ready?: Promise<unknown>; finished?: Promise<unknown> } | undefined };
   // WebKit (Safari & semua peramban di iPhone) dimatikan: di sana transisi bisa
   // tersangkut dan halaman tampil kosong.
-  if (doc.startViewTransition && !WEBKIT && !matchMedia('(prefers-reduced-motion: reduce)').matches) doc.startViewTransition(() => flushSync(run));
-  else run();
+  if (doc.startViewTransition && !WEBKIT && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Pindah halaman beruntun melewati transisi sebelumnya; itu bukan galat.
+    const t = doc.startViewTransition(() => flushSync(run));
+    t?.ready?.catch(() => {});
+    t?.finished?.catch(() => {});
+  } else run();
 }
 
 export function back(fallback = '/hari') {

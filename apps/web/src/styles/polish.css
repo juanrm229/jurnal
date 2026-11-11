@@ -444,3 +444,423 @@ button.card:active {
   background: #1fa855 !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 12px 26px -12px rgba(31, 168, 85, 0.8) !important;
 }
+
+/* ── Keterbacaan: teks kecil tidak lagi pucat ────────────────────────────── */
+:root {
+  --ink-soft: color-mix(in srgb, var(--ink) 66%, var(--paper));
+  --text-soft: color-mix(in srgb, var(--text) 72%, var(--paper));
+}
+:root[data-dark='1'] {
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, var(--paper));
+  --text-soft: color-mix(in srgb, var(--text) 74%, var(--paper));
+}
+.tiny {
+  font-size: 12px;
+}
+.label {
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+}
+
+/* ── Tab bar: enam pintu, yang terakhir membuka laci ─────────────────────── */
+.tabbar {
+  max-width: calc(100vw - 12px);
+  gap: 0;
+}
+.tabbar a,
+.tabbar .tabbar-laci {
+  flex: 1 1 auto;
+  min-width: 52px;
+  padding: 7px 7px 6px;
+  font-size: 10.5px;
+  letter-spacing: 0;
+}
+.tabbar .tabbar-laci {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-soft);
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.25s var(--ease-spring);
+}
+.tabbar .tabbar-laci:active {
+  transform: scale(0.9);
+}
+
+/* ── Navigasi atas halaman hari ini: ikon berlabel ───────────────────────── */
+.today-nav .nav-i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 46px;
+  padding: 4px 3px 2px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--ink);
+  font: 10.5px/1.2 var(--mono);
+  cursor: pointer;
+}
+.today-nav .nav-i > span:last-child {
+  color: var(--ink-soft);
+}
+.today-nav .nav-i:hover {
+  background: var(--ink-faint);
+}
+
+/* ── Niat pagi, versi ringkas ────────────────────────────────────────────── */
+.niat-strip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 10px;
+  padding: 4px 6px 4px 4px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.niat-strip-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px 6px 10px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.niat-strip-main .rupa-hand {
+  flex: 1;
+  min-width: 0;
+  font-size: 21px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.niat-strip-go {
+  flex: 0 0 auto;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--ink);
+  font: 12px/1.2 var(--mono);
+}
+
+/* ── Laci ────────────────────────────────────────────────────────────────── */
+.laci {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.laci-search {
+  position: sticky;
+  top: -18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 30%, transparent), 0 8px 18px -12px rgba(20, 20, 40, 0.4);
+}
+.laci-search:focus-within {
+  box-shadow: inset 0 0 0 2px var(--ink), 0 8px 18px -12px rgba(20, 20, 40, 0.4);
+}
+.laci-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--text);
+  font: 16px/1.3 var(--mono);
+}
+.laci-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (min-width: 560px) {
+  .laci-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.laci-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent);
+  transition: transform 0.2s var(--ease-spring), background 0.2s;
+}
+.laci-item:hover {
+  background: var(--ink-faint);
+}
+.laci-item:active {
+  transform: scale(0.96);
+}
+.laci-ico {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 9%, var(--paper));
+}
+.laci-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.laci-label {
+  font: 500 13.5px/1.25 var(--mono);
+  color: var(--ink);
+}
+.laci-hint {
+  font: 11.5px/1.3 var(--mono);
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.laci-circles {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+/* ── Tiup lilin ──────────────────────────────────────────────────────────── */
+.candle {
+  overflow: visible;
+}
+.candle-flame {
+  transform-origin: 60px 72px;
+  transform: skewX(calc(var(--blow, 0) * -32deg)) scale(calc(1 - var(--blow, 0) * 0.45));
+  transition: transform 0.12s ease-out;
+  animation: candle-flicker 1.7s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(248, 184, 74, 0.75));
+}
+.candle-smoke {
+  opacity: 0;
+}
+.candle.out .candle-flame {
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.25s ease-in, opacity 0.25s;
+  animation: none;
+}
+.candle.out .candle-smoke {
+  animation: candle-smoke 1.4s ease-out forwards;
+}
+@keyframes candle-flicker {
+  0%,
+  100% {
+    scale: 1 1;
+    rotate: -1.5deg;
+  }
+  40% {
+    scale: 0.96 1.05;
+    rotate: 2deg;
+  }
+  70% {
+    scale: 1.03 0.97;
+    rotate: -0.5deg;
+  }
+}
+@keyframes candle-smoke {
+  0% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}
+
+/* ── Primbon ngawur: secarik kertas yang disobek ─────────────────────────── */
+.primbon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 18px 18px;
+  border: 0;
+  background: #fff8e1;
+  color: #3a2f1c;
+  text-align: center;
+  font: inherit;
+  cursor: pointer;
+  rotate: -1.2deg;
+  box-shadow: 0 10px 22px -14px rgba(20, 20, 40, 0.55);
+  --tooth: 9px;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--tooth) 51% repeat-x,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / var(--tooth) 51% repeat-x;
+}
+.primbon.torn {
+  cursor: default;
+  animation: primbon-tear 0.5s var(--ease-spring);
+}
+.primbon-head {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: 11.5px/1.3 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  color: #8a6a2c;
+}
+.primbon-text {
+  font-size: 25px;
+  line-height: 1.15;
+  color: #3a2f1c;
+}
+.primbon-foot {
+  font: 12px/1.4 var(--mono);
+  color: #6b5a36;
+}
+.primbon-foot.dim {
+  font-size: 10.5px;
+  opacity: 0.75;
+}
+@keyframes primbon-tear {
+  0% {
+    transform: translateY(-10px) rotate(3deg) scale(0.96);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .candle-flame,
+  .primbon.torn {
+    animation: none;
+  }
+}
+
+/* ── Kertas kalkir: masa lalu tembus samar di bawah hari ini ─────────────── */
+.kalkir {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.17;
+  filter: blur(0.35px);
+  animation: kalkir-in 1.4s ease both;
+}
+.page.sealed .kalkir {
+  opacity: 0.1;
+}
+.kalkir-text {
+  position: absolute;
+  transform-origin: 0 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.kalkir-text.hand {
+  font-family: var(--hand);
+  line-height: 1.12;
+}
+.kalkir-text.serif {
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+.kalkir-photo {
+  position: absolute;
+  transform-origin: 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 2px dashed var(--ink);
+  border-radius: 6px;
+  color: var(--ink);
+  font: calc(var(--s) * 30px) / 1.2 var(--hand);
+  text-align: center;
+}
+@keyframes kalkir-in {
+  from {
+    opacity: 0;
+  }
+}
+.kalkir-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  flex-wrap: wrap;
+}
+.kalkir-chip button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px dashed color-mix(in srgb, var(--ink) 45%, transparent);
+  border-radius: 999px;
+  background: none;
+  color: var(--ink);
+  font: 12px/1.3 var(--mono);
+  cursor: pointer;
+}
+.kalkir-chip button[aria-pressed='false'] {
+  color: var(--text-soft);
+  border-color: color-mix(in srgb, var(--text) 25%, transparent);
+}
+.kalkir-eye {
+  color: var(--text-soft);
+}
+.kalkir-chip .kalkir-go {
+  border: 0;
+  padding: 5px 2px;
+  color: var(--ink-soft);
+}
+
+/* ── Taman yang masih kosong: bayangan tiga minggu ke depan ──────────────── */
+.garden .g-ghost {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  animation: ghost-bloom 5s ease-in-out infinite;
+}
+@keyframes ghost-bloom {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .garden .g-ghost {
+    animation: none;
+    opacity: 0.2;
+  }
+}

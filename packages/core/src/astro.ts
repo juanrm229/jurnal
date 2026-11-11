@@ -7,7 +7,7 @@
  * Catatan: tanggal resmi Ramadan/Idulfitri di Indonesia ditetapkan sidang isbat
  * dan bisa bergeser sehari dari kalender tabular. Server menyediakan override.
  */
-import { addDays, type DayKey, dayKeyFromParts, dayToUtcDate, parseDay } from './time';
+import { addDays, type DayKey, dayKeyFromParts, dayToUtcDate, localParts, parseDay, todayIn } from './time';
 
 const RAD = Math.PI / 180;
 
@@ -21,6 +21,28 @@ export function sunsetUtc(day: DayKey, lat: number, lon: number): Date | null {
 
 export function sunriseUtc(day: DayKey, lat: number, lon: number): Date | null {
   return sunEventUtc(day, lat, lon, true);
+}
+
+export type PaperPhase = 'siang' | 'senja' | 'malam';
+
+/**
+ * Kertas Ikut Senja: fase langit di kota pengguna. "Senja" adalah jendela
+ * hangat dari 45 menit sebelum sampai 25 menit sesudah matahari terbenam;
+ * setelahnya malam, sampai matahari terbit lagi.
+ */
+export function paperPhase(at: Date, where: { lat: number; lon: number } | null | undefined, tz: string): PaperPhase {
+  const day = todayIn(tz, at);
+  const set = where ? sunsetUtc(day, where.lat, where.lon) : null;
+  const rise = where ? sunriseUtc(day, where.lat, where.lon) : null;
+  if (!set || !rise) {
+    const h = localParts(tz, at).hour;
+    return h < 5 || h >= 19 ? 'malam' : h >= 17 ? 'senja' : 'siang';
+  }
+  const t = at.getTime();
+  if (t < rise.getTime()) return 'malam';
+  if (t >= set.getTime() + 25 * 60_000) return 'malam';
+  if (t >= set.getTime() - 45 * 60_000) return 'senja';
+  return 'siang';
 }
 
 function sunEventUtc(day: DayKey, lat: number, lon: number, rising: boolean): Date | null {

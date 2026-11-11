@@ -51,6 +51,20 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | Catatan Kaki (pemilik memutuskan ikut tercetak) | `l/[id]/hari/[day].tsx` |
 | Rak Perpustakaan + Buku Tahunan cetak | `rak.tsx`, `routes/billing.ts` |
 
+## Sentuhan web app (`apps/web`)
+
+| Fitur | Di mana |
+| --- | --- |
+| **Si Benih**: tanaman lingkaran digambar ulang sebagai satu SVG (8 tahap, pot berwajah, langit ikut jam), bisa diketuk dan bawel; cemburu pada Ruang Main, merajuk saat layu, berpesta di hari jadi | `ui/Benih.tsx`, `pages/circles/Plant.tsx`, `core/benih.ts benihTalk`, `lib/play.ts` |
+| Perjalanan Tumbuh (lembar 8 tahap, yang belum dicapai masih siluet) | `pages/circles/Plant.tsx` |
+| **Laci**: satu peluncur + pencarian untuk semua fitur (tab bar, navigasi atas hari ini, Ctrl/⌘+K) | `ui/Laci.tsx`, `ui/TabBar.tsx` |
+| Niat Pagi ringkas (strip; kertas hari ini tetap di atas) | `editor/Niat.tsx` |
+| **Tiup Lilin**: menyegel dengan meniup mikrofon (ambang mengikuti kebisingan ruangan; suara tidak direkam); tombol tahan tetap ada | `lib/blow.ts`, `editor/Seal.tsx` |
+| **Primbon Ngawur**: ramalan konyol setelah menyegel, diramu di perangkat dari kata-kata halaman | `core/benih.ts primbon`, `editor/Seal.tsx` |
+| **Kertas Ikut Senja**: kertas menghangat menjelang matahari terbenam di kota pengguna, gelap sesudahnya (pilihan di Tema, disimpan di perangkat) | `core/astro.ts paperPhase`, `lib/theme.tsx`, `pages/me/Tema.tsx` |
+| **Kertas Kalkir**: halaman setahun / setengah tahun / sebulan / seminggu lalu tembus samar di bawah halaman hari ini | `editor/Kalkir.tsx`, `pages/Today.tsx` |
+| Keadaan kosong yang bercerita (bayangan taman tiga minggu ke depan, contoh rasi) | `pages/Kenangan.tsx`, `pages/lore/Langit.tsx` |
+
 ## Desain aman
 
 Mode Pisah, Mode Kenangan, keluar satu ketukan, lapor (isi dipilih pelapor) & blokir, kode keamanan, tautan perangkat via QR, kode pemulihan, ekspor & hapus akun, AI cloud opt-in per lingkaran — lihat [keamanan-privasi.md](keamanan-privasi.md). Layar: `l/[id]/pengaturan.tsx`, `lapor.tsx`, `aku/keamanan.tsx`, `aku/privasi.tsx`, `aku/blokir.tsx`.

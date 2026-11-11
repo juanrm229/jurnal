@@ -91,6 +91,8 @@ export interface PageProps {
   renderTools?: (item: PageItem & { layout: PageLayout }) => ReactNode;
   head?: ReactNode;
   foot?: ReactNode;
+  /** Lapisan di bawah semua elemen (mis. kertas kalkir). Tidak menangkap ketukan. */
+  under?: ReactNode;
   /** Pengganti isi halaman kosong yang bisa disunting. */
   empty?: ReactNode;
   /** Benih doodle kecil di pinggir kertas (sama di semua perangkat). */
@@ -241,6 +243,7 @@ export function Page(props: PageProps) {
           <Doodle id={m.id} size={m.size * scale} sw={2} />
         </span>
       ))}
+      {props.under}
       {props.head ? <div className="page-head">{props.head}</div> : null}
       {laid
         .sort((a, b) => a.layout.z - b.layout.z)

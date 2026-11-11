@@ -152,6 +152,16 @@ export default function Langit() {
               {dust.map((d, i) => (
                 <circle key={i} cx={d.x} cy={d.y} r={d.r} fill="var(--night-label)" className="lore-twinkle" style={{ animationDelay: `${d.d}s` }} />
               ))}
+              {/* Langit kosong: contoh rasi samar, supaya terbayang jadinya nanti. */}
+              {bright.length === 0 && year === thisYear ? (
+                <g className="lore-sample" opacity=".9">
+                  <path d="M96 112 L142 86 L186 118 L170 168 L112 160 Z M186 118 L236 96" fill="none" stroke="var(--night-label)" strokeWidth="1" strokeDasharray="3 5" strokeLinecap="round" />
+                  {[[96, 112], [142, 86], [186, 118], [170, 168], [112, 160], [236, 96]].map(([x, y], i) => (
+                    <circle key={i} cx={x} cy={y} r={i === 2 ? 3 : 2.2} fill="var(--night-label)" className="lore-twinkle" style={{ animationDelay: `${i * 0.5}s` }} />
+                  ))}
+                  <text x="150" y="196" textAnchor="middle" fill="var(--night-label)" style={{ font: '13px var(--hand)' }}>contoh: rasi “minggu pertama”</text>
+                </g>
+              ) : null}
               {/* Penanda bulan di jalur spiral. */}
               {Array.from({ length: 12 }, (_, m) => {
                 const p = placeStar('label', `${year}-${String(m + 1).padStart(2, '0')}-08`, SIZE, SIZE * 0.045);
