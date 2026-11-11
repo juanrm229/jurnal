@@ -3,10 +3,11 @@
  * penting dihubungkan jadi rasi dan diberi nama ("Rasi Pindahan Kos").
  * Kanvasnya selalu malam, bahkan di tema terang.
  */
-import { type ConstellationWire, dayOfYear, daysInYear, eachDay, formatDayLong, monthName } from '@sehari/core';
+import { type ConstellationWire, dayOfYear, daysInYear, eachDay, formatDayLong, monthName, todayIn } from '@sehari/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { useTruce } from '@/lib/berdua';
 import { openCircleText, sealCircleText, useCalendar, useCircle, useMe, useToday } from '@/lib/data';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, ErrorNote, Growing, Header, Screen, Section } from '@/ui/kit';
@@ -48,6 +49,11 @@ export default function Langit() {
   const [year, setYear] = useState(thisYear);
   const cal = useCalendar(id, `${year}-01-01`, `${year}-12-31`);
   const cons = useQuery({ queryKey: ['constellations', id], queryFn: () => api.get<ConstellationWire[]>(`/circles/${id}/constellations`), enabled: !!circle });
+  const truce = useTruce(circle ? id : undefined);
+  const peaceStars = (truce.data?.peace ?? [])
+    .map((x) => todayIn(me.user.tz, new Date(x.at)))
+    .filter((d, i, a) => d.startsWith(String(year)) && a.indexOf(d) === i)
+    .map((d) => ({ day: d, ...placeStar(id, d, SIZE) }));
   const [building, setBuilding] = useState(false);
   const [sel, setSel] = useState<string[]>([]);
   const [name, setName] = useState('');
@@ -162,6 +168,14 @@ export default function Langit() {
                   <text x="150" y="196" textAnchor="middle" fill="var(--night-label)" style={{ font: '13px var(--hand)' }}>contoh: rasi “minggu pertama”</text>
                 </g>
               ) : null}
+              {/* Setiap kali bendera putih kalian bertemu: satu bintang emas. */}
+              {peaceStars.map((p) => (
+                <g key={p.day} className="lore-peace" style={{ pointerEvents: 'none' }} transform={`translate(${p.x} ${p.y})`}>
+                  <title>{`baikan · ${formatDayLong(p.day)}`}</title>
+                  <circle r="9" fill="#ffd66b" opacity=".16" />
+                  <path d="M0 -6 L1.6 -1.6 L6 0 L1.6 1.6 L0 6 L-1.6 1.6 L-6 0 L-1.6 -1.6Z" fill="#ffd66b" className="lore-twinkle" />
+                </g>
+              ))}
               {/* Penanda bulan di jalur spiral. */}
               {Array.from({ length: 12 }, (_, m) => {
                 const p = placeStar('label', `${year}-${String(m + 1).padStart(2, '0')}-08`, SIZE, SIZE * 0.045);

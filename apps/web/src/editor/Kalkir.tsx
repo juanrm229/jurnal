@@ -80,7 +80,7 @@ export function KalkirLayer({ ghost }: { ghost: Ghost }) {
 export function KalkirChip({ ghost, on, onToggle, onOpen }: { ghost: Ghost; on: boolean; onToggle: () => void; onOpen: () => void }) {
   return (
     <div className="kalkir-chip" data-testid="kalkir-chip">
-      <button onClick={onToggle} aria-pressed={on} title={on ? 'sembunyikan kertas kalkir' : 'tampilkan kertas kalkir'}>
+      <button className="kalkir-chip-btn" onClick={onToggle} aria-pressed={on} title={on ? 'sembunyikan kertas kalkir' : 'tampilkan kertas kalkir'}>
         <Doodle id="buku-terbuka" size={16} color="currentColor" />
         <span>
           kalkir · <b>{ghost.label}</b>
@@ -88,7 +88,7 @@ export function KalkirChip({ ghost, on, onToggle, onOpen }: { ghost: Ghost; on: 
         <span className="kalkir-eye">{on ? 'tampak' : 'tersembunyi'}</span>
       </button>
       {on ? (
-        <button onClick={onOpen} className="kalkir-go" aria-label={`buka halaman ${formatDayLong(ghost.day)}`}>
+        <button onClick={onOpen} className="kalkir-chip-btn kalkir-go" aria-label={`buka halaman ${formatDayLong(ghost.day)}`}>
           {formatDayShort(ghost.day)} →
         </button>
       ) : null}

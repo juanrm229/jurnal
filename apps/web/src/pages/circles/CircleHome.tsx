@@ -8,6 +8,7 @@ import { memberName, useCircles } from '@/lib/data';
 import { excerpt, useCircleWorks } from '@/lib/works';
 import { countdown, fmtWhen, useCircleMeets } from '@/lib/meets';
 import { Cover } from '@/pages/karya/Cover';
+import { BerduaCard } from './Berdua';
 import { PlantCard } from './Plant';
 import { RollCard } from './RollCard';
 import { TogetherToday } from './Questions';
@@ -120,6 +121,8 @@ export default function CircleHome() {
           <TogetherToday circle={circle} q={q} quiz />
         </section>
       ) : null}
+
+      <BerduaCard circle={circle} />
 
       {circle.kind !== 'moment' ? (
         <section className="section">

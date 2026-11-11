@@ -809,14 +809,16 @@ button.card:active {
     opacity: 0;
   }
 }
-.kalkir-chip {
+.page-chips {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
   flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: 0 0 8px;
 }
-.kalkir-chip button {
+.kalkir-chip {
+  display: contents;
+}
+.kalkir-chip-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -828,14 +830,14 @@ button.card:active {
   font: 12px/1.3 var(--mono);
   cursor: pointer;
 }
-.kalkir-chip button[aria-pressed='false'] {
+.kalkir-chip-btn[aria-pressed='false'] {
   color: var(--text-soft);
   border-color: color-mix(in srgb, var(--text) 25%, transparent);
 }
 .kalkir-eye {
   color: var(--text-soft);
 }
-.kalkir-chip .kalkir-go {
+.kalkir-chip-btn.kalkir-go {
   border: 0;
   padding: 5px 2px;
   color: var(--ink-soft);
@@ -862,5 +864,265 @@ button.card:active {
   .garden .g-ghost {
     animation: none;
     opacity: 0.2;
+  }
+}
+
+/* ── Cuaca seberang: tepi kertas ikut cuaca kota dia ─────────────────────── */
+.sbr {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+.sbr i {
+  position: absolute;
+  top: -4%;
+  width: 2px;
+  height: calc(var(--s) * 46px + 8px);
+  border-radius: 2px;
+  background: linear-gradient(transparent, color-mix(in srgb, #4d9bd6 80%, var(--ink)));
+  opacity: 0;
+  animation: sbr-fall 2s linear infinite;
+}
+.sbr-gerimis i {
+  height: calc(var(--s) * 22px + 5px);
+}
+@keyframes sbr-fall {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.55;
+  }
+  90% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateY(min(900px, 110vh));
+    opacity: 0;
+  }
+}
+.sbr-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  animation: sbr-flash 9s linear infinite;
+}
+@keyframes sbr-flash {
+  0%,
+  91%,
+  94%,
+  100% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 0.35;
+  }
+  93% {
+    opacity: 0.08;
+  }
+  93.5% {
+    opacity: 0.25;
+  }
+}
+.sbr-sun {
+  position: absolute;
+  top: -70px;
+  right: -70px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 205, 96, 0.5), rgba(255, 205, 96, 0.16) 45%, transparent 70%);
+  animation: breathe 6s ease-in-out infinite;
+}
+.sbr-cloud {
+  position: absolute;
+  opacity: 0.22;
+  animation: sbr-drift 26s ease-in-out infinite alternate;
+}
+.sbr-cloud.a {
+  top: 3%;
+  left: 2%;
+}
+.sbr-cloud.b {
+  top: 12%;
+  right: 4%;
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+.sbr-kabut {
+  background: linear-gradient(color-mix(in srgb, var(--fog) 35%, transparent), transparent 40%);
+}
+@keyframes sbr-drift {
+  to {
+    transform: translateX(26px);
+  }
+}
+.sbr-chip b {
+  font-weight: 600;
+}
+
+/* ── Rahasia kecil: tinta hilang, tukar pena, bendera putih ──────────────── */
+.bd-row {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.bd-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 60%, transparent);
+  animation: bd-ping 1.6s ease-out infinite;
+}
+@keyframes bd-ping {
+  to {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+.bd-here {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 4px;
+  border-radius: 999px;
+  background: var(--sticky-green);
+  animation: rise 0.4s ease both;
+}
+.bd-presence {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  font: 12.5px/1.4 var(--mono);
+  color: var(--text-soft);
+}
+.bd-presence.on {
+  background: var(--sticky-green);
+  color: var(--text);
+}
+.bd-pulse {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--fog);
+}
+.bd-presence.on .bd-pulse {
+  background: #3f9d54;
+  animation: bd-ping-green 1.6s ease-out infinite;
+}
+@keyframes bd-ping-green {
+  from {
+    box-shadow: 0 0 0 0 rgba(63, 157, 84, 0.6);
+  }
+  to {
+    box-shadow: 0 0 0 10px rgba(63, 157, 84, 0);
+  }
+}
+.bd-ink {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+.bd-ink.mine {
+  background: color-mix(in srgb, var(--ink) 5%, var(--paper));
+}
+.bd-ink-text {
+  margin: 2px 0;
+  font-size: 25px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.bd-ink:not(.hidden):not(.mine) .bd-ink-text {
+  animation: bd-appear 1.6s ease both;
+}
+@keyframes bd-appear {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    letter-spacing: 0.2em;
+  }
+}
+.bd-scribble {
+  color: var(--ink);
+  opacity: 0.22;
+  filter: blur(2.5px);
+  user-select: none;
+  letter-spacing: 0.05em;
+}
+.bd-x {
+  border: 0;
+  background: none;
+  padding: 4px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.bd-swap {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ink) 5%, var(--paper));
+}
+.bd-swap.theirs {
+  background: var(--sticky-yellow);
+  rotate: -0.6deg;
+}
+.bd-swap-text {
+  margin: 6px 0 0;
+  font-size: 24px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+.bd-flags {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0 0;
+}
+.bd-flags.idle {
+  opacity: 0.45;
+}
+.bd-flags.met > :first-child {
+  animation: bd-meet-l 0.9s var(--ease-spring) both;
+}
+.bd-flags.met > :last-child {
+  animation: bd-meet-r 0.9s var(--ease-spring) both;
+}
+@keyframes bd-meet-l {
+  from {
+    translate: -60px 0;
+    opacity: 0;
+  }
+}
+@keyframes bd-meet-r {
+  from {
+    translate: 60px 0;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sbr i,
+  .sbr-flash,
+  .sbr-cloud,
+  .bd-dot,
+  .bd-pulse {
+    animation: none;
+  }
+  .sbr i {
+    opacity: 0.3;
+    top: 20%;
   }
 }

@@ -29,6 +29,7 @@ import { PrintSheet } from '@/editor/PrintSheet';
 import { NiatCard, niatSkipped, rememberNiat, skipNiat } from '@/editor/Niat';
 import { SealCeremony } from '@/editor/Seal';
 import { KalkirChip, KalkirLayer, useKalkir } from '@/editor/Kalkir';
+import { SeberangChip, SeberangLayer, useSeberang } from '@/editor/Seberang';
 import { MoodSheet, PromptSheet, SilentSheet, SongSheet, StickerSheet, VoiceSheet } from '@/editor/Sheets';
 import { TEXT_SIZES } from '@/editor/elements';
 import { FILLS, isSpecial, LINES, specialWidth } from '@/editor/stickers';
@@ -398,6 +399,9 @@ export default function Today() {
   // Kertas kalkir: halaman lama tembus samar di bawah halaman utama hari ini.
   const [kalkirOn, setKalkirOn] = useState(() => store.get('kalkirOff') !== '1');
   const ghost = useKalkir(day, me.user.id, day === today && page === 'main');
+  // Cuaca seberang: cuaca di kota orang terdekat menetes di tepi halaman hari ini.
+  const [seberangOn, setSeberangOn] = useState(() => store.get('seberangOff') !== '1');
+  const seberang = useSeberang(active, me.user.cityId, day === today);
   const showNiat = editable && page === 'main' && day === today && !!q.data && !niat && !niatOff;
   const mood = pageItems.find((x) => x.payload.mood)?.payload.mood;
 
@@ -618,17 +622,32 @@ export default function Today() {
         </button>
       ) : null}
 
-      {ghost ? (
-        <KalkirChip
-          ghost={ghost}
-          on={kalkirOn}
-          onToggle={() => {
-            setKalkirOn(!kalkirOn);
-            if (kalkirOn) store.set('kalkirOff', '1');
-            else store.del('kalkirOff');
-          }}
-          onOpen={() => navigate(`/hari/${ghost.day}`)}
-        />
+      {ghost || seberang ? (
+        <div className="page-chips">
+          {seberang ? (
+            <SeberangChip
+              s={seberang}
+              on={seberangOn}
+              onToggle={() => {
+                setSeberangOn(!seberangOn);
+                if (seberangOn) store.set('seberangOff', '1');
+                else store.del('seberangOff');
+              }}
+            />
+          ) : null}
+          {ghost ? (
+            <KalkirChip
+              ghost={ghost}
+              on={kalkirOn}
+              onToggle={() => {
+                setKalkirOn(!kalkirOn);
+                if (kalkirOn) store.set('kalkirOff', '1');
+                else store.del('kalkirOff');
+              }}
+              onOpen={() => navigate(`/hari/${ghost.day}`)}
+            />
+          ) : null}
+        </div>
       ) : null}
 
       <div ref={pageBox} className="page-stack">
@@ -654,7 +673,12 @@ export default function Today() {
           onCreateAt={(x, y) => addText(x, y)}
           onFiles={(files, x, y) => void addPhotos(files, x, y)}
           head={head}
-          under={ghost && kalkirOn ? <KalkirLayer ghost={ghost} /> : null}
+          under={
+            <>
+              {ghost && kalkirOn ? <KalkirLayer ghost={ghost} /> : null}
+              {seberang && seberangOn ? <SeberangLayer s={seberang} /> : null}
+            </>
+          }
           sealed={sealed}
           mood={mood}
           margins={`${me.user.id}:${day}:${page}`}

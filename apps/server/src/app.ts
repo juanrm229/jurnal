@@ -27,6 +27,7 @@ import { saudagarRoutes } from './routes/saudagar';
 import { satuRoutes } from './routes/satu';
 import { suratRoutes } from './routes/surat';
 import { tanggaRoutes } from './routes/tangga';
+import { berduaRoutes } from './routes/berdua';
 import { dreamRoutes } from './routes/dreams';
 import { webRoutes } from './web/pages';
 
@@ -80,6 +81,7 @@ export function createApp(s: Services) {
   authed.route('/', workRoutes(s));
   authed.route('/', meetRoutes(s));
   authed.route('/', dreamRoutes(s));
+  authed.route('/', berduaRoutes(s));
   authed.route('/', boardRoutes(s));
   authed.route('/', boothRoutes(s));
   v1.route('/', authed);

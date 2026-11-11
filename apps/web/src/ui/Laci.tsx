@@ -59,7 +59,7 @@ const BASE: Item[] = [
 
 const CIRCLE: { path: (day: string) => string; label: string; hint: string; icon: string; keys?: string }[] = [
   { path: (d) => `/hari/${d}`, label: 'buka hari ini bersama', hint: 'halaman berdampingan', icon: 'buku-terbuka', keys: 'baca halaman dia' },
-  { path: () => '', label: 'beranda', hint: 'tanaman, pertanyaan, minggu ini', icon: 'tunas', keys: 'tanaman benih api streak pertanyaan kuis' },
+  { path: () => '', label: 'beranda', hint: 'tanaman, pertanyaan, minggu ini', icon: 'tunas', keys: 'tanaman benih api streak pertanyaan kuis tinta hilang tukar pena bendera putih baikan rahasia' },
   { path: () => '/papan', label: 'papan tahun', hint: '365 petak', icon: 'peta' },
   { path: () => '/kitab', label: 'kitab', hint: 'bab, adegan, jilid', icon: 'buku', keys: 'buku cetak' },
   { path: () => '/langit', label: 'langit', hint: 'rasi bintang kalian', icon: 'ui-bintang-rasi' },
