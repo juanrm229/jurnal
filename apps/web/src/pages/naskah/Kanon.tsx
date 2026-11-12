@@ -39,6 +39,7 @@ export function KanonList({ m }: { m: NaskahModel }) {
                     {k === 'tokoh' ? <span className="nk-dot" style={{ background: povColor(m, e.id) }} /> : <Doodle id={KIND_DOODLE[k]} size={20} />}
                     <span className="grow" style={{ minWidth: 0 }}>
                       <b>{e.p.name}</b>
+                      {k === 'tokoh' && e.p.born ? <span className="tiny soft">{e.p.born}–{e.p.died ?? ''}</span> : null}
                       {e.p.note ? <span className="tiny soft">{firstLine(e.p.note, 70)}</span> : null}
                       {k !== 'tokoh' && e.p.known.length ? (
                         <span className="nk-tahu-row">
@@ -120,6 +121,18 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
         <input className="field" value={aliases} maxLength={300} onChange={(e) => setAliases(e.target.value)} placeholder={p.kind === 'tokoh' ? 'mis. Bapak, Pak D' : p.kind === 'fakta' ? 'mis. Laras, anak itu' : 'mis. cincin perak'} data-testid="kanon-alias" />
       </label>
       <textarea className="field" rows={2} value={p.note ?? ''} maxLength={1200} onChange={(e) => setP({ ...p, note: e.target.value })} placeholder={p.kind === 'tokoh' ? 'watak, suara, yang ia inginkan' : 'catatan'} />
+      {p.kind === 'tokoh' ? (
+        <div className="nk-lahir">
+          <label className="col" style={{ gap: 4 }}>
+            <span className="tiny soft">tahun lahir</span>
+            <input className="field" inputMode="numeric" maxLength={4} value={p.born ?? ''} onChange={(e) => setP({ ...p, born: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="mis. 1921" data-testid="kanon-lahir" />
+          </label>
+          <label className="col" style={{ gap: 4 }}>
+            <span className="tiny soft">tahun wafat</span>
+            <input className="field" inputMode="numeric" maxLength={4} value={p.died ?? ''} onChange={(e) => setP({ ...p, died: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="kosongkan bila masih hidup" />
+          </label>
+        </div>
+      ) : null}
 
       {p.kind !== 'tokoh' ? (
         <>

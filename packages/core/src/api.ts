@@ -1236,8 +1236,40 @@ export const kotaClaimBody = z.object({
   household: z.string().trim().min(2).max(60),
   from: z.number().int().min(1900).max(2030),
   to: z.number().int().min(1900).max(2030),
+  kind: z.enum(['rumah', 'leluhur']).default('rumah'),
 });
 export const kotaReportBody = z.object({ reason: z.enum(['data-pribadi', 'pelecehan', 'spam', 'lainnya']) });
+const hubungan = z.enum(['anak', 'orangtua', 'saudara', 'pasangan', 'keturunan', 'leluhur', 'tetangga', 'teman', 'musuh', 'cinta']);
+export const kotaKetukBody = z.object({ fromClaimId: z.string().max(40), fromTokoh: z.string().max(40), toClaimId: z.string().max(40), toTokoh: z.string().max(40), type: hubungan, letter: z.string().trim().min(10).max(1200) });
+export const kotaJawabBody = z.object({ action: z.enum(['kanon', 'desas', 'usul', 'tolak', 'terima', 'tarik']), type: hubungan.optional() });
+
+export interface KotaTokohWire {
+  id: string;
+  claimId: string;
+  name: string;
+  born?: number;
+  died?: number;
+}
+export interface KotaRelasiWire {
+  id: string;
+  fromClaimId: string;
+  fromTokoh: string;
+  toClaimId: string;
+  toTokoh: string;
+  type: 'anak' | 'orangtua' | 'saudara' | 'pasangan' | 'keturunan' | 'leluhur' | 'tetangga' | 'teman' | 'musuh' | 'cinta';
+  /** Usul balik dari pemilik rumah yang diketuk. */
+  counter: KotaRelasiWire['type'] | null;
+  /** 'ketuk' menunggu, 'usul' usul balik menunggu pengetuk, 'kanon', 'desas', 'tolak', 'tarik'. Turun ke 'desas' bila salah satu rumah pergi. */
+  state: 'ketuk' | 'usul' | 'kanon' | 'desas' | 'tolak' | 'tarik';
+  /** Surat ketukan: hanya untuk kedua pemilik rumah. */
+  letter: string | null;
+  createdAt: string;
+}
+export interface KotaTautanWire {
+  relations: KotaRelasiWire[];
+  tokoh: KotaTokohWire[];
+  claims: KotaClaimWire[];
+}
 
 export interface KotaClaimWire {
   id: string;
@@ -1253,11 +1285,13 @@ export interface KotaClaimWire {
   scenes: number;
   /** 'terbengkalai': belum ada adegan terbit setelah batas hari; persilnya lowong lagi. */
   state: 'aktif' | 'terbengkalai';
+  /** 'rumah' utama, atau 'leluhur' di zaman lebih awal. */
+  kind: 'rumah' | 'leluhur';
   mine: boolean;
   createdAt: string;
 }
 export interface KotaWire {
   season: number;
   claims: KotaClaimWire[];
-  me: { penName: string | null; quota: number };
+  me: { penName: string | null; quota: number; leluhur: number };
 }
