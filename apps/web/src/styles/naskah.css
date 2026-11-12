@@ -957,3 +957,115 @@
   font-size: calc(var(--ukuran) + 8px);
   color: var(--ink);
 }
+
+/* ── Lapis tokoh di kota ── */
+.nk-kembar {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sticky-yellow) 60%, var(--paper));
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.nk-lapis {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nk-pilih2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.nk-pilih2 button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.nk-pilih2 button.on {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.nk-pilih2 .tiny {
+  color: var(--text-soft);
+  line-height: 1.3;
+}
+.nk-sapa {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 2px;
+}
+.nk-sapa input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--ink);
+}
+.nk-sapa b,
+.nk-sapa .tiny {
+  display: block;
+}
+.nk-pegang-catat {
+  margin: 0 0 var(--sp-3);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--ink);
+  font-size: var(--fs-sm);
+}
+.seditor-layer mark.w-rumah {
+  background: color-mix(in srgb, var(--sticky-blue) 80%, transparent);
+  box-shadow: inset 0 -2px 0 #3b6fb6;
+}
+.seditor-layer mark.m-jumpa {
+  background: none;
+  box-shadow: inset 0 -2px 0 #8a5a2b;
+}
+.nk-coret.nk-ckota {
+  color: #2f5f9e;
+}
+.nk-coret.nk-ckota.figur-waktu {
+  color: #8a6a00;
+}
+.nk-coret.nk-ckota.figur-jumpa {
+  color: #8a5a2b;
+}
+:root[data-dark='1'] .nk-coret.nk-ckota {
+  color: #9cc0f0;
+}
+:root[data-dark='1'] .nk-coret.nk-ckota.figur-jumpa {
+  color: #e0b07a;
+}
+.nk-tanda-kota {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nk-tanda {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.nk-tanda.desas {
+  font-style: italic;
+}
+.nk-tanda button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font: inherit;
+}

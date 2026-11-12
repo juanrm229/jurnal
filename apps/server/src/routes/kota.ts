@@ -5,6 +5,16 @@
  */
 import {
   KOTA_ALMANAK_AWAL,
+  KOTA_WARGA_AWAL,
+  type KotaFigurWire,
+  type KotaNamaWire,
+  type KotaPegangWire,
+  type KotaUbahWire,
+  kotaFigurBody,
+  kotaFigurKini,
+  kotaPegangBody,
+  kotaPegangJawab,
+  kotaUbahBody,
   KOTA_ID,
   KOTA_SETUJU_KANON,
   type KotaKesaksianWire,
@@ -42,7 +52,7 @@ import { bad, conflict, forbidden, notFound } from '../lib/errors';
 import { newId } from '../lib/ids';
 import { rateLimit } from '../lib/rate';
 
-const { cityProfiles, cityClaims, cityReports, cityRelations, cityEvents, manuscripts, msScenes, msCanon } = schema;
+const { cityProfiles, cityClaims, cityReports, cityRelations, cityEvents, cityFigures, cityFigureChanges, cityHolds, manuscripts, msScenes, msCanon } = schema;
 type RelRow = typeof cityRelations.$inferSelect;
 type ClaimRow = typeof cityClaims.$inferSelect;
 
@@ -227,7 +237,8 @@ export function kotaRoutes(s: Services) {
     const rels = await s.db.select().from(cityRelations).where(sql`${cityRelations.fromClaimId} = ${me.id} or ${cityRelations.toClaimId} = ${me.id}`);
     const others = rels.length ? await s.db.select().from(cityClaims).where(inArray(cityClaims.id, rels.flatMap((x) => [x.fromClaimId, x.toClaimId]))) : [];
     const party = (x: RelRow) => [x.fromClaimId, x.toClaimId].some((id) => (id === me.id ? me : others.find((o) => o.id === id))?.ownerId === user.id);
-    return c.json(await bundle(rels.filter((x) => PUBLIC.includes(x.state) || party(x)), [me], user.id));
+    const t = await bundle(rels.filter((x) => PUBLIC.includes(x.state) || party(x)), [me], user.id);
+    return c.json({ ...t, pegang: await pegangOf(me, user.id) });
   });
 
   /** Silsilah: semua rumah yang tersambung lewat hubungan kanon atau desas-desus. */
@@ -417,6 +428,198 @@ export function kotaRoutes(s: Services) {
     if (!x) throw notFound('Naskah ini bukan rumah di kota.');
     const [w] = await describe([x], user.id);
     return c.json(w);
+  });
+
+  // ── Buku Warga Kota ──
+
+  /** Adegan terbit di rumah aktif yang memenuhi syarat (kesaksian, perjumpaan). */
+  const adeganKota = async (cond: ReturnType<typeof sql>, viewer: string) => {
+    const claims = await visible();
+    if (!claims.length) return [];
+    const rows = await s.db.select({ id: msScenes.id, msId: msScenes.msId, envelope: msScenes.envelope }).from(msScenes).where(and(inArray(msScenes.msId, claims.map((c) => c.msId)), eq(msScenes.status, 'terbit'), cond));
+    const wires = await describe(claims, viewer);
+    const tokoh = await tokohOf(claims);
+    return rows.flatMap((x) => {
+      const p = (x.envelope as { plain?: { pov?: string; when?: { label?: string }; text?: string; jumpa?: string[] } }).plain;
+      const c = wires.find((w) => w.msId === x.msId);
+      if (!p || !c || c.state !== 'aktif') return [];
+      return [{ claimId: c.id, household: c.household, regionId: c.regionId, plotId: c.plotId, penName: c.penName, msId: c.msId, sceneId: x.id, tokoh: tokoh.find((t) => t.id === p.pov)?.name ?? 'seseorang', when: p.when?.label ?? '', text: (p.text ?? '').slice(0, 1600), saksi: 'mengalami' as const, jumpa: p.jumpa ?? [] }];
+    });
+  };
+  const figurWires = async (viewer: string): Promise<KotaFigurWire[]> => {
+    const [rows, changes, jumpa] = await Promise.all([
+      s.db.select().from(cityFigures).where(and(eq(cityFigures.city, KOTA_ID), inArray(cityFigures.state, ['usul', 'kanon']))),
+      s.db.select().from(cityFigureChanges).where(inArray(cityFigureChanges.state, ['usul', 'kanon'])),
+      adeganKota(sql`${msScenes.envelope}->'plain'->'jumpa' is not null`, viewer),
+    ]);
+    const pens = new Map((await s.db.select().from(cityProfiles)).map((p) => [p.userId, p.penName]));
+    const ubahOf = (fid: string): KotaUbahWire[] =>
+      changes
+        .filter((x) => x.figureId === fid)
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .map((x) => ({ id: x.id, figurId: x.figureId, kind: x.kind as never, text: x.text, year: x.year ?? undefined, region: x.region ?? undefined, state: x.state as never, proposer: pens.get(x.proposerId) ?? 'warga', endorsements: x.endorsers.length, endorsedByMe: x.endorsers.includes(viewer), mine: x.proposerId === viewer, createdAt: x.createdAt.toISOString() }));
+    const kini = (f: Parameters<typeof kotaFigurKini>[0], u: KotaUbahWire[]) => kotaFigurKini(f, u.filter((x) => x.state === 'kanon'));
+    const n = (id: string) => jumpa.filter((j) => j.jumpa.includes(id)).length;
+    return [
+      ...KOTA_WARGA_AWAL.map((f) => {
+        const u = ubahOf(f.id);
+        return { ...kini(f, u), state: 'kanon' as const, proposer: null, endorsements: 0, endorsedByMe: false, mine: false, jumpa: n(f.id), ubah: u };
+      }),
+      ...rows.map((r) => {
+        const u = ubahOf(r.id);
+        const f = { id: r.id, name: r.name, julukan: r.julukan ?? undefined, region: r.region, tempat: r.tempat, ciri: r.ciri, born: r.born ?? undefined, died: r.died ?? undefined, tetap: r.tetap };
+        return { ...kini(f, u), state: r.state as 'kanon' | 'usul', proposer: pens.get(r.proposerId) ?? 'warga', endorsements: r.endorsers.length, endorsedByMe: r.endorsers.includes(viewer), mine: r.proposerId === viewer, jumpa: n(r.id), ubah: u };
+      }),
+    ];
+  };
+
+  r.get('/kota/warga', async (c) => c.json(await figurWires(c.get('user').id)));
+
+  r.get('/kota/warga/:id', async (c) => {
+    const user = c.get('user');
+    const figur = (await figurWires(user.id)).find((f) => f.id === c.req.param('id'));
+    if (!figur) throw notFound('Figuran tidak ditemukan.');
+    const perjumpaan = await adeganKota(sql`${msScenes.envelope}->'plain'->'jumpa' @> ${JSON.stringify([figur.id])}::jsonb`, user.id);
+    return c.json({ figur, perjumpaan: perjumpaan.map(({ jumpa: _j, ...x }) => x) });
+  });
+
+  r.post('/kota/warga', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, kotaFigurBody);
+    if (!(await warga(user.id))) throw forbidden('Figuran kota diusulkan oleh warga yang punya rumah.');
+    if (!kotaRegion(input.region)) throw bad('region', 'Wilayah tidak dikenal.');
+    if (input.born && input.died && input.died < input.born) throw bad('range', 'Tahun wafat harus sesudah tahun lahir.');
+    const taken = (await figurWires(user.id)).some((f) => f.name.toLowerCase() === input.name.toLowerCase());
+    if (taken) throw conflict('nama', 'Sudah ada figuran kota dengan nama itu.');
+    await rateLimit(s, `kota:figur:${user.id}`, 5, 24 * 3600);
+    const id = `f${newId(19)}`;
+    await s.db.insert(cityFigures).values({ id, city: KOTA_ID, name: input.name, julukan: input.julukan ?? null, region: input.region, tempat: input.tempat, ciri: input.ciri, born: input.born ?? null, died: input.died ?? null, tetap: input.tetap, proposerId: user.id });
+    return c.json({ id }, 201);
+  });
+
+  r.put('/kota/warga/:id', async (c) => {
+    const user = c.get('user');
+    const { action } = await body(c, kotaPeristiwaJawab);
+    const [f] = await s.db.select().from(cityFigures).where(eq(cityFigures.id, c.req.param('id')));
+    if (!f || f.state === 'tarik') throw notFound('Usulan tidak ditemukan.');
+    if (action === 'tarik') {
+      if (f.proposerId !== user.id || f.state === 'kanon') throw forbidden('Hanya pengusul yang bisa menarik usulan yang belum kanon.');
+      await s.db.update(cityFigures).set({ state: 'tarik' }).where(eq(cityFigures.id, f.id));
+      return c.json({ ok: true, state: 'tarik' });
+    }
+    if (f.proposerId === user.id) throw bad('own', 'Usulanmu sendiri butuh persetujuan warga lain.');
+    if (!(await warga(user.id))) throw forbidden('Hanya warga yang punya rumah yang bisa menyetujui.');
+    const endorsers = [...new Set([...f.endorsers, user.id])];
+    const state = endorsers.length >= KOTA_SETUJU_KANON ? 'kanon' : f.state;
+    await s.db.update(cityFigures).set({ endorsers, state }).where(eq(cityFigures.id, f.id));
+    return c.json({ ok: true, state });
+  });
+
+  /** Usul perubahan besar: wafat, pindah, atau fakta baru yang mengikat semua rumah. */
+  r.post('/kota/warga/:id/ubah', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, kotaUbahBody);
+    const f = (await figurWires(user.id)).find((x) => x.id === c.req.param('id') && x.state === 'kanon');
+    if (!f) throw notFound('Figuran tidak ditemukan.');
+    if (!(await warga(user.id))) throw forbidden('Perubahan diusulkan oleh warga yang punya rumah.');
+    if (input.kind === 'wafat' && (!input.year || (f.born && input.year < f.born))) throw bad('year', 'Tahun wafat harus sesudah tahun lahirnya.');
+    if (input.kind === 'wafat' && f.died) throw conflict('wafat', `${f.name} sudah tercatat wafat pada ${f.died}.`);
+    if (input.kind === 'pindah' && (!input.region || !kotaRegion(input.region))) throw bad('region', 'Pilih wilayah tujuan.');
+    await rateLimit(s, `kota:ubah:${user.id}`, 8, 24 * 3600);
+    const id = `u${newId(19)}`;
+    await s.db.insert(cityFigureChanges).values({ id, figureId: f.id, kind: input.kind, text: input.text, year: input.year ?? null, region: input.region ?? null, proposerId: user.id });
+    return c.json({ id }, 201);
+  });
+
+  r.put('/kota/ubah/:id', async (c) => {
+    const user = c.get('user');
+    const { action } = await body(c, kotaPeristiwaJawab);
+    const [u] = await s.db.select().from(cityFigureChanges).where(eq(cityFigureChanges.id, c.req.param('id')));
+    if (!u || u.state === 'tarik') throw notFound('Usulan tidak ditemukan.');
+    if (action === 'tarik') {
+      if (u.proposerId !== user.id || u.state === 'kanon') throw forbidden('Hanya pengusul yang bisa menarik usulan yang belum kanon.');
+      await s.db.update(cityFigureChanges).set({ state: 'tarik' }).where(eq(cityFigureChanges.id, u.id));
+      return c.json({ ok: true, state: 'tarik' });
+    }
+    if (u.proposerId === user.id) throw bad('own', 'Usulanmu sendiri butuh persetujuan warga lain.');
+    if (!(await warga(user.id))) throw forbidden('Hanya warga yang punya rumah yang bisa menyetujui.');
+    const endorsers = [...new Set([...u.endorsers, user.id])];
+    const state = endorsers.length >= KOTA_SETUJU_KANON ? 'kanon' : u.state;
+    await s.db.update(cityFigureChanges).set({ endorsers, state }).where(eq(cityFigureChanges.id, u.id));
+    return c.json({ ok: true, state });
+  });
+
+  /** Indeks nama kota untuk penjaga konsistensi di studio. */
+  r.get('/kota/nama', async (c) => {
+    const user = c.get('user');
+    const claims = await visible();
+    const live = (await describe(claims, user.id)).filter((x) => x.state === 'aktif');
+    const canon = live.length ? await s.db.select().from(msCanon).where(and(inArray(msCanon.msId, live.map((x) => x.msId)), eq(msCanon.kind, 'tokoh'))) : [];
+    const out: KotaNamaWire[] = [];
+    for (const e of canon) {
+      const p = (e.envelope as { plain?: { name?: string; peran?: string; sapa?: string; born?: number; died?: number } }).plain;
+      const cl = live.find((x) => x.msId === e.msId);
+      if (!p?.name || !cl) continue;
+      out.push({ name: p.name, kind: p.peran === 'figuran' ? 'figuran' : 'warga', claimId: cl.id, household: cl.household, tokohId: e.id, sapa: p.sapa === 'disapa' ? 'disapa' : 'tertutup', born: p.born, died: p.died });
+    }
+    for (const f of (await figurWires(user.id)).filter((x) => x.state === 'kanon')) out.push({ name: f.name, kind: 'figur', figurId: f.id, born: f.born, died: f.died, julukan: f.julukan });
+    return c.json(out);
+  });
+
+  // ── Memegang figuran rumah ──
+
+  const pegangOf = async (claim: ClaimRow, viewer: string): Promise<KotaPegangWire[]> => {
+    const rows = await s.db.select().from(cityHolds).where(and(eq(cityHolds.claimId, claim.id), inArray(cityHolds.state, ['minta', 'pegang'])));
+    if (!rows.length) return [];
+    const tokoh = await tokohOf([claim]);
+    const pens = new Map((await s.db.select().from(cityProfiles).where(inArray(cityProfiles.userId, rows.map((x) => x.requesterId)))).map((p) => [p.userId, p.penName]));
+    const owner = claim.ownerId === viewer;
+    return rows
+      .filter((x) => x.state === 'pegang' || owner || x.requesterId === viewer)
+      .map((x) => ({ id: x.id, claimId: x.claimId, tokohId: x.tokohId, tokoh: tokoh.find((t) => t.id === x.tokohId)?.name ?? 'tokoh', requesterId: x.requesterId, penName: pens.get(x.requesterId) ?? 'warga', letter: owner || x.requesterId === viewer ? x.letter : null, state: x.state as never }));
+  };
+
+  r.post('/kota/pegang', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, kotaPegangBody);
+    const [pen] = await s.db.select().from(cityProfiles).where(eq(cityProfiles.userId, user.id));
+    if (!pen) throw conflict('pena', 'Pilih nama pena kota dulu.');
+    const claim = await claimById(input.claimId);
+    if (!claim || claim.status !== 'aktif') throw notFound('Rumah tidak ditemukan.');
+    if (claim.ownerId === user.id) throw bad('own', 'Tokoh ini sudah milikmu.');
+    const [e] = await s.db.select().from(msCanon).where(and(eq(msCanon.id, input.tokohId), eq(msCanon.msId, claim.msId)));
+    const p = (e?.envelope as { plain?: { peran?: string } } | undefined)?.plain;
+    if (!e || p?.peran !== 'figuran') throw bad('tokoh', 'Hanya figuran rumah yang bisa dipegang penulis lain.');
+    const ada = await s.db.select().from(cityHolds).where(and(eq(cityHolds.claimId, claim.id), eq(cityHolds.tokohId, e.id), inArray(cityHolds.state, ['minta', 'pegang'])));
+    if (ada.some((x) => x.state === 'pegang')) throw conflict('dipegang', 'Tokoh ini sudah dipegang penulis lain.');
+    if (ada.some((x) => x.requesterId === user.id)) throw conflict('dup', 'Permintaanmu masih menunggu jawaban.');
+    await rateLimit(s, `kota:pegang:${user.id}`, 6, 24 * 3600);
+    const id = `h${newId(19)}`;
+    await s.db.insert(cityHolds).values({ id, claimId: claim.id, tokohId: e.id, requesterId: user.id, letter: input.letter });
+    void pushTo(s, [claim.ownerId], { body: `Ada penulis yang ingin memegang salah satu tokoh di ${claim.household}.`, data: { type: 'kota', claimId: claim.id } }).catch(() => {});
+    return c.json({ id }, 201);
+  });
+
+  /** Pemilik menerima/menolak; pemilik atau pemegang melepas. Pemegang ikut menjadi penulis naskah rumah. */
+  r.put('/kota/pegang/:id', async (c) => {
+    const user = c.get('user');
+    const { action } = await body(c, kotaPegangJawab);
+    const [x] = await s.db.select().from(cityHolds).where(eq(cityHolds.id, c.req.param('id')));
+    if (!x) throw notFound('Permintaan tidak ditemukan.');
+    const claim = await claimById(x.claimId);
+    if (!claim) throw notFound('Rumah tidak ditemukan.');
+    const owner = claim.ownerId === user.id;
+    const [ms] = await s.db.select().from(manuscripts).where(eq(manuscripts.id, claim.msId));
+    if (owner && x.state === 'minta' && (action === 'terima' || action === 'tolak')) {
+      await s.db.update(cityHolds).set({ state: action === 'terima' ? 'pegang' : 'tolak' }).where(eq(cityHolds.id, x.id));
+      if (action === 'terima' && ms) await s.db.update(manuscripts).set({ members: [...new Set([...ms.members, x.requesterId])] }).where(eq(manuscripts.id, ms.id));
+      void pushTo(s, [x.requesterId], { body: action === 'terima' ? `Kamu kini memegang satu tokoh di ${claim.household}.` : `${claim.household} belum bisa melepas tokohnya.`, data: { type: 'kota', claimId: claim.id } }).catch(() => {});
+    } else if ((owner || x.requesterId === user.id) && x.state === 'pegang' && action === 'lepas') {
+      await s.db.update(cityHolds).set({ state: 'lepas' }).where(eq(cityHolds.id, x.id));
+      const still = await s.db.select().from(cityHolds).where(and(eq(cityHolds.claimId, claim.id), eq(cityHolds.requesterId, x.requesterId), eq(cityHolds.state, 'pegang')));
+      if (!still.length && ms) await s.db.update(manuscripts).set({ members: ms.members.filter((m) => m !== x.requesterId) }).where(eq(manuscripts.id, ms.id));
+    } else throw forbidden('Langkah itu tidak bisa dilakukan sekarang.');
+    return c.json({ ok: true });
   });
 
   return r;

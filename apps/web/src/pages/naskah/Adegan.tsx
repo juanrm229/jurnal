@@ -14,12 +14,14 @@ import {
   naskahMentions,
   naskahWarnings,
   naskahYear,
+  kotaCekTeks,
+  type KotaCekNama,
   kotaDariKota,
   kotaRegion,
 } from '@sehari/core';
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
-import { tanggal, useAlmanak, useRumahNaskah } from '@/lib/kota';
+import { tanggal, useAlmanak, useNamaKota, usePegangan, usePena, useRumahNaskah, useTautan } from '@/lib/kota';
 import { firstLine, tglPanjang, type NaskahModel, povColor, type Scene, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
@@ -69,9 +71,15 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const karya = m.workOf(s);
   const bentuk = karya?.bentuk ?? 'kisah';
   const [saksi, setSaksi] = useState<'mengalami' | 'mendengar'>(p0.saksi ?? 'mengalami');
+  const [desas, setDesas] = useState<string[]>(p0.desas ?? []);
+  const [jumpa, setJumpa] = useState<string[]>(p0.jumpa ?? []);
   const kota = m.ms.visibility === 'kota';
   const rumah = useRumahNaskah(m.ms.id, kota);
   const almanak = useAlmanak(kota);
+  const pegangan = usePegangan(m.ms, m.meId);
+  const pena = usePena(m);
+  const nama = useNamaKota(kota);
+  const tautan = useTautan(kota ? (rumah.data?.id ?? '') : '');
   const [saved, setSaved] = useState<'ok' | 'saving' | 'dirty'>('ok');
   const [sel, setSel] = useState('');
   const [lens, setLens] = useState(true);
@@ -94,14 +102,29 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const tahun = naskahYear(sortOk ? sort : '') ?? rumah.data?.from ?? null;
   const kanonKota = (almanak.data ?? []).filter((e) => e.state === 'kanon');
   const dariKota = rumah.data && tahun ? kotaDariKota(kanonKota, rumah.data.regionId, tahun) : null;
+  // Penjaga konsistensi kota: tokoh rumah lain, figuran kota, dan perjumpaan.
+  const claimId = rumah.data?.id ?? '';
+  const linked = useMemo(
+    () => (tautan.data?.relations ?? []).filter((r) => r.state === 'kanon' || r.state === 'desas').map((r) => (r.fromClaimId === claimId ? r.toTokoh : r.fromTokoh)),
+    [tautan.data, claimId],
+  );
+  const cekKota = useMemo(() => (kota && claimId && nama.data ? kotaCekTeks(text, nama.data, { claimId, linked, desas, jumpa, year: tahun }) : []), [kota, claimId, nama.data, text, linked, desas, jumpa, tahun]);
+  const cekShown = cekKota.filter((w, i, a) => !dismissed.includes(`kota:${w.kind}:${w.term.toLowerCase()}`) && a.findIndex((x) => x.kind === w.kind && x.term === w.term) === i);
+  const figurNama = (fid: string) => nama.data?.find((n) => n.figurId === fid)?.name ?? 'figuran kota';
+  const kenal = useMemo(() => {
+    const ids = new Set<string>();
+    for (const x of m.scenes) if (x.id !== s.id && x.p?.pov === pov && x.p.jumpa?.length && chrono[x.id]! < at) x.p.jumpa.forEach((j) => ids.add(j));
+    return [...ids];
+  }, [m.scenes, s.id, pov, chrono, at]);
   const spans: Span[] = [
+    ...cekKota.filter((w) => cekShown.some((x) => x.kind === w.kind && x.term === w.term)).map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'rumah-lain' ? 'w-rumah' : w.kind === 'figur-waktu' ? 'w-zaman' : 'm-jumpa' })),
     ...shown.map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'belum' ? 'w-belum' : 'w-zaman' })),
     ...naskahMentions(text, view.tahu).map((x) => ({ ...x, cls: 'm-tahu' })),
     ...naskahMentions(text, view.mengira).map((x) => ({ ...x, cls: 'm-kira' })),
   ];
 
   // Simpan otomatis, terenkripsi, sedikit setelah berhenti mengetik.
-  const payload = (): NaskahScenePayload => ({ v: 1, title: title.trim() || undefined, pov, when: { label: label.trim(), sort: sortOk ? sort.trim() : '' }, text, peristiwa: peristiwa || undefined, saksi: peristiwa ? saksi : undefined, kepada: bentuk === 'surat' ? kepada.trim() || undefined : p0.kepada, desas: p0.desas, jumpa: p0.jumpa });
+  const payload = (): NaskahScenePayload => ({ v: 1, title: title.trim() || undefined, pov, when: { label: label.trim(), sort: sortOk ? sort.trim() : '' }, text, peristiwa: peristiwa || undefined, saksi: peristiwa ? saksi : undefined, kepada: bentuk === 'surat' ? kepada.trim() || undefined : p0.kepada, desas: desas.length ? desas : undefined, jumpa: jumpa.length ? jumpa : undefined });
   const first = useRef(true);
   useEffect(() => {
     if (!mine) return;
@@ -121,7 +144,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
       }
     }, 1200);
     return () => clearTimeout(t);
-  }, [text, title, pov, label, sort, peristiwa, saksi, kepada]);
+  }, [text, title, pov, label, sort, peristiwa, saksi, kepada, desas, jumpa]);
 
   useLayoutEffect(() => {
     const el = ta.current;
@@ -156,7 +179,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
     <main className="screen naskah-adegan">
       <Header
         title={m.nameOf(pov)}
-        sub={`${karya ? `${karya.p.title} · ` : ''}${bentuk === 'jurnal' ? 'entri' : bentuk === 'surat' ? 'surat' : `bab ${s.chapter}`} · ${mine ? (s.status === 'draf' ? 'draf milikmu' : `terbit · v${s.version}`) : `oleh ${m.who(s.authorId)}`}`}
+        sub={`${karya ? `${karya.p.title} · ` : ''}${bentuk === 'jurnal' ? 'entri' : bentuk === 'surat' ? 'surat' : `bab ${s.chapter}`} · ${mine ? (s.status === 'draf' ? 'draf milikmu' : `terbit · v${s.version}`) : `oleh ${pena(s.authorId)}`}`}
         backTo={`/naskah/${m.ms.id}`}
         right={
           <button className={`nk-lensa-btn ${lens ? 'on' : ''}`} onClick={() => setLens(!lens)} aria-pressed={lens} aria-label="kacamata tokoh" data-testid="nk-lensa">
@@ -172,7 +195,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
           ) : null}
           {bentuk === 'surat' ? <input className="field" value={kepada} maxLength={80} onChange={(e) => setKepada(e.target.value)} placeholder="kepada siapa? mis. Bu Sri, atau Laras di Kampus" data-testid="nk-kepada" /> : null}
           <div className="row wrap" style={{ gap: 6, display: bentuk === 'jurnal' || bentuk === 'surat' ? 'none' : undefined }} role="group" aria-label="sudut pandang">
-            {m.tokoh.map((t) => (
+            {m.tokoh.filter((t) => !pegangan || pegangan.has(t.id)).map((t) => (
               <button key={t.id} className={`nk-pov ${pov === t.id ? 'on' : ''}`} style={{ '--pov': povColor(m, t.id) } as CSSProperties} onClick={() => setPov(t.id)} data-testid={`nk-pov-${t.p.name}`}>
                 {t.p.name}
               </button>
@@ -185,6 +208,26 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
           {bentuk === 'jurnal' && sortOk && sort.trim() ? <span className="nk-tgl-hias">{tglPanjang(sort.trim())}</span> : null}
           {!sortOk ? <span className="tiny nk-salah">Tulis tanggal sebagai 1979, 1979-02, 1979-02-15, atau 1979-02-15 06:10.</span> : null}
           <input className="field nk-judul-adegan" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="judul adegan (opsional)" />
+          {kota && (desas.length || jumpa.length) ? (
+            <div className="nk-tanda-kota" aria-label="tanda kota di adegan ini">
+              {jumpa.map((f) => (
+                <span key={f} className="nk-tanda jumpa">
+                  berjumpa {figurNama(f)}
+                  <button aria-label={`hapus perjumpaan ${figurNama(f)}`} onClick={() => setJumpa(jumpa.filter((x) => x !== f))}>
+                    ×
+                  </button>
+                </span>
+              ))}
+              {desas.map((d) => (
+                <span key={d} className="nk-tanda desas">
+                  konon: {d}
+                  <button aria-label={`hapus desas-desus ${d}`} onClick={() => setDesas(desas.filter((x) => x !== d))}>
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
           {kota && kanonKota.length ? (
             <div className="nk-saksi">
               <select className="field" value={peristiwa} onChange={(e) => setPeristiwa(e.target.value)} aria-label="kesaksian untuk peristiwa kota" data-testid="nk-peristiwa">
@@ -211,7 +254,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
         </section>
       ) : (
         <p className="nk-baca-meta tiny soft">
-          <Avatar doodle={m.face(s.authorId)} size={18} /> {m.who(s.authorId)} · {label || 'tanpa waktu'}
+          <Avatar doodle={m.face(s.authorId)} size={18} /> {pena(s.authorId)} · {label || 'tanpa waktu'}
           {title ? ` · ${title}` : ''}
         </p>
       )}
@@ -261,8 +304,19 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
         </div>
       </article>
 
-      {lens && shown.length ? (
+      {lens && (shown.length || cekShown.length) ? (
         <section className="nk-coretan" aria-label="catatan pinggir">
+          {cekShown.map((w) => (
+            <CatatanKota
+              key={`${w.kind}-${w.term}`}
+              w={w}
+              tahun={tahun}
+              mine={mine}
+              onDesas={() => setDesas([...desas, w.term])}
+              onJumpa={() => setJumpa([...jumpa, w.ref.figurId!])}
+              onBiar={() => setDismissed([...dismissed, `kota:${w.kind}:${w.term.toLowerCase()}`])}
+            />
+          ))}
           {shown.map((w, i) => (
             <div key={`${w.kind}-${w.at}-${i}`} className={`nk-coret ${w.kind}`}>
               <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true">
@@ -323,6 +377,18 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
                 <i>tidak ada</i>
               )}
             </dd>
+            {kota && (kenal.length || jumpa.length) ? (
+              <>
+                <dt>kenal di kota</dt>
+                <dd data-testid="nk-kenal">
+                  {[...new Set([...kenal, ...jumpa])].map((f) => (
+                    <button key={f} className="nk-kota-peristiwa" onClick={() => navigate(`/kota/warga/${f}`)}>
+                      {figurNama(f)} <i>({kenal.includes(f) ? 'pernah berjumpa' : 'berjumpa di sini'})</i>
+                    </button>
+                  ))}
+                </dd>
+              </>
+            ) : null}
             {dariKota ? (
               <>
                 <dt>dari kota</dt>
@@ -424,6 +490,60 @@ function Versi({ m, s, onRestore }: { m: NaskahModel; s: Scene; onRestore?: (t: 
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** Catatan pinggir dari kota: tokoh rumah lain, figuran kota di luar masanya, perjumpaan. */
+function CatatanKota({ w, tahun, mine, onDesas, onJumpa, onBiar }: { w: KotaCekNama; tahun: number | null; mine: boolean; onDesas: () => void; onJumpa: () => void; onBiar: () => void }) {
+  const n = w.ref;
+  return (
+    <div className={`nk-coret nk-ckota ${w.kind}`} data-testid={`nk-kota-${w.kind}`}>
+      <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true">
+        <path d="M3 18 L11 4 L19 18 Z M11 9 V13 M11 15.5 V16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+      <div className="grow">
+        {w.kind === 'rumah-lain' ? (
+          <p>
+            {n.name} {n.kind === 'figuran' ? 'figuran' : 'tokoh'} dari <b>{n.household}</b>. Rumahmu belum tertaut dengannya, jadi kemunculannya belum kanon.
+          </p>
+        ) : w.kind === 'figur-waktu' ? (
+          <p>
+            {n.name} hidup {n.born ?? '?'}–{n.died ?? 'kini'}, sedangkan adegan ini {tahun}. {tahun && n.died && tahun > n.died ? 'Mungkin yang dimaksud kenangan tentangnya?' : 'Ia belum lahir.'}
+          </p>
+        ) : (
+          <p>
+            {n.name}
+            {n.julukan ? `, ${n.julukan},` : ''} adalah figuran kota. Catat sebagai perjumpaan agar adegan ini tercatat di Buku Warga.
+          </p>
+        )}
+        <div className="row wrap" style={{ gap: 6 }}>
+          {w.kind === 'rumah-lain' ? (
+            <>
+              <button className="pill sm" onClick={() => navigate(`/kota/ketuk/${n.claimId}`)} data-testid="nk-kota-ketuk">
+                ketuk rumahnya
+              </button>
+              {mine ? (
+                <button className="pill sm" onClick={onDesas} data-testid="nk-kota-desas">
+                  jadikan desas-desus
+                </button>
+              ) : null}
+            </>
+          ) : w.kind === 'figur-jumpa' && mine ? (
+            <button className="pill sm" onClick={onJumpa} data-testid="nk-kota-jumpa">
+              catat perjumpaan
+            </button>
+          ) : null}
+          {n.figurId ? (
+            <button className="pill sm ghost" onClick={() => navigate(`/kota/warga/${n.figurId}`)}>
+              lembar warga
+            </button>
+          ) : null}
+          <button className="pill sm ghost" onClick={onBiar}>
+            biarkan
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

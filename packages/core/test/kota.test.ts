@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KOTA_WILAYAH, kotaCekHubungan, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots } from '../src/kota';
+import { KOTA_WARGA_AWAL, KOTA_WILAYAH, kotaCekHubungan, kotaCekTeks, kotaFigurKini, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots } from '../src/kota';
 
 describe('kota sangkala', () => {
   it('persil deterministik di dalam wilayah yang dibuka, dengan alamat', () => {
@@ -27,5 +27,27 @@ describe('kota sangkala', () => {
     expect(kotaCekHubungan('leluhur', { name: 'Opa', born: 1890, from: 1930, to: 1972 }, laras).every((c) => c.ok)).toBe(true);
     expect(kotaCekHubungan('teman', { name: 'Kakek', born: 1880, died: 1930, from: 1900, to: 1930 }, laras).some((c) => !c.ok)).toBe(true);
     expect(kotaCekHubungan('saudara', laras, { name: 'Dina', from: 1952, to: 1981 })[0]!.warn).toBe(true);
+  });
+
+  it('penjaga konsistensi: tokoh rumah lain, figuran di luar masa hidupnya, dan saran mencatat perjumpaan', () => {
+    const nama = [
+      { name: 'Laras', kind: 'warga' as const, claimId: 'kLaras', household: 'Kos Laras', tokohId: 'tLaras', sapa: 'tertutup' as const },
+      { name: 'Bu Tin', kind: 'warga' as const, claimId: 'kTin', household: 'Warung Bu Tin', tokohId: 'tTin', sapa: 'disapa' as const },
+      { name: 'Dina', kind: 'warga' as const, claimId: 'kDarmo', household: 'Keluarga Darmo', tokohId: 'tDina' },
+      { name: 'Mbah Tembang', kind: 'figur' as const, figurId: 'warga.tembang', born: 1911, died: 1984, julukan: 'pengemis yang selalu bernyanyi' },
+    ];
+    const teks = 'Dina melihat Laras di warung Bu Tin, sementara Mbah Tembang bernyanyi di tangga.';
+    const o = { claimId: 'kDarmo', linked: [], desas: [], jumpa: [], year: 1979 };
+    expect(kotaCekTeks(teks, nama, o).map((x) => [x.kind, x.term])).toEqual([['rumah-lain', 'Laras'], ['figur-jumpa', 'Mbah Tembang']]);
+    expect(kotaCekTeks(teks, nama, { ...o, linked: ['tLaras'], jumpa: ['warga.tembang'] })).toEqual([]);
+    expect(kotaCekTeks(teks, nama, { ...o, desas: ['laras'], year: 1990 }).map((x) => x.kind)).toEqual(['figur-waktu']);
+  });
+
+  it('lembar figuran berubah oleh perubahan besar yang sudah kanon', () => {
+    const jamil = KOTA_WARGA_AWAL.find((f) => f.id === 'warga.jamil')!;
+    const kini = kotaFigurKini(jamil, [{ kind: 'wafat', text: 'di tikungan', year: 2019 }, { kind: 'fakta', text: 'Sepedanya disimpan di kantor pos.' }]);
+    expect(kini.died).toBe(2019);
+    expect(kini.tetap.at(-1)).toBe('Sepedanya disimpan di kantor pos.');
+    expect(jamil.died).toBeUndefined();
   });
 });

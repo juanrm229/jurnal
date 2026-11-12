@@ -30,7 +30,7 @@ export function RakKarya({ m, sel, onSel }: { m: NaskahModel; sel: string; onSel
           </span>
         </button>
       ))}
-      {m.canWrite ? (
+      {m.canWrite && (m.ms.visibility !== 'kota' || m.ms.ownerId === m.meId) ? (
         <button className="nk-buku tambah" onClick={() => setBaru(true)} data-testid="nk-karya-baru">
           <Doodle id="pena" size={22} color="currentColor" />
           <b>karya baru</b>

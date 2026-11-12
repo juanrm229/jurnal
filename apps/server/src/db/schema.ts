@@ -1146,3 +1146,54 @@ export const cityEvents = pgTable(
   },
   (t) => [index('city_events_city_idx').on(t.city)],
 );
+
+/** Buku Warga Kota: figuran kota usulan warga (figuran awal ada di @sehari/core). */
+export const cityFigures = pgTable('city_figures', {
+  id: text('id').primaryKey(),
+  city: text('city').notNull().default('sangkala'),
+  name: text('name').notNull(),
+  julukan: text('julukan'),
+  region: text('region').notNull(),
+  tempat: text('tempat').notNull(),
+  ciri: text('ciri').notNull(),
+  born: integer('born'),
+  died: integer('died'),
+  tetap: jsonb('tetap').$type<string[]>().notNull().default([]),
+  proposerId: text('proposer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endorsers: jsonb('endorsers').$type<string[]>().notNull().default([]),
+  state: text('state').notNull().default('usul'),
+  createdAt: ts('created_at').notNull().defaultNow(),
+});
+
+/** Perubahan besar figuran kota (wafat, pindah, fakta baru): sah lewat persetujuan warga. */
+export const cityFigureChanges = pgTable(
+  'city_figure_changes',
+  {
+    id: text('id').primaryKey(),
+    figureId: text('figure_id').notNull(),
+    kind: text('kind').notNull(),
+    text: text('text').notNull(),
+    year: integer('year'),
+    region: text('region'),
+    proposerId: text('proposer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    endorsers: jsonb('endorsers').$type<string[]>().notNull().default([]),
+    state: text('state').notNull().default('usul'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('city_figure_changes_fig_idx').on(t.figureId)],
+);
+
+/** Memegang figuran rumah orang lain: penulis lain menulis dari sudut pandang tokoh itu di rumah yang sama. */
+export const cityHolds = pgTable(
+  'city_holds',
+  {
+    id: text('id').primaryKey(),
+    claimId: text('claim_id').notNull().references(() => cityClaims.id, { onDelete: 'cascade' }),
+    tokohId: text('tokoh_id').notNull(),
+    requesterId: text('requester_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    letter: text('letter').notNull(),
+    state: text('state').notNull().default('minta'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('city_holds_claim_idx').on(t.claimId)],
+);

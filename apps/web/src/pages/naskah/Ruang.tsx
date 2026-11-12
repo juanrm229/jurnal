@@ -4,7 +4,7 @@
  */
 import { NASKAH_BENTUK, type NaskahScenePayload } from '@sehari/core';
 import { type CSSProperties, useState } from 'react';
-import { useRumahNaskah } from '@/lib/kota';
+import { usePegangan, usePena, useRumahNaskah } from '@/lib/kota';
 import { firstLine, type NaskahModel, newNaskahId, povColor, type Scene, tglPanjang, useNaskah, useNaskahModel, type Work } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, useToast } from '@/ui/kit';
@@ -46,14 +46,22 @@ function Workspace({ m }: { m: NaskahModel }) {
   // Rumah di Kota: kembali ke halaman rumahnya, bukan ke rak studio.
   const rumah = useRumahNaskah(m.ms.id, m.ms.visibility === 'kota');
   const w = m.works.find((x) => x.id === sel) ?? null;
+  const pegangan = usePegangan(m.ms, m.meId);
+  // Di rumah kota, penulis dikenal lewat nama pena kota, bukan nama lingkaran.
+  const pena = usePena(m);
   return (
     <main className="screen naskah-ruang">
       <Header title={m.meta.title} sub={`${pub} adegan terbit · ${m.works.length} karya · ${m.canon.length} kanon`} backTo={rumah.data ? `/kota/rumah/${rumah.data.id}` : '/naskah'} />
       {m.meta.logline ? <p className="nk-logline-top rupa-hand">{m.meta.logline}</p> : null}
+      {pegangan ? (
+        <p className="nk-pegang-catat" role="note">
+          {pegangan.size ? `Kamu memegang ${[...pegangan].map((t) => m.nameOf(t)).join(', ')} di rumah ini. Tulis dari sudut pandangnya; kanon rumah tetap dijaga pemiliknya.` : 'Kamu hanya membaca rumah ini.'}
+        </p>
+      ) : null}
       <div className="nk-penulis-row">
         {m.ms.members.map((u) => (
-          <span key={u} title={m.who(u)}>
-            <Avatar doodle={m.face(u)} size={24} /> {m.who(u)}
+          <span key={u} title={pena(u)}>
+            <Avatar doodle={m.face(u)} size={24} /> {pena(u)}
           </span>
         ))}
       </div>
@@ -82,6 +90,8 @@ function Susunan({ m, w, goKanon }: { m: NaskahModel; w: Work | null; goKanon: (
   const [atur, setAtur] = useState(false);
   const [busy, setBusy] = useState(false);
   const pool = m.scenesOf(w?.id ?? null);
+  const pegangan = usePegangan(m.ms, m.meId);
+  const pena = usePena(m);
   const chapters = [...new Set(pool.map((s) => s.chapter))].sort((a, b) => a - b);
   if (!chapters.length) chapters.push(1);
   const bentuk = w?.bentuk ?? 'kisah';
@@ -98,7 +108,9 @@ function Susunan({ m, w, goKanon }: { m: NaskahModel; w: Work | null; goKanon: (
       // Jurnal dan surat ditulis oleh satu tokoh; entri jurnal berikutnya dimulai sehari sesudah entri terakhir.
       const lastSort = [...pool].reverse().find((s) => s.p?.when.sort)?.p?.when.sort ?? '';
       const next = bentuk === 'jurnal' && /^\d{4}-\d{2}-\d{2}$/.test(lastSort) ? new Date(new Date(`${lastSort}T12:00:00`).getTime() + 86_400_000).toISOString().slice(0, 10) : '';
-      const pov = w?.p.tokoh ?? last?.p?.pov ?? m.tokoh[0]!.id;
+      let pov = w?.p.tokoh ?? last?.p?.pov ?? m.tokoh[0]!.id;
+      // Pemegang figuran hanya menulis dari tokoh yang ia pegang.
+      if (pegangan && !pegangan.has(pov)) pov = [...pegangan][0] ?? pov;
       const p: NaskahScenePayload = { v: 1, pov, when: { label: '', sort: next }, text: '' };
       await m.post('/scenes', { id: sid, chapter, order: (inCh.at(-1)?.order ?? 0) + 1, envelope: m.seal(p), status: 'draf', workId: w?.id ?? null });
       navigate(`/naskah/${m.ms.id}/a/${sid}`);
@@ -170,12 +182,12 @@ function Susunan({ m, w, goKanon }: { m: NaskahModel; w: Work | null; goKanon: (
                     <button className="nk-adegan-main" disabled={hidden} onClick={() => navigate(`/naskah/${m.ms.id}/a/${s.id}`)} data-testid="nk-adegan">
                       <span className="nk-adegan-top">
                         <b>{hidden ? `${satuan} baru` : bentuk === 'jurnal' ? tglPanjang(s.p!.when.sort) || 'tanpa tanggal' : bentuk === 'surat' ? `kepada ${s.p!.kepada || '…'}` : m.nameOf(s.p!.pov)}</b>
-                        <span className="tiny soft">{hidden ? `${m.who(s.authorId)} sedang menulis` : s.p!.when.label || (bentuk === 'jurnal' ? m.nameOf(s.p!.pov) : 'waktu belum ditentukan')}</span>
+                        <span className="tiny soft">{hidden ? `${pena(s.authorId)} sedang menulis` : s.p!.when.label || (bentuk === 'jurnal' ? m.nameOf(s.p!.pov) : 'waktu belum ditentukan')}</span>
                       </span>
                       {!hidden ? <span className="nk-adegan-teks">{s.p!.title ? <i>{s.p!.title} · </i> : null}{firstLine(s.p!.text) || <em>kosong</em>}</span> : null}
                       <span className="nk-adegan-bawah">
                         <Avatar doodle={m.face(s.authorId)} size={18} />
-                        <span className="tiny soft">{mine ? 'milikmu' : m.who(s.authorId)}</span>
+                        <span className="tiny soft">{mine ? 'milikmu' : pena(s.authorId)}</span>
                         {s.status === 'draf' ? <span className="nk-pill draf">draf</span> : <span className="tiny soft">v{s.version}</span>}
                       </span>
                     </button>

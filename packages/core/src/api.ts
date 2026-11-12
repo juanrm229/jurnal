@@ -1280,6 +1280,8 @@ export interface KotaRelasiWire {
   createdAt: string;
 }
 export interface KotaTautanWire {
+  /** Permintaan dan pegangan figuran rumah ini (yang relevan bagi penonton). */
+  pegang?: KotaPegangWire[];
   relations: KotaRelasiWire[];
   tokoh: KotaTokohWire[];
   claims: KotaClaimWire[];
@@ -1346,6 +1348,80 @@ export interface KotaKesaksianWire {
 export interface KotaPeristiwaDetail {
   event: KotaPeristiwaWire;
   testimonies: KotaKesaksianWire[];
+}
+
+export const kotaFigurBody = z.object({
+  name: z.string().trim().min(3).max(60),
+  julukan: z.string().trim().max(80).optional(),
+  region: z.string().max(40),
+  tempat: z.string().trim().min(3).max(120),
+  ciri: z.string().trim().min(20).max(600),
+  born: z.number().int().min(1700).max(2030).optional(),
+  died: z.number().int().min(1700).max(2030).optional(),
+  tetap: z.array(z.string().trim().min(5).max(200)).max(5).default([]),
+});
+export const kotaUbahBody = z.object({ kind: z.enum(['fakta', 'wafat', 'pindah']), text: z.string().trim().min(5).max(400), year: z.number().int().min(1700).max(2030).optional(), region: z.string().max(40).optional() });
+export const kotaPegangBody = z.object({ claimId: z.string().max(40), tokohId: z.string().max(40), letter: z.string().trim().min(10).max(800) });
+export const kotaPegangJawab = z.object({ action: z.enum(['terima', 'tolak', 'lepas']) });
+
+export interface KotaUbahWire {
+  id: string;
+  figurId: string;
+  kind: 'fakta' | 'wafat' | 'pindah';
+  text: string;
+  year?: number;
+  region?: string;
+  state: 'kanon' | 'usul';
+  proposer: string;
+  endorsements: number;
+  endorsedByMe: boolean;
+  mine: boolean;
+  createdAt: string;
+}
+export interface KotaFigurWire {
+  id: string;
+  name: string;
+  julukan?: string;
+  region: string;
+  tempat: string;
+  ciri: string;
+  born?: number;
+  died?: number;
+  tetap: string[];
+  state: 'kanon' | 'usul';
+  proposer: string | null;
+  endorsements: number;
+  endorsedByMe: boolean;
+  mine: boolean;
+  /** Jumlah adegan terbit yang mencatat perjumpaan dengannya. */
+  jumpa: number;
+  ubah: KotaUbahWire[];
+}
+export interface KotaFigurDetail {
+  figur: KotaFigurWire;
+  perjumpaan: KotaKesaksianWire[];
+}
+export interface KotaNamaWire {
+  name: string;
+  kind: 'warga' | 'figuran' | 'figur';
+  claimId?: string;
+  household?: string;
+  tokohId?: string;
+  figurId?: string;
+  sapa?: 'tertutup' | 'disapa';
+  born?: number;
+  died?: number;
+  julukan?: string;
+}
+export interface KotaPegangWire {
+  id: string;
+  claimId: string;
+  tokohId: string;
+  tokoh: string;
+  requesterId: string;
+  penName: string;
+  letter: string | null;
+  state: 'minta' | 'pegang' | 'tolak' | 'lepas';
 }
 
 export interface KotaWire {

@@ -24,7 +24,7 @@ import { schema } from '../db';
 import { pushTo, requireMember } from '../lib/domain';
 import { bad, conflict, forbidden, notFound } from '../lib/errors';
 
-const { manuscripts, msScenes, msVersions, msCanon, msWorks, circleMembers } = schema;
+const { manuscripts, msScenes, msVersions, msCanon, msWorks, circleMembers, cityClaims, cityHolds } = schema;
 type WorkRow = typeof msWorks.$inferSelect;
 type MsRow = typeof manuscripts.$inferSelect;
 type SceneRow = typeof msScenes.$inferSelect;
@@ -97,6 +97,28 @@ export function naskahRoutes(s: Services) {
     const [ms] = await s.db.select().from(manuscripts).where(eq(manuscripts.id, id));
     if (!ms || (!ms.members.includes(userId) && ms.visibility !== 'kota')) throw notFound('Naskah tidak ditemukan.');
     return ms;
+  };
+  /**
+   * Penulis yang memegang figuran di rumah kota orang lain: kembalikan tokoh yang
+   * dipegangnya. null = tanpa batasan (pemilik rumah, atau naskah bukan rumah kota).
+   */
+  const held = async (ms: MsRow, userId: string): Promise<Set<string> | null> => {
+    if (ms.visibility !== 'kota' || ms.ownerId === userId) return null;
+    const rows = await s.db
+      .select({ tokohId: cityHolds.tokohId })
+      .from(cityHolds)
+      .innerJoin(cityClaims, eq(cityClaims.id, cityHolds.claimId))
+      .where(and(eq(cityClaims.msId, ms.id), eq(cityHolds.requesterId, userId), eq(cityHolds.state, 'pegang')));
+    return new Set(rows.map((x) => x.tokohId));
+  };
+  const povOk = async (ms: MsRow, userId: string, env: unknown) => {
+    const h = await held(ms, userId);
+    if (!h) return;
+    const pov = (env as { plain?: { pov?: string } }).plain?.pov;
+    if (!pov || !h.has(pov)) throw forbidden('Di rumah ini kamu hanya menulis dari sudut pandang tokoh yang kamu pegang.');
+  };
+  const ownerOnlyKota = (ms: MsRow, userId: string) => {
+    if (ms.visibility === 'kota' && ms.ownerId !== userId) throw forbidden('Rak karya rumah ini diatur oleh pemiliknya.');
   };
   /** Rumah kota menyimpan isi terbuka; naskah privat wajib terenkripsi. */
   const envFor = (ms: MsRow, env: unknown) => {
@@ -183,6 +205,7 @@ export function naskahRoutes(s: Services) {
     const input = await body(c, naskahSceneBody);
     const ms = await mine(c.req.param('id'), user.id);
     envFor(ms, input.envelope);
+    await povOk(ms, user.id, input.envelope);
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msScenes).where(eq(msScenes.msId, ms.id));
     if ((n?.n ?? 0) >= 2000) throw bad('full', 'Naskah ini sudah terlalu panjang.');
     const now = s.now();
@@ -204,7 +227,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahScenePatch);
     const ms = await mine(c.req.param('id'), user.id);
-    if (input.envelope) envFor(ms, input.envelope);
+    if (input.envelope) (envFor(ms, input.envelope), await povOk(ms, user.id, input.envelope));
     const [sc] = await s.db.select().from(msScenes).where(and(eq(msScenes.id, c.req.param('sid')), eq(msScenes.msId, ms.id)));
     if (!sc || (sc.status === 'draf' && sc.authorId !== user.id)) throw notFound('Adegan tidak ditemukan.');
     if ((input.envelope || input.status || input.workId !== undefined) && sc.authorId !== user.id) throw forbidden('Adegan ini milik penulis lain. Beri saran lewat catatan.');
@@ -248,6 +271,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahWorkBody);
     const ms = await mine(c.req.param('id'), user.id);
+    ownerOnlyKota(ms, user.id);
     envFor(ms, input.envelope);
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msWorks).where(eq(msWorks.msId, ms.id));
     if ((n?.n ?? 0) >= 60) throw bad('full', 'Rak karya naskah ini sudah penuh.');
@@ -261,6 +285,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahWorkPatch);
     const ms = await mine(c.req.param('id'), user.id);
+    ownerOnlyKota(ms, user.id);
     const [w] = await s.db.select().from(msWorks).where(and(eq(msWorks.id, c.req.param('wid')), eq(msWorks.msId, ms.id)));
     if (!w) throw notFound('Karya tidak ditemukan.');
     if (input.envelope && w.authorId !== user.id && ms.ownerId !== user.id) throw forbidden('Karya ini dibuat penulis lain.');
@@ -302,6 +327,8 @@ export function naskahRoutes(s: Services) {
     envFor(ms, envelope);
     const [e] = await s.db.select().from(msCanon).where(and(eq(msCanon.id, c.req.param('cid')), eq(msCanon.msId, ms.id)));
     if (!e) throw notFound('Entri kanon tidak ditemukan.');
+    const h = await held(ms, user.id);
+    if (h && e.authorId !== user.id && !h.has(e.id)) throw forbidden('Kanon rumah ini diubah pemiliknya; kamu hanya mengubah tokoh yang kamu pegang.');
     await s.db.update(msCanon).set({ envelope, updatedBy: user.id, updatedAt: s.now() }).where(eq(msCanon.id, e.id));
     return c.json(await send(await touch(ms), user.id));
   });

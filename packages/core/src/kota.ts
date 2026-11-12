@@ -211,3 +211,103 @@ export function kotaDariKota<T extends KotaPeristiwa>(events: T[], regionId: str
 
 /** Persetujuan warga lain yang dibutuhkan agar usulan peristiwa menjadi kanon. */
 export const KOTA_SETUJU_KANON = 2;
+
+// ── Buku Warga Kota: figuran kota bersama ───────────────────────────────────
+
+/** Figuran kota: sosok publik yang boleh dijumpai siapa pun; fakta besarnya diubah lewat persetujuan warga. */
+export interface KotaFigur {
+  id: string;
+  name: string;
+  julukan?: string;
+  /** Wilayah tempat ia biasa ditemui. */
+  region: string;
+  tempat: string;
+  ciri: string;
+  born?: number;
+  died?: number;
+  /** Hal yang tak boleh diubah satu rumah sendirian. */
+  tetap: string[];
+}
+
+export const KOTA_WARGA_AWAL: KotaFigur[] = [
+  { id: 'warga.tembang', name: 'Mbah Tembang', julukan: 'pengemis yang selalu bernyanyi', region: 'pasarsenja', tempat: 'tangga timur Pasar Senja', ciri: 'Kaki kirinya pincang. Menyanyikan lagu yang tak pernah didengar orang lain, dan berhenti setiap kali lonceng ketujuh berbunyi.', born: 1911, died: 1984, tetap: ['Tidak pernah mau menerima uang kertas, hanya koin.', 'Tak seorang pun tahu nama aslinya.'] },
+  { id: 'warga.rasid', name: 'Pak Rasid', julukan: 'penjaga suar', region: 'nusapelita', tempat: 'mercusuar Nusa Pelita', ciri: 'Mencatat setiap kapal yang lewat di buku besar bersampul hijau. Turun ke kota sebulan sekali untuk membeli minyak dan tembakau.', born: 1902, died: 1970, tetap: ['Buku besarnya tidak pernah boleh dibaca orang lain.'] },
+  { id: 'warga.lebai', name: 'Wak Lebai', julukan: 'tukang perahu tambang', region: 'lorongsumbu', tempat: 'tambatan perahu di ujung Gg. Sampan', ciri: 'Menyeberangkan orang di Kali Sirah dengan perahu kayu bercat biru. Hafal kedalaman kali di setiap musim.', born: 1920, died: 1996, tetap: ['Tarifnya selalu sebutir telur, atau doa bila penumpangnya tak punya.'] },
+  { id: 'warga.hanafi', name: 'dr. Hanafi', julukan: 'dokter Lorong Sumbu', region: 'lorongsumbu', tempat: 'rumah praktik di Gg. Kemiri', ciri: 'Datang dengan sepeda dan tas kulit cokelat. Menulis resep dengan tinta hijau.', born: 1925, died: 2008, tetap: ['Tidak pernah menagih pasien yang datang malam hari.'] },
+  { id: 'warga.malian', name: 'Ma Lian', julukan: 'penarik lonceng ketujuh', region: 'tujuhlonceng', tempat: 'menara lonceng ketujuh', ciri: 'Perempuan bertubuh kecil dengan lengan sekuat pelaut. Menghitung waktu dengan tali, bukan jam.', born: 1930, died: 2015, tetap: ['Hanya ia yang boleh membunyikan lonceng ketujuh selama ia hidup.'] },
+  { id: 'warga.jamil', name: 'Bang Jamil', julukan: 'tukang pos bersepeda merah', region: 'lorongsumbu', tempat: 'di mana saja, terutama gang-gang sempit', ciri: 'Sepedanya merah, bel sepedanya dua kali pendek satu kali panjang. Selalu tahu kabar sebelum suratnya sampai.', born: 1948, tetap: ['Hafal semua alamat di kota tanpa melihat sampul surat.'] },
+  { id: 'warga.soebandi', name: 'Pak Soebandi', julukan: 'masinis kereta pertama', region: 'kampungpeluit', tempat: 'lokomotif dan stasiun Kampung Peluit', ciri: 'Topi masinisnya selalu miring ke kiri. Menyimpan sapu tangan istrinya di saku dada.', born: 1885, died: 1962, tetap: ['Membunyikan peluit tiga kali setiap melewati makam istrinya.'] },
+  { id: 'warga.nyaisumbu', name: 'Nyai Sumbu', julukan: 'penjual sumbu tertua', region: 'lorongsumbu', tempat: 'beranda rumah di mulut Lorong Tepian', ciri: 'Memintal sumbu dari kapas sambil bercerita. Semua anak di Lorong Sumbu pernah dimarahi dan diberi permen olehnya.', born: 1899, died: 1979, tetap: ['Sumbu buatannya tidak pernah padam lebih dulu dari pemiliknya.'] },
+  { id: 'warga.ahong', name: 'Koh Ahong', julukan: 'kepala Pasar Senja', region: 'pasarsenja', tempat: 'lapak timbangan di tengah pasar', ciri: 'Memegang timbangan tembaga yang dipercaya semua pedagang. Bicara pelan, tak pernah menawar.', born: 1932, died: 2011, tetap: ['Timbangannya dianggap paling jujur di kota; tidak ada yang berani menggugatnya.'] },
+  { id: 'warga.sarinah', name: 'Bu Sarinah', julukan: 'bidan Tiang Seribu', region: 'tiangseribu', tempat: 'rumah panggung paling ujung di Titian Pari', ciri: 'Mendayung sendiri ke rumah-rumah panggung, siang atau malam. Tangannya selalu berbau minyak kayu putih.', born: 1940, died: 2020, tetap: ['Menuliskan nama setiap bayi yang ditolongnya di dinding rumahnya.'] },
+];
+
+/** Perubahan besar figuran yang sudah disepakati, diterapkan berurutan di atas lembar awalnya. */
+export interface KotaUbah {
+  kind: 'fakta' | 'wafat' | 'pindah';
+  text: string;
+  year?: number;
+  region?: string;
+}
+export function kotaFigurKini(f: KotaFigur, ubah: KotaUbah[]): KotaFigur {
+  let x = { ...f, tetap: [...f.tetap] };
+  for (const u of ubah) {
+    if (u.kind === 'wafat' && u.year) x = { ...x, died: u.year };
+    else if (u.kind === 'pindah' && u.region) x = { ...x, region: u.region, tempat: u.text || x.tempat };
+    else if (u.kind === 'fakta') x = { ...x, tetap: [...x.tetap, u.text] };
+  }
+  return x;
+}
+
+// ── Penjaga konsistensi ─────────────────────────────────────────────────────
+
+/** Satu nama di kota: tokoh rumah (warga/figuran rumah) atau figuran kota. */
+export interface KotaNama {
+  name: string;
+  kind: 'warga' | 'figuran' | 'figur';
+  claimId?: string;
+  household?: string;
+  tokohId?: string;
+  figurId?: string;
+  sapa?: 'tertutup' | 'disapa';
+  born?: number;
+  died?: number;
+  julukan?: string;
+}
+
+export interface KotaCekNama {
+  kind: 'rumah-lain' | 'figur-waktu' | 'figur-jumpa';
+  term: string;
+  at: number;
+  end: number;
+  ref: KotaNama;
+}
+
+/**
+ * Periksa teks adegan sebuah rumah terhadap nama-nama kota:
+ *  - tokoh rumah lain yang tidak tertaut dan tidak "boleh disapa" → ketuk dulu atau desas-desus,
+ *  - figuran kota di luar masa hidupnya → peringatan waktu,
+ *  - figuran kota yang disebut tapi belum dicatat sebagai perjumpaan → saran mencatat.
+ */
+export function kotaCekTeks(text: string, nama: KotaNama[], o: { claimId: string; linked: string[]; desas: string[]; jumpa: string[]; year: number | null }): KotaCekNama[] {
+  const out: KotaCekNama[] = [];
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const find = (term: string) => {
+    const re = new RegExp(`(^|[^\\p{L}\\p{N}])(${esc(term)})(?=(?:nya|ku|mu|lah|kah|pun)?(?:$|[^\\p{L}\\p{N}]))`, 'giu');
+    return [...text.matchAll(re)].map((m) => ({ at: (m.index ?? 0) + m[1]!.length, end: (m.index ?? 0) + m[1]!.length + m[2]!.length }));
+  };
+  for (const n of nama) {
+    if (n.name.trim().length < 3) continue;
+    if (n.kind !== 'figur') {
+      if (n.claimId === o.claimId || n.sapa === 'disapa' || (n.tokohId && o.linked.includes(n.tokohId)) || o.desas.some((d) => d.toLowerCase() === n.name.toLowerCase())) continue;
+      for (const r of find(n.name)) out.push({ kind: 'rumah-lain', term: n.name, ...r, ref: n });
+      continue;
+    }
+    const hits = [...find(n.name), ...(n.julukan ? find(n.julukan) : [])];
+    if (!hits.length) continue;
+    const r = hits[0]!;
+    if (o.year && ((n.born && o.year < n.born) || (n.died && o.year > n.died))) out.push({ kind: 'figur-waktu', term: n.name, ...r, ref: n });
+    else if (!o.jumpa.includes(n.figurId!)) out.push({ kind: 'figur-jumpa', term: n.name, ...r, ref: n });
+  }
+  return out.sort((a, b) => a.at - b.at);
+}

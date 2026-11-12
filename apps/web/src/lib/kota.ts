@@ -1,5 +1,5 @@
 /** Kota Sehari: data kota, patok, dan potongan peta untuk sampul rumah. */
-import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot } from '@sehari/core';
+import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot } from '@sehari/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 
@@ -72,3 +72,32 @@ export function useRumahNaskah(msId: string, enabled: boolean) {
 }
 export const tanggal = (e: { year: number; month?: number; toYear?: number }) =>
   `${e.month ? `${['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][e.month - 1]} ` : ''}${e.year}${e.toYear && e.toYear !== e.year ? `–${e.toYear}` : ''}`;
+
+export function useWargaKota() {
+  return useQuery({ queryKey: ['kota', 'warga'], queryFn: () => api.get<KotaFigurWire[]>('/kota/warga'), staleTime: 60_000 });
+}
+export function useFigur(id: string) {
+  return useQuery({ queryKey: ['kota', 'warga', id], queryFn: () => api.get<KotaFigurDetail>(`/kota/warga/${id}`) });
+}
+/** Indeks nama kota untuk penjaga konsistensi di studio. */
+export function useNamaKota(enabled: boolean) {
+  return useQuery({ queryKey: ['kota', 'nama'], queryFn: () => api.get<KotaNamaWire[]>('/kota/nama'), enabled, staleTime: 120_000 });
+}
+export const masaHidup = (f: { born?: number; died?: number }) => (f.born ? `${f.born}–${f.died ?? ''}` : f.died ? `wafat ${f.died}` : '');
+
+/** Tokoh yang dipegang penonton di naskah rumah kota milik orang lain (null = bukan pemegang). */
+export function usePegangan(ms: { id: string; ownerId: string; visibility: string } | undefined, meId: string | undefined): Set<string> | null {
+  const tamu = !!ms && ms.visibility === 'kota' && ms.ownerId !== meId;
+  const rumah = useRumahNaskah(ms?.id ?? '', tamu);
+  const t = useTautan(tamu ? (rumah.data?.id ?? '') : '');
+  if (!tamu) return null;
+  return new Set((t.data?.pegang ?? []).filter((x) => x.requesterId === meId && x.state === 'pegang').map((x) => x.tokohId));
+}
+
+/** Nama penulis di naskah: nama pena kota untuk rumah kota, nama lingkaran untuk naskah biasa. */
+export function usePena(m: { ms: { id: string; visibility: string }; meId: string; who: (u: string) => string }) {
+  const kota = m.ms.visibility === 'kota';
+  const rumah = useRumahNaskah(m.ms.id, kota);
+  const t = useTautan(kota ? (rumah.data?.id ?? '') : '');
+  return (u: string) => (!kota ? m.who(u) : u === m.meId ? 'kamu' : rumah.data?.ownerId === u ? rumah.data.penName : (t.data?.pegang?.find((x) => x.requesterId === u)?.penName ?? m.who(u)));
+}

@@ -1,6 +1,7 @@
 /** Kanon: tokoh, benda, tempat, dan fakta, dengan siapa tahu sejak adegan mana. */
 import { NASKAH_KINDS, type NaskahCanonPayload, type NaskahKind, type NaskahKnow } from '@sehari/core';
 import { type CSSProperties, useState } from 'react';
+import { useNamaKota, useRumahNaskah } from '@/lib/kota';
 import { firstLine, type NaskahModel, newNaskahId, povColor, type Scene } from '@/lib/naskah';
 import { Doodle, Sheet, useToast } from '@/ui/kit';
 
@@ -39,7 +40,11 @@ export function KanonList({ m }: { m: NaskahModel }) {
                     {k === 'tokoh' ? <span className="nk-dot" style={{ background: povColor(m, e.id) }} /> : <Doodle id={KIND_DOODLE[k]} size={20} />}
                     <span className="grow" style={{ minWidth: 0 }}>
                       <b>{e.p.name}</b>
-                      {k === 'tokoh' && e.p.born ? <span className="tiny soft">{e.p.born}–{e.p.died ?? ''}</span> : null}
+                      {k === 'tokoh' && (e.p.born || e.p.peran === 'figuran' || e.p.sapa === 'disapa') ? (
+                        <span className="tiny soft">
+                          {[e.p.born ? `${e.p.born}–${e.p.died ?? ''}` : '', e.p.peran === 'figuran' ? 'figuran rumah' : '', e.p.sapa === 'disapa' ? 'boleh disapa' : ''].filter(Boolean).join(' · ')}
+                        </span>
+                      ) : null}
                       {e.p.note ? <span className="tiny soft">{firstLine(e.p.note, 70)}</span> : null}
                       {k !== 'tokoh' && e.p.known.length ? (
                         <span className="nk-tahu-row">
@@ -83,6 +88,10 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
     else if (k.how === 'tahu') next.push({ ...k, how: 'mengira' });
     setP({ ...p, known: next });
   };
+  const kota = m.ms.visibility === 'kota';
+  const rumah = useRumahNaskah(m.ms.id, kota);
+  const nama = useNamaKota(kota && p.kind === 'tokoh');
+  const kembar = kota && p.name.trim().length >= 3 ? (nama.data ?? []).filter((n) => n.name.toLowerCase() === p.name.trim().toLowerCase() && n.claimId !== rumah.data?.id) : [];
   const setSince = (who: string, since: string) => setP({ ...p, known: p.known.map((k) => (k.who === who ? { ...k, since: since || undefined } : k)) });
 
   const save = async () => {
@@ -130,6 +139,34 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
           <label className="col" style={{ gap: 4 }}>
             <span className="tiny soft">tahun wafat</span>
             <input className="field" inputMode="numeric" maxLength={4} value={p.died ?? ''} onChange={(e) => setP({ ...p, died: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="kosongkan bila masih hidup" />
+          </label>
+        </div>
+      ) : null}
+
+      {p.kind === 'tokoh' && kembar.length ? (
+        <p className="nk-kembar" role="note" data-testid="kanon-kembar">
+          Nama ini sudah dipakai di kota: {kembar.map((n) => (n.kind === 'figur' ? `${n.name}, figuran kota${n.julukan ? ` (${n.julukan})` : ''}` : `${n.name} dari ${n.household}`)).join('; ')}. Boleh saja, tapi pembaca bisa mengira orang yang sama; tambahkan nama keluarga atau julukan.
+        </p>
+      ) : null}
+      {p.kind === 'tokoh' && kota ? (
+        <div className="nk-lapis">
+          <span className="label">di kota</span>
+          <div className="nk-pilih2" role="radiogroup" aria-label="peran tokoh di rumah">
+            <button role="radio" aria-checked={(p.peran ?? 'utama') === 'utama'} className={(p.peran ?? 'utama') === 'utama' ? 'on' : ''} onClick={() => setP({ ...p, peran: 'utama' })}>
+              <b>tokoh utama</b>
+              <span className="tiny">kamu yang menuliskannya</span>
+            </button>
+            <button role="radio" aria-checked={p.peran === 'figuran'} className={p.peran === 'figuran' ? 'on' : ''} onClick={() => setP({ ...p, peran: 'figuran' })} data-testid="kanon-figuran">
+              <b>figuran rumah</b>
+              <span className="tiny">istri, tetangga, pembantu; penulis lain boleh meminta memegangnya</span>
+            </button>
+          </div>
+          <label className="nk-sapa">
+            <input type="checkbox" checked={p.sapa === 'disapa'} onChange={(e) => setP({ ...p, sapa: e.target.checked ? 'disapa' : 'tertutup' })} data-testid="kanon-sapa" />
+            <span>
+              <b>boleh disapa</b>
+              <span className="tiny soft">Rumah lain boleh menulis perjumpaan kecil dengannya tanpa mengetuk, selama tidak mengubah faktanya.</span>
+            </span>
           </label>
         </div>
       ) : null}
