@@ -1,5 +1,6 @@
 /** Hidup Orang Lain: data cerita bersama. Bagian dienkripsi di perangkat sebelum dikirim. */
 import { openEnvelope, type RecipientSpec, sealEnvelope, type StoryPartPayload, type StoryPartWire, type StoryWire } from '@sehari/core';
+import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { type CircleView, newDropId, useKeyring } from './data';
@@ -35,7 +36,7 @@ export function useOpenPart() {
   };
 }
 
-export function sealPart(payload: StoryPartPayload, circle: CircleView | undefined, me: { id: string; publicKey: Uint8Array }) {
+export function sealPart(payload: unknown, circle: CircleView | undefined, me: { id: string; publicKey: Uint8Array }) {
   const recips: RecipientSpec[] = [{ t: 'user', userId: me.id, publicKey: me.publicKey }];
   if (circle) {
     const key = circle.keys.get(circle.currentEpoch);
@@ -47,3 +48,19 @@ export function sealPart(payload: StoryPartPayload, circle: CircleView | undefin
 }
 
 export const wordCount = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
+
+/** Buka amplop apa pun di cerita (premis buatan sendiri, sanggahan); null kalau tidak bisa. */
+export function useOpenAny() {
+  const ring = useKeyring();
+  return useCallback(
+    <T,>(env: { ciphertext: string; recipients: unknown[] } | null | undefined): T | null => {
+      if (!env || !ring) return null;
+      try {
+        return openEnvelope<T>(env as never, ring);
+      } catch {
+        return null;
+      }
+    },
+    [ring],
+  );
+}

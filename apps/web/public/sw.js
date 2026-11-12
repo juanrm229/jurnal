@@ -75,6 +75,8 @@ function routeFor(d) {
       return d.dropId ? `/kilasan?id=${encodeURIComponent(d.dropId)}` : '/kilasan';
     case 'invite_accepted':
       return d.circleId ? `/l/${d.circleId}` : '/lingkaran';
+    case 'story':
+      return d.storyId ? `/cerita/${d.storyId}` : '/cerita';
     case 'meet':
       return d.meetId ? `/janji/${d.meetId}` : '/janji';
     case 'booth':

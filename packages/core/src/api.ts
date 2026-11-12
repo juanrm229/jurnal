@@ -1006,11 +1006,18 @@ export const storyBody = z.object({
   circleId: id.nullable(),
   premise: z.string().min(1).max(40),
   members: z.array(id).max(5),
+  rounds: z.union([z.literal(3), z.literal(6), z.literal(12)]).default(3),
+  deck: z.enum(['awal', 'lengkap']).default('awal'),
+  mode: z.enum(['terbuka', 'kejutan']).default('terbuka'),
+  /** Wajib untuk premis buatan sendiri ('bebas'). */
+  meta: envelopeSchema.optional(),
 });
+export const storyNoteBody = z.object({ id, reason: z.enum(['fakta', 'pengetahuan', 'sebab']), envelope: envelopeSchema });
+export const storyBranchBody = z.object({ round: z.number().int().min(1).max(12), envelope: envelopeSchema });
 export type StoryBody = z.infer<typeof storyBody>;
 
 export const storyPartBody = z.object({
-  round: z.number().int().min(1).max(3),
+  round: z.number().int().min(1).max(12),
   envelope: envelopeSchema,
   seal: z.boolean(),
 });
@@ -1027,6 +1034,16 @@ export interface StoryPartWire {
   sealed: boolean;
   /** Siapa yang menyepakati jejak bagian ini (handshake). */
   agrees: string[];
+  /** 'a' jalur utama; selain itu cabang "jalan lain". */
+  world: string;
+}
+
+export interface StoryNoteWire {
+  id: string;
+  partId: string;
+  authorId: string;
+  reason: 'fakta' | 'pengetahuan' | 'sebab';
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
 }
 
 export interface StoryWire {
@@ -1041,6 +1058,14 @@ export interface StoryWire {
   roles: Record<string, string>;
   /** Siapa yang siap lanjut dari ruang baca. */
   ready: string[];
+  rounds: number;
+  deck: 'awal' | 'lengkap';
+  mode: 'terbuka' | 'kejutan';
+  meta: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] } | null;
+  skips: string[];
+  /** Role babak-babak sebelumnya; hanya terisi saat selesai. */
+  rolesLog: Record<string, string>[];
+  notes: StoryNoteWire[];
   parts: StoryPartWire[];
   createdAt: string;
   updatedAt: string;
