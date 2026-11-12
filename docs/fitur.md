@@ -108,7 +108,10 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Ekspor**: EPUB 3, DOCX, dan Markdown dirakit di perangkat.
 - **AI (opsional)**: rangkuman kejadian (terjadi vs diyakini) dan dua sinopsis, usulan jejak dari naskah, dan cek kesinambungan. Aktif hanya bila semua anggota lingkaran setuju dan server punya kunci AI; teks yang dikirim disebutkan sebelum tombol ditekan.
 
-### Studio Naskah
+### Studio Naskah (kini meja tulis rumah di Kota)
+
+Studio tidak lagi berdiri sendiri di menu: ia adalah meja tulis setiap rumah di Kota. Naskah lama dan bekas rumah tetap terbuka di bagian arsip meja tulis.
+
 
 - **Naskah berbasis adegan**: bab dan adegan, urutan baca bisa diatur siapa pun di naskah. Satu adegan, satu pemilik: hanya penulisnya yang mengubah isi; draf hanya terlihat olehnya sampai diterbitkan. Riwayat versi tersimpan saat terbit.
 - **Kanon**: tokoh, benda, tempat, dan fakta, dengan siapa yang tahu atau mengira dan sejak adegan mana. Kanon milik bersama.
@@ -120,11 +123,13 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 
 - **Peta kota buatan sendiri** (`scripts/peta/sangkala.mjs`): ±2.600 rumah beratap, gang, pohon, sawah, terasering, bakau, laguna rumah panggung, pelabuhan, benteng, dan mercusuar, dirender ke WebP. 17 wilayah dengan nama khas (Lorong Sumbu, Kampung Tiang Seribu, Gang Tujuh Lonceng, Padang Gubernur, Telaga Mangu, Pasar Senja, Lereng Kabut, Kampung Peluit, Dermaga Besi, Tanjung Jala, Sawah Seribu Petak, Pasir Pengantin, Rawa Kelana, Bukit Seribu Undak, Hutan Pamali, Benteng Lima Sudut, Nusa Pelita). Musim 1 membuka tiga wilayah pertama: 944 persil, dan setiap persil adalah rumah yang tergambar di peta.
 - **Penggeser zaman** 1900–sekarang: peta menua ke sepia, wilayah yang belum dihuni diarsir, dan rumah tampil sesuai rentang hidupnya.
-- **Patok**: satu persil × rentang tahun. Server menolak rentang yang bertumpuk; satu rumah per warga per musim. Butuh nama pena kota yang terpisah dari jurnal.
+- **Patok**: satu persil × rentang tahun. Server menolak rentang yang bertumpuk. Butuh nama pena kota yang terpisah dari jurnal. Semua penulisan dimulai dari patok: tidak ada naskah baru di luar peta.
+- **Jatah musim: 3 tokoh dalam 3 patok.** Tokoh adalah milik warga, patok adalah tempat tokoh-tokohnya tinggal. Patok pertama wajib membawa tokoh pertama. Patok berikutnya dihuni tokohmu yang **pindah** (orang yang sama di zaman lain, tidak memakai jatah; nama dan masa hidupnya mengikuti rumah asal) dan/atau tokoh baru. Tokoh baru di patok tambahan harus **keluarga** salah satu tokohmu (anak, orang tua, saudara, pasangan, keturunan, leluhur; usia diperiksa, ikatannya langsung kanon), kecuali ia tinggal di persil rumahmu yang sama (penghuni rumah itu di zaman lain). Satu rumah boleh dihuni beberapa tokohmu. Figuran rumah tidak memakai jatah; memegang figuran rumah orang lain memakai satu jatah. Dihitung per orang, jadi melepas rumah asal tidak membebaskan tokoh yang masih tinggal di rumah lain.
+- **Meja tulis** (`/kota/meja`, tombol rumah di peta): rumah-rumahmu, tokoh-tokohmu, jatah musim, dan arsip naskah lama.
 - **Rumah**: isinya Studio Naskah terbuka. Warga membaca adegan yang sudah terbit, hanya pemilik yang menulis. Rumah tanpa adegan terbit dalam 14 hari jadi desas-desus dan persilnya lowong lagi.
 - **Laporan**: tiga laporan dari warga berbeda menyembunyikan rumah sampai ditinjau. Melepas rumah mengosongkan persil; naskahnya tetap milik penulis.
 - **Ketuk**: tokoh dari rumahmu mengusulkan hubungan (anak, orang tua, saudara, pasangan, keturunan, leluhur, tetangga, teman, musuh, cinta lama) dengan tokoh di rumah lain, lewat surat dari dalam cerita. Usia dan masa hidup diperiksa dari tahun lahir/wafat. Pemilik rumah memilih: kanon, desas-desus, usul balik, atau tolak. Hubungan kanon turun jadi desas-desus bila salah satu rumah pergi.
-- **Rumah leluhur**: setelah punya rumah utama, warga boleh mematok dua rumah leluhur di zaman lebih awal; ketukan antar-rumah milik sendiri langsung kanon.
+- Ketukan antar-rumah milik sendiri langsung kanon.
 - **Silsilah**: rumah-rumah yang tersambung digambar di atas peta kota, dengan garis generasi dari tahun lahir dan wafat.
 - **Almanak & Peristiwa Kota**: 12 peristiwa awal kanon (Benteng Lima Sudut 1702, lonceng ketujuh 1858, mercusuar 1891, kereta pertama 1909, Banjir Kali Sirah 1979, Kota gelap tiga malam 1998, …). Warga yang punya rumah bisa mengusulkan peristiwa; jadi kanon setelah dua warga lain setuju. Adegan rumah kota bisa ditandai sebagai kesaksian (mengalami/mendengar); halaman peristiwa bergaya **Koran Sangkala** mengumpulkannya. Kacamata Tokoh di rumah kota menampilkan baris "dari kota" sesuai tahun dan wilayah. Peta menampilkan peristiwa tahun yang sedang dipilih; halaman rumah menampilkan peristiwa yang dilewatinya.
 - **Peta versi lukis**: relief bukit dari peta ketinggian, atap tiga dimensi berbayang, tajuk pohon bergradasi, delta bakau bercabang, beting karang, perahu layar, serta masjid, gereja, klenteng, stasiun, dan sekolah. Tata letak dan id persil tetap sama.

@@ -2,7 +2,7 @@
 import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, NASKAH_BENTUK, type KotaHubungan, type KotaPegangWire, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useTautan } from '@/lib/kota';
+import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useNamaKota, useTautan } from '@/lib/kota';
 import { firstLine, type NaskahModel, povColor, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
@@ -22,6 +22,7 @@ export default function Rumah() {
   const almanak = useAlmanak();
   const kota = useKota();
   const punyaRumah = (kota.data?.claims ?? []).some((x) => x.mine && x.state === 'aktif');
+  const nama = useNamaKota(true);
   if (!c) return q.isError ? <Growing label="rumah ini tidak ditemukan" /> : <Growing label="mengetuk pintu…" />;
   const plot = kotaPlot(c.plotId);
   const region = kotaRegion(c.regionId);
@@ -60,6 +61,28 @@ export default function Rumah() {
             <span className="small soft">{m.tokoh.filter((t) => t.p.peran !== 'figuran').map((t) => t.p.name).join(', ')}</span>
           </div>
         ) : null}
+        {(() => {
+          // Tokoh yang juga tinggal di rumah lain milik penulis yang sama: orang yang sama, zaman lain.
+          const pindah = (nama.data ?? []).filter((n) => n.rumah && n.rumah.length > 1 && n.rumah.includes(c.id));
+          const rumahLain = (ids: string[]) => ids.filter((x) => x !== c.id).map((x) => kota.data?.claims.find((k) => k.id === x)).filter((k): k is NonNullable<typeof k> => !!k);
+          return pindah.length ? (
+            <div className="kr-pindah">
+              {pindah.map((n) => (
+                <p key={n.tokohId} className="tiny">
+                  {n.name} juga tinggal di{' '}
+                  {rumahLain(n.rumah!).map((k, i) => (
+                    <span key={k.id}>
+                      {i ? ', ' : ''}
+                      <button className="kr-pindah-l" onClick={() => navigate(`/kota/rumah/${k.id}`)}>
+                        {k.household} ({k.from}–{k.to})
+                      </button>
+                    </span>
+                  ))}
+                </p>
+              ))}
+            </div>
+          ) : null;
+        })()}
         {m ? <Figuran c={c} m={m} pegang={tautan.data?.pegang ?? []} reload={() => void tautan.refetch()} /> : null}
 
         {tautan.data ? <Tautan c={c} t={tautan.data} reload={() => void tautan.refetch()} /> : null}
@@ -117,12 +140,12 @@ export default function Rumah() {
           {c.mine ? (
             <>
               <button className="btn" onClick={() => navigate(`/naskah/${c.msId}`)} data-testid="kota-tulis">
-                <Doodle id="pena" size={18} color="currentColor" /> tulis di studio
+                <Doodle id="pena" size={18} color="currentColor" /> tulis di rumah ini
               </button>
               <button
                 className="btn ghost"
                 onClick={async () => {
-                  if (!confirm('Lepaskan rumah ini? Persilnya lowong lagi; naskahmu tetap tersimpan di studio, hanya untukmu.')) return;
+                  if (!confirm('Lepaskan rumah ini? Persilnya lowong lagi; naskahmu pindah ke arsip meja tulis, hanya untukmu. Tokohmu yang juga tinggal di rumahmu yang lain tetap ada di sana.')) return;
                   await api.del(`/kota/claims/${c.id}`);
                   void refresh();
                   navigate('/kota', { replace: true });

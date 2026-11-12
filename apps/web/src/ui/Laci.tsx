@@ -25,8 +25,8 @@ export const openLaci = () => window.dispatchEvent(new Event(EVENT));
 const BASE: Item[] = [
   { group: 'menulis', to: '/hari', label: 'halaman hari ini', hint: 'tulis, tempel, segel', icon: 'ui-hari-ini', keys: 'jurnal today segel tulis' },
   { group: 'menulis', to: '/karya', label: 'karya', hint: 'esai, cerpen, puisi', icon: 'pena', keys: 'tulisan panjang cerita' },
-  { group: 'menulis', to: '/kota', label: 'kota sangkala', hint: 'patok rumah, tulis keluarganya', icon: 'rumah', keys: 'kota peta dunia worldbuilding rumah patok musim' },
-  { group: 'menulis', to: '/naskah', label: 'studio naskah', hint: 'menulis bersama, adegan per adegan', icon: 'buku-terbuka', keys: 'novel naskah kanon tokoh menulis bersama kolaborasi' },
+  { group: 'menulis', to: '/kota', label: 'kota sangkala', hint: 'patok rumah, tulis tokoh dan keluarganya', icon: 'rumah', keys: 'kota peta dunia worldbuilding rumah patok musim novel naskah kanon tokoh studio menulis cerita' },
+  { group: 'menulis', to: '/kota/meja', label: 'meja tulis kota', hint: 'rumah-rumahmu, tokohmu, jatah musim', icon: 'buku-terbuka', keys: 'naskah studio tokoh rumahku meja tulis' },
   { group: 'menulis', to: '/surat', label: 'kotak surat', hint: 'surat tersesat & kapsul waktu', icon: 'surat-botol', keys: 'letter masa depan wasiat' },
   { group: 'menulis', to: '/surat/tulis', label: 'tulis surat', hint: 'untuk nanti, atau untuk tersesat', icon: 'amplop', keys: 'kirim kapsul' },
   { group: 'menulis', to: '/kartu', label: 'kartu ucapan', hint: 'hias lalu kirim ke WhatsApp', icon: 'amplop', keys: 'ulang tahun selamat wa' },

@@ -1,7 +1,8 @@
 /** Kanon: tokoh, benda, tempat, dan fakta, dengan siapa tahu sejak adegan mana. */
 import { NASKAH_KINDS, type NaskahCanonPayload, type NaskahKind, type NaskahKnow } from '@sehari/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { type CSSProperties, useState } from 'react';
-import { useNamaKota, useRumahNaskah } from '@/lib/kota';
+import { useKota, useNamaKota, useRumahNaskah } from '@/lib/kota';
 import { firstLine, type NaskahModel, newNaskahId, povColor, type Scene } from '@/lib/naskah';
 import { Doodle, Sheet, useToast } from '@/ui/kit';
 
@@ -40,9 +41,9 @@ export function KanonList({ m }: { m: NaskahModel }) {
                     {k === 'tokoh' ? <span className="nk-dot" style={{ background: povColor(m, e.id) }} /> : <Doodle id={KIND_DOODLE[k]} size={20} />}
                     <span className="grow" style={{ minWidth: 0 }}>
                       <b>{e.p.name}</b>
-                      {k === 'tokoh' && (e.p.born || e.p.peran === 'figuran' || e.p.sapa === 'disapa') ? (
+                      {k === 'tokoh' && (e.p.born || e.p.asal || e.p.peran === 'figuran' || e.p.sapa === 'disapa') ? (
                         <span className="tiny soft">
-                          {[e.p.born ? `${e.p.born}–${e.p.died ?? ''}` : '', e.p.peran === 'figuran' ? 'figuran rumah' : '', e.p.sapa === 'disapa' ? 'boleh disapa' : ''].filter(Boolean).join(' · ')}
+                          {[e.p.born ? `${e.p.born}–${e.p.died ?? ''}` : '', e.p.asal ? 'pindahan' : '', e.p.peran === 'figuran' ? 'figuran rumah' : '', e.p.sapa === 'disapa' ? 'boleh disapa' : ''].filter(Boolean).join(' · ')}
                         </span>
                       ) : null}
                       {e.p.note ? <span className="tiny soft">{firstLine(e.p.note, 70)}</span> : null}
@@ -76,6 +77,7 @@ export function KanonList({ m }: { m: NaskahModel }) {
 export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string; init: NaskahCanonPayload; onDone: (id: string) => void }) {
   const toast = useToast();
   const [p, setP] = useState<NaskahCanonPayload>(init);
+  const [jatahDiset, setJatahDiset] = useState(false);
   const [aliases, setAliases] = useState(init.aliases.join(', '));
   const [busy, setBusy] = useState(false);
   const scenes = m.scenes.filter((s) => s.p).sort((a, b) => m.chrono[a.id]!.localeCompare(m.chrono[b.id]!));
@@ -91,7 +93,18 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
   const kota = m.ms.visibility === 'kota';
   const rumah = useRumahNaskah(m.ms.id, kota);
   const nama = useNamaKota(kota && p.kind === 'tokoh');
+  const kotaQ = useKota();
+  const qc = useQueryClient();
+  const jatah = kotaQ.data?.me.tokoh;
+  // Jatah tokoh: tokoh utama baru (atau figuran yang dinaikkan) butuh sisa jatah.
+  const wasUtama = !!id && (init.peran ?? 'utama') === 'utama';
+  const penuh = kota && !!jatah && jatah.pakai >= jatah.maks && !wasUtama;
+  const pindahan = kota ? init.asal : undefined;
   const kembar = kota && p.name.trim().length >= 3 ? (nama.data ?? []).filter((n) => n.name.toLowerCase() === p.name.trim().toLowerCase() && n.claimId !== rumah.data?.id) : [];
+  if (penuh && !id && p.kind === 'tokoh' && p.peran !== 'figuran' && !jatahDiset) {
+    setJatahDiset(true);
+    setP({ ...p, peran: 'figuran' });
+  }
   const setSince = (who: string, since: string) => setP({ ...p, known: p.known.map((k) => (k.who === who ? { ...k, since: since || undefined } : k)) });
 
   const save = async () => {
@@ -101,6 +114,7 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
       const cid = id ?? newNaskahId();
       if (id) await m.put(`/canon/${id}`, { envelope: m.seal(payload) });
       else await m.post('/canon', { id: cid, kind: payload.kind, envelope: m.seal(payload) });
+      if (kota) void qc.invalidateQueries({ queryKey: ['kota'] });
       onDone(cid);
     } catch (e) {
       toast((e as Error).message);
@@ -123,7 +137,7 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
       {p.kind === 'fakta' ? (
         <textarea className="field" rows={2} value={p.name} maxLength={300} onChange={(e) => setP({ ...p, name: e.target.value })} placeholder="kalimat fakta, mis. Laras anak Pak Darmo" autoFocus data-testid="kanon-nama" />
       ) : (
-        <input className="field" value={p.name} maxLength={80} onChange={(e) => setP({ ...p, name: e.target.value })} placeholder={p.kind === 'tokoh' ? 'nama tokoh' : p.kind === 'benda' ? 'nama benda, mis. cincin' : 'nama tempat'} autoFocus data-testid="kanon-nama" />
+        <input className="field" value={p.name} maxLength={80} onChange={(e) => setP({ ...p, name: e.target.value })} placeholder={p.kind === 'tokoh' ? 'nama tokoh' : p.kind === 'benda' ? 'nama benda, mis. cincin' : 'nama tempat'} autoFocus disabled={!!pindahan} data-testid="kanon-nama" />
       )}
       <label className="col" style={{ gap: 4 }}>
         <span className="tiny soft">{p.kind === 'fakta' ? 'kata kunci yang menandai fakta ini di teks' : 'sebutan lain'} (pisahkan dengan koma)</span>
@@ -134,15 +148,20 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
         <div className="nk-lahir">
           <label className="col" style={{ gap: 4 }}>
             <span className="tiny soft">tahun lahir</span>
-            <input className="field" inputMode="numeric" maxLength={4} value={p.born ?? ''} onChange={(e) => setP({ ...p, born: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="mis. 1921" data-testid="kanon-lahir" />
+            <input className="field" inputMode="numeric" maxLength={4} value={p.born ?? ''} onChange={(e) => setP({ ...p, born: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="mis. 1921" disabled={!!pindahan} data-testid="kanon-lahir" />
           </label>
           <label className="col" style={{ gap: 4 }}>
             <span className="tiny soft">tahun wafat</span>
-            <input className="field" inputMode="numeric" maxLength={4} value={p.died ?? ''} onChange={(e) => setP({ ...p, died: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="kosongkan bila masih hidup" />
+            <input className="field" inputMode="numeric" maxLength={4} value={p.died ?? ''} onChange={(e) => setP({ ...p, died: e.target.value ? Number(e.target.value.replace(/\D/g, '')) || undefined : undefined })} placeholder="kosongkan bila masih hidup" disabled={!!pindahan} />
           </label>
         </div>
       ) : null}
 
+      {pindahan ? (
+        <p className="nk-pegang-catat" role="note">
+          Pindahan dari {kotaQ.data?.claims.find((c) => c.id === pindahan.claimId)?.household ?? 'rumahmu yang lain'}: orang yang sama. Nama dan masa hidupnya diubah dari rumah asalnya; watak dan catatan di rumah ini boleh berbeda.
+        </p>
+      ) : null}
       {p.kind === 'tokoh' && kembar.length ? (
         <p className="nk-kembar" role="note" data-testid="kanon-kembar">
           Nama ini sudah dipakai di kota: {kembar.map((n) => (n.kind === 'figur' ? `${n.name}, figuran kota${n.julukan ? ` (${n.julukan})` : ''}` : `${n.name} dari ${n.household}`)).join('; ')}. Boleh saja, tapi pembaca bisa mengira orang yang sama; tambahkan nama keluarga atau julukan.
@@ -152,13 +171,13 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
         <div className="nk-lapis">
           <span className="label">di kota</span>
           <div className="nk-pilih2" role="radiogroup" aria-label="peran tokoh di rumah">
-            <button role="radio" aria-checked={(p.peran ?? 'utama') === 'utama'} className={(p.peran ?? 'utama') === 'utama' ? 'on' : ''} onClick={() => setP({ ...p, peran: 'utama' })}>
+            <button role="radio" aria-checked={(p.peran ?? 'utama') === 'utama'} className={(p.peran ?? 'utama') === 'utama' ? 'on' : ''} disabled={penuh} onClick={() => setP({ ...p, peran: 'utama' })} data-testid="kanon-utama">
               <b>tokoh utama</b>
-              <span className="tiny">kamu yang menuliskannya</span>
+              <span className="tiny">{penuh ? `jatah ${jatah!.maks} tokohmu sudah terpakai` : `memakai jatah tokohmu (${jatah ? `${jatah.pakai}/${jatah.maks}` : '…'})`}</span>
             </button>
             <button role="radio" aria-checked={p.peran === 'figuran'} className={p.peran === 'figuran' ? 'on' : ''} onClick={() => setP({ ...p, peran: 'figuran' })} data-testid="kanon-figuran">
               <b>figuran rumah</b>
-              <span className="tiny">istri, tetangga, pembantu; penulis lain boleh meminta memegangnya</span>
+              <span className="tiny">istri, tetangga, pembantu; tidak memakai jatah; penulis lain boleh meminta memegangnya</span>
             </button>
           </div>
           <label className="nk-sapa">
@@ -222,6 +241,7 @@ export function KanonForm({ m, id, init, onDone }: { m: NaskahModel; id?: string
             onClick={async () => {
               try {
                 await m.del(`/canon/${id}`);
+                if (kota) void qc.invalidateQueries({ queryKey: ['kota'] });
                 onDone(id);
               } catch (e) {
                 toast((e as Error).message);

@@ -62,6 +62,8 @@ export interface NaskahCanonPayload {
   /** Tokoh: tahun lahir dan wafat, dipakai untuk memeriksa hubungan antar-rumah di Kota. */
   born?: number;
   died?: number;
+  /** Tokoh yang pindah rumah: orang yang sama dengan tokoh di rumah lain milik penulis yang sama. Diisi server. */
+  asal?: { claimId: string; tokohId: string };
 }
 
 export interface NaskahEntry {

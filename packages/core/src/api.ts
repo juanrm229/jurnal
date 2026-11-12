@@ -1250,7 +1250,14 @@ export const kotaClaimBody = z.object({
   household: z.string().trim().min(2).max(60),
   from: z.number().int().min(1900).max(2030),
   to: z.number().int().min(1900).max(2030),
-  kind: z.enum(['rumah', 'leluhur']).default('rumah'),
+  /** Diabaikan: patok pertama selalu rumah utama, berikutnya rumah keluarga. */
+  kind: z.enum(['rumah', 'leluhur']).optional(),
+  /** Tokoh baru yang tinggal di sini (memakai kuota tokoh). */
+  tokoh: z.object({ id: z.string().min(8).max(40).optional(), name: z.string().trim().min(2).max(60), born: z.number().int().min(1700).max(2030).optional(), died: z.number().int().min(1700).max(2030).optional() }).optional(),
+  /** Tokohmu dari rumah lain yang ikut tinggal di sini (orang yang sama, tidak memakai kuota). */
+  pindah: z.array(z.string().max(40)).max(3).default([]),
+  /** Tokoh baru di patok tambahan harus keluarga salah satu tokohmu, kecuali di persil yang sama. */
+  ikat: z.object({ tokohId: z.string().max(40), type: z.enum(['anak', 'orangtua', 'saudara', 'pasangan', 'keturunan', 'leluhur']) }).optional(),
 });
 export const kotaReportBody = z.object({ reason: z.enum(['data-pribadi', 'pelecehan', 'spam', 'lainnya']) });
 const hubungan = z.enum(['anak', 'orangtua', 'saudara', 'pasangan', 'keturunan', 'leluhur', 'tetangga', 'teman', 'musuh', 'cinta']);
@@ -1405,6 +1412,7 @@ export interface KotaNamaWire {
   name: string;
   kind: 'warga' | 'figuran' | 'figur';
   claimId?: string;
+  rumah?: string[];
   household?: string;
   tokohId?: string;
   figurId?: string;
@@ -1427,5 +1435,23 @@ export interface KotaPegangWire {
 export interface KotaWire {
   season: number;
   claims: KotaClaimWire[];
-  me: { penName: string | null; quota: number; leluhur: number };
+  me: {
+    penName: string | null;
+    patok: { pakai: number; maks: number };
+    tokoh: { pakai: number; maks: number };
+    /** Tokoh-tokohmu (asli, bukan salinan pindahan) dan figuran yang kamu pegang. */
+    tokohku: KotaTokohku[];
+  };
+}
+export interface KotaTokohku {
+  id: string;
+  claimId: string;
+  household: string;
+  name: string;
+  born?: number;
+  died?: number;
+  /** Figuran rumah orang lain yang kamu pegang. */
+  dipegang?: boolean;
+  /** Rumah-rumahmu tempat tokoh ini tinggal (asli dan pindahan). */
+  rumah: string[];
 }

@@ -160,8 +160,19 @@ export function kotaCekHubungan(type: KotaHubungan, a: KotaJiwa, b: KotaJiwa): K
   return out;
 }
 
-/** Kuota musim: satu rumah utama, dan beberapa rumah leluhur di zaman lebih awal. */
-export const KOTA_KUOTA = { rumah: 1, leluhur: 2 } as const;
+/**
+ * Aturan musim: tokoh adalah milik warga, patok adalah tempat tokoh-tokohnya tinggal.
+ * Paling banyak 3 tokoh (tokoh utama dan figuran yang dipegang) dalam paling banyak 3 patok.
+ * Satu tokoh boleh pindah ke patok lain (orang yang sama, zaman yang lain), dan satu patok
+ * boleh dihuni beberapa tokoh bila mereka keluarga atau pernah tinggal di rumah itu.
+ */
+export const KOTA_TOKOH_MAKS = 3;
+export const KOTA_PATOK_MAKS = 3;
+/** Ikatan yang membolehkan tokoh baru di patok tambahan: keluarga. */
+export const KOTA_IKATAN = ['anak', 'orangtua', 'saudara', 'pasangan', 'keturunan', 'leluhur'] as const;
+export type KotaIkatan = (typeof KOTA_IKATAN)[number];
+/** Apakah tokoh (lahir–wafat) masih hidup di sebagian rentang rumah. */
+export const kotaHidupDi = (t: { born?: number; died?: number }, r: { from: number; to: number }) => (t.born === undefined || t.born <= r.to) && (t.died === undefined || t.died >= r.from);
 
 // ── Almanak: peristiwa kota ─────────────────────────────────────────────────
 
@@ -266,6 +277,8 @@ export interface KotaNama {
   name: string;
   kind: 'warga' | 'figuran' | 'figur';
   claimId?: string;
+  /** Semua rumah tempat orang ini tinggal (asli dan pindahan). */
+  rumah?: string[];
   household?: string;
   tokohId?: string;
   figurId?: string;
@@ -299,7 +312,7 @@ export function kotaCekTeks(text: string, nama: KotaNama[], o: { claimId: string
   for (const n of nama) {
     if (n.name.trim().length < 3) continue;
     if (n.kind !== 'figur') {
-      if (n.claimId === o.claimId || n.sapa === 'disapa' || (n.tokohId && o.linked.includes(n.tokohId)) || o.desas.some((d) => d.toLowerCase() === n.name.toLowerCase())) continue;
+      if (n.claimId === o.claimId || n.rumah?.includes(o.claimId) || n.sapa === 'disapa' || (n.tokohId && o.linked.includes(n.tokohId)) || o.desas.some((d) => d.toLowerCase() === n.name.toLowerCase())) continue;
       for (const r of find(n.name)) out.push({ kind: 'rumah-lain', term: n.name, ...r, ref: n });
       continue;
     }
