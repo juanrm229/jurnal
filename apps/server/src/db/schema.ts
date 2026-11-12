@@ -1068,6 +1068,8 @@ export const cityClaims = pgTable(
     fromYear: integer('from_year').notNull(),
     toYear: integer('to_year').notNull(),
     msId: text('ms_id').notNull().references(() => manuscripts.id, { onDelete: 'cascade' }),
+    /** 'rumah' utama atau 'leluhur' (zaman lebih awal). */
+    kind: text('kind').notNull().default('rumah'),
     /** 'aktif', 'dilepas', atau 'disembunyikan' (laporan). */
     status: text('status').notNull().default('aktif'),
     createdAt: ts('created_at').notNull().defaultNow(),
@@ -1085,4 +1087,23 @@ export const cityReports = pgTable(
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [uniqueIndex('city_reports_once').on(t.claimId, t.reporterId)],
+);
+
+/** Ketuk: hubungan antara tokoh dua rumah. Sah lewat persetujuan pemilik rumah yang diketuk. */
+export const cityRelations = pgTable(
+  'city_relations',
+  {
+    id: text('id').primaryKey(),
+    fromClaimId: text('from_claim_id').notNull().references(() => cityClaims.id, { onDelete: 'cascade' }),
+    fromTokoh: text('from_tokoh').notNull(),
+    toClaimId: text('to_claim_id').notNull().references(() => cityClaims.id, { onDelete: 'cascade' }),
+    toTokoh: text('to_tokoh').notNull(),
+    type: text('type').notNull(),
+    counter: text('counter'),
+    state: text('state').notNull().default('ketuk'),
+    letter: text('letter').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('city_relations_from_idx').on(t.fromClaimId), index('city_relations_to_idx').on(t.toClaimId)],
 );

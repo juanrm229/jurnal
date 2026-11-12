@@ -123,3 +123,6 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Patok**: satu persil × rentang tahun. Server menolak rentang yang bertumpuk; satu rumah per warga per musim. Butuh nama pena kota yang terpisah dari jurnal.
 - **Rumah**: isinya Studio Naskah terbuka. Warga membaca adegan yang sudah terbit, hanya pemilik yang menulis. Rumah tanpa adegan terbit dalam 14 hari jadi desas-desus dan persilnya lowong lagi.
 - **Laporan**: tiga laporan dari warga berbeda menyembunyikan rumah sampai ditinjau. Melepas rumah mengosongkan persil; naskahnya tetap milik penulis.
+- **Ketuk**: tokoh dari rumahmu mengusulkan hubungan (anak, orang tua, saudara, pasangan, keturunan, leluhur, tetangga, teman, musuh, cinta lama) dengan tokoh di rumah lain, lewat surat dari dalam cerita. Usia dan masa hidup diperiksa dari tahun lahir/wafat. Pemilik rumah memilih: kanon, desas-desus, usul balik, atau tolak. Hubungan kanon turun jadi desas-desus bila salah satu rumah pergi.
+- **Rumah leluhur**: setelah punya rumah utama, warga boleh mematok dua rumah leluhur di zaman lebih awal; ketukan antar-rumah milik sendiri langsung kanon.
+- **Silsilah**: rumah-rumah yang tersambung digambar di atas peta kota, dengan garis generasi dari tahun lahir dan wafat.

@@ -46,6 +46,9 @@ export interface NaskahCanonPayload {
   known: NaskahKnow[];
   /** Adegan tempat entri ini mulai ada di dunia cerita. Tanpa ini: sejak awal. */
   since?: string;
+  /** Tokoh: tahun lahir dan wafat, dipakai untuk memeriksa hubungan antar-rumah di Kota. */
+  born?: number;
+  died?: number;
 }
 
 export interface NaskahEntry {

@@ -4,7 +4,7 @@ import { type CSSProperties, useState } from 'react';
 import { api } from '@/lib/api';
 import { kotaCrop, useKota, useKotaRefresh } from '@/lib/kota';
 import { newNaskahId } from '@/lib/naskah';
-import { navigate, useParams } from '@/lib/router';
+import { navigate, useParams, usePath } from '@/lib/router';
 import { Doodle, Growing, useToast } from '@/ui/kit';
 
 export default function Patok() {
@@ -12,6 +12,8 @@ export default function Patok() {
   const kota = useKota();
   const toast = useToast();
   const refresh = useKotaRefresh();
+  const { search } = usePath();
+  const leluhur = search.get('jenis') === 'leluhur';
   const plot = kotaPlot(plotId);
   const region = plot && kotaRegion(plot.region);
   const live = (kota.data?.claims ?? []).filter((c) => c.plotId === plotId && c.state === 'aktif').sort((a, b) => a.from - b.from);
@@ -26,6 +28,8 @@ export default function Patok() {
   if (!plot || !region) return <Growing label="persil ini tidak ditemukan" />;
   if (!kota.data) return <Growing label="membuka peta…" />;
   const me = kota.data.me;
+  const home = kota.data.claims.find((c) => c.mine && c.kind === 'rumah' && c.state === 'aktif');
+  const slot = leluhur ? me.leluhur : me.quota;
   const f = Number(from);
   const t = Number(to);
   const clash = live.find((c) => kotaOverlap(c, { from: f, to: t }));
@@ -38,9 +42,11 @@ export default function Patok() {
           ? `Paling jauh ${KOTA_TAHUN.max}.`
           : clash
             ? `Bertumpuk dengan ${clash.household} (${clash.from}–${clash.to}).`
-            : '';
+            : leluhur && home && f >= home.from
+              ? `Rumah leluhur dimulai sebelum rumah utamamu (${home.from}).`
+              : '';
   const penaOk = !!me.penName || KOTA_PENA_RE.test(pena.trim().toLowerCase());
-  const ok = !err && penaOk && household.trim().length >= 2 && me.quota > 0;
+  const ok = !err && penaOk && household.trim().length >= 2 && slot > 0;
   const span = KOTA_TAHUN.max - KOTA_TAHUN.min;
   const pct = (y: number) => ((y - KOTA_TAHUN.min) / span) * 100;
 
@@ -48,7 +54,7 @@ export default function Patok() {
     setBusy(true);
     try {
       if (!me.penName) await api.put('/kota/profil', { penName: pena.trim().toLowerCase() });
-      const res = await api.post<{ id: string; msId: string }>('/kota/claims', { plotId, household: household.trim(), from: f, to: t });
+      const res = await api.post<{ id: string; msId: string }>('/kota/claims', { plotId, household: household.trim(), from: f, to: t, kind: leluhur ? 'leluhur' : 'rumah' });
       if (tokoh.trim()) {
         const p: NaskahCanonPayload = { v: 1, kind: 'tokoh', name: tokoh.trim(), aliases: [], known: [] };
         await api.post(`/naskah/${res.msId}/canon`, { id: newNaskahId(), kind: 'tokoh', envelope: { plain: p } });
@@ -63,14 +69,15 @@ export default function Patok() {
 
   return (
     <main className="kota-patok">
-      <div className="kpt-peta" style={kotaCrop(plotId, 420, 230, 3.4)}>
+      <div className="kpt-peta" style={kotaCrop(plotId, 420, 230, 2.2)}>
         <span className="kpt-tanda" aria-hidden />
         <button className="kp-glass kp-back" aria-label="kembali ke peta" onClick={() => navigate('/kota')}>
           <Doodle id="ui-kembali" size={20} />
         </button>
       </div>
       <div className="kpt-isi">
-        <span className="kp-musim">mematok · {region.name}</span>
+        <span className="kp-musim">{leluhur ? 'rumah leluhur' : 'mematok'} · {region.name}</span>
+        {leluhur ? <p className="tiny soft">Rumah leluhur: keluarga di zaman lebih awal, sebelum {home?.household ?? 'rumah utamamu'} ({home?.from}). Ketuk rumah utamamu dari sini untuk menyambung garisnya.</p> : null}
         <h1 className="kpt-alamat">{plot.address}</h1>
 
         <section className="kpt-strata" aria-label="lapisan zaman alamat ini">
@@ -138,7 +145,7 @@ export default function Patok() {
           Kota ini publik. Pakai nama fiksi, jangan tulis data pribadi orang sungguhan. Rumah tanpa adegan terbit dalam {KOTA_TERBENGKALAI_HARI} hari kembali lowong, dan keluargamu tinggal sebagai desas-desus.
         </p>
         <button className="btn" disabled={!ok || busy} onClick={() => void submit()} data-testid="kota-pasang">
-          {busy ? 'memasang patok…' : me.quota > 0 ? `pasang patok · ${Number.isFinite(f) ? f : ''}–${Number.isFinite(t) ? t : ''}` : 'kamu sudah punya rumah musim ini'}
+          {busy ? 'memasang patok…' : slot > 0 ? `pasang patok · ${Number.isFinite(f) ? f : ''}–${Number.isFinite(t) ? t : ''}` : leluhur ? 'kuota rumah leluhur musim ini habis' : 'kamu sudah punya rumah musim ini'}
         </button>
       </div>
     </main>

@@ -140,3 +140,70 @@ export function kotaFree(taken: { from: number; to: number }[], min: number = KO
 
 /** Nama pena kota: 3–24 huruf, angka, titik, garis bawah, atau tanda hubung. */
 export const KOTA_PENA_RE = /^[a-z0-9][a-z0-9._-]{2,23}$/;
+
+// ── Ketuk: hubungan antar-rumah ─────────────────────────────────────────────
+
+/** "X adalah [jenis] dari Y". `balik` adalah jenis yang sama dilihat dari Y. */
+export const KOTA_HUBUNGAN = {
+  anak: { label: 'anak', balik: 'orangtua' },
+  orangtua: { label: 'orang tua', balik: 'anak' },
+  saudara: { label: 'saudara', balik: 'saudara' },
+  pasangan: { label: 'pasangan', balik: 'pasangan' },
+  keturunan: { label: 'keturunan', balik: 'leluhur' },
+  leluhur: { label: 'leluhur', balik: 'keturunan' },
+  tetangga: { label: 'tetangga', balik: 'tetangga' },
+  teman: { label: 'teman lama', balik: 'teman' },
+  musuh: { label: 'musuh', balik: 'musuh' },
+  cinta: { label: 'cinta lama', balik: 'cinta' },
+} as const;
+export type KotaHubungan = keyof typeof KOTA_HUBUNGAN;
+export const KOTA_HUBUNGAN_IDS = Object.keys(KOTA_HUBUNGAN) as KotaHubungan[];
+
+/** Riwayat hidup singkat seorang tokoh untuk diperiksa: tahun lahir/wafat dan rentang rumahnya. */
+export interface KotaJiwa {
+  name: string;
+  born?: number;
+  died?: number;
+  from: number;
+  to: number;
+}
+
+export interface KotaCek {
+  ok: boolean;
+  /** Belum bisa diperiksa (tahun lahir kosong); tidak menghalangi. */
+  warn?: boolean;
+  text: string;
+}
+
+/** Periksa apakah hubungan masuk akal menurut waktu. Kegagalan (ok=false) menghalangi ketukan. */
+export function kotaCekHubungan(type: KotaHubungan, a: KotaJiwa, b: KotaJiwa): KotaCek[] {
+  const out: KotaCek[] = [];
+  const alive = (x: KotaJiwa) => ({ s: x.born ?? x.from, e: x.died ?? Math.max(x.to, (x.born ?? x.from) + 60) });
+  if (a.born === undefined || b.born === undefined) out.push({ ok: true, warn: true, text: `Tahun lahir ${a.born === undefined ? a.name : b.name} belum diisi, jadi usia belum bisa diperiksa.` });
+  const older = (p: KotaJiwa, c: KotaJiwa, gap: number, what: string) => {
+    if (p.born === undefined || c.born === undefined) return;
+    const d = c.born - p.born;
+    out.push(d >= gap ? { ok: true, text: `${p.name} ${d} tahun lebih tua dari ${c.name}.` } : { ok: false, text: `${what} perlu setidaknya ${gap} tahun lebih tua; selisihnya ${d} tahun.` });
+    if (gap < 30 && p.died !== undefined && p.died < c.born - 1) out.push({ ok: false, text: `${p.name} wafat ${p.died}, sebelum ${c.name} lahir (${c.born}).` });
+  };
+  if (type === 'anak') older(b, a, 15, `${b.name} sebagai orang tua`);
+  else if (type === 'orangtua') older(a, b, 15, `${a.name} sebagai orang tua`);
+  else if (type === 'keturunan') older(b, a, 30, `${b.name} sebagai leluhur`);
+  else if (type === 'leluhur') older(a, b, 30, `${a.name} sebagai leluhur`);
+  else if (type === 'saudara') {
+    if (a.born !== undefined && b.born !== undefined) {
+      const d = Math.abs(a.born - b.born);
+      out.push(d <= 25 ? { ok: true, text: `Selisih usia ${d} tahun.` } : { ok: false, text: `Selisih usia ${d} tahun terlalu jauh untuk saudara kandung.` });
+    }
+  } else {
+    const x = alive(a);
+    const y = alive(b);
+    const meet = Math.max(x.s, y.s) <= Math.min(x.e, y.e);
+    out.push(meet ? { ok: true, text: `Hidup mereka bersinggungan sekitar ${Math.max(x.s, y.s)}–${Math.min(x.e, y.e)}.` } : { ok: false, text: `${a.name} dan ${b.name} tidak pernah hidup di masa yang sama.` });
+    if (type === 'tetangga') out.push(kotaOverlap(a, b) ? { ok: true, text: 'Rumah mereka berdiri di zaman yang sama.' } : { ok: false, text: 'Rumah mereka tidak berdiri di zaman yang sama.' });
+  }
+  return out;
+}
+
+/** Kuota musim: satu rumah utama, dan beberapa rumah leluhur di zaman lebih awal. */
+export const KOTA_KUOTA = { rumah: 1, leluhur: 2 } as const;

@@ -281,7 +281,7 @@ export default function Kota() {
         {region ? <RegionSheet r={region} claims={claims} year={year} onFocus={() => (focus(region), setRegion(null))} /> : null}
       </Sheet>
       <Sheet open={!!plot} onClose={() => setPlot(null)} title={plot?.address}>
-        {plot ? <PlotSheet p={plot} claims={byPlot.get(plot.id) ?? []} quota={kota.data?.me.quota ?? 0} /> : null}
+        {plot ? <PlotSheet p={plot} claims={byPlot.get(plot.id) ?? []} quota={kota.data?.me.quota ?? 0} leluhur={kota.data?.me.leluhur ?? 0} /> : null}
       </Sheet>
     </main>
   );
@@ -314,7 +314,7 @@ function RegionSheet({ r, claims, year, onFocus }: { r: KotaRegion; claims: Kota
   );
 }
 
-function PlotSheet({ p, claims, quota }: { p: KotaPlot; claims: KotaClaimWire[]; quota: number }) {
+function PlotSheet({ p, claims, quota, leluhur }: { p: KotaPlot; claims: KotaClaimWire[]; quota: number; leluhur: number }) {
   const r = kotaRegion(p.region)!;
   const live = claims.filter((c) => c.state === 'aktif').sort((a, b) => a.from - b.from);
   const free = kotaFree(live, Math.max(KOTA_TAHUN.min, r.since));
@@ -357,8 +357,12 @@ function PlotSheet({ p, claims, quota }: { p: KotaPlot; claims: KotaClaimWire[];
           <button className="btn" onClick={() => navigate(`/kota/patok/${p.id}`)} data-testid="kota-patok">
             patok persil ini · lowong {free.map((f) => `${f.from}–${f.to === KOTA_TAHUN.max ? 'kini' : f.to}`).join(', ')}
           </button>
+        ) : leluhur > 0 ? (
+          <button className="btn soft" onClick={() => navigate(`/kota/patok/${p.id}?jenis=leluhur`)} data-testid="kota-patok-leluhur">
+            patok sebagai rumah leluhur · sisa {leluhur}
+          </button>
         ) : (
-          <p className="tiny soft">Musim ini kamu sudah punya satu rumah. Satu warga, satu rumah per musim.</p>
+          <p className="tiny soft">Musim ini kamu sudah punya satu rumah dan rumah leluhurnya. Satu warga, satu rumah per musim.</p>
         )
       ) : (
         <p className="tiny soft">Semua zaman di alamat ini sudah dihuni.</p>
