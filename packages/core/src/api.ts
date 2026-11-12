@@ -1173,17 +1173,20 @@ export interface StoryWire {
 
 // ── Studio Naskah ─────────────────────────────────────────────────────────────
 
+/** Amplop naskah: terenkripsi untuk naskah privat, terbuka ({ plain }) untuk rumah di Kota. */
+export const naskahEnv = z.union([envelopeSchema, z.object({ plain: z.record(z.string(), z.unknown()) }).refine((x) => JSON.stringify(x).length <= 120_000, 'Isi terlalu panjang.')]);
 export const naskahBody = z.object({ id, circleId: id.nullable(), members: z.array(id).max(8), meta: envelopeSchema });
-export const naskahMetaBody = z.object({ meta: envelopeSchema });
-export const naskahSceneBody = z.object({ id, chapter: z.number().int().min(1).max(200), order: z.number().min(-1e6).max(1e6), envelope: envelopeSchema, status: z.enum(['draf', 'terbit']).default('draf') });
+export const naskahMetaBody = z.object({ meta: naskahEnv });
+export const naskahSceneBody = z.object({ id, chapter: z.number().int().min(1).max(200), order: z.number().min(-1e6).max(1e6), envelope: naskahEnv, status: z.enum(['draf', 'terbit']).default('draf') });
 export const naskahScenePatch = z.object({
   chapter: z.number().int().min(1).max(200).optional(),
   order: z.number().min(-1e6).max(1e6).optional(),
-  envelope: envelopeSchema.optional(),
+  envelope: naskahEnv.optional(),
   status: z.enum(['draf', 'terbit']).optional(),
 });
-export const naskahCanonBody = z.object({ id, kind: z.enum(['tokoh', 'benda', 'tempat', 'fakta']), envelope: envelopeSchema });
-export const naskahCanonPatch = z.object({ envelope: envelopeSchema });
+export const naskahCanonBody = z.object({ id, kind: z.enum(['tokoh', 'benda', 'tempat', 'fakta']), envelope: naskahEnv });
+export const naskahCanonPatch = z.object({ envelope: naskahEnv });
+export type NaskahEnv = Env | { plain: unknown };
 
 export interface NaskahSceneWire {
   id: string;
@@ -1192,7 +1195,7 @@ export interface NaskahSceneWire {
   order: number;
   status: 'draf' | 'terbit';
   /** Null untuk draf orang lain: yang lain hanya tahu seseorang sedang menulis. */
-  envelope: Env | null;
+  envelope: NaskahEnv | null;
   version: number;
   updatedAt: string;
 }
@@ -1201,14 +1204,14 @@ export interface NaskahCanonWire {
   kind: 'tokoh' | 'benda' | 'tempat' | 'fakta';
   authorId: string;
   updatedBy: string;
-  envelope: Env;
+  envelope: NaskahEnv;
   updatedAt: string;
 }
 export interface NaskahVersionWire {
   id: string;
   sceneId: string;
   version: number;
-  envelope: Env;
+  envelope: NaskahEnv;
   createdAt: string;
 }
 export interface NaskahWire {
@@ -1216,9 +1219,45 @@ export interface NaskahWire {
   circleId: string | null;
   ownerId: string;
   members: string[];
-  meta: Env;
+  /** 'privat' (terenkripsi), 'kota' (rumah publik), atau 'arsip' (bekas rumah, terbuka tapi hanya untuk penulisnya). */
+  visibility: 'privat' | 'kota' | 'arsip';
+  meta: NaskahEnv;
   scenes: NaskahSceneWire[];
   canon: NaskahCanonWire[];
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Kota Sehari ─────────────────────────────────────────────────────────────
+
+export const kotaPenaBody = z.object({ penName: z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9._-]{2,23}$/, 'Nama pena 3–24 huruf kecil, angka, titik, garis bawah, atau tanda hubung.') });
+export const kotaClaimBody = z.object({
+  plotId: z.string().max(40),
+  household: z.string().trim().min(2).max(60),
+  from: z.number().int().min(1900).max(2030),
+  to: z.number().int().min(1900).max(2030),
+});
+export const kotaReportBody = z.object({ reason: z.enum(['data-pribadi', 'pelecehan', 'spam', 'lainnya']) });
+
+export interface KotaClaimWire {
+  id: string;
+  plotId: string;
+  regionId: string;
+  household: string;
+  from: number;
+  to: number;
+  ownerId: string;
+  penName: string;
+  msId: string;
+  /** Jumlah adegan terbit. */
+  scenes: number;
+  /** 'terbengkalai': belum ada adegan terbit setelah batas hari; persilnya lowong lagi. */
+  state: 'aktif' | 'terbengkalai';
+  mine: boolean;
+  createdAt: string;
+}
+export interface KotaWire {
+  season: number;
+  claims: KotaClaimWire[];
+  me: { penName: string | null; quota: number };
 }

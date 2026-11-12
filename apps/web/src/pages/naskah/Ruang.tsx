@@ -42,6 +42,7 @@ function Workspace({ m }: { m: NaskahModel }) {
       </nav>
       <div key={tab} className="meja-isi">
         {tab === 'naskah' ? <Susunan m={m} goKanon={() => setTab('kanon')} /> : tab === 'waktu' ? <GarisWaktu m={m} /> : <KanonList m={m} />}
+        {m.pub ? <p className="tiny soft nk-publik">{m.ms.visibility === 'kota' ? 'Rumah ini ada di Kota Lirih: adegan yang terbit bisa dibaca semua warga. Draf tetap hanya untukmu.' : 'Bekas rumah di Kota. Kini hanya terbaca olehmu.'}</p> : null}
       </div>
     </main>
   );
@@ -87,7 +88,7 @@ function Susunan({ m, goKanon }: { m: NaskahModel; goKanon: () => void }) {
     }
   };
 
-  if (!m.tokoh.length)
+  if (!m.tokoh.length && m.canWrite)
     return (
       <div className="nk-kosong">
         <Doodle id="ui-peluk" size={56} draw />
@@ -101,7 +102,7 @@ function Susunan({ m, goKanon }: { m: NaskahModel; goKanon: () => void }) {
 
   return (
     <div className="nk-susunan">
-      <div className="row" style={{ justifyContent: 'flex-end' }}>
+      <div className="row" style={{ justifyContent: 'flex-end', display: m.canWrite ? undefined : 'none' }}>
         <button className={`pill sm ${atur ? 'active' : ''}`} onClick={() => setAtur(!atur)} aria-pressed={atur}>
           {atur ? 'selesai mengatur' : 'atur urutan'}
         </button>
@@ -142,16 +143,20 @@ function Susunan({ m, goKanon }: { m: NaskahModel; goKanon: () => void }) {
                   </div>
                 );
               })}
-              <button className="nk-tambah" disabled={busy} onClick={() => void add(ch)} data-testid={`nk-tambah-${ch}`}>
-                + adegan di bab {ch}
-              </button>
+              {m.canWrite ? (
+                <button className="nk-tambah" disabled={busy} onClick={() => void add(ch)} data-testid={`nk-tambah-${ch}`}>
+                  + adegan di bab {ch}
+                </button>
+              ) : null}
             </div>
           </section>
         );
       })}
-      <button className="btn soft" disabled={busy} onClick={() => void add(chapters.at(-1)! + 1)} data-testid="nk-bab-baru">
-        <Doodle id="buku" size={18} /> mulai bab {chapters.at(-1)! + 1}
-      </button>
+      {m.canWrite ? (
+        <button className="btn soft" disabled={busy} onClick={() => void add(chapters.at(-1)! + 1)} data-testid="nk-bab-baru">
+          <Doodle id="buku" size={18} /> mulai bab {chapters.at(-1)! + 1}
+        </button>
+      ) : null}
     </div>
   );
 }
