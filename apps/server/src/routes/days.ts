@@ -54,7 +54,7 @@ import { newId } from '../lib/ids';
 import { canSeeDrop, dropsInCircle, filterForCircle } from '../lib/visibility';
 import { canSeeMeetMedia } from './meets';
 
-const { faceReactions, drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users, boardItems, boothFrames, booths } = schema;
+const { faceReactions, drops, dropRecipients, dropCircles, capsules, circleSeals, circles, circleMembers, reactions, footnotes, media, freezes, letters, visits, users, boardItems, boothFrames, booths, stories, storyResearch } = schema;
 
 type DropInput = z.infer<typeof createDropBody>;
 
@@ -832,6 +832,12 @@ async function canSeeMedia(s: Services, user: UserRow, mediaId: string): Promise
     .innerJoin(booths, eq(booths.id, boothFrames.boothId))
     .where(sql`${boothFrames.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
   for (const p of shots) if ((await membership(s, p.circleId, user.id))?.state === 'active') return true;
+  const research = await s.db
+    .select({ members: stories.members, shared: storyResearch.shared, authorId: storyResearch.authorId })
+    .from(storyResearch)
+    .innerJoin(stories, eq(stories.id, storyResearch.storyId))
+    .where(sql`${storyResearch.mediaIds} @> ${JSON.stringify([mediaId])}::jsonb`);
+  if (research.some((x) => x.authorId === user.id || (x.shared && x.members.includes(user.id)))) return true;
   const letterHolders = await s.db
     .select()
     .from(letters)

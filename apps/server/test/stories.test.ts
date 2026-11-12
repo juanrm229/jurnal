@@ -134,8 +134,17 @@ describe('hidup orang lain', () => {
     expect((await sari.req('POST', `/v1/stories/${nid}/skip`)).status).toBe(400);
     await seal(raka, 1);
     await seal(naya, 1);
+    await part(sari, 1, false, 'draf-rahasia', nid);
     expect((await raka.ok('POST', `/v1/stories/${nid}/skip`)).phase).toBe('write');
-    expect((await naya.ok('POST', `/v1/stories/${nid}/skip`)).phase).toBe('read');
+    const opened = await naya.ok('POST', `/v1/stories/${nid}/skip`);
+    expect(opened.phase).toBe('read');
+    // Draf Sari yang tidak disegel tidak ikut terbuka, dan Sari tidak menahan fakta.
+    expect(opened.parts.filter((x: any) => x.authorId === sari.userId)).toHaveLength(0);
+    expect((await get(sari, nid)).parts.find((x: any) => x.authorId === sari.userId).envelope).toBeTruthy();
+    expect(opened.voters.sort()).toEqual([raka.userId, naya.userId].sort());
+    const fk = id();
+    await raka.ok('POST', `/v1/stories/${nid}/facts`, { id: fk, round: 1, envelope: amplop(raka, 'f') });
+    expect((await naya.ok('PUT', `/v1/stories/${nid}/facts/${fk}`, { vote: 'setuju' })).facts.find((x: any) => x.id === fk).state).toBe('sah');
     await next(raka);
     expect((await next(naya)).round).toBe(2);
     for (const round of [2, 3]) {
@@ -169,6 +178,16 @@ describe('hidup orang lain', () => {
     await naya.ok('DELETE', `/v1/stories/${sid}/research/${r1}`);
     expect((await get(raka)).research).toHaveLength(1);
     expect((await raka.ok('DELETE', `/v1/stories/${sid}/research/${r1}`)).research).toHaveLength(0);
+    // Moodboard: foto terbuka untuk penulis meja hanya setelah kartunya dibagikan; foto orang lain tidak bisa ditautkan.
+    const foto = (await raka.req('POST', '/v1/media', undefined, new Uint8Array([7, 7]))).json.id;
+    expect((await naya.req('POST', `/v1/stories/${sid}/research`, { id: id(), envelope: amplop(naya, 'm'), mediaIds: [foto] })).status).toBe(403);
+    const r2 = id();
+    await raka.ok('POST', `/v1/stories/${sid}/research`, { id: r2, envelope: amplop(raka, 'mood'), mediaIds: [foto] });
+    expect((await naya.req('GET', `/v1/media/${foto}`)).status).toBe(404);
+    await raka.ok('PUT', `/v1/stories/${sid}/research/${r2}`, { shared: true });
+    expect((await naya.req('GET', `/v1/media/${foto}`)).status).toBe(200);
+    expect((await sari.req('GET', `/v1/media/${foto}`)).status).toBe(404);
+    await raka.ok('DELETE', `/v1/stories/${sid}/research/${r2}`);
   });
 
   it('jatah keuntungan: sekali per babak', async () => {

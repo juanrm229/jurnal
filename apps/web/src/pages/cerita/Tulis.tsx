@@ -225,7 +225,7 @@ export function Tulis({ m }: { m: StoryModel }) {
           {flip ? (
             <>
               <span className="kr-row">
-                <i>keuntungan · sekali per babak</i>
+                <i>keuntungan · {st.rounds > 3 ? 'sekali per babak' : 'sekali per cerita'}</i>
                 {role.keuntungan}
               </span>
               <span className="kr-row soft">
@@ -323,7 +323,7 @@ export function Tulis({ m }: { m: StoryModel }) {
               <label className="serah-perk">
                 <span className="grow">
                   <b>pakai keuntungan {role.name}</b>
-                  <span className="tiny soft">{m.st.perkUsed && !perk ? 'Jatah keuntungan babak ini sudah kamu pakai. Kartu menyegarkan jatahnya di babak berikutnya.' : `${role.keuntungan} Sekali per babak.`}</span>
+                  <span className="tiny soft">{m.st.perkUsed && !perk ? (st.rounds > 3 ? 'Jatah keuntungan babak ini sudah kamu pakai. Kartu baru di babak berikutnya membawa jatah baru.' : 'Jatah keuntungan kartumu sudah kamu pakai di cerita ini.') : `${role.keuntungan} ${st.rounds > 3 ? 'Sekali per babak.' : 'Sekali per cerita.'}`}</span>
                 </span>
                 <button type="button" role="switch" aria-checked={perk} disabled={m.st.perkUsed && !perk} className="switch" onClick={() => setPerk(!perk)} data-testid="pakai-keuntungan" />
               </label>

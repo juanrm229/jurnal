@@ -1030,7 +1030,7 @@ export const storyEditionBody = z.object({
   ending: z.array(z.string().max(200)).max(3),
   template: z.enum(['satu-jendela', 'dua-sisi', 'arsip']),
 });
-export const storyResearchBody = z.object({ id, envelope: envelopeSchema, shared: z.boolean().default(false), status: z.enum(['terbuka', 'terjawab', 'diperdebatkan']).default('terbuka') });
+export const storyResearchBody = z.object({ id, envelope: envelopeSchema, mediaIds: z.array(id).max(4).default([]), shared: z.boolean().default(false), status: z.enum(['terbuka', 'terjawab', 'diperdebatkan']).default('terbuka') });
 export const storyResearchPatch = z.object({ envelope: envelopeSchema.optional(), shared: z.boolean().optional(), status: z.enum(['terbuka', 'terjawab', 'diperdebatkan']).optional() });
 const aiScene = z.object({ tokoh: z.string().max(60), waktu: z.string().max(80), text: z.string().max(6000) });
 export const storyAiSummaryBody = z.object({ scenes: z.array(aiScene).min(1).max(60), facts: z.array(z.string().max(300)).max(60).default([]) });
@@ -1158,6 +1158,8 @@ export interface StoryWire {
   edition: StoryEdition | null;
   editionOk: string[];
   research: StoryResearchWire[];
+  /** Penulis yang suaranya dibutuhkan untuk fakta dan edisi: yang menyegel di gelombang terakhir yang dibuka. */
+  voters: string[];
   /** Keuntungan role-mu sudah dipakai di babak ini. */
   perkUsed: boolean;
   /** AI cloud boleh dipakai untuk cerita ini (semua anggota lingkaran setuju, atau cerita sendiri). */

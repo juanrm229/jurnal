@@ -34,7 +34,7 @@ export function Akhir({ m }: { m: StoryModel }) {
   const ed = draft ?? st.edition ?? defaultEd;
   const ordered = ed.order.map((id) => st.parts.find((p) => p.id === id)).filter((p): p is StoryPartWire => !!p);
   const approved = st.editionOk.includes(meId);
-  const allOk = !!st.edition && st.members.every((u) => st.editionOk.includes(u));
+  const allOk = !!st.edition && st.voters.every((u) => st.editionOk.includes(u));
   const [branch, setBranch] = useState(false);
   const [kapsul, setKapsul] = useState(false);
   const [printing, setPrinting] = useState(false);
@@ -139,7 +139,7 @@ export function Akhir({ m }: { m: StoryModel }) {
             </button>
           ) : null}
           <span className="tiny soft" style={{ alignSelf: 'center' }}>
-            {allOk ? 'disahkan semua penulis' : st.edition ? `${st.editionOk.length} dari ${m.n} menyetujui` : 'belum diusulkan'}
+            {allOk ? 'disahkan semua penulis' : st.edition ? `${st.editionOk.filter((u) => st.voters.includes(u)).length} dari ${st.voters.length} menyetujui` : 'belum diusulkan'}
           </span>
         </div>
       </section>

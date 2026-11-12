@@ -79,7 +79,8 @@ export function useStoryModel(st: StoryWire) {
     const n = st.members.length;
     const name = (uid: string) => memberName(circles, uid, meId);
     const face = (uid: string) => (uid === meId ? me.user.doodle : (circle?.members.find((m) => m.userId === uid)?.doodle ?? 'tunas'));
-    const main = st.parts.filter((p) => p.world === 'a');
+    // Draf yang tidak sempat disegel (penulisnya dilewati) bukan bagian cerita.
+    const main = st.parts.filter((p) => p.world === 'a' && (p.sealed || (st.phase === 'write' && p.round === st.round)));
     const fixedSeat = (round: number, i: number) => (round <= premise.rounds.length ? storySeat(premise, round, i, n) : null);
     const waktuOf = (round: number) => premise.rounds[round - 1]?.waktu ?? `gelombang ${round}`;
 
@@ -176,6 +177,8 @@ export function useStoryModel(st: StoryWire) {
         const wait = st.members.filter((m) => !main.find((p) => p.round === st.round && p.authorId === m)?.sealed);
         return `Bagianmu tersegel. Menunggu ${wait.map(name).join(', ')}.`;
       }
+      const wroteNow = main.some((p) => p.round === st.round && p.authorId === meId);
+      if (!wroteNow) return 'Gelombang ini lanjut tanpa bagianmu. Baca lipatannya; giliranmu kembali di gelombang berikutnya.';
       const vote = facts.filter((x) => (x.state === 'usul' || x.state === 'tunda') && !x.agrees.includes(meId)).length;
       if (vote) return `${vote} fakta menunggu persetujuanmu.`;
       const unread = main.filter((p) => p.round === st.round && p.authorId !== meId && !st.reads.some((r) => r.partId === p.id && r.readerId === meId && r.kind === 'tafsir'));

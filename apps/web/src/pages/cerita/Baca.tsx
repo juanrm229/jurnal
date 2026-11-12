@@ -276,7 +276,7 @@ export function FactCard({ m, f, onRevise }: { m: StoryModel; f: Fact; onRevise?
       <span className="fakta-top">
         {f.supersedes ? 'revisi · ' : ''}
         {f.f.mystery ? 'misteri disengaja' : f.f.scope}
-        {f.f.waktu ? ` · ${f.f.waktu}` : ''} · {f.state === 'sah' ? 'disepakati' : f.state === 'tunda' ? 'ditunda' : f.state === 'diganti' ? 'diganti revisi' : `${f.agrees.length} dari ${m.n} setuju`}
+        {f.f.waktu ? ` · ${f.f.waktu}` : ''} · {f.state === 'sah' ? 'disepakati' : f.state === 'tunda' ? 'ditunda' : f.state === 'diganti' ? 'diganti revisi' : `${f.agrees.filter((u) => m.st.voters.includes(u)).length} dari ${m.st.voters.length} setuju`}
       </span>
       <p className="fakta-kal">{f.f.sentence}</p>
       {f.f.knows.length || f.f.believes.length ? (

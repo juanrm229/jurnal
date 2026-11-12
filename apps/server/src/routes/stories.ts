@@ -54,6 +54,17 @@ interface Bundle {
   research: ResearchRow[];
 }
 
+/**
+ * Penulis yang suaranya dibutuhkan untuk fakta dan edisi: yang menyegel di
+ * gelombang terakhir yang sudah dibuka. Penulis yang dilewati tetap boleh
+ * memberi suara, tetapi tidak lagi menahan kesepakatan.
+ */
+export function storyVoters(st: Pick<StoryRow, 'members' | 'phase' | 'round'>, parts: Pick<PartRow, 'authorId' | 'round' | 'world' | 'sealedAt'>[]): string[] {
+  const last = st.phase === 'write' ? st.round - 1 : st.round;
+  const v = st.members.filter((m) => parts.some((p) => p.authorId === m && p.round === last && p.world === 'a' && p.sealedAt));
+  return v.length ? v : st.members;
+}
+
 function wire(st: StoryRow, b: Bundle, viewer: string, aiOk = false): StoryWire {
   const phase = st.phase as StoryPhase;
   const done = phase === 'done';
@@ -89,11 +100,14 @@ function wire(st: StoryRow, b: Bundle, viewer: string, aiOk = false): StoryWire 
     research: b.research.filter((x) => x.shared || x.authorId === viewer).map((x) => ({ id: x.id, authorId: x.authorId, envelope: x.envelope as never, shared: x.shared, status: x.status as never })),
     perkUsed: b.parts.some((p) => p.authorId === viewer && p.perk && p.world === 'a' && storyBabak(st.rounds, p.round) === storyBabak(st.rounds, st.round) && p.round !== st.round),
     aiOk,
+    voters: storyVoters(st, b.parts),
     parts: b.parts
+      // Draf yang tidak pernah disegel (penulisnya dilewati) tidak pernah dibuka untuk orang lain.
+      .filter((p) => p.authorId === viewer || p.sealedAt || (phase === 'write' && p.round === st.round))
       .sort((x, y) => x.round - y.round)
       .map((p) => {
         const own = p.authorId === viewer;
-        const open = own || opened(p.round);
+        const open = own || (opened(p.round) && !!p.sealedAt);
         // Mode kejutan: adegan ditahan sampai selesai, kecuali bagian lama yang belum punya amplop serah-terima.
         const scene = own || (open && (done || st.mode !== 'kejutan' || !p.handoff));
         return {
@@ -337,7 +351,10 @@ export function storyRoutes(s: Services) {
       const [old] = await s.db.select().from(storyFacts).where(and(eq(storyFacts.id, input.supersedes), eq(storyFacts.storyId, st.id)));
       if (!old) throw notFound('Fakta yang direvisi tidak ditemukan.');
     }
-    const solo = st.members.length === 1;
+    const parts = await s.db.select({ authorId: storyParts.authorId, round: storyParts.round, world: storyParts.world, sealedAt: storyParts.sealedAt }).from(storyParts).where(eq(storyParts.storyId, st.id));
+    const voters = storyVoters(st, parts);
+    // Cerita sendiri, atau hanya pengusul yang masih aktif menulis: langsung sah.
+    const solo = voters.length === 1 && voters[0] === user.id;
     await s.db
       .insert(storyFacts)
       .values({ id: input.id, storyId: st.id, round: input.round, authorId: user.id, envelope: input.envelope, supersedes: input.supersedes, agrees: [user.id], state: solo ? 'sah' : 'usul' })
@@ -362,7 +379,8 @@ export function storyRoutes(s: Services) {
     }
     const agrees = vote === 'setuju' ? [...new Set([...f.agrees, user.id])] : f.agrees.filter((x) => x !== user.id);
     const defers = vote === 'tunda' ? [...new Set([...f.defers, user.id])] : f.defers.filter((x) => x !== user.id);
-    const sah = st.members.every((m) => agrees.includes(m));
+    const parts = await s.db.select({ authorId: storyParts.authorId, round: storyParts.round, world: storyParts.world, sealedAt: storyParts.sealedAt }).from(storyParts).where(eq(storyParts.storyId, st.id));
+    const sah = storyVoters(st, parts).every((m) => agrees.includes(m));
     await s.db.update(storyFacts).set({ agrees, defers, state: sah ? 'sah' : defers.length ? 'tunda' : 'usul' }).where(eq(storyFacts.id, f.id));
     if (sah && f.supersedes) await s.db.update(storyFacts).set({ state: 'diganti' }).where(eq(storyFacts.id, f.supersedes));
     if (sah) void kabar(st, user.id, 'Satu fakta disepakati semua penulis.');
@@ -456,7 +474,8 @@ export function storyRoutes(s: Services) {
     if (!st.edition) throw conflict('none', 'Belum ada edisi yang diusulkan.');
     const editionOk = [...new Set([...st.editionOk, user.id])];
     const [next] = await s.db.update(stories).set({ editionOk, updatedAt: new Date() }).where(eq(stories.id, st.id)).returning();
-    if (st.members.every((m) => editionOk.includes(m))) void kabar(next!, '', 'Edisi kalian sudah disahkan semua penulis.');
+    const parts = await s.db.select({ authorId: storyParts.authorId, round: storyParts.round, world: storyParts.world, sealedAt: storyParts.sealedAt }).from(storyParts).where(eq(storyParts.storyId, st.id));
+    if (storyVoters(st, parts).every((m) => editionOk.includes(m))) void kabar(next!, '', 'Edisi kalian sudah disahkan semua penulis.');
     return c.json(await send(next!, user.id));
   });
 
@@ -467,7 +486,12 @@ export function storyRoutes(s: Services) {
     const st = await mine(c.req.param('id'), user.id);
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(storyResearch).where(eq(storyResearch.storyId, st.id));
     if ((n?.n ?? 0) >= 300) throw bad('full', 'Ruang penelitian sudah penuh.');
-    await s.db.insert(storyResearch).values({ id: input.id, storyId: st.id, authorId: user.id, envelope: input.envelope, shared: input.shared, status: input.status }).onConflictDoNothing();
+    if (input.mediaIds.length) {
+      // Hanya media milik sendiri yang boleh ditautkan, supaya tautan tidak membuka akses ke media orang lain.
+      const own = await s.db.select({ id: schema.media.id }).from(schema.media).where(and(inArray(schema.media.id, input.mediaIds), eq(schema.media.ownerId, user.id)));
+      if (own.length !== input.mediaIds.length) throw forbidden('Foto itu bukan milikmu.');
+    }
+    await s.db.insert(storyResearch).values({ id: input.id, storyId: st.id, authorId: user.id, envelope: input.envelope, mediaIds: input.mediaIds, shared: input.shared, status: input.status }).onConflictDoNothing();
     return c.json(await send(st, user.id), 201);
   });
 
