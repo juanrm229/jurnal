@@ -70,7 +70,7 @@ export default function RuangMain() {
         <span className="kota-pintu-peta" aria-hidden />
         <span className="kota-pintu-isi">
           <span className="kp-musim">kota sehari · musim 1</span>
-          <b>Kota Lirih</b>
+          <b>Kota Sangkala</b>
           <span className="small">Patok satu rumah di peta kota, pilih zamannya, dan tulis keluarganya. Kota ini dibangun oleh warganya.</span>
         </span>
       </Link>

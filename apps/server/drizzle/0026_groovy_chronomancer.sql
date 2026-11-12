@@ -1,0 +1,1 @@
+ALTER TABLE "city_claims" ALTER COLUMN "city" SET DEFAULT 'sangkala';

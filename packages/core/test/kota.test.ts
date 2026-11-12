@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { KOTA_LIRIH, kotaCekHubungan, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots } from '../src/kota';
+import { KOTA_WILAYAH, kotaCekHubungan, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots } from '../src/kota';
 
-describe('kota lirih', () => {
+describe('kota sangkala', () => {
   it('persil deterministik di dalam wilayah yang dibuka, dengan alamat', () => {
-    for (const r of KOTA_LIRIH.filter(kotaOpen)) {
+    for (const r of KOTA_WILAYAH.filter(kotaOpen)) {
       const ps = kotaPlots(r.id);
       expect(ps.length).toBeGreaterThan(40);
       expect(ps.every((p) => kotaInside([p.x, p.y], r.poly))).toBe(true);
       expect(new Set(ps.map((p) => p.address)).size).toBe(ps.length);
     }
-    expect(kotaPlot('bantaran.12')?.address).toMatch(/No\. \d+$/);
-    expect(kotaPlots('pantai')).toEqual([]);
+    expect(kotaPlot('lorongsumbu.12')?.address).toMatch(/No\. \d+$/);
+    expect(kotaPlots('pasirpengantin')).toEqual([]);
   });
   it('rentang lowong dan tumpang tindih', () => {
     expect(kotaOverlap({ from: 1950, to: 1980 }, { from: 1980, to: 1990 })).toBe(true);

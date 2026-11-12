@@ -1059,7 +1059,7 @@ export const cityClaims = pgTable(
   'city_claims',
   {
     id: text('id').primaryKey(),
-    city: text('city').notNull().default('lirih'),
+    city: text('city').notNull().default('sangkala'),
     season: integer('season').notNull(),
     regionId: text('region_id').notNull(),
     plotId: text('plot_id').notNull(),

@@ -116,9 +116,9 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Garis waktu**: adegan menurut urutan kejadian per tokoh, terpisah dari urutan baca.
 - Cerita Hidup Orang Lain yang selesai bisa dilanjutkan di studio: tokoh dan fakta sah jadi Kanon, bagian jadi adegan.
 
-### Kota Sehari (Musim 1: Kota Lirih)
+### Kota Sehari (Musim 1: Kota Sangkala)
 
-- **Peta kota** ilustrasi yang bisa digeser, dicubit, dan digulir, dengan 16 wilayah. Musim 1 membuka Bantaran Kali, Kampung Air, dan Kota Tua (±760 persil beralamat).
+- **Peta kota buatan sendiri** (`scripts/peta/sangkala.mjs`): ±2.600 rumah beratap, gang, pohon, sawah, terasering, bakau, laguna rumah panggung, pelabuhan, benteng, dan mercusuar, dirender ke WebP. 17 wilayah dengan nama khas (Lorong Sumbu, Kampung Tiang Seribu, Gang Tujuh Lonceng, Padang Gubernur, Telaga Mangu, Pasar Senja, Lereng Kabut, Kampung Peluit, Dermaga Besi, Tanjung Jala, Sawah Seribu Petak, Pasir Pengantin, Rawa Kelana, Bukit Seribu Undak, Hutan Pamali, Benteng Lima Sudut, Nusa Pelita). Musim 1 membuka tiga wilayah pertama: 944 persil, dan setiap persil adalah rumah yang tergambar di peta.
 - **Penggeser zaman** 1900–sekarang: peta menua ke sepia, wilayah yang belum dihuni diarsir, dan rumah tampil sesuai rentang hidupnya.
 - **Patok**: satu persil × rentang tahun. Server menolak rentang yang bertumpuk; satu rumah per warga per musim. Butuh nama pena kota yang terpisah dari jurnal.
 - **Rumah**: isinya Studio Naskah terbuka. Warga membaca adegan yang sudah terbit, hanya pemilik yang menulis. Rumah tanpa adegan terbit dalam 14 hari jadi desas-desus dan persilnya lowong lagi.

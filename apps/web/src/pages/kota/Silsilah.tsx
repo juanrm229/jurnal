@@ -22,7 +22,7 @@ export default function Silsilah() {
   const xs = [...pts.values()].filter(Boolean).map((p) => p!.x);
   const ys = [...pts.values()].filter(Boolean).map((p) => p!.y);
   // Ruang ekstra di kanan untuk label rumah.
-  const b = { x0: Math.min(...xs) - 60, x1: Math.max(...xs) + 190, y0: Math.min(...ys) - 70, y1: Math.max(...ys) + 70 };
+  const b = { x0: Math.min(...xs) - 60, x1: Math.max(...xs) + 240, y0: Math.min(...ys) - 70, y1: Math.max(...ys) + 70 };
   const h = Math.min(440, Math.max(260, (w * (b.y1 - b.y0)) / (b.x1 - b.x0)));
   const s = Math.min(w / (b.x1 - b.x0), h / (b.y1 - b.y0), 3);
   const ox = w / 2 - ((b.x0 + b.x1) / 2) * s;

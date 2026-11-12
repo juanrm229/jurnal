@@ -16,7 +16,7 @@ export function useKotaRefresh() {
   return () => qc.invalidateQueries({ queryKey: kk.all });
 }
 
-export const KOTA_IMG = { kecil: '/kota/lirih-kecil.webp', sedang: '/kota/lirih-2k.webp', besar: '/kota/lirih-4k.webp' };
+export const KOTA_IMG = { kecil: '/kota/sangkala-kecil.webp', sedang: '/kota/sangkala-2k.webp', besar: '/kota/sangkala-4k.webp' };
 
 /** Gaya latar untuk menampilkan potongan peta di sekitar sebuah persil. */
 export function kotaCrop(plotId: string, w: number, h: number, zoom = 3) {

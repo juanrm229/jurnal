@@ -587,7 +587,7 @@
 .kota-pintu-peta {
   position: absolute;
   inset: -20px;
-  background: url('/kota/lirih-kecil.webp') 42% 55% / cover no-repeat;
+  background: url('/kota/sangkala-kecil.webp') 40% 52% / cover no-repeat;
   animation: kota-layang 26s ease-in-out infinite alternate;
 }
 @keyframes kota-layang {

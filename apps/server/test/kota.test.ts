@@ -21,7 +21,7 @@ const patok = (c: Client, plotId: string, from: number, to: number, household = 
 
 describe('kota sehari', () => {
   it('nama pena wajib dan unik sebelum mematok', async () => {
-    expect((await patok(raka, 'bantaran.12', 1952, 1981)).status).toBe(409);
+    expect((await patok(raka, 'lorongsumbu.12', 1952, 1981)).status).toBe(409);
     expect((await raka.req('PUT', '/v1/kota/profil', { penName: 'Padi Wangi' })).status).toBe(400);
     await raka.ok('PUT', '/v1/kota/profil', { penName: 'padiwangi' });
     expect((await naya.req('PUT', '/v1/kota/profil', { penName: 'padiwangi' })).status).toBe(409);
@@ -31,14 +31,14 @@ describe('kota sehari', () => {
   });
 
   it('patok: wilayah harus dibuka, tahun sesuai, satu rumah per musim, tidak bertumpuk', async () => {
-    expect((await patok(raka, 'pantai.1', 1952, 1981)).status).toBe(400);
-    expect((await patok(raka, 'bantaran.12', 1920, 1981)).status).toBe(400);
-    const r = await patok(raka, 'bantaran.12', 1952, 1981);
+    expect((await patok(raka, 'pasirpengantin.1', 1952, 1981)).status).toBe(400);
+    expect((await patok(raka, 'lorongsumbu.12', 1920, 1981)).status).toBe(400);
+    const r = await patok(raka, 'lorongsumbu.12', 1952, 1981);
     expect(r.status).toBe(201);
     rumah = r.json;
-    expect((await patok(raka, 'bantaran.13', 1960, 1970)).status).toBe(409);
-    expect((await patok(naya, 'bantaran.12', 1981, 1990)).status).toBe(409);
-    expect((await patok(naya, 'bantaran.12', 1995, 2030, 'Keluarga Wirya')).status).toBe(201);
+    expect((await patok(raka, 'lorongsumbu.13', 1960, 1970)).status).toBe(409);
+    expect((await patok(naya, 'lorongsumbu.12', 1981, 1990)).status).toBe(409);
+    expect((await patok(naya, 'lorongsumbu.12', 1995, 2030, 'Keluarga Wirya')).status).toBe(201);
     const kota = await sari.ok('GET', '/v1/kota');
     expect(kota.claims.map((x: any) => [x.household, x.penName])).toEqual(expect.arrayContaining([['Keluarga Darmo', 'padiwangi'], ['Keluarga Wirya', 'lampukamis']]));
     expect(kota.me).toEqual({ penName: 'sari.kali', quota: 1, leluhur: 0 });
@@ -58,13 +58,13 @@ describe('kota sehari', () => {
   });
 
   it('rumah tanpa adegan terbit jadi terbengkalai dan persilnya lowong lagi', async () => {
-    const r = await patok(sari, 'kampungair.5', 1940, 1960, 'Keluarga Bandeng');
+    const r = await patok(sari, 'tiangseribu.5', 1940, 1960, 'Keluarga Bandeng');
     expect(r.status).toBe(201);
     env.advanceDays(15);
     const kota = await tono.ok('GET', '/v1/kota');
     expect(kota.claims.find((x: any) => x.household === 'Keluarga Bandeng').state).toBe('terbengkalai');
     expect(kota.claims.find((x: any) => x.household === 'Keluarga Darmo').state).toBe('aktif');
-    expect((await patok(tono, 'kampungair.5', 1945, 1950, 'Keluarga Teripang')).status).toBe(201);
+    expect((await patok(tono, 'tiangseribu.5', 1945, 1950, 'Keluarga Teripang')).status).toBe(201);
     expect((await sari.ok('GET', '/v1/kota')).me.quota).toBe(1);
   });
 
@@ -83,8 +83,8 @@ describe('kota sehari', () => {
   it('ketuk: pemeriksaan usia, jawaban pemilik, usul balik, silsilah, dan desas-desus saat rumah pergi', async () => {
     const tokoh = (c: Client, msId: string, name: string, born: number, died?: number) =>
       c.ok('POST', `/v1/naskah/${msId}/canon`, { id: `t${name.replace(/\W/g, '')}${born}`, kind: 'tokoh', envelope: { plain: { v: 1, kind: 'tokoh', name, aliases: [], known: [], born, died } } });
-    const darmo = (await patok(raka, 'bantaran.40', 1952, 1981, 'Keluarga Darmo')).json;
-    const laras = (await patok(naya, 'kotatua.30', 1998, 2030, 'Kos Laras')).json;
+    const darmo = (await patok(raka, 'lorongsumbu.40', 1952, 1981, 'Keluarga Darmo')).json;
+    const laras = (await patok(naya, 'tujuhlonceng.30', 1998, 2030, 'Kos Laras')).json;
     await tokoh(raka, darmo.msId, 'Pak Darmo', 1921, 1979);
     await tokoh(naya, laras.msId, 'Laras', 1977);
     const ketuk = (c: Client, from: any, ft: string, to: any, tt: string, type: string) =>
@@ -109,8 +109,8 @@ describe('kota sehari', () => {
     const sil = await sari.ok('GET', `/v1/kota/silsilah/${laras.id}`);
     expect(sil.claims.map((x: any) => x.household).sort()).toEqual(['Keluarga Darmo', 'Kos Laras']);
     // Rumah leluhur: harus dimulai sebelum rumah utama, dan pemiliknya sama jadi langsung kanon.
-    expect((await raka.req('POST', '/v1/kota/claims', { plotId: 'kotatua.50', household: 'Keluarga Sitorus', from: 1960, to: 1990, kind: 'leluhur' })).status).toBe(400);
-    const lel = await raka.ok('POST', '/v1/kota/claims', { plotId: 'kotatua.50', household: 'Keluarga Sitorus', from: 1900, to: 1960, kind: 'leluhur' });
+    expect((await raka.req('POST', '/v1/kota/claims', { plotId: 'tujuhlonceng.50', household: 'Keluarga Sitorus', from: 1960, to: 1990, kind: 'leluhur' })).status).toBe(400);
+    const lel = await raka.ok('POST', '/v1/kota/claims', { plotId: 'tujuhlonceng.50', household: 'Keluarga Sitorus', from: 1900, to: 1960, kind: 'leluhur' });
     await tokoh(raka, lel.msId, 'Opa Sitorus', 1880, 1950);
     expect((await ketuk(raka, lel, 'tOpaSitorus1880', darmo, 'tPakDarmo1921', 'orangtua')).json.state).toBe('kanon');
     expect((await raka.ok('GET', '/v1/kota')).me).toMatchObject({ quota: 0, leluhur: 1 });

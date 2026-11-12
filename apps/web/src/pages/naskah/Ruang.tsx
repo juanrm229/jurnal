@@ -42,7 +42,7 @@ function Workspace({ m }: { m: NaskahModel }) {
       </nav>
       <div key={tab} className="meja-isi">
         {tab === 'naskah' ? <Susunan m={m} goKanon={() => setTab('kanon')} /> : tab === 'waktu' ? <GarisWaktu m={m} /> : <KanonList m={m} />}
-        {m.pub ? <p className="tiny soft nk-publik">{m.ms.visibility === 'kota' ? 'Rumah ini ada di Kota Lirih: adegan yang terbit bisa dibaca semua warga. Draf tetap hanya untukmu.' : 'Bekas rumah di Kota. Kini hanya terbaca olehmu.'}</p> : null}
+        {m.pub ? <p className="tiny soft nk-publik">{m.ms.visibility === 'kota' ? 'Rumah ini ada di Kota Sangkala: adegan yang terbit bisa dibaca semua warga. Draf tetap hanya untukmu.' : 'Bekas rumah di Kota. Kini hanya terbaca olehmu.'}</p> : null}
       </div>
     </main>
   );
