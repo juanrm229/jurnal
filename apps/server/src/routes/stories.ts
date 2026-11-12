@@ -9,6 +9,7 @@ import {
   drawStoryOffers,
   drawStoryRoles,
   STORY_FREE,
+  STORY_ALONE_HOURS,
   storyBabak,
   storyBody,
   storyBranchBody,
@@ -101,6 +102,11 @@ function wire(st: StoryRow, b: Bundle, viewer: string, aiOk = false): StoryWire 
     perkUsed: b.parts.some((p) => p.authorId === viewer && p.perk && p.world === 'a' && storyBabak(st.rounds, p.round) === storyBabak(st.rounds, st.round) && p.round !== st.round),
     aiOk,
     voters: storyVoters(st, b.parts),
+    aloneAt: (() => {
+      if (phase !== 'write' || st.members.length < 2) return null;
+      const sealed = b.parts.filter((p) => p.round === st.round && p.world === 'a' && p.sealedAt);
+      return sealed.length === 1 && sealed[0]!.authorId === viewer ? new Date(sealed[0]!.sealedAt!.getTime() + STORY_ALONE_HOURS * 3600_000).toISOString() : null;
+    })(),
     parts: b.parts
       // Draf yang tidak pernah disegel (penulisnya dilewati) tidak pernah dibuka untuk orang lain.
       .filter((p) => p.authorId === viewer || p.sealedAt || (phase === 'write' && p.round === st.round))
@@ -286,7 +292,7 @@ export function storyRoutes(s: Services) {
           .where(and(eq(storyParts.storyId, st.id), eq(storyParts.authorId, user.id), eq(storyParts.perk, true), eq(storyParts.world, 'a')));
         if (used.some((u) => u.round !== st.round && storyBabak(st.rounds, u.round) === storyBabak(st.rounds, st.round))) throw conflict('perk_used', 'Jatah keuntungan kartumu di babak ini sudah terpakai.');
       }
-      const now = new Date();
+      const now = s.now();
       const set = { envelope: input.envelope, handoff: input.handoff ?? null, intent: input.intent ?? null, perk: input.perk, sealedAt: input.seal ? now : null, updatedAt: now };
       await tx
         .insert(storyParts)
@@ -313,10 +319,16 @@ export function storyRoutes(s: Services) {
       const [st] = await tx.select().from(stories).where(eq(stories.id, c.req.param('id'))).for('update');
       if (!st || !st.members.includes(user.id)) throw notFound('Cerita tidak ditemukan.');
       if (st.phase !== 'write') throw conflict('phase', 'Tidak ada yang perlu dilewati.');
-      const sealed = await sealedAuthors(tx, st);
+      const rows = await tx
+        .select({ authorId: storyParts.authorId, sealedAt: storyParts.sealedAt })
+        .from(storyParts)
+        .where(and(eq(storyParts.storyId, st.id), eq(storyParts.round, st.round), eq(storyParts.world, 'a'), sql`${storyParts.sealedAt} is not null`));
+      const sealed = rows.map((x) => x.authorId);
       if (!sealed.includes(user.id)) throw bad('unsealed', 'Segel bagianmu dulu sebelum mengusulkan lanjut.');
+      // Sendirian: boleh lanjut setelah menunggu, supaya cerita berdua tidak tertahan selamanya.
+      if (sealed.length === 1 && s.now().getTime() - rows[0]!.sealedAt!.getTime() < STORY_ALONE_HOURS * 3600_000) throw conflict('wait', `Kalau hanya kamu yang sudah menyegel, kamu bisa lanjut sendiri ${STORY_ALONE_HOURS / 24} hari setelah segelmu.`);
       const skips = [...new Set([...st.skips, user.id])].filter((x) => sealed.includes(x));
-      const go = sealed.length >= 2 && sealed.every((x) => skips.includes(x));
+      const go = sealed.every((x) => skips.includes(x));
       const [next] = await tx.update(stories).set(go ? { phase: 'read', ready: [], skips: [], updatedAt: new Date() } : { skips, updatedAt: new Date() }).where(eq(stories.id, st.id)).returning();
       return { next: next!, go };
     });
