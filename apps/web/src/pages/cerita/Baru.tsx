@@ -2,10 +2,11 @@
  * Menyiapkan meja: pembuka, penulis, bentuk karya, dan palet. Empat langkah
  * pendek; kartu baru dibagikan di akhir.
  */
-import { STORY_FORMATS, STORY_FREE, STORY_MAX_WRITERS, STORY_PREMISES, type StoryFormat, storyDeckIds, type StoryMeta, type StoryPalettePayload, type StoryWire } from '@sehari/core';
+import { addDays, type MyDay, STORY_FORMATS, STORY_FREE, STORY_MAX_WRITERS, STORY_PREMISES, type StoryFormat, storyDeckIds, type StoryMeta, type StoryPalettePayload, type StoryWire } from '@sehari/core';
+import { useQuery } from '@tanstack/react-query';
 import { type CSSProperties, useState } from 'react';
 import { api } from '@/lib/api';
-import { useCircles, useMe } from '@/lib/data';
+import { openDrop, useCircles, useKeyring, useMe, useMyDays, useToday } from '@/lib/data';
 import { navigate, usePath } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { newStoryId, sealPart } from '@/lib/stories';
@@ -102,6 +103,14 @@ export default function Baru() {
                 </span>
               </button>
             </div>
+            {!fromKapsul ? (
+              <DariHarimu
+                onPick={(line) => {
+                  setPremise(STORY_FREE);
+                  setOwn({ title: own.title, pitch: `Bagaimana kalau kalimat ini ditulis oleh orang lain: “${line}”`, fakta: line, tokoh: own.tokoh });
+                }}
+              />
+            ) : null}
             {premise === STORY_FREE ? (
               <div className="col baru-form">
                 <input className="field" value={own.title} maxLength={80} placeholder="judul" onChange={(e) => setOwn({ ...own, title: e.target.value })} data-testid="bebas-judul" />
@@ -225,5 +234,60 @@ export default function Baru() {
         )}
       </div>
     </main>
+  );
+}
+
+/** Pembuka dari harimu: Kalimat Terakhir dari hari yang sudah kamu segel, jadi benih premis. */
+function DariHarimu({ onPick }: { onPick: (line: string) => void }) {
+  const today = useToday();
+  const ring = useKeyring();
+  const days = useMyDays(addDays(today, -20), today);
+  const sealed = (days.data ?? []).filter((d) => d.sealedAt).map((d) => d.day).sort().reverse().slice(0, 6);
+  const lines = useQuery({
+    queryKey: ['cerita-harimu', sealed.join(','), !!ring],
+    enabled: sealed.length > 0 && !!ring,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const out: { day: string; text: string }[] = [];
+      for (const d of sealed) {
+        try {
+          const day = await api.get<MyDay>(`/days/${d}`);
+          for (const w of day.drops) {
+            if (w.kind !== 'last_line') continue;
+            const t = (openDrop(w, ring).payload as { text?: string } | null)?.text?.trim();
+            if (t && t.length >= 8) out.push({ day: d, text: t.slice(0, 240) });
+          }
+        } catch {
+          /* hari yang tidak terbuka dilewati */
+        }
+      }
+      return out.slice(0, 4);
+    },
+  });
+  const [open, setOpen] = useState(false);
+  if (!lines.data?.length) return null;
+  const fmt = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  return (
+    <div className={`harimu ${open ? 'on' : ''}`}>
+      <button className="harimu-head" onClick={() => setOpen(!open)} aria-expanded={open} data-testid="dari-harimu">
+        <Doodle id="surat-terbuka" size={26} />
+        <span className="grow">
+          <b>dari harimu</b>
+          <span className="tiny soft">Kalimat Terakhir dari hari yang sudah kamu segel, jadi benih cerita.</span>
+        </span>
+        <Doodle id="ui-panah-kanan" size={14} />
+      </button>
+      {open ? (
+        <div className="harimu-list">
+          {lines.data.map((l, i) => (
+            <button key={`${l.day}-${i}`} className="harimu-line" style={{ '--n': i } as CSSProperties} onClick={() => onPick(l.text)} data-testid="harimu-kalimat">
+              <time className="tiny soft">{fmt(l.day)}</time>
+              <span className="rupa-hand">“{l.text}”</span>
+            </button>
+          ))}
+          <p className="tiny soft">Kalimat yang kamu pilih masuk ke cerita sebagai fakta pembuka, terenkripsi untuk penulis meja ini saja. Kamu masih bisa mengubahnya.</p>
+        </div>
+      ) : null}
+    </div>
   );
 }

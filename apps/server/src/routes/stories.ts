@@ -21,7 +21,10 @@ import {
   storyPartBody,
   storyPremise,
   storyReadBody,
+  storyResearchBody,
+  storyResearchPatch,
   storyResolveBody,
+  type StoryDeckCtx,
   storyVoteBody,
   type StoryPhase,
   type StoryWire,
@@ -35,7 +38,8 @@ import { schema } from '../db';
 import { pushTo, requireMember } from '../lib/domain';
 import { bad, conflict, forbidden, notFound } from '../lib/errors';
 
-const { stories, storyParts, storyNotes, storyFacts, storyReads, circleMembers } = schema;
+const { stories, storyParts, storyNotes, storyFacts, storyReads, storyResearch, circleMembers } = schema;
+type ResearchRow = typeof storyResearch.$inferSelect;
 type StoryRow = typeof stories.$inferSelect;
 type PartRow = typeof storyParts.$inferSelect;
 type NoteRow = typeof storyNotes.$inferSelect;
@@ -47,9 +51,10 @@ interface Bundle {
   notes: NoteRow[];
   facts: FactRow[];
   reads: ReadRow[];
+  research: ResearchRow[];
 }
 
-function wire(st: StoryRow, b: Bundle, viewer: string): StoryWire {
+function wire(st: StoryRow, b: Bundle, viewer: string, aiOk = false): StoryWire {
   const phase = st.phase as StoryPhase;
   const done = phase === 'done';
   // Gelombang yang sudah dibuka: yang sudah lewat, dan gelombang ini begitu masuk ruang baca.
@@ -81,6 +86,9 @@ function wire(st: StoryRow, b: Bundle, viewer: string): StoryWire {
       .map((r) => ({ id: r.id, partId: r.partId, readerId: r.readerId, kind: r.kind as never, envelope: r.envelope as never })),
     edition: (st.edition as StoryWire['edition']) ?? null,
     editionOk: st.editionOk,
+    research: b.research.filter((x) => x.shared || x.authorId === viewer).map((x) => ({ id: x.id, authorId: x.authorId, envelope: x.envelope as never, shared: x.shared, status: x.status as never })),
+    perkUsed: b.parts.some((p) => p.authorId === viewer && p.perk && p.world === 'a' && storyBabak(st.rounds, p.round) === storyBabak(st.rounds, st.round) && p.round !== st.round),
+    aiOk,
     parts: b.parts
       .sort((x, y) => x.round - y.round)
       .map((p) => {
@@ -112,17 +120,33 @@ export function storyRoutes(s: Services) {
   const r = new Hono<AppEnv>();
 
   const load = async (ids: string[]): Promise<Bundle> => {
-    if (!ids.length) return { parts: [], notes: [], facts: [], reads: [] };
-    const [parts, notes, facts, reads] = await Promise.all([
+    if (!ids.length) return { parts: [], notes: [], facts: [], reads: [], research: [] };
+    const [parts, notes, facts, reads, research] = await Promise.all([
       s.db.select().from(storyParts).where(inArray(storyParts.storyId, ids)),
       s.db.select().from(storyNotes).where(inArray(storyNotes.storyId, ids)),
       s.db.select().from(storyFacts).where(inArray(storyFacts.storyId, ids)),
       s.db.select().from(storyReads).where(inArray(storyReads.storyId, ids)),
+      s.db.select().from(storyResearch).where(inArray(storyResearch.storyId, ids)),
     ]);
-    return { parts, notes, facts, reads };
+    return { parts, notes, facts, reads, research };
   };
-  const pick = (b: Bundle, id: string): Bundle => ({ parts: b.parts.filter((x) => x.storyId === id), notes: b.notes.filter((x) => x.storyId === id), facts: b.facts.filter((x) => x.storyId === id), reads: b.reads.filter((x) => x.storyId === id) });
-  const send = async (st: StoryRow, userId: string) => wire(st, await load([st.id]), userId);
+  const pick = (b: Bundle, id: string): Bundle => ({ parts: b.parts.filter((x) => x.storyId === id), notes: b.notes.filter((x) => x.storyId === id), facts: b.facts.filter((x) => x.storyId === id), reads: b.reads.filter((x) => x.storyId === id), research: b.research.filter((x) => x.storyId === id) });
+  /** AI cloud boleh dipakai: cerita sendiri, atau semua anggota aktif lingkarannya setuju. */
+  const aiAllowed = async (st: StoryRow) => {
+    if (!st.circleId) return true;
+    const ms = await s.db.select({ ok: circleMembers.aiConsent }).from(circleMembers).where(and(eq(circleMembers.circleId, st.circleId), eq(circleMembers.state, 'active')));
+    return ms.length > 0 && ms.every((m) => m.ok);
+  };
+  const send = async (st: StoryRow, userId: string) => wire(st, await load([st.id]), userId, await aiAllowed(st));
+  /** Keadaan meja untuk membuka kartu berprasyarat. */
+  const deckCtx = async (tx: Pick<Services['db'], 'select'>, st: StoryRow, round: number): Promise<StoryDeckCtx> => {
+    const [f, r, n] = await Promise.all([
+      tx.select({ n: sql<number>`count(*)::int` }).from(storyFacts).where(and(eq(storyFacts.storyId, st.id), eq(storyFacts.state, 'sah'))),
+      tx.select({ n: sql<number>`count(*)::int` }).from(storyResearch).where(and(eq(storyResearch.storyId, st.id), eq(storyResearch.shared, true))),
+      tx.select({ n: sql<number>`count(*)::int` }).from(storyNotes).where(and(eq(storyNotes.storyId, st.id), eq(storyNotes.resolution, 'misteri'))),
+    ]);
+    return { round, rounds: st.rounds, members: st.members.length, sah: f[0]?.n ?? 0, research: r[0]?.n ?? 0, misteri: n[0]?.n ?? 0 };
+  };
   const mine = async (id: string, userId: string): Promise<StoryRow> => {
     const [st] = await s.db.select().from(stories).where(eq(stories.id, id));
     if (!st || !st.members.includes(userId)) throw notFound('Cerita tidak ditemukan.');
@@ -145,14 +169,15 @@ export function storyRoutes(s: Services) {
         .where(and(eq(storyParts.storyId, st.id), eq(storyParts.round, st.round), eq(storyParts.world, 'a'), sql`${storyParts.sealedAt} is not null`))
     ).map((p) => p.authorId);
   /** Dari ruang baca ke gelombang berikutnya, atau selesai. Babak baru membagikan kartu baru. */
-  const advance = (st: StoryRow) => {
+  const advance = async (tx: Pick<Services['db'], 'select'>, st: StoryRow) => {
     if (st.round >= st.rounds) return { phase: 'done', ready: st.members };
     const next = st.round + 1;
     const newBabak = st.rounds > 3 && storyBabak(st.rounds, next) !== storyBabak(st.rounds, st.round);
     if (!newBabak) return { phase: 'write', round: next, ready: [], skips: [] };
     const pickMode = Object.keys(st.offers).length > 0;
-    const offers = pickMode ? drawStoryOffers(st.members, st.deck as StoryDeck) : {};
-    const roles = pickMode ? Object.fromEntries(Object.entries(offers).map(([m, o]) => [m, o[0]!])) : drawStoryRoles(st.members, st.deck as StoryDeck);
+    const ctx = await deckCtx(tx, st, next);
+    const offers = pickMode ? drawStoryOffers(st.members, st.deck as StoryDeck, Math.random, ctx) : {};
+    const roles = pickMode ? Object.fromEntries(Object.entries(offers).map(([m, o]) => [m, o[0]!])) : drawStoryRoles(st.members, st.deck as StoryDeck, Math.random, ctx);
     return { phase: 'write', round: next, ready: [], skips: [], rolesLog: [...st.rolesLog, st.roles], roles, offers };
   };
 
@@ -185,14 +210,15 @@ export function storyRoutes(s: Services) {
     } else if (members.length > 1) throw bad('members', 'Cerita bersama butuh lingkaran.');
     const [dup] = await s.db.select().from(stories).where(eq(stories.id, input.id));
     if (dup) throw conflict('exists', 'Cerita itu sudah ada.');
-    const offers = input.pick ? drawStoryOffers(members, input.deck) : {};
-    const roles = input.pick ? Object.fromEntries(Object.entries(offers).map(([m, o]) => [m, o[0]!])) : drawStoryRoles(members, input.deck);
+    const ctx: StoryDeckCtx = { round: 1, rounds: input.rounds, members: members.length, sah: 0, research: 0, misteri: 0 };
+    const offers = input.pick ? drawStoryOffers(members, input.deck, Math.random, ctx) : {};
+    const roles = input.pick ? Object.fromEntries(Object.entries(offers).map(([m, o]) => [m, o[0]!])) : drawStoryRoles(members, input.deck, Math.random, ctx);
     const [st] = await s.db
       .insert(stories)
       .values({ id: input.id, circleId: input.circleId, ownerId: user.id, premise: input.premise, members, roles, offers, rounds: input.rounds, deck: input.deck, mode: input.mode, meta: input.meta ?? null, palette: input.palette ? [input.palette] : [] })
       .returning();
     void kabar(st!, user.id, `${user.penName ?? 'Seseorang'} membuka cerita baru dan membagikan kartu untukmu.`);
-    return c.json(wire(st!, await load([]), user.id), 201);
+    return c.json(wire(st!, await load([]), user.id, await aiAllowed(st!)), 201);
   });
 
   r.get('/stories/:id', async (c) => c.json(await send(await mine(c.req.param('id'), c.get('user').id), c.get('user').id)));
@@ -238,6 +264,14 @@ export function storyRoutes(s: Services) {
       const [st] = await tx.select().from(stories).where(eq(stories.id, c.req.param('id'))).for('update');
       if (!st || !st.members.includes(user.id)) throw notFound('Cerita tidak ditemukan.');
       if (st.phase !== 'write' || input.round !== st.round) throw conflict('closed', 'Gelombang itu sudah dibuka. Perubahan tidak lagi bisa disimpan di sini.');
+      if (input.perk) {
+        // Keuntungan role dipakai sekali per masa pegang kartu (satu babak).
+        const used = await tx
+          .select({ round: storyParts.round })
+          .from(storyParts)
+          .where(and(eq(storyParts.storyId, st.id), eq(storyParts.authorId, user.id), eq(storyParts.perk, true), eq(storyParts.world, 'a')));
+        if (used.some((u) => u.round !== st.round && storyBabak(st.rounds, u.round) === storyBabak(st.rounds, st.round))) throw conflict('perk_used', 'Jatah keuntungan kartumu di babak ini sudah terpakai.');
+      }
       const now = new Date();
       const set = { envelope: input.envelope, handoff: input.handoff ?? null, intent: input.intent ?? null, perk: input.perk, sealedAt: input.seal ? now : null, updatedAt: now };
       await tx
@@ -286,7 +320,7 @@ export function storyRoutes(s: Services) {
       const ready = [...new Set([...st.ready, user.id])];
       const wrote = await sealedAuthors(tx, st);
       const all = wrote.every((m) => ready.includes(m));
-      const [next] = await tx.update(stories).set({ ...(all ? advance(st) : { ready }), updatedAt: new Date() }).where(eq(stories.id, st.id)).returning();
+      const [next] = await tx.update(stories).set({ ...(all ? await advance(tx, st) : { ready }), updatedAt: new Date() }).where(eq(stories.id, st.id)).returning();
       return { next: next!, all };
     });
     if (out.all) void kabar(out.next, '', out.next.phase === 'done' ? 'Cerita kalian selesai. Buka pengungkapannya.' : `Gelombang ${out.next.round} dibuka. Kartumu sudah menunggu.`);
@@ -424,6 +458,40 @@ export function storyRoutes(s: Services) {
     const [next] = await s.db.update(stories).set({ editionOk, updatedAt: new Date() }).where(eq(stories.id, st.id)).returning();
     if (st.members.every((m) => editionOk.includes(m))) void kabar(next!, '', 'Edisi kalian sudah disahkan semua penulis.');
     return c.json(await send(next!, user.id));
+  });
+
+  /** Ruang Penelitian: kartu baru, privat sampai dibagikan. */
+  r.post('/stories/:id/research', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, storyResearchBody);
+    const st = await mine(c.req.param('id'), user.id);
+    const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(storyResearch).where(eq(storyResearch.storyId, st.id));
+    if ((n?.n ?? 0) >= 300) throw bad('full', 'Ruang penelitian sudah penuh.');
+    await s.db.insert(storyResearch).values({ id: input.id, storyId: st.id, authorId: user.id, envelope: input.envelope, shared: input.shared, status: input.status }).onConflictDoNothing();
+    return c.json(await send(st, user.id), 201);
+  });
+
+  /** Ubah kartu riset: isi dan berbagi oleh pemiliknya; status pertanyaan oleh siapa pun di meja. */
+  r.put('/stories/:id/research/:rid', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, storyResearchPatch);
+    const st = await mine(c.req.param('id'), user.id);
+    const [x] = await s.db.select().from(storyResearch).where(and(eq(storyResearch.id, c.req.param('rid')), eq(storyResearch.storyId, st.id)));
+    if (!x || (!x.shared && x.authorId !== user.id)) throw notFound('Kartu riset tidak ditemukan.');
+    if ((input.envelope || input.shared !== undefined) && x.authorId !== user.id) throw forbidden('Hanya pemiliknya yang bisa mengubah atau membagikan kartu ini.');
+    await s.db
+      .update(storyResearch)
+      .set({ ...(input.envelope ? { envelope: input.envelope } : {}), ...(input.shared !== undefined ? { shared: input.shared } : {}), ...(input.status ? { status: input.status } : {}) })
+      .where(eq(storyResearch.id, x.id));
+    if (input.shared && !x.shared) void kabar(st, user.id, 'Ada temuan riset baru di meja kalian.');
+    return c.json(await send(st, user.id));
+  });
+
+  r.delete('/stories/:id/research/:rid', async (c) => {
+    const user = c.get('user');
+    const st = await mine(c.req.param('id'), user.id);
+    await s.db.delete(storyResearch).where(and(eq(storyResearch.id, c.req.param('rid')), eq(storyResearch.storyId, st.id), eq(storyResearch.authorId, user.id)));
+    return c.json(await send(st, user.id));
   });
 
   r.delete('/stories/:id', async (c) => {

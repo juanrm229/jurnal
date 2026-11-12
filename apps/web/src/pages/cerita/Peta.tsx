@@ -1,6 +1,7 @@
 /** Peta Cerita: siapa tahu apa, garis waktu, perjalanan jejak, cek kesinambungan, dan palet. */
 import { type CSSProperties, useState } from 'react';
 import { Avatar } from '@/ui/kit';
+import { AiKesinambungan } from './ai';
 import { FactCard } from './Baca';
 import type { StoryModel } from './kit';
 
@@ -89,6 +90,7 @@ export function Peta({ m }: { m: StoryModel }) {
           </ul>
         </section>
       ) : null}
+      <AiKesinambungan m={m} />
 
       <section className="section">
         <span className="label">garis waktu</span>

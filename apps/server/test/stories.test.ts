@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { STORY_DECK, storyDeckIds, storyPrereqMet } from '@sehari/core';
 import { Client, id, setup } from './helpers';
 
 let env: Awaited<ReturnType<typeof setup>>;
@@ -154,5 +155,47 @@ describe('hidup orang lain', () => {
     expect(r.json.phase).toBe('read');
     const f = await sari.ok('POST', `/v1/stories/${solo}/facts`, { id: id(), round: 1, envelope: amplop(sari, 'f') });
     expect(f.facts[0].state).toBe('sah');
+  });
+  it('ruang penelitian: privat sampai dibagikan; status pertanyaan bisa diubah siapa pun di meja', async () => {
+    const r1 = id();
+    let st = await raka.ok('POST', `/v1/stories/${sid}/research`, { id: r1, envelope: amplop(raka, 'tanya') });
+    expect(st.research).toHaveLength(1);
+    expect((await get(naya)).research).toHaveLength(0);
+    expect((await naya.req('PUT', `/v1/stories/${sid}/research/${r1}`, { status: 'terjawab' })).status).toBe(404);
+    await raka.ok('PUT', `/v1/stories/${sid}/research/${r1}`, { shared: true });
+    st = await naya.ok('PUT', `/v1/stories/${sid}/research/${r1}`, { status: 'diperdebatkan' });
+    expect(st.research[0]).toMatchObject({ shared: true, status: 'diperdebatkan' });
+    expect((await naya.req('PUT', `/v1/stories/${sid}/research/${r1}`, { envelope: amplop(naya, 'ubah') })).status).toBe(403);
+    await naya.ok('DELETE', `/v1/stories/${sid}/research/${r1}`);
+    expect((await get(raka)).research).toHaveLength(1);
+    expect((await raka.ok('DELETE', `/v1/stories/${sid}/research/${r1}`)).research).toHaveLength(0);
+  });
+
+  it('jatah keuntungan: sekali per babak', async () => {
+    const solo = id();
+    await sari.ok('POST', '/v1/stories', { id: solo, circleId: null, premise: 'warung', members: [] });
+    const perk = (round: number) => sari.req('PUT', `/v1/stories/${solo}/parts`, { round, envelope: amplop(sari, 'a'), perk: true, seal: true });
+    expect((await perk(1)).status).toBe(200);
+    const st = await sari.ok('POST', `/v1/stories/${solo}/ready`);
+    expect(st.round).toBe(2);
+    expect(st.perkUsed).toBe(true);
+    expect(st.aiOk).toBe(true);
+    expect((await perk(2)).status).toBe(409);
+  });
+
+  it('kartu berprasyarat baru masuk dek setelah Peta memenuhi syaratnya', () => {
+    const base = { round: 1, rounds: 3, members: 2, sah: 0, research: 0, misteri: 0 };
+    expect(storyPrereqMet('22', base)).toBe(false);
+    expect(storyPrereqMet('22', { ...base, sah: 2 })).toBe(true);
+    expect(storyPrereqMet('36', { ...base, research: 1 })).toBe(true);
+    const awal = storyDeckIds('lengkap', base);
+    expect(awal.length).toBeLessThan(STORY_DECK.length);
+    expect(storyDeckIds('lengkap', { round: 8, rounds: 12, members: 5, sah: 9, research: 3, misteri: 2 }).length).toBeGreaterThan(awal.length);
+  });
+
+  it('AI cerita meminta izin semua anggota lingkaran', async () => {
+    const r = await raka.req('POST', `/v1/stories/${sid}/ai/jejak`, { text: 'Kunci itu kusimpan di laci.', tokoh: 'Raka', tokohs: ['Naya'] });
+    expect(r.status).toBe(403);
+    expect((await get(raka)).aiOk).toBe(false);
   });
 });

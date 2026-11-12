@@ -1030,6 +1030,22 @@ export const storyEditionBody = z.object({
   ending: z.array(z.string().max(200)).max(3),
   template: z.enum(['satu-jendela', 'dua-sisi', 'arsip']),
 });
+export const storyResearchBody = z.object({ id, envelope: envelopeSchema, shared: z.boolean().default(false), status: z.enum(['terbuka', 'terjawab', 'diperdebatkan']).default('terbuka') });
+export const storyResearchPatch = z.object({ envelope: envelopeSchema.optional(), shared: z.boolean().optional(), status: z.enum(['terbuka', 'terjawab', 'diperdebatkan']).optional() });
+const aiScene = z.object({ tokoh: z.string().max(60), waktu: z.string().max(80), text: z.string().max(6000) });
+export const storyAiSummaryBody = z.object({ scenes: z.array(aiScene).min(1).max(60), facts: z.array(z.string().max(300)).max(60).default([]) });
+export const storyAiTraceBody = z.object({ text: z.string().min(1).max(6000), tokoh: z.string().max(60), tokohs: z.array(z.string().max(60)).max(20) });
+export interface StoryAiSummary {
+  kejadian: { peristiwa: string; jenis: 'terjadi' | 'diyakini'; tokoh: string; adegan: number }[];
+  sampul: string;
+  satuHalaman: string;
+}
+export interface StoryAiTrace {
+  usulan: { potongan: string; tahu: string[]; pertanyaan: string }[];
+}
+export interface StoryAiContinuity {
+  temuan: { masalah: string; adegan: number[] }[];
+}
 export type StoryBody = z.infer<typeof storyBody>;
 
 export const storyPartBody = z.object({
@@ -1098,6 +1114,14 @@ export interface StoryReadWire {
   envelope: Env;
 }
 
+export interface StoryResearchWire {
+  id: string;
+  authorId: string;
+  envelope: Env;
+  shared: boolean;
+  status: 'terbuka' | 'terjawab' | 'diperdebatkan';
+}
+
 export interface StoryEdition {
   order: string[];
   ending: string[];
@@ -1133,6 +1157,11 @@ export interface StoryWire {
   reads: StoryReadWire[];
   edition: StoryEdition | null;
   editionOk: string[];
+  research: StoryResearchWire[];
+  /** Keuntungan role-mu sudah dipakai di babak ini. */
+  perkUsed: boolean;
+  /** AI cloud boleh dipakai untuk cerita ini (semua anggota lingkaran setuju, atau cerita sendiri). */
+  aiOk: boolean;
   parts: StoryPartWire[];
   createdAt: string;
   updatedAt: string;

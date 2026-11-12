@@ -12,6 +12,7 @@ import { Akhir } from './Akhir';
 import { Baca } from './Baca';
 import { STEPS, stepOf, useStoryModel } from './kit';
 import { Peta } from './Peta';
+import { Riset } from './Riset';
 import { Tulis } from './Tulis';
 
 export default function Meja() {
@@ -23,11 +24,12 @@ export default function Meja() {
 
 function Table({ st }: { st: StoryWire }) {
   const m = useStoryModel(st);
-  const [tab, setTab] = useState<'meja' | 'peta'>('meja');
+  const [tab, setTab] = useState<'meja' | 'peta' | 'riset'>('meja');
   const step = stepOf(m);
   const fmt = STORY_FORMATS[storyFormat(st.rounds)];
   const babak = st.rounds > 3 ? ` · babak ${storyBabak(st.rounds, st.round) + 1}` : '';
   const pending = m.facts.filter((f) => (f.state === 'usul' || f.state === 'tunda') && !f.agrees.includes(m.meId)).length;
+  const openQ = st.research.filter((x) => x.shared && x.status !== 'terjawab' && m.open<{ kind: string }>(x.envelope)?.kind === 'tanya').length;
   const done = (u: string) => (st.phase === 'write' ? !!m.main.find((p) => p.round === st.round && p.authorId === u)?.sealed : st.phase === 'read' ? st.ready.includes(u) : true);
 
   return (
@@ -68,13 +70,17 @@ function Table({ st }: { st: StoryWire }) {
           <Doodle id="pena" size={16} color="currentColor" /> meja
         </button>
         <button role="tab" aria-selected={tab === 'peta'} className={tab === 'peta' ? 'on' : ''} onClick={() => setTab('peta')} data-testid="tab-peta">
-          <Doodle id="peta" size={16} color="currentColor" /> peta cerita
+          <Doodle id="peta" size={16} color="currentColor" /> peta
           {pending ? <em>{pending}</em> : null}
+        </button>
+        <button role="tab" aria-selected={tab === 'riset'} className={tab === 'riset' ? 'on' : ''} onClick={() => setTab('riset')} data-testid="tab-riset">
+          <Doodle id="kacamata" size={16} color="currentColor" /> riset
+          {openQ ? <em className="soft">{openQ}</em> : null}
         </button>
       </nav>
 
       <div key={`${tab}-${st.phase}-${st.round}`} className="meja-isi">
-        {tab === 'peta' ? <Peta m={m} /> : st.phase === 'write' ? <Tulis m={m} /> : st.phase === 'read' ? <Baca m={m} /> : <Akhir m={m} />}
+        {tab === 'peta' ? <Peta m={m} /> : tab === 'riset' ? <Riset m={m} /> : st.phase === 'write' ? <Tulis m={m} /> : st.phase === 'read' ? <Baca m={m} /> : <Akhir m={m} />}
       </div>
     </main>
   );

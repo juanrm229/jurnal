@@ -1,10 +1,11 @@
 /** Langkah kartu dan menulis: kartu prompt dari Peta, Lensa, kartu role, editor, serah-terima, segel. */
-import { STORY_WORDS, type StoryHandoffPayload, storyLens, storyRole, storyTilt } from '@sehari/core';
+import { STORY_WORDS, type StoryHandoffPayload, type StoryResearchPayload, storyLens, storyRole, storyTilt } from '@sehari/core';
 import { type CSSProperties, useEffect, useState } from 'react';
 import { sound } from '@/lib/sound';
 import { store } from '@/lib/storage';
 import { Avatar, Doodle } from '@/ui/kit';
 import { StoryEditor } from './Editor';
+import { AiJejak } from './ai';
 import type { Prompt, StoryModel } from './kit';
 
 /** Kartu prompt: posisi, yang kamu tahu, yang kamu kira, yang tersensor, keputusanmu, jejak, opsi. */
@@ -187,6 +188,7 @@ export function Tulis({ m }: { m: StoryModel }) {
       ) : null}
 
       <PromptCard p={prompt} />
+      <RisetPita m={m} tokoh={tokoh} />
 
       {st.offers.length === 2 && !sealed ? (
         <section className="tawaran" data-testid="tawaran">
@@ -287,6 +289,18 @@ export function Tulis({ m }: { m: StoryModel }) {
                 )}
               </span>
             </div>
+            {!trace && !sealed ? (
+              <AiJejak
+                m={m}
+                text={text}
+                tokoh={tokoh}
+                onPick={(u) => {
+                  setTrace(u.potongan);
+                  setKnows(u.tahu);
+                  setQuestion(u.pertanyaan);
+                }}
+              />
+            ) : null}
             {trace ? (
               <div className="serah-tahu">
                 <span className="tiny soft">siapa yang secara masuk akal bisa tahu?</span>
@@ -309,9 +323,9 @@ export function Tulis({ m }: { m: StoryModel }) {
               <label className="serah-perk">
                 <span className="grow">
                   <b>pakai keuntungan {role.name}</b>
-                  <span className="tiny soft">{role.keuntungan}</span>
+                  <span className="tiny soft">{m.st.perkUsed && !perk ? 'Jatah keuntungan babak ini sudah kamu pakai. Kartu menyegarkan jatahnya di babak berikutnya.' : `${role.keuntungan} Sekali per babak.`}</span>
                 </span>
-                <button type="button" role="switch" aria-checked={perk} className="switch" onClick={() => setPerk(!perk)} data-testid="pakai-keuntungan" />
+                <button type="button" role="switch" aria-checked={perk} disabled={m.st.perkUsed && !perk} className="switch" onClick={() => setPerk(!perk)} data-testid="pakai-keuntungan" />
               </label>
             ) : null}
             {perk && role?.kind === 'prompt' ? (
@@ -363,5 +377,29 @@ function Waiting({ m }: { m: StoryModel }) {
         {st.skips.includes(meId) ? `kamu setuju · ${st.skips.length} dari ${sealed.length}` : 'setuju lanjut tanpa mereka'}
       </button>
     </section>
+  );
+}
+
+/** Riset yang relevan untuk tokoh ini: keputusan dunia dan kartu yang ditautkan. */
+function RisetPita({ m, tokoh }: { m: StoryModel; tokoh: string }) {
+  const items = m.st.research
+    .map((w) => ({ w, r: m.open<StoryResearchPayload>(w.envelope) }))
+    .filter((x): x is { w: (typeof m.st.research)[number]; r: StoryResearchPayload } => !!x.r && x.r.kind !== 'mood' && (x.r.kind === 'keputusan' || (!!tokoh && x.r.link?.toLowerCase() === tokoh.toLowerCase())))
+    .slice(0, 5);
+  if (!items.length) return null;
+  return (
+    <details className="riset-pita">
+      <summary>
+        <Doodle id="kacamata" size={16} /> dari ruang riset <em>{items.length}</em>
+      </summary>
+      <ul>
+        {items.map(({ w, r }) => (
+          <li key={w.id}>
+            {r.title}
+            {r.kind === 'keputusan' && r.origin ? <span className={`riset-asal o-${r.origin}`}>{r.origin === 'fiksi' ? 'fiksi kita' : r.origin}</span> : null}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }

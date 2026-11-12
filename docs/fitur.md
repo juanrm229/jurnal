@@ -98,3 +98,12 @@ Mode Pisah, Mode Kenangan, keluar satu ketukan, lapor (isi dipilih pelapor) & bl
 ## Monetisasi
 
 Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadiah (kode) · Buku Tahunan · Kapsul Momen · dek kartu. Bayar lewat web (Xendit: QRIS, e-wallet, VA). Layar: `plus.tsx`, `aku/pesanan.tsx`, `aku/hadiah.tsx`, `aku/dek.tsx`, `rak.tsx`. Server: `routes/billing.ts`, `core/plans.ts`.
+
+### Hidup Orang Lain: lanjutan
+
+- **Jatah keuntungan**: keuntungan kartu role dipakai sekali per babak; server menolak pemakaian kedua dan editor menampilkan sisa jatah.
+- **Kartu berprasyarat**: kartu dek lengkap yang butuh kondisi Peta (fakta sah, riset bersama, misteri, gelombang, jumlah penulis) baru masuk tawaran setelah syaratnya terpenuhi.
+- **Ruang Penelitian**: tab riset berisi pertanyaan (terbuka/terjawab/diperdebatkan), kartu sumber, keputusan dunia dengan asalnya, dan moodboard foto terenkripsi. Privat sampai dibagikan; keputusan bisa diusulkan jadi fakta dunia di Peta. Riset yang relevan tampil di kartu prompt tokoh.
+- **Dari harimu**: Kalimat Terakhir dari hari yang sudah disegel bisa jadi benih premis.
+- **Ekspor**: EPUB 3, DOCX, dan Markdown dirakit di perangkat.
+- **AI (opsional)**: rangkuman kejadian (terjadi vs diyakini) dan dua sinopsis, usulan jejak dari naskah, dan cek kesinambungan. Aktif hanya bila semua anggota lingkaran setuju dan server punya kunci AI; teks yang dikirim disebutkan sebelum tombol ditekan.
