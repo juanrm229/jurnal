@@ -1,0 +1,569 @@
+/* Studio Naskah: kertas, pena merah di pinggir, dan Kacamata bertinta biru. */
+
+/* ── Pintu masuk ── */
+.nk-pintu {
+  margin-top: var(--sp-3);
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--line));
+  animation-delay: 80ms;
+}
+.nk-pintu b {
+  color: var(--ink);
+}
+.nk-ke-studio {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* ── Rak ── */
+.nk-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+}
+.nk-hero .rupa-hand {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  line-height: 1.08;
+  color: var(--ink);
+  animation: ink-write 1100ms cubic-bezier(0.5, 0, 0.2, 1) 120ms both;
+}
+.nk-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  text-align: left;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) 0;
+  overflow: hidden;
+  animation: card-deal 560ms var(--ease-spring) both;
+  animation-delay: calc(var(--n, 0) * 60ms);
+}
+.nk-spine {
+  align-self: stretch;
+  width: 10px;
+  border-radius: 0 6px 6px 0;
+  background: linear-gradient(180deg, var(--ink), color-mix(in srgb, var(--ink) 60%, #000));
+  flex: none;
+}
+.nk-item b {
+  display: block;
+  font-family: var(--serif-display);
+  font-size: var(--fs-lg);
+  font-weight: 500;
+}
+.nk-item .tiny,
+.nk-logline {
+  display: block;
+}
+.nk-logline {
+  margin: 2px 0 4px;
+  font-family: var(--serif);
+}
+.nk-penulis {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 4px 12px 4px 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--card);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--text-soft);
+}
+.nk-penulis.on {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, var(--card));
+}
+
+/* ── Ruang ── */
+.nk-logline-top {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.nk-penulis-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-xs);
+  color: var(--text-soft);
+}
+.nk-penulis-row > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.nk-kosong {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-4);
+  text-align: center;
+}
+.nk-kosong .rupa-hand {
+  margin: 0;
+  font-size: var(--fs-xl);
+  color: var(--ink);
+}
+.nk-bab {
+  margin-top: var(--sp-5);
+}
+.nk-bab-h {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--serif-display);
+  font-weight: 500;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.3px;
+}
+.nk-adegan {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  animation: paper-lay 480ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 40ms);
+}
+.nk-adegan-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 12px 18px;
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.nk-adegan-main::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--pov, var(--ink));
+}
+.nk-adegan.draf .nk-adegan-main {
+  background: repeating-linear-gradient(-45deg, transparent 0 10px, color-mix(in srgb, var(--text) 3%, transparent) 10px 11px), var(--card);
+}
+.nk-adegan.tutup .nk-adegan-main {
+  opacity: 0.7;
+}
+.nk-adegan-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nk-adegan-top b {
+  color: var(--pov, var(--ink));
+  font-weight: 500;
+}
+.nk-adegan-teks {
+  font-family: var(--serif);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+}
+.nk-adegan-teks em {
+  color: var(--text-soft);
+}
+.nk-adegan-bawah {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nk-pill {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+}
+.nk-pill.draf {
+  background: var(--sticky-yellow);
+  color: #4a4300;
+}
+.nk-geser {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nk-geser button {
+  flex: 1;
+  width: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 10%, var(--paper));
+  color: var(--ink);
+  font-size: 18px;
+}
+.nk-geser button:disabled {
+  opacity: 0.3;
+}
+.nk-tambah {
+  min-height: 46px;
+  border: 1px dashed color-mix(in srgb, var(--ink) 40%, var(--line));
+  border-radius: var(--r-card);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.nk-susunan > .btn {
+  margin-top: var(--sp-5);
+}
+
+/* Garis waktu: jalur per tokoh, urut kejadian. */
+.nk-jalur-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: var(--sp-3);
+  font-size: var(--fs-xs);
+}
+.nk-jalur-legenda > span,
+.nk-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.nk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.nk-garis {
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nk-garis li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding-left: calc(var(--lane, 0) * 14px);
+  animation: paper-lay 420ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 35ms);
+}
+.nk-garis li::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--pov);
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.nk-garis time {
+  color: var(--text-soft);
+  line-height: 1.3;
+}
+.nk-titik {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 0;
+  border-left: 4px solid var(--pov);
+  border-radius: 10px;
+  background: var(--card);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+.nk-titik b {
+  font-weight: 500;
+  color: var(--pov);
+}
+
+/* ── Kanon ── */
+.nk-entri {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  animation: paper-lay 420ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 40ms);
+}
+.nk-entri b {
+  display: block;
+  font-weight: 500;
+  font-family: var(--serif);
+}
+.nk-entri .tiny {
+  display: block;
+}
+.nk-tahu-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.nk-tahu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  border: 1px solid transparent;
+}
+.nk-tahu.tahu {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.nk-tahu.mengira {
+  border: 1px dashed var(--ink);
+  color: var(--ink);
+}
+.nk-tahu.tidak {
+  background: color-mix(in srgb, var(--text) 6%, var(--paper));
+  color: var(--text-soft);
+}
+.nk-tahu.big {
+  min-height: 40px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.nk-know {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.field.sm {
+  min-height: 40px;
+  font-size: var(--fs-sm);
+  flex: 1;
+  min-width: 150px;
+}
+
+/* ── Editor adegan ── */
+.nk-lensa-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 0;
+  background: color-mix(in srgb, var(--ink) 10%, var(--paper));
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+}
+.nk-lensa-btn.on {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.nk-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--sp-3);
+}
+.nk-pov {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid color-mix(in srgb, var(--pov) 45%, transparent);
+  background: none;
+  color: var(--pov);
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+.nk-pov.on {
+  background: var(--pov);
+  border-color: var(--pov);
+  color: #fff;
+}
+.nk-kapan {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 8px;
+}
+.field.salah {
+  border-color: var(--lak);
+}
+.nk-salah {
+  color: var(--lak-deep);
+}
+.nk-judul-adegan {
+  font-family: var(--serif);
+}
+.nk-baca-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--sp-3);
+}
+.nk-paper {
+  border-radius: 6px;
+  box-shadow: var(--shadow-lift);
+  background-image: none;
+  background-color: #fff;
+}
+:root[data-dark='1'] .nk-paper {
+  background-color: var(--card);
+}
+.nk-paper::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--lak) 35%, transparent);
+  pointer-events: none;
+}
+.seditor-layer mark.w-belum {
+  background: color-mix(in srgb, var(--lak) 20%, transparent);
+  box-shadow: inset 0 -2px 0 var(--lak);
+}
+.seditor-layer mark.w-zaman {
+  background: color-mix(in srgb, var(--sticky-yellow) 75%, transparent);
+  box-shadow: inset 0 -2px 0 #b8900b;
+}
+.seditor-layer mark.m-tahu {
+  background: none;
+  box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--ink) 55%, transparent);
+}
+.seditor-layer mark.m-kira {
+  background: none;
+  border-bottom: 1.5px dashed color-mix(in srgb, var(--ink) 50%, transparent);
+}
+.nk-coretan {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: var(--sp-4) 0;
+}
+.nk-coret {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--lak);
+  animation: note-stick 520ms var(--ease-spring) both;
+}
+.nk-coret.zaman {
+  color: #8a6a00;
+}
+.nk-coret p {
+  margin: 0 0 6px;
+  font-family: var(--hand);
+  font-size: 21px;
+  line-height: 1.15;
+}
+.nk-kacamata {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-sheet);
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--ink) 90%, transparent);
+  animation: sheet-body 420ms var(--ease-out) both;
+}
+.nk-kacamata b {
+  font-family: var(--serif-display);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+}
+.nk-kacamata .tiny {
+  opacity: 0.8;
+}
+.nk-kacamata dl {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 8px 10px;
+  margin: 12px 0 10px;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+.nk-kacamata dt {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  padding-top: 3px;
+}
+.nk-kacamata dd {
+  margin: 0;
+}
+.nk-kacamata dd.kira {
+  font-style: italic;
+}
+.nk-kacamata i {
+  opacity: 0.7;
+}
+.nk-sensor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+}
+.nk-sensor span {
+  display: inline-block;
+  height: 11px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--on-ink) 88%, transparent);
+}
+.nk-sensor em {
+  font-style: normal;
+  font-size: 11px;
+  text-decoration: underline;
+  opacity: 0.85;
+}
+.nk-kacamata-catat {
+  display: block;
+  line-height: 1.4;
+}
+.nk-aksi {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: var(--sp-4);
+}
+.nk-hapus {
+  color: var(--lak-deep);
+}
+.nk-versi .small {
+  margin: 6px 0;
+  font-family: var(--serif);
+}
+@media (min-width: 900px) {
+  .naskah-adegan {
+    max-width: 760px;
+  }
+}

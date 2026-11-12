@@ -1,0 +1,88 @@
+/** Studio Naskah: data dan model bersama. Isi dibuka di perangkat. */
+import {
+  type NaskahCanonPayload,
+  type NaskahEntry,
+  type NaskahMeta,
+  type NaskahScenePayload,
+  type NaskahWire,
+  naskahChrono,
+} from '@sehari/core';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { api } from './api';
+import { memberName, newDropId, useCircles } from './data';
+import { useReady } from './session';
+import { sealPart, useOpenAny } from './stories';
+
+export const nk = { all: ['naskah'] as const, one: (id: string) => ['naskah', id] as const };
+export const newNaskahId = () => `n${newDropId().slice(1)}`;
+
+export function useNaskahList() {
+  return useQuery({ queryKey: nk.all, queryFn: () => api.get<NaskahWire[]>('/naskah'), refetchInterval: 60_000 });
+}
+export function useNaskah(id: string) {
+  return useQuery({ queryKey: nk.one(id), queryFn: () => api.get<NaskahWire>(`/naskah/${id}`), refetchInterval: 15_000 });
+}
+export function useNaskahCache() {
+  const qc = useQueryClient();
+  return (ms: NaskahWire) => {
+    qc.setQueryData(nk.one(ms.id), ms);
+    void qc.invalidateQueries({ queryKey: nk.all });
+  };
+}
+
+export interface Scene {
+  id: string;
+  authorId: string;
+  chapter: number;
+  order: number;
+  status: 'draf' | 'terbit';
+  version: number;
+  updatedAt: string;
+  p: NaskahScenePayload | null;
+}
+
+/** Model satu naskah: semua amplop dibuka, kronologi dihitung, nama tokoh siap dipakai. */
+export function useNaskahModel(ms: NaskahWire | undefined) {
+  const { me, identity } = useReady();
+  const { circles } = useCircles();
+  const open = useOpenAny();
+  const cache = useNaskahCache();
+  const meId = me.user.id;
+  return useMemo(() => {
+    if (!ms) return null;
+    const circle = circles.find((c) => c.id === ms.circleId);
+    const meta = open<NaskahMeta>(ms.meta) ?? { v: 1, title: 'naskah tanpa judul' };
+    const scenes: Scene[] = ms.scenes.map((x) => ({ ...x, p: open<NaskahScenePayload>(x.envelope) }));
+    const canon: NaskahEntry[] = ms.canon.map((x) => ({ id: x.id, p: open<NaskahCanonPayload>(x.envelope)! })).filter((x) => !!x.p);
+    const chrono = naskahChrono(scenes);
+    const tokoh = canon.filter((e) => e.p.kind === 'tokoh');
+    const nameOf = (cid: string | undefined) => canon.find((e) => e.id === cid)?.p.name ?? 'tanpa tokoh';
+    const chapters = [...new Set(scenes.map((s) => s.chapter))].sort((a, b) => a - b);
+    const seal = (v: unknown) => sealPart(v, circle, { id: meId, publicKey: identity.publicKey });
+    const call = async (f: () => Promise<NaskahWire>) => {
+      const next = await f();
+      cache(next);
+      return next;
+    };
+    const post = (path: string, body?: unknown) => call(() => api.post<NaskahWire>(`/naskah/${ms.id}${path}`, body));
+    const put = (path: string, body?: unknown) => call(() => api.put<NaskahWire>(`/naskah/${ms.id}${path}`, body));
+    const del = (path: string) => call(() => api.del<NaskahWire>(`/naskah/${ms.id}${path}`));
+    const who = (uid: string) => memberName(circles, uid, meId);
+    const face = (uid: string) => (uid === meId ? me.user.doodle : (circle?.members.find((m) => m.userId === uid)?.doodle ?? 'tunas'));
+    return { ms, meta, scenes, canon, chrono, tokoh, nameOf, chapters, seal, post, put, del, who, face, meId, circle };
+  }, [ms, circles, open, meId]);
+}
+export type NaskahModel = NonNullable<ReturnType<typeof useNaskahModel>>;
+
+/** Warna tetap per tokoh, supaya sudut pandang mudah dikenali di daftar dan garis waktu. */
+const POV_COLORS = ['#2a14d6', '#c2371f', '#1f7a4d', '#b8860b', '#7b3fb8', '#0f6f8f', '#b2456e', '#5a5a14'];
+export const povColor = (m: NaskahModel, cid: string | undefined) => {
+  const i = m.tokoh.findIndex((t) => t.id === cid);
+  return i < 0 ? '#8a8a92' : POV_COLORS[i % POV_COLORS.length]!;
+};
+
+export const firstLine = (t: string | undefined, n = 90) => {
+  const s = (t ?? '').trim().replace(/\s+/g, ' ');
+  return s.length > n ? `${s.slice(0, n)}…` : s;
+};

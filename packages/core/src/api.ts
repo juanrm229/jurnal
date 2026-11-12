@@ -1170,3 +1170,55 @@ export interface StoryWire {
   createdAt: string;
   updatedAt: string;
 }
+
+// ── Studio Naskah ─────────────────────────────────────────────────────────────
+
+export const naskahBody = z.object({ id, circleId: id.nullable(), members: z.array(id).max(8), meta: envelopeSchema });
+export const naskahMetaBody = z.object({ meta: envelopeSchema });
+export const naskahSceneBody = z.object({ id, chapter: z.number().int().min(1).max(200), order: z.number().min(-1e6).max(1e6), envelope: envelopeSchema, status: z.enum(['draf', 'terbit']).default('draf') });
+export const naskahScenePatch = z.object({
+  chapter: z.number().int().min(1).max(200).optional(),
+  order: z.number().min(-1e6).max(1e6).optional(),
+  envelope: envelopeSchema.optional(),
+  status: z.enum(['draf', 'terbit']).optional(),
+});
+export const naskahCanonBody = z.object({ id, kind: z.enum(['tokoh', 'benda', 'tempat', 'fakta']), envelope: envelopeSchema });
+export const naskahCanonPatch = z.object({ envelope: envelopeSchema });
+
+export interface NaskahSceneWire {
+  id: string;
+  authorId: string;
+  chapter: number;
+  order: number;
+  status: 'draf' | 'terbit';
+  /** Null untuk draf orang lain: yang lain hanya tahu seseorang sedang menulis. */
+  envelope: Env | null;
+  version: number;
+  updatedAt: string;
+}
+export interface NaskahCanonWire {
+  id: string;
+  kind: 'tokoh' | 'benda' | 'tempat' | 'fakta';
+  authorId: string;
+  updatedBy: string;
+  envelope: Env;
+  updatedAt: string;
+}
+export interface NaskahVersionWire {
+  id: string;
+  sceneId: string;
+  version: number;
+  envelope: Env;
+  createdAt: string;
+}
+export interface NaskahWire {
+  id: string;
+  circleId: string | null;
+  ownerId: string;
+  members: string[];
+  meta: Env;
+  scenes: NaskahSceneWire[];
+  canon: NaskahCanonWire[];
+  createdAt: string;
+  updatedAt: string;
+}

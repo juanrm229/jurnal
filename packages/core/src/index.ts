@@ -80,3 +80,4 @@ export * from './dates';
 export * from './wrapLong';
 export * from './cerita';
 export * from './ceritaDek';
+export * from './naskah';

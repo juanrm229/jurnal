@@ -1,12 +1,14 @@
 /** Penutupan: pengungkapan, penghargaan, Wrapped, susunan edisi, templat buku, dan kapsul lanjutan. */
-import { STORY_DECK, type StoryEdition, type StoryPartWire, storyRole, storySentences } from '@sehari/core';
+import { type NaskahCanonPayload, type NaskahWire, STORY_DECK, storyBabak, type StoryEdition, type StoryPartWire, storyRole, storySentences } from '@sehari/core';
 import { type CSSProperties, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { api } from '@/lib/api';
+import { newNaskahId } from '@/lib/naskah';
 import { namaBerkas, toDocx, toEpub, toMarkdown, unduh } from '@/lib/ekspor';
 import { navigate } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { newWorkId, saveWork } from '@/lib/works';
-import { Avatar, Doodle, Sheet } from '@/ui/kit';
+import { Avatar, Doodle, Sheet, useToast } from '@/ui/kit';
 import { AiRangkuman } from './ai';
 import { Lipatan } from './Baca';
 import type { StoryModel } from './kit';
@@ -150,6 +152,7 @@ export function Akhir({ m }: { m: StoryModel }) {
 
       <div className="col meja-lanjut" style={{ gap: 10 }}>
         <BookButton m={m} ordered={ordered} credit={credit} />
+        <KeStudio m={m} ordered={ordered} />
         <Ekspor m={m} ordered={ordered} credit={credit} />
         <div className="row" style={{ gap: 8 }}>
           <button className="btn soft grow" onClick={() => setBranch(true)} data-testid="jalan-lain">
@@ -218,6 +221,52 @@ function Ekspor({ m, ordered, credit }: { m: StoryModel; ordered: StoryPartWire[
         ))}
       </div>
     </div>
+  );
+}
+
+/** Bawa cerita yang selesai ke Studio Naskah: tokoh dan fakta jadi Kanon, bagian jadi adegan terbit. */
+function KeStudio({ m, ordered }: { m: StoryModel; ordered: StoryPartWire[] }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    setBusy(true);
+    try {
+      const ms = await api.post<NaskahWire>('/naskah', { id: newNaskahId(), circleId: m.st.circleId, members: m.st.members.filter((u) => u !== m.meId), meta: m.seal({ v: 1, title: m.premise.title, logline: m.premise.pitch || undefined }) });
+      const tokohId = new Map<string, string>();
+      for (const t of m.tokohs) {
+        const cid = newNaskahId();
+        tokohId.set(t.toLowerCase(), cid);
+        await api.post(`/naskah/${ms.id}/canon`, { id: cid, kind: 'tokoh', envelope: m.seal({ v: 1, kind: 'tokoh', name: t, aliases: [], known: [] } satisfies NaskahCanonPayload) });
+      }
+      const idOf = (name: string) => tokohId.get(name.trim().toLowerCase());
+      const firstOfRound = new Map<number, string>();
+      let i = 0;
+      for (const p of ordered.filter((x) => x.world === 'a')) {
+        const sid = newNaskahId();
+        if (!firstOfRound.has(p.round)) firstOfRound.set(p.round, sid);
+        const tokoh = m.tokohOf(p);
+        await api.post(`/naskah/${ms.id}/scenes`, {
+          id: sid,
+          chapter: storyBabak(m.st.rounds, p.round) + 1,
+          order: ++i,
+          status: 'terbit',
+          envelope: m.seal({ v: 1, title: `dari ${m.name(p.authorId)}`, pov: idOf(tokoh) ?? '', when: { label: m.handoffOf(p)?.waktu ?? m.waktuOf(p.round), sort: '' }, text: m.sceneOf(p)?.text ?? '' }),
+        });
+      }
+      for (const f of m.sah) {
+        const known = [...f.f.knows.map((w) => ({ who: idOf(w), how: 'tahu' as const })), ...f.f.believes.map((w) => ({ who: idOf(w), how: 'mengira' as const }))].filter((k): k is { who: string; how: 'tahu' | 'mengira' } => !!k.who).map((k) => ({ ...k, since: firstOfRound.get(f.round) }));
+        await api.post(`/naskah/${ms.id}/canon`, { id: newNaskahId(), kind: 'fakta', envelope: m.seal({ v: 1, kind: 'fakta', name: f.f.sentence, aliases: [], known, since: firstOfRound.get(f.round) } satisfies NaskahCanonPayload) });
+      }
+      navigate(`/naskah/${ms.id}`);
+    } catch (e) {
+      toast((e as Error).message);
+      setBusy(false);
+    }
+  };
+  return (
+    <button className="btn soft" disabled={busy} onClick={() => void go()} data-testid="ke-studio">
+      <Doodle id="buku-terbuka" size={20} /> {busy ? 'memindahkan ke studio…' : 'lanjutkan di Studio Naskah'}
+    </button>
   );
 }
 
