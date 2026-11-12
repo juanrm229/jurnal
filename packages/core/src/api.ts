@@ -998,3 +998,50 @@ export function swapTarget(memberIds: string[], meId: string, month: string): st
   const shift = 1 + (((y ?? 0) * 12 + (m ?? 0)) % (ids.length - 1));
   return ids[(i + shift) % ids.length]!;
 }
+
+// ── Hidup Orang Lain (cerita bersama) ───────────────────────────────────────
+
+export const storyBody = z.object({
+  id,
+  circleId: id.nullable(),
+  premise: z.string().min(1).max(40),
+  members: z.array(id).max(5),
+});
+export type StoryBody = z.infer<typeof storyBody>;
+
+export const storyPartBody = z.object({
+  round: z.number().int().min(1).max(3),
+  envelope: envelopeSchema,
+  seal: z.boolean(),
+});
+export type StoryPartBody = z.infer<typeof storyPartBody>;
+
+export type StoryPhase = 'write' | 'read' | 'done';
+
+export interface StoryPartWire {
+  id: string;
+  round: number;
+  authorId: string;
+  /** Kosong selama bagian orang lain belum boleh dibaca. */
+  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] } | null;
+  sealed: boolean;
+  /** Siapa yang menyepakati jejak bagian ini (handshake). */
+  agrees: string[];
+}
+
+export interface StoryWire {
+  id: string;
+  circleId: string | null;
+  ownerId: string;
+  premise: string;
+  round: number;
+  phase: StoryPhase;
+  members: string[];
+  /** Selama permainan hanya role-mu sendiri; semua role terbuka saat selesai. */
+  roles: Record<string, string>;
+  /** Siapa yang siap lanjut dari ruang baca. */
+  ready: string[];
+  parts: StoryPartWire[];
+  createdAt: string;
+  updatedAt: string;
+}

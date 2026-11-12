@@ -78,3 +78,4 @@ export * from './kepo';
 export * from './kenal';
 export * from './dates';
 export * from './wrapLong';
+export * from './cerita';
