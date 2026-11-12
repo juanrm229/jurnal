@@ -145,6 +145,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/naskah', page('naskah/Rak'), true, false],
   ['/naskah/:id', page('naskah/Ruang'), true, false],
   ['/naskah/:id/a/:sid', page('naskah/Adegan'), true, false],
+  ['/naskah/:id/baca/:wid', page('naskah/Baca'), true, false],
   ['/kota', page('kota/Kota'), true, false],
   ['/kota/patok/:plotId', page('kota/Patok'), true, false],
   ['/kota/rumah/:id', page('kota/Rumah'), true, false],

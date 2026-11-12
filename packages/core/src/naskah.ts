@@ -26,6 +26,12 @@ export interface NaskahScenePayload {
   pov: string;
   when: NaskahWhen;
   text: string;
+  /** Surat: kepada siapa (nama atau tokoh). */
+  kepada?: string;
+  /** Nama yang sengaja dibiarkan sebagai desas-desus (tokoh rumah lain yang belum tertaut). */
+  desas?: string[];
+  /** Figuran kota yang dijumpai di adegan ini (id Buku Warga Kota). */
+  jumpa?: string[];
   /** Rumah di Kota: adegan ini kesaksian atas peristiwa kota (id almanak). */
   peristiwa?: string;
   saksi?: 'mengalami' | 'mendengar';
@@ -49,6 +55,10 @@ export interface NaskahCanonPayload {
   known: NaskahKnow[];
   /** Adegan tempat entri ini mulai ada di dunia cerita. Tanpa ini: sejak awal. */
   since?: string;
+  /** Tokoh: 'utama' (warga), atau 'figuran' (tokoh pendukung milik rumah ini). */
+  peran?: 'utama' | 'figuran';
+  /** Tokoh rumah kota: 'disapa' = rumah lain boleh menulis pertemuan kecil tanpa mengetuk, tanpa mengubah faktanya. */
+  sapa?: 'tertutup' | 'disapa';
   /** Tokoh: tahun lahir dan wafat, dipakai untuk memeriksa hubungan antar-rumah di Kota. */
   born?: number;
   died?: number;
@@ -177,4 +187,28 @@ export function naskahMentions(text: string, entries: NaskahEntry[]): { at: numb
   const out: { at: number; end: number; id: string }[] = [];
   for (const e of entries) for (const t of naskahTerms(e.p)) for (const r of naskahFind(text, t)) out.push({ ...r, id: e.id });
   return out;
+}
+
+// ── Rak karya: satu Kanon, banyak karya ─────────────────────────────────────
+
+export type NaskahBentuk = 'kisah' | 'cerpen' | 'novel' | 'jurnal' | 'surat';
+
+/** Bentuk karya. Semua karya dalam satu naskah berbagi Kanon (tokoh, benda, fakta) yang sama. */
+export const NASKAH_BENTUK: Record<NaskahBentuk, { label: string; hint: string; doodle: string }> = {
+  kisah: { label: 'kisah', hint: 'Adegan-adegan lepas dari berbagai tokoh dan waktu. Cocok untuk memulai.', doodle: 'pena' },
+  cerpen: { label: 'cerpen', hint: 'Satu cerita utuh yang selesai sekali baca, biasanya satu atau dua bab.', doodle: 'kertas-sobek' },
+  novel: { label: 'novel', hint: 'Cerita panjang berbab dengan judul bab, urutan baca, dan garis waktu.', doodle: 'buku' },
+  jurnal: { label: 'jurnal tokoh', hint: 'Buku harian satu tokoh: entri bertanggal, ditulis dari kepalanya sendiri.', doodle: 'buku-terbuka' },
+  surat: { label: 'surat', hint: 'Surat-surat dari satu tokoh kepada orang lain, termasuk tokoh di rumah lain.', doodle: 'amplop' },
+};
+export const NASKAH_BENTUK_IDS = Object.keys(NASKAH_BENTUK) as NaskahBentuk[];
+
+export interface NaskahWorkPayload {
+  v: 1;
+  title: string;
+  sinopsis?: string;
+  /** Jurnal: pemilik buku harian. Surat: penulis surat. (id entri Kanon tokoh) */
+  tokoh?: string;
+  /** Judul bab untuk novel dan cerpen. */
+  bab?: Record<string, string>;
 }

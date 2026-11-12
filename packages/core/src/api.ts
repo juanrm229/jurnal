@@ -1177,20 +1177,33 @@ export interface StoryWire {
 export const naskahEnv = z.union([envelopeSchema, z.object({ plain: z.record(z.string(), z.unknown()) }).refine((x) => JSON.stringify(x).length <= 120_000, 'Isi terlalu panjang.')]);
 export const naskahBody = z.object({ id, circleId: id.nullable(), members: z.array(id).max(8), meta: envelopeSchema });
 export const naskahMetaBody = z.object({ meta: naskahEnv });
-export const naskahSceneBody = z.object({ id, chapter: z.number().int().min(1).max(200), order: z.number().min(-1e6).max(1e6), envelope: naskahEnv, status: z.enum(['draf', 'terbit']).default('draf') });
+export const naskahSceneBody = z.object({ id, chapter: z.number().int().min(1).max(200), order: z.number().min(-1e6).max(1e6), envelope: naskahEnv, status: z.enum(['draf', 'terbit']).default('draf'), workId: z.string().max(40).nullable().optional() });
 export const naskahScenePatch = z.object({
   chapter: z.number().int().min(1).max(200).optional(),
   order: z.number().min(-1e6).max(1e6).optional(),
   envelope: naskahEnv.optional(),
   status: z.enum(['draf', 'terbit']).optional(),
+  workId: z.string().max(40).nullable().optional(),
 });
+export const naskahWorkBody = z.object({ id, bentuk: z.enum(['kisah', 'cerpen', 'novel', 'jurnal', 'surat']), envelope: naskahEnv, order: z.number().min(-1e6).max(1e6).default(0) });
+export const naskahWorkPatch = z.object({ envelope: naskahEnv.optional(), order: z.number().min(-1e6).max(1e6).optional() });
 export const naskahCanonBody = z.object({ id, kind: z.enum(['tokoh', 'benda', 'tempat', 'fakta']), envelope: naskahEnv });
 export const naskahCanonPatch = z.object({ envelope: naskahEnv });
 export type NaskahEnv = Env | { plain: unknown };
 
+export interface NaskahWorkWire {
+  id: string;
+  authorId: string;
+  bentuk: 'kisah' | 'cerpen' | 'novel' | 'jurnal' | 'surat';
+  envelope: NaskahEnv;
+  order: number;
+  createdAt: string;
+}
 export interface NaskahSceneWire {
   id: string;
   authorId: string;
+  /** Karya tempat adegan ini; null = kisah lepas. */
+  workId: string | null;
   chapter: number;
   order: number;
   status: 'draf' | 'terbit';
@@ -1223,6 +1236,7 @@ export interface NaskahWire {
   visibility: 'privat' | 'kota' | 'arsip';
   meta: NaskahEnv;
   scenes: NaskahSceneWire[];
+  works: NaskahWorkWire[];
   canon: NaskahCanonWire[];
   createdAt: string;
   updatedAt: string;

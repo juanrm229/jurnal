@@ -4,6 +4,8 @@ import {
   type NaskahEntry,
   type NaskahMeta,
   type NaskahScenePayload,
+  type NaskahBentuk,
+  type NaskahWorkPayload,
   type NaskahWire,
   naskahChrono,
 } from '@sehari/core';
@@ -31,9 +33,18 @@ export function useNaskahCache() {
   };
 }
 
+export interface Work {
+  id: string;
+  authorId: string;
+  bentuk: NaskahBentuk;
+  order: number;
+  p: NaskahWorkPayload;
+}
+
 export interface Scene {
   id: string;
   authorId: string;
+  workId: string | null;
   chapter: number;
   order: number;
   status: 'draf' | 'terbit';
@@ -59,6 +70,10 @@ export function useNaskahModel(ms: NaskahWire | undefined) {
     const scenes: Scene[] = ms.scenes.map((x) => ({ ...x, p: unwrap<NaskahScenePayload>(x.envelope) }));
     const canon: NaskahEntry[] = ms.canon.map((x) => ({ id: x.id, p: unwrap<NaskahCanonPayload>(x.envelope)! })).filter((x) => !!x.p);
     const chrono = naskahChrono(scenes);
+    const works: Work[] = ms.works.map((w) => ({ id: w.id, authorId: w.authorId, bentuk: w.bentuk, order: w.order, p: unwrap<NaskahWorkPayload>(w.envelope) ?? { v: 1, title: 'karya' } }));
+    /** Adegan sebuah karya; null = kisah lepas (adegan tanpa karya). */
+    const scenesOf = (workId: string | null) => scenes.filter((s) => (s.workId ?? null) === workId);
+    const workOf = (s: Scene) => works.find((w) => w.id === s.workId) ?? null;
     const tokoh = canon.filter((e) => e.p.kind === 'tokoh');
     const nameOf = (cid: string | undefined) => canon.find((e) => e.id === cid)?.p.name ?? 'tanpa tokoh';
     const chapters = [...new Set(scenes.map((s) => s.chapter))].sort((a, b) => a - b);
@@ -74,7 +89,7 @@ export function useNaskahModel(ms: NaskahWire | undefined) {
     const del = (path: string) => call(() => api.del<NaskahWire>(`/naskah/${ms.id}${path}`));
     const who = (uid: string) => memberName(circles, uid, meId);
     const face = (uid: string) => (uid === meId ? me.user.doodle : (circle?.members.find((m) => m.userId === uid)?.doodle ?? 'tunas'));
-    return { ms, meta, scenes, canon, chrono, tokoh, nameOf, chapters, seal, post, put, del, who, face, meId, circle, pub, canWrite, unwrap };
+    return { ms, meta, scenes, canon, chrono, tokoh, nameOf, chapters, seal, post, put, del, who, face, meId, circle, pub, canWrite, unwrap, works, scenesOf, workOf };
   }, [ms, circles, open, meId]);
 }
 export type NaskahModel = NonNullable<ReturnType<typeof useNaskahModel>>;
@@ -90,3 +105,15 @@ export const firstLine = (t: string | undefined, n = 90) => {
   const s = (t ?? '').trim().replace(/\s+/g, ' ');
   return s.length > n ? `${s.slice(0, n)}…` : s;
 };
+
+const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+/** "1979-02-14" → "Rabu, 14 Februari 1979"; tanggal sebagian tetap dibaca seadanya. */
+export function tglPanjang(sort: string | undefined): string {
+  const m = sort?.match(/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?/);
+  if (!m) return '';
+  const [, y, mo, d] = m;
+  if (d) return `${HARI[new Date(Number(y), Number(mo) - 1, Number(d)).getDay()]}, ${Number(d)} ${BULAN[Number(mo) - 1]} ${y}`;
+  if (mo) return `${BULAN[Number(mo) - 1]} ${y}`;
+  return y!;
+}

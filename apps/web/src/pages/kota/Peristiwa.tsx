@@ -31,6 +31,11 @@ export default function Peristiwa() {
       const ms = await api.get<NaskahWire>(`/naskah/${rumahku.msId}`);
       const tokoh = ms.canon.map((c) => (c.envelope as { plain?: NaskahCanonPayload }).plain).find((p) => p?.kind === 'tokoh');
       const tokohId = ms.canon.find((c) => (c.envelope as { plain?: NaskahCanonPayload }).plain === tokoh)?.id ?? '';
+      if (!tokohId) {
+        toast('Rumahmu belum punya tokoh. Tambahkan dulu di Kanon, lalu kembali ke koran ini.');
+        navigate(`/naskah/${rumahku.msId}`);
+        return;
+      }
       const kena = !e.regions.length || e.regions.includes(rumahku.regionId);
       const sid = newNaskahId();
       const p: NaskahScenePayload = { v: 1, pov: tokohId, when: { label: tanggal(e), sort: e.month ? `${e.year}-${String(e.month).padStart(2, '0')}` : String(e.year) }, text: '', peristiwa: e.id, saksi: kena ? 'mengalami' : 'mendengar' };

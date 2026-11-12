@@ -12,6 +12,8 @@ import {
   naskahMetaBody,
   naskahSceneBody,
   naskahScenePatch,
+  naskahWorkBody,
+  naskahWorkPatch,
   type NaskahVersionWire,
   type NaskahWire,
 } from '@sehari/core';
@@ -22,7 +24,8 @@ import { schema } from '../db';
 import { pushTo, requireMember } from '../lib/domain';
 import { bad, conflict, forbidden, notFound } from '../lib/errors';
 
-const { manuscripts, msScenes, msVersions, msCanon, circleMembers } = schema;
+const { manuscripts, msScenes, msVersions, msCanon, msWorks, circleMembers } = schema;
+type WorkRow = typeof msWorks.$inferSelect;
 type MsRow = typeof manuscripts.$inferSelect;
 type SceneRow = typeof msScenes.$inferSelect;
 type CanonRow = typeof msCanon.$inferSelect;
@@ -31,7 +34,7 @@ type CanonRow = typeof msCanon.$inferSelect;
 const VERSION_GAP_MS = 10 * 60_000;
 const MAX_VERSIONS = 30;
 
-function wire(ms: MsRow, scenes: SceneRow[], canon: CanonRow[], viewer: string): NaskahWire {
+function wire(ms: MsRow, scenes: SceneRow[], canon: CanonRow[], viewer: string, works: WorkRow[] = []): NaskahWire {
   return {
     id: ms.id,
     circleId: ms.circleId,
@@ -46,6 +49,7 @@ function wire(ms: MsRow, scenes: SceneRow[], canon: CanonRow[], viewer: string):
       .map((x) => ({
         id: x.id,
         authorId: x.authorId,
+        workId: x.workId ?? null,
         chapter: x.chapter,
         order: x.order,
         status: x.status as 'draf' | 'terbit',
@@ -53,6 +57,7 @@ function wire(ms: MsRow, scenes: SceneRow[], canon: CanonRow[], viewer: string):
         version: x.version,
         updatedAt: x.updatedAt.toISOString(),
       })),
+    works: works.sort((a, b) => a.order - b.order).map((x) => ({ id: x.id, authorId: x.authorId, bentuk: x.bentuk as never, envelope: x.envelope as never, order: x.order, createdAt: x.createdAt.toISOString() })),
     canon: canon.map((x) => ({ id: x.id, kind: x.kind as never, authorId: x.authorId, updatedBy: x.updatedBy, envelope: x.envelope as never, updatedAt: x.updatedAt.toISOString() })),
     createdAt: ms.createdAt.toISOString(),
     updatedAt: ms.updatedAt.toISOString(),
@@ -63,13 +68,24 @@ export function naskahRoutes(s: Services) {
   const r = new Hono<AppEnv>();
 
   const load = async (ids: string[]) => {
-    if (!ids.length) return { scenes: [] as SceneRow[], canon: [] as CanonRow[] };
-    const [scenes, canon] = await Promise.all([s.db.select().from(msScenes).where(inArray(msScenes.msId, ids)), s.db.select().from(msCanon).where(inArray(msCanon.msId, ids))]);
-    return { scenes, canon };
+    if (!ids.length) return { scenes: [] as SceneRow[], canon: [] as CanonRow[], works: [] as WorkRow[] };
+    const [scenes, canon, works] = await Promise.all([
+      s.db.select().from(msScenes).where(inArray(msScenes.msId, ids)),
+      s.db.select().from(msCanon).where(inArray(msCanon.msId, ids)),
+      s.db.select().from(msWorks).where(inArray(msWorks.msId, ids)),
+    ]);
+    return { scenes, canon, works };
   };
   const send = async (ms: MsRow, viewer: string) => {
     const b = await load([ms.id]);
-    return wire(ms, b.scenes, b.canon, viewer);
+    return wire(ms, b.scenes, b.canon, viewer, b.works);
+  };
+  /** Karya harus milik naskah yang sama. */
+  const workIn = async (ms: MsRow, workId: string | null | undefined) => {
+    if (!workId) return null;
+    const [w] = await s.db.select({ id: msWorks.id }).from(msWorks).where(and(eq(msWorks.id, workId), eq(msWorks.msId, ms.id)));
+    if (!w) throw bad('work', 'Karya itu tidak ada di naskah ini.');
+    return w.id;
   };
   const mine = async (id: string, userId: string): Promise<MsRow> => {
     const [ms] = await s.db.select().from(manuscripts).where(eq(manuscripts.id, id));
@@ -117,7 +133,7 @@ export function naskahRoutes(s: Services) {
       .orderBy(desc(manuscripts.updatedAt))
       .limit(60);
     const b = await load(rows.map((x) => x.id));
-    return c.json(rows.map((ms) => wire(ms, b.scenes.filter((x) => x.msId === ms.id), b.canon.filter((x) => x.msId === ms.id), user.id)));
+    return c.json(rows.map((ms) => wire(ms, b.scenes.filter((x) => x.msId === ms.id), b.canon.filter((x) => x.msId === ms.id), user.id, b.works.filter((x) => x.msId === ms.id))));
   });
 
   r.post('/naskah', async (c) => {
@@ -172,7 +188,7 @@ export function naskahRoutes(s: Services) {
     const now = s.now();
     const [row] = await s.db
       .insert(msScenes)
-      .values({ id: input.id, msId: ms.id, authorId: user.id, chapter: input.chapter, order: input.order, status: input.status, envelope: input.envelope, createdAt: now, updatedAt: now })
+      .values({ id: input.id, msId: ms.id, authorId: user.id, workId: await workIn(ms, input.workId), chapter: input.chapter, order: input.order, status: input.status, envelope: input.envelope, createdAt: now, updatedAt: now })
       .onConflictDoNothing()
       .returning();
     if (row && input.status === 'terbit') {
@@ -191,7 +207,8 @@ export function naskahRoutes(s: Services) {
     if (input.envelope) envFor(ms, input.envelope);
     const [sc] = await s.db.select().from(msScenes).where(and(eq(msScenes.id, c.req.param('sid')), eq(msScenes.msId, ms.id)));
     if (!sc || (sc.status === 'draf' && sc.authorId !== user.id)) throw notFound('Adegan tidak ditemukan.');
-    if ((input.envelope || input.status) && sc.authorId !== user.id) throw forbidden('Adegan ini milik penulis lain. Beri saran lewat catatan.');
+    if ((input.envelope || input.status || input.workId !== undefined) && sc.authorId !== user.id) throw forbidden('Adegan ini milik penulis lain. Beri saran lewat catatan.');
+    const workId = input.workId === undefined ? sc.workId : await workIn(ms, input.workId);
     const now = s.now();
     const status = input.status ?? sc.status;
     const envelope = input.envelope ?? sc.envelope;
@@ -199,7 +216,7 @@ export function naskahRoutes(s: Services) {
     if (status === 'terbit' && (input.envelope || sc.status !== 'terbit')) version = await snapshot(sc, envelope, now);
     await s.db
       .update(msScenes)
-      .set({ chapter: input.chapter ?? sc.chapter, order: input.order ?? sc.order, status, envelope, version, ...(input.envelope || input.status ? { updatedAt: now } : {}) })
+      .set({ workId, chapter: input.chapter ?? sc.chapter, order: input.order ?? sc.order, status, envelope, version, ...(input.envelope || input.status ? { updatedAt: now } : {}) })
       .where(eq(msScenes.id, sc.id));
     if (status === 'terbit' && sc.status !== 'terbit') void kabar(ms, user.id, `${user.penName ?? 'Seseorang'} menerbitkan adegan baru.`);
     return c.json(await send(await touch(ms), user.id));
@@ -223,6 +240,45 @@ export function naskahRoutes(s: Services) {
     if (!sc || (sc.status === 'draf' && sc.authorId !== user.id)) throw notFound('Adegan tidak ditemukan.');
     const rows = await s.db.select().from(msVersions).where(eq(msVersions.sceneId, sc.id)).orderBy(desc(msVersions.version));
     return c.json(rows.map((x): NaskahVersionWire => ({ id: x.id, sceneId: x.sceneId, version: x.version, envelope: x.envelope as never, createdAt: x.createdAt.toISOString() })));
+  });
+
+  // ── Rak karya ──
+
+  r.post('/naskah/:id/works', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, naskahWorkBody);
+    const ms = await mine(c.req.param('id'), user.id);
+    envFor(ms, input.envelope);
+    const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msWorks).where(eq(msWorks.msId, ms.id));
+    if ((n?.n ?? 0) >= 60) throw bad('full', 'Rak karya naskah ini sudah penuh.');
+    const now = s.now();
+    await s.db.insert(msWorks).values({ id: input.id, msId: ms.id, authorId: user.id, bentuk: input.bentuk, envelope: input.envelope, order: input.order, createdAt: now, updatedAt: now }).onConflictDoNothing();
+    return c.json(await send(await touch(ms), user.id), 201);
+  });
+
+  /** Judul, sinopsis, judul bab: oleh pembuat karya atau pembuka naskah. */
+  r.put('/naskah/:id/works/:wid', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, naskahWorkPatch);
+    const ms = await mine(c.req.param('id'), user.id);
+    const [w] = await s.db.select().from(msWorks).where(and(eq(msWorks.id, c.req.param('wid')), eq(msWorks.msId, ms.id)));
+    if (!w) throw notFound('Karya tidak ditemukan.');
+    if (input.envelope && w.authorId !== user.id && ms.ownerId !== user.id) throw forbidden('Karya ini dibuat penulis lain.');
+    if (input.envelope) envFor(ms, input.envelope);
+    await s.db.update(msWorks).set({ ...(input.envelope ? { envelope: input.envelope } : {}), ...(input.order !== undefined ? { order: input.order } : {}), updatedAt: s.now() }).where(eq(msWorks.id, w.id));
+    return c.json(await send(await touch(ms), user.id));
+  });
+
+  /** Hapus karya: adegannya tetap ada, kembali jadi kisah lepas. */
+  r.delete('/naskah/:id/works/:wid', async (c) => {
+    const user = c.get('user');
+    const ms = await mine(c.req.param('id'), user.id);
+    const [w] = await s.db.select().from(msWorks).where(and(eq(msWorks.id, c.req.param('wid')), eq(msWorks.msId, ms.id)));
+    if (!w) throw notFound('Karya tidak ditemukan.');
+    if (w.authorId !== user.id && ms.ownerId !== user.id) throw forbidden('Karya ini dibuat penulis lain.');
+    await s.db.update(msScenes).set({ workId: null }).where(eq(msScenes.workId, w.id));
+    await s.db.delete(msWorks).where(eq(msWorks.id, w.id));
+    return c.json(await send(await touch(ms), user.id));
   });
 
   // ── Kanon (milik bersama) ──

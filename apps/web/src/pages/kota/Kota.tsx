@@ -33,7 +33,17 @@ type View = { x: number; y: number; s: number };
 export default function Kota() {
   const kota = useKota();
   const almanak = useAlmanak();
-  const [year, setYear] = useState(2026);
+  // Peta mengingat posisi, zoom, dan tahun terakhir selama sesi ini.
+  const saved = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('kota.view') ?? 'null') as (View & { year: number }) | null;
+    } catch {
+      return null;
+    }
+  })();
+  const [year, setYear] = useState(saved?.year ?? 2026);
+  const yearRef = useRef(year);
+  yearRef.current = year;
   const [scale, setScale] = useState(1);
   const [region, setRegion] = useState<KotaRegion | null>(null);
   const [plot, setPlot] = useState<KotaPlot | null>(null);
@@ -66,7 +76,14 @@ export default function Kota() {
     el.style.transition = animate ? 'transform 650ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none';
     el.style.transform = `translate3d(${view.current.x}px, ${view.current.y}px, 0) scale(${view.current.s})`;
   };
-  const commit = () => setScale(view.current.s);
+  const commit = () => {
+    setScale(view.current.s);
+    try {
+      sessionStorage.setItem('kota.view', JSON.stringify({ ...view.current, year: yearRef.current }));
+    } catch {
+      /* penyimpanan sesi tidak tersedia */
+    }
+  };
   /** Dekati sebuah kotak di peta. */
   const focus = (r: KotaRegion) => {
     const { w, h } = size.current;
@@ -86,7 +103,8 @@ export default function Kota() {
       size.current = { w: el.clientWidth, h: el.clientHeight };
       const s = minS();
       // Awal: Bantaran Kali di tengah, wilayah pertama yang dibuka.
-      apply({ s: s * 1.15, x: size.current.w / 2 - 760 * s * 1.15, y: size.current.h / 2 - 540 * s * 1.15 });
+      if (saved) apply(saved);
+      else apply({ s: s * 1.15, x: size.current.w / 2 - 760 * s * 1.15, y: size.current.h / 2 - 540 * s * 1.15 });
       commit();
     };
     fit();
@@ -253,7 +271,7 @@ export default function Kota() {
             {claims.filter((c) => liveAt(c, year)).length} rumah hidup tahun ini · {showPlots ? 'ketuk persil' : 'ketuk wilayah bergaris'}
           </span>
         </div>
-        <input className="kp-range" type="range" min={KOTA_TAHUN.min} max={2026} value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="tahun" data-testid="kota-tahun" />
+        <input className="kp-range" type="range" min={KOTA_TAHUN.min} max={2026} value={year} onChange={(e) => setYear(Number(e.target.value))} onPointerUp={() => setTimeout(commit, 0)} aria-label="tahun" data-testid="kota-tahun" />
         <div className="kp-zaman-ticks tiny">
           <span>1900</span>
           <span>1940</span>

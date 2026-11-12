@@ -204,6 +204,13 @@
       "when": 1794501066353,
       "tag": "0028_giant_adam_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794502417556,
+      "tag": "0029_green_prodigy",
+      "breakpoints": true
     }
   ]
 }

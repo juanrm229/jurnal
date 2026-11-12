@@ -1,9 +1,9 @@
 /** Halaman rumah di Kota: sampul dari peta, keluarga, dan bab-bab yang sudah terbit. */
-import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, type KotaHubungan, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
+import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, NASKAH_BENTUK, type KotaHubungan, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useTautan } from '@/lib/kota';
-import { firstLine, povColor, useNaskah, useNaskahModel } from '@/lib/naskah';
+import { firstLine, povColor, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
 
@@ -26,7 +26,6 @@ export default function Rumah() {
   const plot = kotaPlot(c.plotId);
   const region = kotaRegion(c.regionId);
   const scenes = (m?.scenes ?? []).filter((s) => s.status === 'terbit' && s.p);
-  const chapters = [...new Set(scenes.map((s) => s.chapter))].sort((a, b) => a - b);
 
   return (
     <main className="kota-rumah">
@@ -79,24 +78,35 @@ export default function Rumah() {
           ) : null;
         })()}
 
-        {chapters.length ? (
-          <section className="kr-bab">
-            {chapters.map((ch) => (
-              <div key={ch}>
-                <span className="label">bab {ch}</span>
-                {scenes
-                  .filter((s) => s.chapter === ch)
-                  .map((s) => (
+        {scenes.length && m ? (
+          <section className="kr-rak">
+            <span className="label">rak rumah</span>
+            {[...m.works.map((w) => ({ id: w.id, w })), ...(m.scenesOf(null).length ? [{ id: 'lepas', w: null }] : [])].map(({ id: wid, w }) => {
+              const isi = scenes.filter((s) => (s.workId ?? null) === (w?.id ?? null));
+              if (!isi.length) return null;
+              const bentuk = w?.bentuk ?? 'kisah';
+              return (
+                <article key={wid} className={`kr-karya bentuk-${bentuk}`}>
+                  <button className="kr-karya-sampul" onClick={() => navigate(`/naskah/${c.msId}/baca/${wid}`)} data-testid="kota-karya">
+                    <span className="kr-karya-jenis">{NASKAH_BENTUK[bentuk].label}</span>
+                    <b>{w?.p.title ?? 'Kisah lepas'}</b>
+                    {w?.p.sinopsis ? <span className="small">{w.p.sinopsis}</span> : null}
+                    <span className="tiny">
+                      {isi.length} {bentuk === 'jurnal' ? 'entri' : bentuk === 'surat' ? 'surat' : 'adegan'} · baca
+                    </span>
+                  </button>
+                  {isi.slice(0, 3).map((s) => (
                     <button key={s.id} className="kr-adegan" onClick={() => navigate(`/naskah/${c.msId}/a/${s.id}`)} data-testid="kota-adegan">
-                      <span className="kr-adegan-waktu tiny">{s.p!.when.label || '—'}</span>
+                      <span className="kr-adegan-waktu tiny">{bentuk === 'jurnal' ? tglPanjang(s.p!.when.sort) || s.p!.when.label : s.p!.when.label || '—'}</span>
                       <span className="grow">
-                        <b style={{ color: m ? povColor(m, s.p!.pov) : undefined }}>{m?.nameOf(s.p!.pov)}</b>
+                        <b style={{ color: povColor(m, s.p!.pov) }}>{bentuk === 'surat' ? `kepada ${s.p!.kepada ?? '…'}` : m.nameOf(s.p!.pov)}</b>
                         <span className="small">{s.p!.title ?? firstLine(s.p!.text, 80)}</span>
                       </span>
                     </button>
                   ))}
-              </div>
-            ))}
+                </article>
+              );
+            })}
           </section>
         ) : (
           <p className="small soft kr-kosong">{c.mine ? 'Rumahmu masih sunyi. Tulis adegan pertama: siapa yang pertama menyalakan lampu di rumah ini?' : 'Rumah ini belum bercerita.'}</p>
@@ -122,7 +132,7 @@ export default function Rumah() {
           ) : (
             <>
               {scenes[0] ? (
-                <button className="btn" onClick={() => navigate(`/naskah/${c.msId}/a/${scenes[0]!.id}`)}>
+                <button className="btn" onClick={() => navigate(`/naskah/${c.msId}/baca/${scenes[0]!.workId ?? 'lepas'}`)}>
                   baca dari awal
                 </button>
               ) : null}

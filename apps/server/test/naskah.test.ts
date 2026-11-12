@@ -73,4 +73,20 @@ describe('studio naskah', () => {
     await raka.ok('DELETE', `/v1/naskah/${nid}`);
     expect((await naya.req('GET', `/v1/naskah/${nid}`)).status).toBe(404);
   });
+
+  it('rak karya: banyak karya berbagi kanon; adegan masuk karya; menghapus karya mengembalikan adegan jadi kisah lepas', async () => {
+    const ms = id();
+    await raka.ok('POST', '/v1/naskah', { id: ms, circleId: null, members: [], meta: amplop(raka, 'seri') });
+    const jurnal = id();
+    let w = await raka.ok('POST', `/v1/naskah/${ms}/works`, { id: jurnal, bentuk: 'jurnal', envelope: amplop(raka, 'Jurnal Dina') });
+    expect(w.works).toEqual([expect.objectContaining({ id: jurnal, bentuk: 'jurnal' })]);
+    expect((await raka.req('POST', `/v1/naskah/${ms}/works`, { id: id(), bentuk: 'puisi', envelope: amplop(raka, 'x') })).status).toBe(400);
+    const sid = id();
+    await raka.ok('POST', `/v1/naskah/${ms}/scenes`, { id: sid, chapter: 1, order: 1, envelope: amplop(raka, 'entri'), workId: jurnal });
+    expect((await raka.req('POST', `/v1/naskah/${ms}/scenes`, { id: id(), chapter: 1, order: 2, envelope: amplop(raka, 'x'), workId: 'tidakada1' })).status).toBe(400);
+    w = await raka.ok('GET', `/v1/naskah/${ms}`);
+    expect(w.scenes[0].workId).toBe(jurnal);
+    w = await raka.ok('DELETE', `/v1/naskah/${ms}/works/${jurnal}`);
+    expect([w.works.length, w.scenes[0].workId]).toEqual([0, null]);
+  });
 });

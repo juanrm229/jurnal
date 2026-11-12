@@ -20,7 +20,7 @@ import {
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { tanggal, useAlmanak, useRumahNaskah } from '@/lib/kota';
-import { firstLine, type NaskahModel, povColor, type Scene, useNaskah, useNaskahModel } from '@/lib/naskah';
+import { firstLine, tglPanjang, type NaskahModel, povColor, type Scene, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
 import { KanonForm, sceneLabel } from './Kanon';
@@ -65,6 +65,9 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const [label, setLabel] = useState(p0.when.label);
   const [sort, setSort] = useState(p0.when.sort);
   const [peristiwa, setPeristiwa] = useState(p0.peristiwa ?? '');
+  const [kepada, setKepada] = useState(p0.kepada ?? '');
+  const karya = m.workOf(s);
+  const bentuk = karya?.bentuk ?? 'kisah';
   const [saksi, setSaksi] = useState<'mengalami' | 'mendengar'>(p0.saksi ?? 'mengalami');
   const kota = m.ms.visibility === 'kota';
   const rumah = useRumahNaskah(m.ms.id, kota);
@@ -98,7 +101,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   ];
 
   // Simpan otomatis, terenkripsi, sedikit setelah berhenti mengetik.
-  const payload = (): NaskahScenePayload => ({ v: 1, title: title.trim() || undefined, pov, when: { label: label.trim(), sort: sortOk ? sort.trim() : '' }, text, peristiwa: peristiwa || undefined, saksi: peristiwa ? saksi : undefined });
+  const payload = (): NaskahScenePayload => ({ v: 1, title: title.trim() || undefined, pov, when: { label: label.trim(), sort: sortOk ? sort.trim() : '' }, text, peristiwa: peristiwa || undefined, saksi: peristiwa ? saksi : undefined, kepada: bentuk === 'surat' ? kepada.trim() || undefined : p0.kepada, desas: p0.desas, jumpa: p0.jumpa });
   const first = useRef(true);
   useEffect(() => {
     if (!mine) return;
@@ -118,7 +121,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
       }
     }, 1200);
     return () => clearTimeout(t);
-  }, [text, title, pov, label, sort, peristiwa, saksi]);
+  }, [text, title, pov, label, sort, peristiwa, saksi, kepada]);
 
   useLayoutEffect(() => {
     const el = ta.current;
@@ -153,7 +156,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
     <main className="screen naskah-adegan">
       <Header
         title={m.nameOf(pov)}
-        sub={`bab ${s.chapter} · ${mine ? (s.status === 'draf' ? 'draf milikmu' : `terbit · v${s.version}`) : `oleh ${m.who(s.authorId)}`}`}
+        sub={`${karya ? `${karya.p.title} · ` : ''}${bentuk === 'jurnal' ? 'entri' : bentuk === 'surat' ? 'surat' : `bab ${s.chapter}`} · ${mine ? (s.status === 'draf' ? 'draf milikmu' : `terbit · v${s.version}`) : `oleh ${m.who(s.authorId)}`}`}
         backTo={`/naskah/${m.ms.id}`}
         right={
           <button className={`nk-lensa-btn ${lens ? 'on' : ''}`} onClick={() => setLens(!lens)} aria-pressed={lens} aria-label="kacamata tokoh" data-testid="nk-lensa">
@@ -164,7 +167,11 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
 
       {mine ? (
         <section className="nk-meta">
-          <div className="row wrap" style={{ gap: 6 }} role="group" aria-label="sudut pandang">
+          {bentuk === 'jurnal' || bentuk === 'surat' ? (
+            <span className="tiny soft">{bentuk === 'jurnal' ? `buku harian ${m.nameOf(pov)}: tulis dari kepalanya sendiri, sebagai “aku”` : `surat dari ${m.nameOf(pov)}`}</span>
+          ) : null}
+          {bentuk === 'surat' ? <input className="field" value={kepada} maxLength={80} onChange={(e) => setKepada(e.target.value)} placeholder="kepada siapa? mis. Bu Sri, atau Laras di Kampus" data-testid="nk-kepada" /> : null}
+          <div className="row wrap" style={{ gap: 6, display: bentuk === 'jurnal' || bentuk === 'surat' ? 'none' : undefined }} role="group" aria-label="sudut pandang">
             {m.tokoh.map((t) => (
               <button key={t.id} className={`nk-pov ${pov === t.id ? 'on' : ''}`} style={{ '--pov': povColor(m, t.id) } as CSSProperties} onClick={() => setPov(t.id)} data-testid={`nk-pov-${t.p.name}`}>
                 {t.p.name}
@@ -172,9 +179,10 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
             ))}
           </div>
           <div className="nk-kapan">
-            <input className="field" value={label} maxLength={80} onChange={(e) => setLabel(e.target.value)} placeholder="kapan? mis. subuh, hari kedua banjir" data-testid="nk-kapan" />
+            <input className="field" value={label} maxLength={80} onChange={(e) => setLabel(e.target.value)} placeholder={bentuk === 'jurnal' ? 'suasana hari itu (opsional), mis. hujan sejak subuh' : 'kapan? mis. subuh, hari kedua banjir'} data-testid="nk-kapan" />
             <input className={`field ${sortOk ? '' : 'salah'}`} value={sort} maxLength={16} onChange={(e) => setSort(e.target.value)} placeholder="1979-02-15 06:10" inputMode="numeric" aria-label="tanggal cerita untuk garis waktu" data-testid="nk-tanggal" />
           </div>
+          {bentuk === 'jurnal' && sortOk && sort.trim() ? <span className="nk-tgl-hias">{tglPanjang(sort.trim())}</span> : null}
           {!sortOk ? <span className="tiny nk-salah">Tulis tanggal sebagai 1979, 1979-02, 1979-02-15, atau 1979-02-15 06:10.</span> : null}
           <input className="field nk-judul-adegan" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="judul adegan (opsional)" />
           {kota && kanonKota.length ? (

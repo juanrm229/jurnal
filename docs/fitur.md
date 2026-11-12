@@ -128,3 +128,10 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Silsilah**: rumah-rumah yang tersambung digambar di atas peta kota, dengan garis generasi dari tahun lahir dan wafat.
 - **Almanak & Peristiwa Kota**: 12 peristiwa awal kanon (Benteng Lima Sudut 1702, lonceng ketujuh 1858, mercusuar 1891, kereta pertama 1909, Banjir Kali Sirah 1979, Kota gelap tiga malam 1998, …). Warga yang punya rumah bisa mengusulkan peristiwa; jadi kanon setelah dua warga lain setuju. Adegan rumah kota bisa ditandai sebagai kesaksian (mengalami/mendengar); halaman peristiwa bergaya **Koran Sangkala** mengumpulkannya. Kacamata Tokoh di rumah kota menampilkan baris "dari kota" sesuai tahun dan wilayah. Peta menampilkan peristiwa tahun yang sedang dipilih; halaman rumah menampilkan peristiwa yang dilewatinya.
 - **Peta versi lukis**: relief bukit dari peta ketinggian, atap tiga dimensi berbayang, tajuk pohon bergradasi, delta bakau bercabang, beting karang, perahu layar, serta masjid, gereja, klenteng, stasiun, dan sekolah. Tata letak dan id persil tetap sama.
+
+### Rak karya (Studio Naskah & rumah Kota)
+
+- Satu naskah (atau satu rumah di Kota) bisa berisi banyak **karya** yang berbagi Kanon yang sama: **kisah** (adegan lepas), **cerpen**, **novel** (bab berjudul), **jurnal tokoh** (buku harian satu tokoh, entri bertanggal), dan **surat** (surat-surat satu tokoh, dengan penerima).
+- **Mode baca** per bentuk: buku (halaman judul, bab, pemisah ⁂, ukuran huruf, garis kemajuan), buku harian bergaris dengan tanggal tulisan tangan, dan bundel surat.
+- Halaman rumah di Kota menampilkan **rak rumah**: karya-karya keluarga itu sebagai buku.
+- Alur: studio rumah kembali ke halaman rumahnya; studio mengingat karya yang sedang dikerjakan; peta mengingat posisi, zoom, dan tahun; patok menanyakan tahun lahir tokoh pertama; kesaksian dari koran mengarahkan ke Kanon bila rumah belum punya tokoh.
