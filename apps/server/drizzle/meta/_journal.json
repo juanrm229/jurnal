@@ -141,6 +141,13 @@
       "when": 1794458985862,
       "tag": "0019_slow_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794480280482,
+      "tag": "0020_mixed_obadiah_stane",
+      "breakpoints": true
     }
   ]
 }

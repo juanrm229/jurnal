@@ -161,14 +161,16 @@ export const storyPremise = (id: string) => STORY_PREMISES.find((p) => p.id === 
 
 /**
  * Kursi tokoh penulis ke-`i` dari `n` penulis di putaran `round` (1..3).
- * Kursi pertama dan kedua adalah dua tokoh utama; urutannya bergeser tiap
- * putaran, jadi kamu menulis tokoh yang tadinya ditulis orang lain. Berdua
- * (atau sendirian) kalian bertukar di antara dua tokoh utama.
+ * Kursi pertama dan kedua adalah dua tokoh utama. Bertiga ke atas urutannya
+ * bergeser tiap gelombang; berdua, tokoh berganti tangan di gelombang terakhir.
  */
 export function storySeat(premise: StoryPremise, round: number, i: number, n: number): StorySeat {
   const seats = premise.rounds[round - 1]!.seats;
   const k = Math.min(seats.length, Math.max(2, n));
-  return seats[(i + round - 1) % k]!;
+  // Berdua (atau sendiri): tokoh dipegang sampai gelombang terakhir, baru berganti tangan,
+  // supaya jejak untuk tokoh pasangan benar-benar sampai ke pasangan. Bertiga ke atas: bergilir.
+  const shift = n <= 2 ? (round >= premise.rounds.length ? 1 : 0) : round - 1;
+  return seats[(i + shift) % k]!;
 }
 
 /** Jejak siapa yang diterima penulis ke-`i`: orang sebelum dia (sendirian: dirinya sendiri). */
@@ -204,6 +206,76 @@ export interface StoryMeta {
   tokoh: string[];
 }
 export const STORY_FREE = 'bebas';
+
+/** Tawarkan dua kartu berbeda kepada tiap penulis (mode pilih); kartu pertama jadi bawaan. */
+export function drawStoryOffers(members: string[], deck: StoryDeck = 'awal', rand: () => number = Math.random): Record<string, string[]> {
+  const pool = storyDeckIds(deck);
+  const out: Record<string, string[]> = {};
+  for (const m of members) {
+    const a = pool.splice(Math.floor(rand() * pool.length), 1)[0]!;
+    const b = pool.length ? pool.splice(Math.floor(rand() * pool.length), 1)[0]! : a;
+    out[m] = [a, b];
+  }
+  return out;
+}
+
+/** Lensa gelombang ini: penulis yang memilih fokus, bergilir. */
+export const storyLens = (members: string[], round: number) => members[(round - 1) % members.length]!;
+/** Giliran buta (tilt): di tengah karya, fokus Lensa wajib memengaruhi keputusan tokoh. */
+export const storyTilt = (rounds: number) => (rounds <= 3 ? 2 : Math.ceil(rounds / 2) + 1);
+
+/** Kalimat serah-terima, jejak, dan opsi: yang boleh dilihat lebih dulu daripada adegan. */
+export interface StoryHandoffPayload {
+  v: 1;
+  tokoh: string;
+  waktu?: string;
+  /** Satu kalimat dari adegan yang tampil di lipatan. */
+  line: string;
+  /** Satu jejak: potongan teks yang diteruskan, siapa yang bisa tahu, dan pertanyaan untuk penerimanya. */
+  trace?: { what: string; knows: string[]; question: string };
+  /** Keuntungan role jenis Prompt: satu opsi tambahan untuk tokoh tertentu di gelombang berikutnya. */
+  option?: { to: string; text: string };
+  /** Baris yang membuktikan batasan role dimainkan. */
+  proof?: string;
+}
+
+/** Fakta yang diusulkan lewat handshake. Tokoh disebut dengan namanya di cerita. */
+export interface StoryFactPayload {
+  v: 1;
+  sentence: string;
+  scope: 'lokal' | 'dunia';
+  waktu?: string;
+  knows: string[];
+  believes: string[];
+  mystery?: boolean;
+}
+
+export interface StoryReadPayload {
+  v: 1;
+  /** Kalimat yang membentuk tafsir pembaca, dikutip persis. */
+  quote?: string;
+  text: string;
+  /** Mode kejutan: tebakan id kartu role penulis bagian ini. */
+  role?: string;
+}
+
+/** Palet: yang ingin ada, garis (tidak muncul sama sekali), tirai (terjadi di luar layar). */
+export interface StoryPalettePayload {
+  v: 1;
+  boleh: string[];
+  garis: string[];
+  tirai: string[];
+}
+
+export interface StoryFocusPayload {
+  v: 1;
+  text: string;
+}
+
+/** Pecah teks menjadi kalimat (untuk memilih kalimat serah-terima dan menandai tafsir). */
+export function storySentences(text: string): string[] {
+  return (text.replace(/\s+/g, ' ').trim().match(/[^.!?…]+(?:[.!?…]+["”’)]*|$)/g) ?? []).map((s) => s.trim()).filter(Boolean);
+}
 
 /** Isi satu bagian sebelum dienkripsi. */
 export interface StoryPartPayload {
