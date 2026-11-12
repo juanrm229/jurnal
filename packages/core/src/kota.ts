@@ -162,3 +162,52 @@ export function kotaCekHubungan(type: KotaHubungan, a: KotaJiwa, b: KotaJiwa): K
 
 /** Kuota musim: satu rumah utama, dan beberapa rumah leluhur di zaman lebih awal. */
 export const KOTA_KUOTA = { rumah: 1, leluhur: 2 } as const;
+
+// ── Almanak: peristiwa kota ─────────────────────────────────────────────────
+
+export interface KotaPeristiwa {
+  id: string;
+  title: string;
+  year: number;
+  month?: number;
+  /** Tahun berakhir untuk peristiwa yang berlangsung lama. */
+  toYear?: number;
+  /** Wilayah yang mengalaminya; kosong = seluruh kota. */
+  regions: string[];
+  body: string;
+}
+
+/** Almanak awal: jangkar sejarah Sangkala, kanon sejak kota dibuka. */
+export const KOTA_ALMANAK_AWAL: KotaPeristiwa[] = [
+  { id: 'awal.benteng', title: 'Benteng Lima Sudut berdiri di ujung tanjung', year: 1702, regions: ['bentenglimasudut'], body: 'Batu karang dipotong dan diangkut dengan perahu selama tujuh musim. Sejak itu tanjung ini punya nama, dan kota punya alasan untuk tumbuh di belakangnya.' },
+  { id: 'awal.lonceng', title: 'Lonceng ketujuh dipasang di Gang Tujuh Lonceng', year: 1858, month: 4, regions: ['tujuhlonceng'], body: 'Enam lonceng pertama dipesan dari seberang; yang ketujuh dicor di gang ini sendiri, dari perabot tembaga yang disumbangkan warga. Bunyinya sedikit sumbang, dan karena itu paling dicintai.' },
+  { id: 'awal.suar', title: 'Mercusuar Nusa Pelita menyala pertama kali', year: 1891, month: 9, regions: ['nusapelita'], body: 'Penjaga suar pertama mencatat di bukunya: malam ini tidak ada kapal yang tersesat. Catatan itu masih dibacakan tiap tahun.' },
+  { id: 'awal.kereta', title: 'Kereta pertama tiba di Kampung Peluit', year: 1909, month: 8, regions: ['kampungpeluit', 'sawah'], body: 'Seluruh kampung keluar rumah mendengar peluitnya. Sejak hari itu, tak ada lagi yang memakai jam dinding di sepanjang rel.' },
+  { id: 'awal.pasar', title: 'Pasar Senja dibuka', year: 1912, regions: ['pasarsenja'], body: 'Pedagang dari sawah dan pelabuhan sepakat berdagang setelah matahari turun, supaya siangnya tetap bisa bekerja. Harga mulai ditawar dengan lagu.' },
+  { id: 'awal.telaga', title: 'Telaga Mangu digali', year: 1925, regions: ['telagamangu', 'padanggubernur'], body: 'Rawa kecil di belakang balai kota dikeruk jadi telaga. Paviliunnya dibangun belakangan, dari kayu kapal yang karam.' },
+  { id: 'awal.sumbu', title: 'Kampung sumbu berdiri di tepi Kali Sirah', year: 1931, regions: ['lorongsumbu'], body: 'Keluarga-keluarga pembuat sumbu lampu menetap di tepian. Tiap rumah menggantung contoh sumbunya di jendela, dan gangnya mulai bercahaya tiap malam.' },
+  { id: 'awal.kebakaran', title: 'Pasar Senja terbakar semalaman', year: 1965, month: 7, regions: ['pasarsenja', 'tujuhlonceng'], body: 'Api bermula dari lapak minyak dan menjalar ke atap-atap tenda. Lonceng ketujuh dibunyikan sampai pagi. Pasar dibangun ulang dalam empat puluh hari.' },
+  { id: 'awal.dermaga', title: 'Dermaga Besi dibuka', year: 1974, regions: ['dermagabesi', 'tanjungjala', 'tiangseribu'], body: 'Derek pertama didirikan di muara. Para nelayan Tanjung Jala menyaksikan kapal-kapal besar masuk, dan bertanya-tanya ke mana ikan-ikan akan pergi.' },
+  { id: 'awal.banjir', title: 'Banjir besar Kali Sirah', year: 1979, month: 2, regions: ['lorongsumbu', 'tiangseribu', 'tujuhlonceng'], body: 'Air naik selama tiga hari. Lorong Sumbu terendam sampai dada; rumah-rumah panggung Tiang Seribu menjadi tempat mengungsi. Di Gang Tujuh Lonceng, lonceng dibunyikan untuk menghitung yang masih hilang.' },
+  { id: 'awal.gelap', title: 'Kota gelap tiga malam', year: 1998, month: 5, regions: [], body: 'Listrik padam di seluruh kota. Warga Lorong Sumbu kembali menyalakan sumbu-sumbu lama, dan untuk tiga malam kota kembali seperti dulu.' },
+  { id: 'awal.kabut', title: 'Kabut tujuh hari di Lereng Kabut', year: 2003, month: 1, regions: ['lerengkabut', 'bukitseribuundak'], body: 'Kabut turun dan tidak naik lagi selama tujuh hari. Orang-orang saling memanggil nama supaya tidak tersesat di jalan sendiri.' },
+];
+
+/** Peristiwa yang sedang berlangsung pada tahun tertentu. */
+export const kotaPeristiwaPada = <T extends KotaPeristiwa>(events: T[], year: number) => events.filter((e) => e.year <= year && year <= (e.toYear ?? e.year));
+
+/**
+ * "Dari kota" untuk Kacamata Tokoh: peristiwa yang terjadi sebelum atau pada
+ * tahun adegan. Dialami bila wilayah rumahnya terdampak; peristiwa seluruh kota
+ * dialami semua; peristiwa wilayah lain hanya didengar.
+ */
+export function kotaDariKota<T extends KotaPeristiwa>(events: T[], regionId: string, year: number) {
+  const past = events.filter((e) => e.year <= year).sort((a, b) => b.year - a.year);
+  return {
+    mengalami: past.filter((e) => !e.regions.length || e.regions.includes(regionId)),
+    mendengar: past.filter((e) => e.regions.length && !e.regions.includes(regionId)),
+  };
+}
+
+/** Persetujuan warga lain yang dibutuhkan agar usulan peristiwa menjadi kanon. */
+export const KOTA_SETUJU_KANON = 2;

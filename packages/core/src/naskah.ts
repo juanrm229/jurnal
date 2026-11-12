@@ -26,6 +26,9 @@ export interface NaskahScenePayload {
   pov: string;
   when: NaskahWhen;
   text: string;
+  /** Rumah di Kota: adegan ini kesaksian atas peristiwa kota (id almanak). */
+  peristiwa?: string;
+  saksi?: 'mengalami' | 'mendengar';
 }
 
 /** Siapa (tokoh) tahu atau mengira sebuah entri, mulai adegan mana. Tanpa `since`: sejak awal. */

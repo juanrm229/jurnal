@@ -1290,6 +1290,50 @@ export interface KotaClaimWire {
   mine: boolean;
   createdAt: string;
 }
+export const kotaPeristiwaBody = z.object({
+  title: z.string().trim().min(6).max(90),
+  year: z.number().int().min(1700).max(2030),
+  month: z.number().int().min(1).max(12).optional(),
+  toYear: z.number().int().min(1700).max(2030).optional(),
+  regions: z.array(z.string().max(40)).max(17),
+  body: z.string().trim().min(20).max(800),
+});
+export const kotaPeristiwaJawab = z.object({ action: z.enum(['setuju', 'tarik']) });
+
+export interface KotaPeristiwaWire {
+  id: string;
+  title: string;
+  year: number;
+  month?: number;
+  toYear?: number;
+  regions: string[];
+  body: string;
+  state: 'kanon' | 'usul';
+  /** null untuk almanak awal. */
+  proposer: string | null;
+  endorsements: number;
+  endorsedByMe: boolean;
+  mine: boolean;
+  testimonies: number;
+}
+export interface KotaKesaksianWire {
+  claimId: string;
+  household: string;
+  regionId: string;
+  plotId: string;
+  penName: string;
+  msId: string;
+  sceneId: string;
+  tokoh: string;
+  when: string;
+  text: string;
+  saksi: 'mengalami' | 'mendengar';
+}
+export interface KotaPeristiwaDetail {
+  event: KotaPeristiwaWire;
+  testimonies: KotaKesaksianWire[];
+}
+
 export interface KotaWire {
   season: number;
   claims: KotaClaimWire[];

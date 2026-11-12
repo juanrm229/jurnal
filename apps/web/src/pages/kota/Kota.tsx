@@ -14,10 +14,11 @@ import {
   kotaInside,
   kotaOpen,
   kotaPlots,
+  kotaPeristiwaPada,
   kotaRegion,
 } from '@sehari/core';
 import { type CSSProperties, type PointerEvent as RPointerEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { KOTA_IMG, liveAt, useKota } from '@/lib/kota';
+import { KOTA_IMG, liveAt, tanggal, useAlmanak, useKota } from '@/lib/kota';
 import { navigate } from '@/lib/router';
 import { store } from '@/lib/storage';
 import { Doodle, Sheet } from '@/ui/kit';
@@ -31,6 +32,7 @@ type View = { x: number; y: number; s: number };
 
 export default function Kota() {
   const kota = useKota();
+  const almanak = useAlmanak();
   const [year, setYear] = useState(2026);
   const [scale, setScale] = useState(1);
   const [region, setRegion] = useState<KotaRegion | null>(null);
@@ -234,9 +236,12 @@ export default function Kota() {
           <span className="kp-musim">kota sehari · musim 1</span>
           <b>Kota Sangkala</b>
         </div>
+        <button className="kp-glass kp-almanak" onClick={() => navigate('/kota/almanak')} aria-label="almanak kota" data-testid="kota-almanak">
+          <Doodle id="buku-terbuka" size={18} color="currentColor" />
+        </button>
         {mine ? (
-          <button className="kp-glass kp-rumahku" onClick={() => navigate(`/kota/rumah/${mine.id}`)} data-testid="kota-rumahku">
-            <Doodle id="rumah" size={18} color="currentColor" /> rumahku
+          <button className="kp-glass kp-rumahku" onClick={() => navigate(`/kota/rumah/${mine.id}`)} aria-label="rumahku" data-testid="kota-rumahku">
+            <Doodle id="rumah" size={20} color="currentColor" />
           </button>
         ) : null}
       </header>
@@ -255,6 +260,23 @@ export default function Kota() {
           <span>1980</span>
           <span>sekarang</span>
         </div>
+        {(() => {
+          const kanon = (almanak.data ?? []).filter((e) => e.state === 'kanon');
+          const now = kotaPeristiwaPada(kanon, year)[0] ?? [...kanon].filter((e) => e.year <= year).sort((a, b) => b.year - a.year)[0];
+          return now ? (
+            <button key={now.id} className="kp-peristiwa" onClick={() => navigate(`/kota/peristiwa/${now.id}`)} data-testid="kota-peristiwa">
+              <span className={`kp-peristiwa-titik ${now.year === year ? 'kini' : ''}`} aria-hidden />
+              <span className="grow">
+                <b>{now.title}</b>
+                <span className="tiny">
+                  {tanggal(now)} · {now.regions.length ? now.regions.map((r) => kotaRegion(r)?.name).join(', ') : 'seluruh kota'}
+                  {now.testimonies ? ` · ${now.testimonies} kesaksian` : ''}
+                </span>
+              </span>
+              <Doodle id="ui-panah-kanan" size={14} />
+            </button>
+          ) : null;
+        })()}
       </section>
 
       {intro ? (
