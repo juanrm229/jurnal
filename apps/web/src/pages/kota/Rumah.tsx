@@ -1,9 +1,9 @@
 /** Halaman rumah di Kota: sampul dari peta, keluarga, dan bab-bab yang sudah terbit. */
-import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, NASKAH_BENTUK, type KotaHubungan, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
+import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, NASKAH_BENTUK, type KotaHubungan, type KotaPegangWire, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useTautan } from '@/lib/kota';
-import { firstLine, povColor, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
+import { firstLine, type NaskahModel, povColor, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
 
@@ -52,14 +52,15 @@ export default function Rumah() {
 
         {m?.tokoh.length ? (
           <div className="kr-penghuni">
-            {m.tokoh.map((t) => (
+            {m.tokoh.filter((t) => t.p.peran !== 'figuran').map((t) => (
               <span key={t.id} className="kr-wajah" style={{ background: povColor(m, t.id) }} title={t.p.name}>
                 {t.p.name.slice(0, 1)}
               </span>
             ))}
-            <span className="small soft">{m.tokoh.map((t) => t.p.name).join(', ')}</span>
+            <span className="small soft">{m.tokoh.filter((t) => t.p.peran !== 'figuran').map((t) => t.p.name).join(', ')}</span>
           </div>
         ) : null}
+        {m ? <Figuran c={c} m={m} pegang={tautan.data?.pegang ?? []} reload={() => void tautan.refetch()} /> : null}
 
         {tautan.data ? <Tautan c={c} t={tautan.data} reload={() => void tautan.refetch()} /> : null}
         {(() => {
@@ -274,6 +275,116 @@ function Tautan({ c, t, reload }: { c: { id: string; mine: boolean }; t: KotaTau
             ))}
           </div>
         ) : null}
+      </Sheet>
+    </section>
+  );
+}
+
+/**
+ * Figuran rumah: istri, tetangga, pembantu. Pemilik menulis mereka sesukanya;
+ * penulis lain boleh meminta memegang salah satunya (lewat surat). Pemegang
+ * menulis adegan dari sudut pandang figuran itu di naskah rumah yang sama.
+ */
+function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msId: string }; m: NaskahModel; pegang: KotaPegangWire[]; reload: () => void }) {
+  const toast = useToast();
+  const [minta, setMinta] = useState<string | null>(null);
+  const [surat, setSurat] = useState('');
+  const fig = m.tokoh.filter((t) => t.p.peran === 'figuran');
+  if (!fig.length) return null;
+  const jawab = async (x: KotaPegangWire, action: 'terima' | 'tolak' | 'lepas') => {
+    if (action === 'lepas' && !confirm(`Lepaskan ${x.tokoh}? Adegan yang sudah ditulis tetap ada.`)) return;
+    try {
+      await api.put(`/kota/pegang/${x.id}`, { action });
+      reload();
+    } catch (e) {
+      toast((e as Error).message);
+    }
+  };
+  return (
+    <section className="kr-figuran">
+      <span className="label">figuran rumah</span>
+      {fig.map((t) => {
+        const held = pegang.find((x) => x.tokohId === t.id && x.state === 'pegang');
+        const mohon = pegang.filter((x) => x.tokohId === t.id && x.state === 'minta');
+        const punyaku = held?.requesterId === m.meId;
+        const mintaku = mohon.find((x) => x.requesterId === m.meId);
+        return (
+          <article key={t.id} className="kr-fig" data-testid="kota-figuran">
+            <span className="kr-wajah sm" style={{ background: povColor(m, t.id) }} aria-hidden>
+              {t.p.name.slice(0, 1)}
+            </span>
+            <span className="grow">
+              <b>{t.p.name}</b>
+              {t.p.note ? <span className="tiny soft">{firstLine(t.p.note, 90)}</span> : null}
+              <span className="tiny">
+                {held ? (punyaku ? 'kamu yang memegangnya' : `dipegang ${held.penName}`) : t.p.sapa === 'disapa' ? 'boleh disapa' : 'belum dipegang siapa pun'}
+              </span>
+            </span>
+            {punyaku ? (
+              <span className="col" style={{ gap: 4 }}>
+                <button className="pill sm active" onClick={() => navigate(`/naskah/${c.msId}`)} data-testid="kota-pegang-tulis">
+                  tulis
+                </button>
+                <button className="pill sm" onClick={() => void jawab(held!, 'lepas')}>
+                  lepas
+                </button>
+              </span>
+            ) : c.mine && held ? (
+              <button className="pill sm" onClick={() => void jawab(held, 'lepas')}>
+                ambil kembali
+              </button>
+            ) : !c.mine && !held ? (
+              mintaku ? (
+                <span className="tiny soft">permintaanmu menunggu</span>
+              ) : (
+                <button className="pill sm" onClick={() => setMinta(t.id)} data-testid="kota-pegang-minta">
+                  minta memegang
+                </button>
+              )
+            ) : null}
+            {c.mine
+              ? mohon.map((x) => (
+                  <div key={x.id} className="kr-fig-mohon" data-testid="kota-pegang-masuk">
+                    <p className="small">
+                      <b>{x.penName}</b> ingin memegang {t.p.name}.
+                    </p>
+                    {x.letter ? <blockquote className="kr-surat">{x.letter}</blockquote> : null}
+                    <div className="row" style={{ gap: 6 }}>
+                      <button className="btn sm" onClick={() => void jawab(x, 'terima')} data-testid="kota-pegang-terima">
+                        serahkan
+                      </button>
+                      <button className="btn ghost sm" onClick={() => void jawab(x, 'tolak')}>
+                        belum bisa
+                      </button>
+                    </div>
+                  </div>
+                ))
+              : null}
+          </article>
+        );
+      })}
+      <Sheet open={!!minta} onClose={() => setMinta(null)} title={`memegang ${m.nameOf(minta ?? '')}`}>
+        <div className="col" style={{ gap: 10 }}>
+          <p className="small soft">Pemegang menulis adegan dari sudut pandang tokoh ini, di rumah ini. Pemilik rumah tetap menjaga kanonnya: fakta tokoh hanya berubah lewat pemilik.</p>
+          <textarea className="field" rows={4} value={surat} maxLength={800} onChange={(e) => setSurat(e.target.value)} placeholder="Surat untuk pemilik rumah: apa yang ingin kamu tuliskan tentang tokoh ini?" data-testid="kota-pegang-surat" />
+          <button
+            className="btn"
+            disabled={surat.trim().length < 10}
+            onClick={async () => {
+              try {
+                await api.post('/kota/pegang', { claimId: c.id, tokohId: minta, letter: surat.trim() });
+                toast('Suratmu terkirim ke pemilik rumah.');
+                setMinta(null);
+                setSurat('');
+                reload();
+              } catch (e) {
+                toast((e as Error).message);
+              }
+            }}
+            data-testid="kota-pegang-kirim">
+            kirim surat
+          </button>
+        </div>
       </Sheet>
     </section>
   );

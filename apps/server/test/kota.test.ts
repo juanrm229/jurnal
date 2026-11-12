@@ -145,4 +145,51 @@ describe('kota sehari', () => {
     expect((await sari.ok('GET', '/v1/kota/almanak')).find((e: any) => e.id === 'awal.banjir').testimonies).toBe(1);
     expect((await raka.ok('GET', `/v1/kota/naskah/${rumahRaka.msId}`)).id).toBe(rumahRaka.id);
   });
+
+  it('buku warga: figuran awal kanon; perubahan besar butuh persetujuan; perjumpaan terkumpul', async () => {
+    const semua = await sari.ok('GET', '/v1/kota/warga');
+    expect(semua.find((f: any) => f.id === 'warga.jamil')).toMatchObject({ state: 'kanon', name: 'Bang Jamil' });
+    // Usul wafat Bang Jamil: sah setelah dua warga lain setuju, lalu lembarnya berubah.
+    const u = await raka.ok('POST', '/v1/kota/warga/warga.jamil/ubah', { kind: 'wafat', text: 'Wafat di atas sepedanya, di tikungan Gg. Sampan.', year: 2019 });
+    expect((await raka.req('POST', '/v1/kota/warga/warga.tembang/ubah', { kind: 'wafat', text: 'wafat lagi di pasar', year: 1990 })).status).toBe(409);
+    await sari.ok('PUT', `/v1/kota/ubah/${u.id}`, { action: 'setuju' });
+    await tono.ok('PUT', `/v1/kota/ubah/${u.id}`, { action: 'setuju' });
+    const jamil = (await sari.ok('GET', '/v1/kota/warga')).find((f: any) => f.id === 'warga.jamil');
+    expect(jamil.died).toBe(2019);
+    expect(jamil.ubah[0]).toMatchObject({ state: 'kanon', kind: 'wafat' });
+    // Figuran baru usulan warga.
+    const baru = await raka.ok('POST', '/v1/kota/warga', { name: 'Cik Nur', julukan: 'penjual kue putu', region: 'lorongsumbu', tempat: 'mulut Gg. Kemiri', ciri: 'Peluit kukusan putunya terdengar dari ujung gang setiap magrib.', born: 1950, tetap: [] });
+    expect((await raka.req('POST', '/v1/kota/warga', { name: 'Mbah Tembang', region: 'pasarsenja', tempat: 'tangga', ciri: 'nama yang sama dengan figuran lain' })).status).toBe(409);
+    await sari.ok('PUT', `/v1/kota/warga/${baru.id}`, { action: 'setuju' });
+    expect((await tono.ok('PUT', `/v1/kota/warga/${baru.id}`, { action: 'setuju' })).state).toBe('kanon');
+    // Perjumpaan: adegan terbit yang mencatat figuran.
+    const rumahRaka = (await raka.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine && x.kind === 'rumah');
+    await raka.ok('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'jumpa001x', chapter: 3, order: 1, status: 'terbit', envelope: { plain: { v: 1, pov: 'tPakDarmo1921', when: { label: 'sore', sort: '1975' }, text: 'Mbah Tembang berhenti bernyanyi saat lonceng berbunyi.', jumpa: ['warga.tembang'] } } });
+    const tembang = await tono.ok('GET', '/v1/kota/warga/warga.tembang');
+    expect(tembang.perjumpaan.map((x: any) => x.household)).toEqual(['Keluarga Darmo']);
+    expect(tembang.figur.jumpa).toBe(1);
+    // Indeks nama: warga rumah dan figuran kota.
+    const nama = await sari.ok('GET', '/v1/kota/nama');
+    expect(nama.some((n: any) => n.kind === 'figur' && n.name === 'Cik Nur')).toBe(true);
+    expect(nama.some((n: any) => n.kind === 'warga' && n.name === 'Pak Darmo')).toBe(true);
+  });
+
+  it('memegang figuran rumah: hanya figuran, pemilik memutuskan, pemegang hanya menulis tokoh yang dipegangnya', async () => {
+    const rumahRaka = (await raka.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine && x.kind === 'rumah');
+    await raka.ok('POST', `/v1/naskah/${rumahRaka.msId}/canon`, { id: 'tBuSri00001', kind: 'tokoh', envelope: { plain: { v: 1, kind: 'tokoh', name: 'Bu Sri', aliases: [], known: [], peran: 'figuran', born: 1926 } } });
+    expect((await tono.req('POST', '/v1/kota/pegang', { claimId: rumahRaka.id, tokohId: 'tPakDarmo1921', letter: 'Aku ingin menulis Pak Darmo.' })).status).toBe(400);
+    const minta = await tono.ok('POST', '/v1/kota/pegang', { claimId: rumahRaka.id, tokohId: 'tBuSri00001', letter: 'Aku ingin menulis Bu Sri dari mesin jahitnya.' });
+    expect((await tono.req('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'sri00001x', chapter: 1, order: 9, envelope: { plain: { v: 1, pov: 'tBuSri00001', when: { label: '', sort: '' }, text: 'x' } } })).status).toBe(404);
+    expect((await tono.req('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'terima' })).status).toBe(403);
+    await raka.ok('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'terima' });
+    // Pemegang menulis dari Bu Sri, tapi tidak dari Pak Darmo, dan tidak mengubah kanon Pak Darmo.
+    await tono.ok('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'sri00001x', chapter: 1, order: 9, envelope: { plain: { v: 1, pov: 'tBuSri00001', when: { label: '', sort: '' }, text: 'Mesin jahit berhenti.' } } });
+    expect((await tono.req('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'darmo002x', chapter: 1, order: 10, envelope: { plain: { v: 1, pov: 'tPakDarmo1921', when: { label: '', sort: '' }, text: 'x' } } })).status).toBe(403);
+    expect((await tono.req('PUT', `/v1/naskah/${rumahRaka.msId}/canon/tPakDarmo1921`, { envelope: { plain: { v: 1, kind: 'tokoh', name: 'Darmo palsu', aliases: [], known: [] } } })).status).toBe(403);
+    expect((await tono.req('POST', `/v1/naskah/${rumahRaka.msId}/works`, { id: 'karya0001', bentuk: 'novel', envelope: { plain: { v: 1, title: 'x' } } })).status).toBe(403);
+    const t = await sari.ok('GET', `/v1/kota/claims/${rumahRaka.id}/tautan`);
+    expect(t.pegang).toEqual([expect.objectContaining({ tokoh: 'Bu Sri', state: 'pegang', letter: null })]);
+    await tono.ok('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'lepas' });
+    expect((await tono.req('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'sri00002x', chapter: 1, order: 11, envelope: { plain: { v: 1, pov: 'tBuSri00001', when: { label: '', sort: '' }, text: 'x' } } })).status).toBe(404);
+  });
 });

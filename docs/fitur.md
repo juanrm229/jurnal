@@ -135,3 +135,17 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Mode baca** per bentuk: buku (halaman judul, bab, pemisah ⁂, ukuran huruf, garis kemajuan), buku harian bergaris dengan tanggal tulisan tangan, dan bundel surat.
 - Halaman rumah di Kota menampilkan **rak rumah**: karya-karya keluarga itu sebagai buku.
 - Alur: studio rumah kembali ke halaman rumahnya; studio mengingat karya yang sedang dikerjakan; peta mengingat posisi, zoom, dan tahun; patok menanyakan tahun lahir tokoh pertama; kesaksian dari koran mengarahkan ke Kanon bila rumah belum punya tokoh.
+
+### Tiga lapis tokoh di Kota (menjaga dunia tetap konsisten)
+
+Pertanyaan pokoknya: kalau sebuah kisah memakai tokoh yang tidak dipatok siapa pun (istri yang tak punya rumah sendiri, pengemis di pasar), apakah itu kanon? Jawabannya bergantung pada lapis tokoh itu.
+
+1. **Tokoh rumah** (utama): milik rumah yang menuliskannya. Rumah lain hanya boleh menjadikannya bagian dari cerita mereka lewat **ketuk** dan jabat tangan. Pemilik bisa menandai tokohnya **boleh disapa**: rumah lain boleh menulis perjumpaan kecil (berpapasan, membeli di warungnya) tanpa mengetuk, selama tidak mengubah faktanya.
+2. **Figuran rumah**: istri, tetangga, pembantu. Ditulis bebas oleh pemilik rumah dan kanon di dalam rumah itu. Penulis lain boleh **meminta memegang** satu figuran lewat surat; bila pemilik menyerahkannya, pemegang menulis adegan dari sudut pandang figuran itu di naskah rumah yang sama (server menolak sudut pandang lain), sedangkan kanon tokoh tetap dijaga pemilik. Pemilik bisa mengambil kembali; pemegang bisa melepas.
+3. **Figuran kota** di **Buku Warga Kota** (`/kota/warga`): orang yang dikenal seluruh kota (Mbah Tembang si penjual tembakau, dr. Hanafi, Ma Lian, Bang Jamil si tukang becak, …; 10 figur awal). Siapa pun boleh menulis **perjumpaan** dengan mereka. Perubahan besar (wafat, pindah, fakta baru) diusulkan lalu sah setelah dua warga lain setuju; "hal yang tetap" di lembar figur tidak boleh diubah satu rumah sendirian. Warga juga bisa mengusulkan figuran kota baru (sah dengan dua persetujuan).
+
+**Penjaga konsistensi di studio** (rumah kota): editor adegan memeriksa naskah terhadap indeks nama kota.
+- Nama tokoh rumah lain yang tidak tertaut dan tidak boleh disapa → catatan pinggir biru dengan pilihan **ketuk rumahnya** atau **jadikan desas-desus**. Desas-desus tetap boleh ditulis, tapi pembaca melihat "konon: …" di kaki adegan; ia bukan kanon.
+- Figuran kota yang disebut di luar masa hidupnya → peringatan waktu.
+- Figuran kota yang disebut → saran **catat perjumpaan**; perjumpaan muncul di lembar figurnya seperti kliping koran, dan Kacamata Tokoh menambah baris **kenal di kota** untuk adegan-adegan berikutnya dari sudut pandang yang sama.
+- Kanon: membuat tokoh dengan nama yang sudah dipakai rumah lain atau figuran kota memunculkan peringatan nama kembar.

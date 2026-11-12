@@ -31,6 +31,12 @@ export default function Almanak() {
   return (
     <main className="screen kota-almanak">
       <Header title="Almanak Sangkala" sub={`${kanon.length} peristiwa kanon · ${menunggu.length} usulan`} backTo="/kota" />
+      <nav className="ka-tab" aria-label="almanak kota">
+        <button className="on">peristiwa</button>
+        <button onClick={() => navigate('/kota/warga', { replace: true })} data-testid="ka-ke-warga">
+          warga kota
+        </button>
+      </nav>
       <p className="ka-pembuka rupa-hand">Sejarah kota yang ditulis warganya. Setiap peristiwa bisa disaksikan dari banyak rumah.</p>
 
       {menunggu.length ? (

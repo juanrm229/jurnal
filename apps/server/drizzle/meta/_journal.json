@@ -211,6 +211,13 @@
       "when": 1794502417556,
       "tag": "0029_green_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794503130556,
+      "tag": "0030_nostalgic_ultimates",
+      "breakpoints": true
     }
   ]
 }
