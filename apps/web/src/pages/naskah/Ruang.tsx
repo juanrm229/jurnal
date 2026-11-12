@@ -152,7 +152,7 @@ function Susunan({ m, w, goKanon }: { m: NaskahModel; w: Work | null; goKanon: (
 
   return (
     <div className={`nk-susunan bentuk-${bentuk}`}>
-      {w ? (
+      {w && (w.p.tokoh || w.p.sinopsis) ? (
         <div className="nk-karya-kepala">
           <span className="tiny soft">{NASKAH_BENTUK[bentuk].label}{w.p.tokoh ? ` · ${m.nameOf(w.p.tokoh)}` : ''}</span>
           {w.p.sinopsis ? <p className="small">{w.p.sinopsis}</p> : null}

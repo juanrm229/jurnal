@@ -323,7 +323,7 @@
 .kp-lapis-k.milikku {
   background: #c2371f;
 }
-.kp-penghuni {
+.card.kp-penghuni {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1246,13 +1246,13 @@
   background: #f2ecda;
   color: #1b1a17;
 }
-.kr-kepala {
+.kn-kepala {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
 }
-.kr-kepala-baris {
+.kn-kepala-baris {
   width: 100%;
   display: flex;
   align-items: center;
@@ -1262,7 +1262,7 @@
   letter-spacing: 0.1em;
   color: #4d4a40;
 }
-.kr-balik {
+.kn-balik {
   width: 44px;
   height: 44px;
   border: 0;
@@ -1271,17 +1271,17 @@
   display: grid;
   place-items: center;
 }
-.kr-kosong {
+.kn-kosong {
   width: 44px;
 }
-.kr-nama {
+.kn-nama {
   font-family: var(--serif-display);
   font-weight: 800;
   font-size: clamp(32px, 10vw, 46px);
   letter-spacing: -1px;
   line-height: 1;
 }
-.kr-tanggal {
+.kn-tanggal {
   width: 100%;
   display: flex;
   justify-content: space-between;
@@ -1292,7 +1292,7 @@
   font-size: 10px;
   letter-spacing: 0.04em;
 }
-.kr-judul-berita {
+.kn-judul-berita {
   margin: 4px 0 0;
   font-family: var(--serif-display);
   font-weight: 600;
@@ -1300,13 +1300,13 @@
   line-height: 1.05;
   letter-spacing: -0.5px;
 }
-.kr-lede {
+.kn-lede {
   margin: 0;
   font-family: var(--serif);
   font-size: 15px;
   line-height: 1.6;
 }
-.kr-lede::first-letter {
+.kn-lede::first-letter {
   float: left;
   margin: 4px 6px 0 0;
   font-family: var(--serif-display);
@@ -1314,14 +1314,14 @@
   font-size: 46px;
   line-height: 0.85;
 }
-.kr-foto {
+.kn-foto {
   position: relative;
   height: 150px;
   border: 1px solid #1b1a17;
   background-repeat: no-repeat;
   filter: sepia(0.35) contrast(1.05);
 }
-.kr-foto-ket {
+.kn-foto-ket {
   position: absolute;
   left: 0;
   right: 0;
@@ -1332,11 +1332,11 @@
   font-size: 10px;
   letter-spacing: 0.04em;
 }
-.kr-pilih {
+.kn-pilih {
   display: flex;
   gap: 6px;
 }
-.kr-pilih button {
+.kn-pilih button {
   min-height: 36px;
   padding: 0 12px;
   border-radius: var(--r-pill);
@@ -1346,38 +1346,38 @@
   font-family: var(--mono);
   font-size: 12px;
 }
-.kr-pilih button.on {
+.kn-pilih button.on {
   background: #1b1a17;
   color: #f2ecda;
 }
-.kr-kolom {
+.kn-kolom {
   column-count: 2;
   column-gap: 18px;
   column-rule: 1px solid #b5ad96;
 }
 @media (max-width: 380px) {
-  .kr-kolom {
+  .kn-kolom {
     column-count: 1;
   }
 }
-.kr-kolom.satu {
+.kn-kolom.satu {
   column-count: 1;
 }
-.kr-kesaksian {
+.kn-kesaksian {
   break-inside: avoid;
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-.kr-alamat {
+.kn-alamat {
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #4d4a40;
 }
-.kr-kesaksian p {
+.kn-kesaksian p {
   margin: 0;
   font-family: var(--serif);
   font-size: 13px;
@@ -1385,12 +1385,12 @@
   text-align: justify;
   hyphens: auto;
 }
-.kr-tanda {
+.kn-tanda {
   font-family: var(--hand);
   font-size: 18px;
   color: #2a14d6;
 }
-.kr-baca {
+.kn-baca {
   align-self: flex-start;
   padding: 0;
   border: 0;
@@ -1400,13 +1400,13 @@
   color: #4d4a40;
   text-decoration: underline;
 }
-.kr-sepi {
+.kn-sepi {
   margin: 8px 0;
   font-family: var(--serif);
   font-style: italic;
   color: #4d4a40;
 }
-.kr-aksi {
+.kn-aksi {
   margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid #b5ad96;
@@ -1738,4 +1738,44 @@
 }
 .kr-fig-mohon .kr-surat {
   color: var(--text);
+}
+
+/* ── Kertas malam ── */
+:root[data-dark='1'] .kp-intro-card {
+  background: #1d1d24;
+  color: var(--text);
+}
+:root[data-dark='1'] .kpt-lapis.lowong {
+  background: rgba(255, 255, 255, 0.06);
+  border-top-color: rgba(255, 255, 255, 0.18);
+}
+:root[data-dark='1'] .kr-wajah {
+  color: #111116;
+  border-color: var(--paper);
+}
+
+/* Patok dan rumah selebar layar lain di desktop. */
+.kota-patok,
+.kota-rumah {
+  max-width: var(--max);
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Layar bertinta (ketuk, ketukan masuk) di kertas malam: tinta diperdalam supaya teks putih terbaca. */
+:root[data-dark='1'] .kota-ketuk,
+:root[data-dark='1'] .kr-ketukan {
+  background: color-mix(in srgb, var(--ink) 34%, #111118);
+}
+:root[data-dark='1'] .kk-rumahku button.on,
+:root[data-dark='1'] .kk-pilih button.on,
+:root[data-dark='1'] .kk-kirim,
+:root[data-dark='1'] .kr-ketukan:not(.keluar) .btn:not(.ghost):not(.soft) {
+  color: #1a1a24;
+}
+:root[data-dark='1'] .kr-taut-pil {
+  color: var(--on-ink);
+}
+:root[data-dark='1'] .kpt-lapis.pilih {
+  background: color-mix(in srgb, var(--ink) 40%, #111118);
+  color: #fff;
 }
