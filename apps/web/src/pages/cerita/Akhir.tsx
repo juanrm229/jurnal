@@ -2,10 +2,12 @@
 import { STORY_DECK, type StoryEdition, type StoryPartWire, storyRole, storySentences } from '@sehari/core';
 import { type CSSProperties, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { namaBerkas, toDocx, toEpub, toMarkdown, unduh } from '@/lib/ekspor';
 import { navigate } from '@/lib/router';
 import { useReady } from '@/lib/session';
 import { newWorkId, saveWork } from '@/lib/works';
 import { Avatar, Doodle, Sheet } from '@/ui/kit';
+import { AiRangkuman } from './ai';
 import { Lipatan } from './Baca';
 import type { StoryModel } from './kit';
 
@@ -144,8 +146,11 @@ export function Akhir({ m }: { m: StoryModel }) {
 
       <Edisi m={m} ed={ed} ordered={ordered} />
 
+      <AiRangkuman m={m} />
+
       <div className="col meja-lanjut" style={{ gap: 10 }}>
         <BookButton m={m} ordered={ordered} credit={credit} />
+        <Ekspor m={m} ordered={ordered} credit={credit} />
         <div className="row" style={{ gap: 8 }}>
           <button className="btn soft grow" onClick={() => setBranch(true)} data-testid="jalan-lain">
             <Doodle id="peta" size={18} /> jalan lain
@@ -184,6 +189,34 @@ export function Akhir({ m }: { m: StoryModel }) {
             document.body,
           )
         : null}
+    </div>
+  );
+}
+
+function Ekspor({ m, ordered, credit }: { m: StoryModel; ordered: StoryPartWire[]; credit: string }) {
+  const naskah = () => ({
+    title: m.premise.title,
+    subtitle: 'Hidup Orang Lain',
+    credit,
+    chapters: ordered.map((p) => ({ heading: m.tokohOf(p), sub: [m.handoffOf(p)?.waktu ?? m.waktuOf(p.round), p.world === 'b' ? 'jalan lain' : ''].filter(Boolean).join(' · '), text: m.sceneOf(p)?.text ?? '' })),
+  });
+  const file = namaBerkas(m.premise.title);
+  const go = (kind: 'md' | 'epub' | 'docx') => {
+    const n = naskah();
+    if (kind === 'md') unduh(new Blob([toMarkdown(n)], { type: 'text/markdown;charset=utf-8' }), `${file}.md`);
+    if (kind === 'epub') unduh(new Blob([toEpub(n, m.st.id)], { type: 'application/epub+zip' }), `${file}.epub`);
+    if (kind === 'docx') unduh(new Blob([toDocx(n)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), `${file}.docx`);
+  };
+  return (
+    <div className="ekspor" role="group" aria-label="ekspor naskah">
+      <span className="tiny soft">bawa pulang naskahnya, dirakit di perangkatmu</span>
+      <div className="row" style={{ gap: 6 }}>
+        {(['epub', 'docx', 'md'] as const).map((k) => (
+          <button key={k} className="pill" onClick={() => go(k)} data-testid={`ekspor-${k}`}>
+            <Doodle id={k === 'epub' ? 'buku-terbuka' : k === 'docx' ? 'kertas-sobek' : 'pena'} size={16} color="currentColor" /> {k === 'md' ? 'Markdown' : k.toUpperCase()}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

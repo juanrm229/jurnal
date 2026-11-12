@@ -148,6 +148,13 @@
       "when": 1794480280482,
       "tag": "0020_mixed_obadiah_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794482526912,
+      "tag": "0021_fuzzy_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

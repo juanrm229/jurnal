@@ -959,3 +959,18 @@ export const storyReads = pgTable(
   },
   (t) => [uniqueIndex('story_reads_once').on(t.partId, t.readerId, t.kind)],
 );
+
+/** Ruang Penelitian: pertanyaan, sumber, keputusan fiksi, moodboard. Privat sampai dibagikan. */
+export const storyResearch = pgTable(
+  'story_research',
+  {
+    id: text('id').primaryKey(),
+    storyId: text('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    shared: boolean('shared').notNull().default(false),
+    status: text('status').notNull().default('terbuka'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('story_research_story_idx').on(t.storyId)],
+);

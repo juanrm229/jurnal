@@ -31,8 +31,45 @@ export interface StoryRole {
 }
 
 export type StoryDeck = 'awal' | 'lengkap';
-/** Kartu yang boleh diundi: Awal saja, atau seluruh dek kecuali yang butuh prasyarat. */
-export const storyDeckIds = (deck: StoryDeck): string[] => STORY_DECK.filter((r) => (deck === 'awal' ? r.tier === 'awal' : !r.prasyarat)).map((r) => r.id);
+
+/** Keadaan meja yang bisa dilihat server tanpa membaca isi: dipakai untuk membuka kartu berprasyarat. */
+export interface StoryDeckCtx {
+  round: number;
+  rounds: number;
+  members: number;
+  /** Fakta yang sudah disepakati. */
+  sah: number;
+  /** Kartu riset yang dibagikan ke meja. */
+  research: number;
+  /** Sanggahan yang diputuskan jadi misteri disengaja. */
+  misteri: number;
+}
+/** Kapan bahan untuk tiap kartu berprasyarat sudah tersedia. */
+const PREREQ: Record<string, (c: StoryDeckCtx) => boolean> = {
+  '05': (c) => c.sah >= 1,
+  '06': () => true,
+  '08': (c) => c.members >= 3,
+  '11': () => true,
+  '12': (c) => c.round >= 2,
+  '19': (c) => c.round >= 2,
+  '22': (c) => c.sah >= 2,
+  '25': (c) => c.round >= 2,
+  '28': (c) => c.rounds > 3,
+  '29': (c) => c.sah >= 1,
+  '32': (c) => c.round >= 4,
+  '35': () => true,
+  '36': (c) => c.research >= 1,
+  '37': (c) => c.round >= 3,
+  '38': (c) => c.sah >= 1,
+  '39': (c) => c.sah >= 2,
+  '43': (c) => c.sah >= 1 || c.misteri >= 1,
+  '45': (c) => c.round >= 2,
+  '48': (c) => c.round >= 2,
+};
+export const storyPrereqMet = (id: string, ctx: StoryDeckCtx) => (PREREQ[id] ?? (() => false))(ctx);
+/** Kartu yang boleh diundi: dek awal, atau dek lengkap dengan kartu berprasyarat yang bahannya sudah ada di meja. */
+export const storyDeckIds = (deck: StoryDeck, ctx?: StoryDeckCtx): string[] =>
+  STORY_DECK.filter((r) => (deck === 'awal' ? r.tier === 'awal' : !r.prasyarat || (!!ctx && storyPrereqMet(r.id, ctx)))).map((r) => r.id);
 export const STORY_ROLES: StoryRole[] = STORY_DECK;
 export const STORY_ROLE_IDS = STORY_ROLES.map((r) => r.id);
 export const storyRole = (id: string | undefined) => STORY_ROLES.find((r) => r.id === id);
@@ -179,8 +216,8 @@ export function storyGiver(members: string[], i: number): string {
 }
 
 /** Undi role berbeda untuk tiap penulis; `rand` mengembalikan angka 0..1. */
-export function drawStoryRoles(members: string[], deck: StoryDeck = 'awal', rand: () => number = Math.random): Record<string, string> {
-  const pool = storyDeckIds(deck);
+export function drawStoryRoles(members: string[], deck: StoryDeck = 'awal', rand: () => number = Math.random, ctx?: StoryDeckCtx): Record<string, string> {
+  const pool = storyDeckIds(deck, ctx);
   const out: Record<string, string> = {};
   for (const m of members) out[m] = pool.splice(Math.floor(rand() * pool.length), 1)[0]!;
   return out;
@@ -208,8 +245,8 @@ export interface StoryMeta {
 export const STORY_FREE = 'bebas';
 
 /** Tawarkan dua kartu berbeda kepada tiap penulis (mode pilih); kartu pertama jadi bawaan. */
-export function drawStoryOffers(members: string[], deck: StoryDeck = 'awal', rand: () => number = Math.random): Record<string, string[]> {
-  const pool = storyDeckIds(deck);
+export function drawStoryOffers(members: string[], deck: StoryDeck = 'awal', rand: () => number = Math.random, ctx?: StoryDeckCtx): Record<string, string[]> {
+  const pool = storyDeckIds(deck, ctx);
   const out: Record<string, string[]> = {};
   for (const m of members) {
     const a = pool.splice(Math.floor(rand() * pool.length), 1)[0]!;
@@ -287,4 +324,26 @@ export interface StoryPartPayload {
   proof?: string;
   /** Gelombang bebas: tokoh dan waktu dipilih penulisnya sendiri. */
   seat?: { tokoh: string; waktu: string };
+}
+
+/** Kartu Ruang Penelitian (terenkripsi). */
+export interface StoryResearchPayload {
+  v: 1;
+  /** tanya: pertanyaan riset; sumber: kartu sumber; keputusan: fakta dunia atau keputusan fiksi; mood: moodboard. */
+  kind: 'tanya' | 'sumber' | 'keputusan' | 'mood';
+  title: string;
+  note?: string;
+  /** Alasan naratif (pertanyaan) atau klaim yang didukung (sumber). */
+  claim?: string;
+  creator?: string;
+  date?: string;
+  url?: string;
+  locator?: string;
+  quote?: string;
+  origin?: 'sumber' | 'observasi' | 'perkiraan' | 'fiksi';
+  /** Ditautkan ke tokoh, adegan (id bagian), atau aturan dunia. */
+  link?: string;
+  group?: string;
+  media?: { id: string; key: string; mime: string; width?: number; height?: number; tint?: string };
+  rights?: string;
 }
