@@ -363,6 +363,8 @@ function Waiting({ m }: { m: StoryModel }) {
   const { st, meId, main } = m;
   const sealed = st.members.filter((u) => main.find((p) => p.round === st.round && p.authorId === u)?.sealed);
   if (sealed.length >= st.members.length) return null;
+  const alone = st.aloneAt ? new Date(st.aloneAt) : null;
+  const aloneOk = !!alone && alone.getTime() <= Date.now();
   return (
     <section className="meja-lewati" data-testid="lewati">
       <div className="row" style={{ gap: 6 }}>
@@ -372,10 +374,25 @@ function Waiting({ m }: { m: StoryModel }) {
           </span>
         ))}
       </div>
-      <p className="small soft">Tidak ada tenggat. Kalau semua yang sudah menyegel setuju, gelombang ini bisa lanjut tanpa bagian yang belum masuk.</p>
-      <button className={`pill ${st.skips.includes(meId) ? 'active' : ''}`} disabled={st.skips.includes(meId)} onClick={() => void m.run(() => m.post('/skip'))} data-testid="usul-lewati">
-        {st.skips.includes(meId) ? `kamu setuju · ${st.skips.length} dari ${sealed.length}` : 'setuju lanjut tanpa mereka'}
-      </button>
+      {sealed.length === 1 ? (
+        <>
+          <p className="small soft">
+            {aloneOk
+              ? 'Sudah tiga hari. Kamu boleh lanjut sendiri; mereka bisa bergabung lagi di gelombang berikutnya.'
+              : `Tidak ada tenggat. Kalau sampai ${alone ? alone.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' }) : 'tiga hari lagi'} belum ada bagian lain, kamu boleh lanjut sendiri.`}
+          </p>
+          <button className="pill" disabled={!aloneOk} onClick={() => void m.run(() => m.post('/skip'))} data-testid="usul-lewati">
+            lanjut sendiri
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="small soft">Tidak ada tenggat. Kalau semua yang sudah menyegel setuju, gelombang ini bisa lanjut tanpa bagian yang belum masuk.</p>
+          <button className={`pill ${st.skips.includes(meId) ? 'active' : ''}`} disabled={st.skips.includes(meId)} onClick={() => void m.run(() => m.post('/skip'))} data-testid="usul-lewati">
+            {st.skips.includes(meId) ? `kamu setuju · ${st.skips.length} dari ${sealed.length}` : 'setuju lanjut tanpa mereka'}
+          </button>
+        </>
+      )}
     </section>
   );
 }

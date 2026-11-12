@@ -347,3 +347,6 @@ export interface StoryResearchPayload {
   media?: { id: string; key: string; mime: string; width?: number; height?: number; tint?: string };
   rights?: string;
 }
+
+/** Berapa lama penulis yang menyegel sendirian menunggu sebelum boleh lanjut tanpa yang lain. */
+export const STORY_ALONE_HOURS = 72;

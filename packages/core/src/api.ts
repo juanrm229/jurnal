@@ -1160,6 +1160,8 @@ export interface StoryWire {
   research: StoryResearchWire[];
   /** Penulis yang suaranya dibutuhkan untuk fakta dan edisi: yang menyegel di gelombang terakhir yang dibuka. */
   voters: string[];
+  /** Penulis yang menyegel sendirian boleh lanjut tanpa yang lain mulai saat ini (ISO), atau null. */
+  aloneAt: string | null;
   /** Keuntungan role-mu sudah dipakai di babak ini. */
   perkUsed: boolean;
   /** AI cloud boleh dipakai untuk cerita ini (semua anggota lingkaran setuju, atau cerita sendiri). */

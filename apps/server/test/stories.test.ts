@@ -157,6 +157,23 @@ describe('hidup orang lain', () => {
     expect(four.offers).not.toEqual(st.offers);
   });
 
+  it('cerita berdua: yang menyegel sendirian boleh lanjut setelah tiga hari', async () => {
+    const st2 = id();
+    await raka.ok('POST', '/v1/stories', { id: st2, circleId: duo, premise: 'warung', members: [naya.userId] });
+    await part(raka, 1, true, 'a', st2);
+    const w = await get(raka, st2);
+    expect(w.aloneAt).toBeTruthy();
+    expect((await get(naya, st2)).aloneAt).toBeNull();
+    expect((await raka.req('POST', `/v1/stories/${st2}/skip`)).status).toBe(409);
+    env.advanceDays(3);
+    const go = await raka.ok('POST', `/v1/stories/${st2}/skip`);
+    expect(go.phase).toBe('read');
+    expect(go.voters).toEqual([raka.userId]);
+    const f = await raka.ok('POST', `/v1/stories/${st2}/facts`, { id: id(), round: 1, envelope: amplop(raka, 'f') });
+    expect(f.facts[0].state).toBe('sah');
+    expect((await raka.ok('POST', `/v1/stories/${st2}/ready`)).round).toBe(2);
+  });
+
   it('cerita sendiri: fakta langsung sah', async () => {
     const solo = id();
     await sari.ok('POST', '/v1/stories', { id: solo, circleId: null, premise: 'warung', members: [] });
