@@ -1,0 +1,1 @@
+ALTER TABLE "story_research" ADD COLUMN "media_ids" jsonb DEFAULT '[]'::jsonb NOT NULL;

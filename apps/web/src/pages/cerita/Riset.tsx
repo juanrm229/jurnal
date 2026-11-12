@@ -286,7 +286,7 @@ function ResearchForm({ m, kind, onDone }: { m: StoryModel; kind: Kind; onDone: 
               link: f.link,
               media: media as StoryResearchPayload['media'],
             };
-            if (await m.run(() => m.post('/research', { id: newStoryId(), envelope: seal(payload, shared), shared }))) onDone();
+            if (await m.run(() => m.post('/research', { id: newStoryId(), envelope: seal(payload, shared), mediaIds: media ? [media.id] : [], shared }))) onDone();
           } catch (e) {
             toast((e as Error).message);
           } finally {

@@ -970,6 +970,8 @@ export const storyResearch = pgTable(
     envelope: jsonb('envelope').notNull(),
     shared: boolean('shared').notNull().default(false),
     status: text('status').notNull().default('terbuka'),
+    /** Foto moodboard: dibuka untuk penulis meja bila kartunya dibagikan. */
+    mediaIds: jsonb('media_ids').$type<string[]>().notNull().default([]),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('story_research_story_idx').on(t.storyId)],
