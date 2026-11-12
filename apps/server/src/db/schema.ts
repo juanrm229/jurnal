@@ -850,3 +850,38 @@ export const circlePresence = pgTable(
   },
   (t) => [primaryKey({ columns: [t.circleId, t.userId] })],
 );
+
+// ── Hidup Orang Lain ────────────────────────────────────────────────────────
+
+export const stories = pgTable(
+  'stories',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').references(() => circles.id, { onDelete: 'cascade' }),
+    ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    premise: text('premise').notNull(),
+    round: integer('round').notNull().default(1),
+    phase: text('phase').notNull().default('write'),
+    members: jsonb('members').$type<string[]>().notNull(),
+    roles: jsonb('roles').$type<Record<string, string>>().notNull(),
+    ready: jsonb('ready').$type<string[]>().notNull().default([]),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('stories_circle_idx').on(t.circleId)],
+);
+
+export const storyParts = pgTable(
+  'story_parts',
+  {
+    id: text('id').primaryKey(),
+    storyId: text('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+    round: integer('round').notNull(),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    sealedAt: ts('sealed_at'),
+    agrees: jsonb('agrees').$type<string[]>().notNull().default([]),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('story_parts_once').on(t.storyId, t.round, t.authorId)],
+);

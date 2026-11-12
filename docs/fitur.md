@@ -76,6 +76,14 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | Pindah hari dengan kertas yang terbalik, dan kerangka kertas saat memuat | `pages/Today.tsx` |
 | Keadaan kosong yang bercerita (bayangan taman tiga minggu ke depan, contoh rasi) | `pages/Kenangan.tsx`, `pages/lore/Langit.tsx` |
 
+## Hidup Orang Lain (cerita bersama)
+
+| Fitur | Di mana |
+| --- | --- |
+| Cerpen 1–5 penulis dalam tiga putaran asinkron; bagian orang lain baru dilepas server setelah semua menyegel; segel bisa ditarik selama belum semua menyegel | `routes/stories.ts`, tabel `stories` & `story_parts`, `test/stories.test.ts` |
+| Tiga premis (kartu prompt lima bagian per tokoh), 12 kartu role Awal, aturan kursi dan serah-terima jejak | `core/cerita.ts` |
+| Meja menulis, ruang baca dengan handshake satu ketukan, pengungkapan + perjalanan jejak, rakit jadi draf Karya | `pages/cerita/Cerita.tsx`, `pages/cerita/Meja.tsx`, `lib/stories.ts` |
+
 ## Desain aman
 
 Mode Pisah, Mode Kenangan, keluar satu ketukan, lapor (isi dipilih pelapor) & blokir, kode keamanan, tautan perangkat via QR, kode pemulihan, ekspor & hapus akun, AI cloud opt-in per lingkaran — lihat [keamanan-privasi.md](keamanan-privasi.md). Layar: `l/[id]/pengaturan.tsx`, `lapor.tsx`, `aku/keamanan.tsx`, `aku/privasi.tsx`, `aku/blokir.tsx`.

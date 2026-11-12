@@ -20,7 +20,7 @@ const ROOMS: string[][] = [
   ['/hari'],
   ['/lingkaran', '/l/'],
   ['/kenangan', '/karya', '/surat', '/kepo', '/wrap'],
-  ['/main', '/sidik', '/photobox', '/tentang-kita', '/kartu'],
+  ['/main', '/sidik', '/photobox', '/tentang-kita', '/kartu', '/cerita'],
 ];
 export function tabIndex(path: string): number {
   return ROOMS.findIndex((r) => r.some((p) => path === p || path.startsWith(p.endsWith('/') ? p : `${p}/`)));

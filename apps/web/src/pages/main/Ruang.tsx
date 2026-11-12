@@ -57,6 +57,15 @@ export default function RuangMain() {
           masuk
         </button>
       </div>
+      <Link to="/cerita" className="cerita-pintu" data-testid="rm-cerita">
+        <Doodle id="pena" size={40} color="currentColor" />
+        <span className="grow">
+          <b>Hidup Orang Lain</b>
+          <span className="tiny">1–5 penulis · tidak perlu serentak</span>
+          <span className="small">Kamu menulis apa yang terjadi. Orang lain menulis apa yang ia kira terjadi. Tiga putaran, lalu jadi cerpen.</span>
+        </span>
+        <Doodle id="ui-panah-kanan" size={18} color="currentColor" />
+      </Link>
       <div className="rm-daftar">
         {GAMES.map((g) => (
           <button key={g.id} className={`rm-game ${g.to ? '' : 'segera'}`} disabled={!g.to} onClick={() => g.to && navigate(g.to)} data-testid={`rm-${g.id}`}>
