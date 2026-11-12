@@ -6,39 +6,34 @@
  * Teks cerita sendiri terenkripsi dan tidak pernah dibaca server.
  */
 
+/** Jumlah putaran cerpen; novella dan novel lebih panjang (lihat STORY_FORMATS). */
 export const STORY_ROUNDS = 3;
 export const STORY_MAX_WRITERS = 5;
 /** Panduan panjang per bagian (kata); bukan batas keras. */
 export const STORY_WORDS = { min: 50, max: 180 } as const;
+
+import { STORY_DECK } from './ceritaDek';
 
 export type RoleKind = 'adegan' | 'jejak' | 'prompt' | 'ruang-baca';
 
 export interface StoryRole {
   id: string;
   name: string;
+  tier: 'awal' | 'lanjutan';
   kind: RoleKind;
   doodle: string;
   batasan: string;
   keuntungan: string;
   contoh: string;
   latihan: string;
+  /** Bahan yang harus sudah ada sebelum kartu ini dibagikan. */
+  prasyarat?: string;
 }
 
-/** Dua belas kartu Awal dari dek 48 kartu. */
-export const STORY_ROLES: StoryRole[] = [
-  { id: '01', name: 'Sang Penyendiri', kind: 'jejak', doodle: 'ui-aku', batasan: 'Gunakan sudut pandang orang pertama dari satu tokoh sepanjang bagian. Batin tokoh lain hanya boleh muncul sebagai dugaan si “aku”.', keuntungan: 'Teruskan satu detail yang sempat si “aku” indra tetapi gagal ia pahami. Penulis berikutnya berdiri di sisi lain detail itu.', contoh: 'Dina melihat pantulan lampu teras di kaca taksi dan mengira rumah lain yang menyala.', latihan: 'Sudut pandang terbatas dan inferensi.' },
-  { id: '02', name: 'Sang Kamera', kind: 'prompt', doodle: 'kamera', batasan: 'Tampilkan adegan lewat hal yang bisa direkam dari luar: gerak, bunyi, benda, tulisan, dan percakapan.', keuntungan: 'Tunjuk satu tindakan yang tampak di permukaan. Penulis berikutnya boleh menulis keputusan batin yang memicunya, atau reaksinya.', contoh: 'Seseorang merapikan tiga piring. Penulis tokoh itu bisa memperlihatkan siapa yang masih ia tunggu.', latihan: 'Subteks dan karakterisasi lewat tindakan.' },
-  { id: '09', name: 'Sang Bisu', kind: 'adegan', doodle: 'gelembung-kata', batasan: 'Tulis tanpa ucapan langsung. Tokoh berkomunikasi lewat tindakan, jeda, atau benda.', keuntungan: 'Izinkan tepat satu kalimat ucapan langsung di titik pilihan tokoh. Kamu menentukan kepada siapa kalimat itu diucapkan.', contoh: 'Sepanjang adegan Dina memberi isyarat lewat spion. Saat sopir hendak berbelok ia berkata, “Lewat depan rumah dulu.”', latihan: 'Ekonomi dialog dan penempatan kalimat penting.' },
-  { id: '10', name: 'Sang Pengelak', kind: 'jejak', doodle: 'kabut', batasan: 'Pilih satu emosi yang menggerakkan adegan. Jangan sebut nama emosi itu maupun sinonim langsungnya.', keuntungan: 'Teruskan satu tindakan yang memperlihatkan emosi itu, tanpa labelnya. Tokoh berikutnya memutuskan cara meresponsnya.', contoh: 'Seseorang terus memutar cangkir yang gagangnya retak. Orang berikutnya memilih mengambil cangkir itu atau membiarkannya.', latihan: 'Show, don’t tell dan pembacaan perilaku.' },
-  { id: '17', name: 'Sang Tukang Jam', kind: 'adegan', doodle: 'ui-jam', batasan: 'Batasi aksi utama pada satu rentang tiga menit di waktu cerita. Pilih awal rentangnya sebelum menulis.', keuntungan: 'Sisipkan satu fragmen paling panjang dua kalimat dari waktu lain yang bisa diingat atau dibayangkan tokoh, lalu kembali ke rentang yang sama.', contoh: 'Sambil melipat kuitansi, Bapak mengingat Dina kecil menamai setiap kunci rumah.', latihan: 'Pengendalian durasi adegan dan kilas balik.' },
-  { id: '18', name: 'Sang Pembaca Akhir', kind: 'prompt', doodle: 'jam-pasir', batasan: 'Buka bagian dengan satu akibat konkret. Beri petunjuk penyebabnya setelah pembaca melihat akibat itu.', keuntungan: 'Pilih satu mata rantai penyebab yang masih terbuka. Penulis berikutnya boleh menulis peristiwa penghubungnya.', contoh: 'Buka dengan pagar yang sudah digembok dari dalam. Serahkan pertanyaan siapa yang terakhir melintas.', latihan: 'Urutan pengungkapan dan sebab-akibat.' },
-  { id: '25', name: 'Sang Pewaris', kind: 'adegan', doodle: 'kunci', batasan: 'Pakai satu jejak yang sah sebagai awal keputusan tokoh. Tunjukkan tanggung jawab atau risiko yang ikut berpindah bersama jejak itu.', keuntungan: 'Tulis dua respons berbeda atas jejak yang sama, lalu pilih satu sebelum menyegel. Yang lain boleh kamu perlihatkan di ruang baca.', contoh: 'Anak Dina bisa mengembalikan kunci ke rumah lama, atau menyerahkannya kepada orang yang kini tinggal di sana.', latihan: 'Hubungan sebab-akibat dan keputusan karakter.' },
-  { id: '26', name: 'Sang Penjaga Pintu', kind: 'prompt', doodle: 'ui-gembok', batasan: 'Letakkan satu kesempatan yang punya batas konkret. Tokoh memutuskan sebelum batas itu lewat, atau menanggung akibatnya sesudahnya.', keuntungan: 'Kirim satu kesempatan yang tersisa kepada tokoh lain, lengkap dengan batas dan harganya.', contoh: 'Taksi hanya bisa menunggu sampai palang ditutup. Bapak masih bisa menitipkan kunci lewat penjaga sebelum pergantian sif.', latihan: 'Taruhan adegan dan pilihan berbatas.' },
-  { id: '33', name: 'Sang Juru Benda', kind: 'jejak', doodle: 'lampu', batasan: 'Gunakan satu benda konkret untuk memicu aksi, membelokkannya, atau mengungkap akibat. Benda itu harus benar-benar dipakai, dipindah, rusak, atau ditinggalkan.', keuntungan: 'Wariskan kondisi akhir benda dan satu pertanyaan tentang pemakaian berikutnya. Penerima bebas memberinya fungsi baru yang masuk akal.', contoh: 'Kunci yang tak cocok dengan gembok dipakai untuk menahan amplop agar tak tertiup.', latihan: 'Detail konkret, properti adegan, dan motif.' },
-  { id: '34', name: 'Sang Pembuat Peta', kind: 'adegan', doodle: 'peta', batasan: 'Tetapkan dua titik ruang yang jelas dan satu hambatan di antaranya. Posisi dan perpindahan tokoh mengikuti rute itu.', keuntungan: 'Tambahkan satu jalan alternatif yang bisa ditemukan dari lingkungan adegan.', contoh: 'Dari mobil ke teras ada pagar terkunci. Tokoh melihat bukaan kecil yang biasa dipakai untuk mengantar tabung gas.', latihan: 'Geografi adegan dan gerak yang terbaca.' },
-  { id: '41', name: 'Sang Penjaga Rahasia', kind: 'jejak', doodle: 'amplop', batasan: 'Tentukan satu informasi yang diketahui tokohmu sebelum menulis. Sisakan petunjuk yang bisa ditemukan, tetapi tahan pengungkapan langsung.', keuntungan: 'Kirim petunjuknya dan satu kondisi masuk akal yang kelak memberi tokoh penerima akses pada jawabannya.', contoh: 'Tokoh menyembunyikan kuitansi di lipatan jaket. Jawabannya baru terbuka jika jaket itu sampai ke penjahit.', latihan: 'Penyemaian petunjuk dan waktu pengungkapan.' },
-  { id: '42', name: 'Sang Perangkai Akhir', kind: 'ruang-baca', doodle: 'ui-bintang-rasi', batasan: 'Akhiri bagianmu dengan satu gambar konkret yang berhubungan dengan pilihan tokoh, dan bisa ditelusuri ke detail di tubuh adegan.', keuntungan: 'Ajukan gambar itu sebagai calon gambar penutup cerita.', contoh: 'Seorang anak menggantung dua kunci pada paku yang sama setelah memutuskan menyimpan rumah lama dalam ingatan.', latihan: 'Penutup bergambar dan resonansi motif.' },
-];
+export type StoryDeck = 'awal' | 'lengkap';
+/** Kartu yang boleh diundi: Awal saja, atau seluruh dek kecuali yang butuh prasyarat. */
+export const storyDeckIds = (deck: StoryDeck): string[] => STORY_DECK.filter((r) => (deck === 'awal' ? r.tier === 'awal' : !r.prasyarat)).map((r) => r.id);
+export const STORY_ROLES: StoryRole[] = STORY_DECK;
 export const STORY_ROLE_IDS = STORY_ROLES.map((r) => r.id);
 export const storyRole = (id: string | undefined) => STORY_ROLES.find((r) => r.id === id);
 
@@ -182,12 +177,33 @@ export function storyGiver(members: string[], i: number): string {
 }
 
 /** Undi role berbeda untuk tiap penulis; `rand` mengembalikan angka 0..1. */
-export function drawStoryRoles(members: string[], rand: () => number = Math.random): Record<string, string> {
-  const pool = [...STORY_ROLE_IDS];
+export function drawStoryRoles(members: string[], deck: StoryDeck = 'awal', rand: () => number = Math.random): Record<string, string> {
+  const pool = storyDeckIds(deck);
   const out: Record<string, string> = {};
   for (const m of members) out[m] = pool.splice(Math.floor(rand() * pool.length), 1)[0]!;
   return out;
 }
+
+/** Tiga ukuran karya: jumlah gelombang, dan berapa gelombang dalam satu babak. */
+export const STORY_FORMATS = {
+  cerpen: { name: 'cerpen', rounds: 3, babak: 3, hint: 'tiga putaran, bisa selesai sekali duduk' },
+  novella: { name: 'novella', rounds: 6, babak: 3, hint: 'enam gelombang dalam dua babak' },
+  novel: { name: 'novel', rounds: 12, babak: 4, hint: 'dua belas gelombang dalam tiga babak' },
+} as const;
+export type StoryFormat = keyof typeof STORY_FORMATS;
+export const storyFormat = (rounds: number): StoryFormat => (rounds <= 3 ? 'cerpen' : rounds <= 6 ? 'novella' : 'novel');
+/** Babak ke berapa (mulai 0) sebuah gelombang berada. */
+export const storyBabak = (rounds: number, round: number) => Math.floor((round - 1) / STORY_FORMATS[storyFormat(rounds)].babak);
+
+/** Premis buatan sendiri: judul, fakta pembuka, dan tokoh-tokohnya (dienkripsi). */
+export interface StoryMeta {
+  v: 1;
+  title: string;
+  pitch: string;
+  fakta: string[];
+  tokoh: string[];
+}
+export const STORY_FREE = 'bebas';
 
 /** Isi satu bagian sebelum dienkripsi. */
 export interface StoryPartPayload {
@@ -197,4 +213,6 @@ export interface StoryPartPayload {
   trace?: { what: string; knownBy: string; question: string };
   /** Baris yang menunjukkan cara batasan role dimainkan. */
   proof?: string;
+  /** Gelombang bebas: tokoh dan waktu dipilih penulisnya sendiri. */
+  seat?: { tokoh: string; waktu: string };
 }

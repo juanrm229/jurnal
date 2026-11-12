@@ -85,6 +85,48 @@ describe('hidup orang lain', () => {
     expect(done.parts).toHaveLength(6);
   });
 
+  it('setelah selesai: sanggahan dan jalan lain bisa ditambahkan', async () => {
+    const st = await raka.ok('GET', `/v1/stories/${sid}`);
+    const np = st.parts.find((x: any) => x.authorId === naya.userId && x.round === 1);
+    const withNote = await raka.ok('POST', `/v1/stories/${sid}/parts/${np.id}/notes`, { id: id(), reason: 'pengetahuan', envelope: amplop(raka, 'dari mana dina tahu?') });
+    expect(withNote.notes).toHaveLength(1);
+    const b = await naya.ok('PUT', `/v1/stories/${sid}/branch`, { round: 2, envelope: amplop(naya, 'taksi berhenti') });
+    expect(b.parts.filter((x: any) => x.world === 'b')).toHaveLength(1);
+    expect(b.parts).toHaveLength(7);
+  });
+
+  it('novella: babak baru mengundi role baru, dan penulis yang macet bisa dilewati', async () => {
+    const trio = (await raka.createCircle('circle', 'Geng')).id;
+    await naya.accept(await raka.invite(trio));
+    await sari.accept(await raka.invite(trio));
+    const nid = id();
+    const st = await raka.ok('POST', '/v1/stories', { id: nid, circleId: trio, premise: 'kunci', members: [naya.userId, sari.userId], rounds: 6, deck: 'lengkap' });
+    expect([st.rounds, st.deck]).toEqual([6, 'lengkap']);
+    const seal = (c: Client, round: number) => c.ok('PUT', `/v1/stories/${nid}/parts`, { round, envelope: amplop(c, 'x'), seal: true });
+    const next = (c: Client) => c.ok('POST', `/v1/stories/${nid}/ready`);
+    // Sari tidak menulis: belum boleh melewati sebelum menyegel, dan butuh semua yang sudah menyegel.
+    expect((await sari.req('POST', `/v1/stories/${nid}/skip`)).status).toBe(400);
+    await seal(raka, 1);
+    await seal(naya, 1);
+    expect((await raka.ok('POST', `/v1/stories/${nid}/skip`)).phase).toBe('write');
+    expect((await naya.ok('POST', `/v1/stories/${nid}/skip`)).phase).toBe('read');
+    await next(raka);
+    expect((await next(naya)).round).toBe(2);
+    for (const round of [2, 3]) {
+      for (const c of [raka, naya, sari]) await seal(c, round);
+      for (const c of [raka, naya, sari]) await next(c);
+    }
+    const four = await raka.ok('GET', `/v1/stories/${nid}`);
+    expect([four.round, four.phase]).toEqual([4, 'write']);
+    for (const round of [4, 5, 6]) {
+      for (const c of [raka, naya, sari]) await seal(c, round);
+      for (const c of [raka, naya, sari]) await next(c);
+    }
+    const done = await raka.ok('GET', `/v1/stories/${nid}`);
+    expect(done.phase).toBe('done');
+    expect(done.rolesLog).toHaveLength(1);
+  });
+
   it('cerita sendiri tidak butuh lingkaran', async () => {
     const solo = id();
     const st = await sari.ok('POST', '/v1/stories', { id: solo, circleId: null, premise: 'warung', members: [] });

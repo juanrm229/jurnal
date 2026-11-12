@@ -865,6 +865,17 @@ export const stories = pgTable(
     members: jsonb('members').$type<string[]>().notNull(),
     roles: jsonb('roles').$type<Record<string, string>>().notNull(),
     ready: jsonb('ready').$type<string[]>().notNull().default([]),
+    /** Jumlah gelombang: 3 cerpen, 6 novella, 12 novel. */
+    rounds: integer('rounds').notNull().default(3),
+    deck: text('deck').notNull().default('awal'),
+    /** 'terbuka' atau 'kejutan' (adegan penuh baru tampil di pengungkapan). */
+    mode: text('mode').notNull().default('terbuka'),
+    /** Premis buatan sendiri, terenkripsi. */
+    meta: jsonb('meta'),
+    /** Siapa yang setuju melewati penulis yang belum menyegel di gelombang ini. */
+    skips: jsonb('skips').$type<string[]>().notNull().default([]),
+    /** Role babak-babak sebelumnya, urut. */
+    rolesLog: jsonb('roles_log').$type<Record<string, string>[]>().notNull().default([]),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
@@ -881,7 +892,24 @@ export const storyParts = pgTable(
     envelope: jsonb('envelope').notNull(),
     sealedAt: ts('sealed_at'),
     agrees: jsonb('agrees').$type<string[]>().notNull().default([]),
+    /** 'a' = jalur utama; selain itu cabang "jalan lain". */
+    world: text('world').notNull().default('a'),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
-  (t) => [uniqueIndex('story_parts_once').on(t.storyId, t.round, t.authorId)],
+  (t) => [uniqueIndex('story_parts_once').on(t.storyId, t.round, t.authorId, t.world)],
+);
+
+/** Sanggahan di ruang baca: alasan terbuka, isi terenkripsi. */
+export const storyNotes = pgTable(
+  'story_notes',
+  {
+    id: text('id').primaryKey(),
+    storyId: text('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+    partId: text('part_id').notNull().references(() => storyParts.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(),
+    envelope: jsonb('envelope').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('story_notes_story_idx').on(t.storyId)],
 );

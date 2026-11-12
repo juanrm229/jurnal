@@ -83,6 +83,10 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 | Cerpen 1–5 penulis dalam tiga putaran asinkron; bagian orang lain baru dilepas server setelah semua menyegel; segel bisa ditarik selama belum semua menyegel | `routes/stories.ts`, tabel `stories` & `story_parts`, `test/stories.test.ts` |
 | Tiga premis (kartu prompt lima bagian per tokoh), 12 kartu role Awal, aturan kursi dan serah-terima jejak | `core/cerita.ts` |
 | Meja menulis, ruang baca dengan handshake satu ketukan, pengungkapan + perjalanan jejak, rakit jadi draf Karya | `pages/cerita/Cerita.tsx`, `pages/cerita/Meja.tsx`, `lib/stories.ts` |
+| Cerpen (3), novella (6, dua babak), novel (12, tiga babak); role diundi ulang tiap babak; gelombang di luar premis jadi gelombang bebas (tokoh dan waktu dipilih penulis) | `core/cerita.ts STORY_FORMATS`, `routes/stories.ts advance` |
+| Dek Role Penulis 48 kartu (Awal 12; dek lengkap tanpa kartu berprasyarat 29), dibangkitkan dari dokumen rancangan | `core/ceritaDek.ts` |
+| Premis buatan sendiri (terenkripsi), mode kejutan, lewati penulis yang macet (semua yang sudah menyegel setuju), sanggahan (fakta/pengetahuan/sebab-akibat), jalan lain setelah selesai, notifikasi tanpa isi | `routes/stories.ts`, tabel `story_notes` |
+| Pengungkapan: perjalanan jejak, penghargaan dari bukti nyata, potret penulis + kartu untuk cerita berikutnya, cetak/PDF | `pages/cerita/Meja.tsx` |
 
 ## Desain aman
 

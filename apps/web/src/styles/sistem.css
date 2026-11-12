@@ -2647,6 +2647,113 @@ button.cerita-premis {
   font-weight: 500;
 }
 
+/* Hidup Orang Lain, versi penuh: lewati, sanggahan, jalan lain, penghargaan. */
+.meja-lewati {
+  margin-top: var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-card);
+}
+.meja-lewati p {
+  margin: 0;
+}
+.bagian-tutup {
+  color: var(--text-soft);
+  font-style: italic;
+}
+.bagian-sanggah {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.bagian-sanggah li {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-card);
+  background: var(--sticky-blue);
+  font-size: var(--fs-sm);
+  animation: note-stick 520ms var(--ease-spring) both;
+}
+.bagian-sanggah li .tiny {
+  display: block;
+  color: var(--text-soft);
+}
+.bagian-sanggah-btn {
+  margin-top: var(--sp-2);
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.jalan-lain {
+  margin-top: var(--sp-3);
+  padding-left: var(--sp-3);
+  border-left: 2px dashed var(--ink);
+}
+.jalan-lain .bagian {
+  background: var(--ink-faint);
+}
+.award {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-card);
+  background: var(--sticky-yellow);
+  color: #16161a;
+  animation: note-stick 620ms var(--ease-spring) both;
+  animation-delay: calc(300ms + var(--n, 0) * 160ms);
+}
+:root[data-dark='1'] .award {
+  color: var(--text);
+}
+.award b {
+  display: block;
+  font-family: var(--serif-display);
+  font-size: var(--fs-lg);
+  font-weight: 480;
+}
+.potret {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--sp-2);
+}
+.potret-k {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: pop-in 520ms var(--ease-spring) both;
+  animation-delay: calc(200ms + var(--n, 0) * 90ms);
+}
+.potret-k b {
+  font-weight: 500;
+}
+.potret-hadiah {
+  margin-top: 4px;
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r-card);
+  background: var(--ink-faint);
+}
+.potret-hadiah i {
+  font-style: normal;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dock-seal::before,
   .dock-seal::after {
