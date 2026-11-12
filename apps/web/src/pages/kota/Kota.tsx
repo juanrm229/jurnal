@@ -1,10 +1,10 @@
 /**
- * Kota Lirih: peta ilustrasi yang bisa digeser dan dicubit. Wilayah diketuk
+ * Kota Sangkala: peta ilustrasi yang bisa digeser dan dicubit. Wilayah diketuk
  * untuk didekati; saat cukup dekat, persil muncul. Penggeser zaman menua-kan
  * peta dan menampilkan rumah yang hidup pada tahun itu.
  */
 import {
-  KOTA_LIRIH,
+  KOTA_WILAYAH,
   KOTA_TAHUN,
   type KotaClaimWire,
   type KotaPlot,
@@ -25,7 +25,7 @@ import { Doodle, Sheet } from '@/ui/kit';
 const W = 2000;
 const H = 1125;
 /** Persil muncul mulai skala ini (piksel layar per satuan peta). */
-const PLOT_AT = 1.5;
+const PLOT_AT = 1.7;
 
 type View = { x: number; y: number; s: number };
 
@@ -42,7 +42,7 @@ export default function Kota() {
   const size = useRef({ w: 390, h: 700 });
   const claims = kota.data?.claims ?? [];
   const mine = claims.find((c) => c.mine && c.state === 'aktif');
-  const openRegions = KOTA_LIRIH.filter(kotaOpen);
+  const openRegions = KOTA_WILAYAH.filter(kotaOpen);
   const plots = useMemo(() => openRegions.flatMap((r) => kotaPlots(r.id)), []);
   const byPlot = useMemo(() => {
     const m = new Map<string, KotaClaimWire[]>();
@@ -52,7 +52,7 @@ export default function Kota() {
 
   const minS = () => Math.max(size.current.w / W, size.current.h / H);
   const clamp = (v: View): View => {
-    const s = Math.min(Math.max(v.s, minS()), minS() * 9);
+    const s = Math.min(Math.max(v.s, minS()), Math.max(minS() * 3, 4.2));
     const x = Math.min(0, Math.max(size.current.w - W * s, v.x));
     const y = Math.min(0, Math.max(size.current.h - H * s, v.y));
     return { x, y, s };
@@ -84,7 +84,7 @@ export default function Kota() {
       size.current = { w: el.clientWidth, h: el.clientHeight };
       const s = minS();
       // Awal: Bantaran Kali di tengah, wilayah pertama yang dibuka.
-      apply({ s: s * 1.15, x: size.current.w / 2 - 860 * s * 1.15, y: size.current.h / 2 - 640 * s * 1.15 });
+      apply({ s: s * 1.15, x: size.current.w / 2 - 760 * s * 1.15, y: size.current.h / 2 - 540 * s * 1.15 });
       commit();
     };
     fit();
@@ -170,7 +170,7 @@ export default function Kota() {
         return;
       }
     }
-    const r = KOTA_LIRIH.find((x) => kotaInside(w, x.poly));
+    const r = KOTA_WILAYAH.find((x) => kotaInside(w, x.poly));
     setPlot(null);
     setRegion(r ?? null);
   };
@@ -183,7 +183,7 @@ export default function Kota() {
     <main className="kota" data-testid="kota">
       <div ref={box} className="kp-view" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onWheel={wheel}>
         <div ref={inner} className="kp-world" style={{ width: W, height: H, backgroundImage: `url(${KOTA_IMG.kecil})` }}>
-          <img className="kp-img" src={KOTA_IMG.sedang} alt="Peta ilustrasi Kota Lirih" draggable={false} style={{ filter: `sepia(${(sepia * 0.7).toFixed(2)}) saturate(${(1 - sepia * 0.3).toFixed(2)})` }} />
+          <img className="kp-img" src={KOTA_IMG.sedang} alt="Peta ilustrasi Kota Sangkala" draggable={false} style={{ filter: `sepia(${(sepia * 0.7).toFixed(2)}) saturate(${(1 - sepia * 0.3).toFixed(2)})` }} />
           {scale > 1.25 ? <img className="kp-img" src={KOTA_IMG.besar} alt="" aria-hidden draggable={false} style={{ filter: `sepia(${(sepia * 0.7).toFixed(2)}) saturate(${(1 - sepia * 0.3).toFixed(2)})` }} /> : null}
           <svg className="kp-svg" viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden>
             <defs>
@@ -192,7 +192,7 @@ export default function Kota() {
                 <path d="M0 5 H10" stroke="#a08a5c" strokeOpacity="0.45" strokeWidth="1.2" />
               </pattern>
             </defs>
-            {KOTA_LIRIH.map((r) => {
+            {KOTA_WILAYAH.map((r) => {
               const open = kotaOpen(r);
               const sel = region?.id === r.id;
               const pts = r.poly.map((p) => p.join(',')).join(' ');
@@ -208,7 +208,7 @@ export default function Kota() {
                   const cs = byPlot.get(q.id) ?? [];
                   const live = cs.find((c) => liveAt(c, year));
                   const cls = live ? (live.mine ? 'milikku' : 'huni') : cs.some((c) => c.state === 'aktif') ? 'lain' : 'lowong';
-                  return <circle key={q.id} cx={q.x} cy={q.y} r={((cls === 'lowong' ? 2.6 : 4.4) / scale) * 1.4} className={`kp-persil ${cls} ${plot?.id === q.id ? 'pilih' : ''}`} style={{ strokeWidth: 1.4 / scale }} />;
+                  return <circle key={q.id} cx={q.x} cy={q.y} r={(cls === 'lowong' ? 2.4 : 3.8) / scale + (cls === 'lowong' ? 0.9 : 1.6)} className={`kp-persil ${cls} ${plot?.id === q.id ? 'pilih' : ''}`} style={{ strokeWidth: 1.4 / scale }} />;
                 })
               : claims
                   .filter((c) => liveAt(c, year))
@@ -217,7 +217,7 @@ export default function Kota() {
                     return q ? <circle key={c.id} cx={q.x} cy={q.y} r={7 / scale} className={`kp-rumah ${c.mine ? 'milikku' : ''}`} style={{ strokeWidth: 2 / scale }} /> : null;
                   })}
             {plot ? <circle cx={plot.x} cy={plot.y} r={14 / scale} className="kp-cincin" style={{ strokeWidth: 2.4 / scale }} /> : null}
-            {KOTA_LIRIH.map((r) => (
+            {KOTA_WILAYAH.map((r) => (
               <text key={r.id} x={r.label[0]} y={r.label[1]} className={`kp-label ${kotaOpen(r) ? 'buka' : ''}`} style={{ fontSize: lbl * (kotaOpen(r) ? 1.25 : 1), strokeWidth: lbl / 3.2, opacity: showPlots && !kotaOpen(r) ? 0.4 : 1 }}>
                 {r.name}
               </text>
@@ -232,7 +232,7 @@ export default function Kota() {
         </button>
         <div className="kp-glass kp-title">
           <span className="kp-musim">kota sehari · musim 1</span>
-          <b>Kota Lirih</b>
+          <b>Kota Sangkala</b>
         </div>
         {mine ? (
           <button className="kp-glass kp-rumahku" onClick={() => navigate(`/kota/rumah/${mine.id}`)} data-testid="kota-rumahku">
@@ -258,17 +258,17 @@ export default function Kota() {
       </section>
 
       {intro ? (
-        <div className="kp-intro" role="dialog" aria-label="selamat datang di Kota Lirih">
+        <div className="kp-intro" role="dialog" aria-label="selamat datang di Kota Sangkala">
           <div className="kp-intro-card">
             <span className="kp-musim">musim 1 · tiga wilayah dibuka</span>
             <h2>Kota yang ditulis warganya.</h2>
-            <p>Patok satu rumah di Bantaran Kali, Kampung Air, atau Kota Tua, pada rentang tahun yang kamu pilih. Hidupkan keluarganya lewat adegan. Satu alamat bisa punya penghuni berbeda dari zaman ke zaman.</p>
+            <p>Sangkala: kalimat yang menyimpan tahun. Patok satu rumah yang tergambar di Lorong Sumbu, Kampung Tiang Seribu, atau Gang Tujuh Lonceng, pada rentang tahun yang kamu pilih, lalu hidupkan keluarganya lewat adegan. Satu alamat bisa punya penghuni berbeda dari zaman ke zaman.</p>
             <button
               className="btn"
               onClick={() => {
                 store.set('kota.intro', '1');
                 setIntro(false);
-                focus(kotaRegion('bantaran')!);
+                focus(kotaRegion('lorongsumbu')!);
               }}
               data-testid="kota-mulai">
               jelajahi kota

@@ -4,7 +4,7 @@
  * terpisah dari jurnal; tidak ada tautan ke halaman pribadi penulis.
  */
 import {
-  KOTA_HUBUNGAN,
+  KOTA_ID,
   KOTA_KUOTA,
   KOTA_LAPOR_SEMBUNYI,
   KOTA_MUSIM,
@@ -75,7 +75,7 @@ export function kotaRoutes(s: Services) {
       };
     });
   };
-  const visible = () => s.db.select().from(cityClaims).where(and(eq(cityClaims.season, KOTA_MUSIM), eq(cityClaims.status, 'aktif')));
+  const visible = () => s.db.select().from(cityClaims).where(and(eq(cityClaims.city, KOTA_ID), eq(cityClaims.season, KOTA_MUSIM), eq(cityClaims.status, 'aktif')));
 
   r.get('/kota', async (c) => {
     const user = c.get('user');
@@ -113,7 +113,7 @@ export function kotaRoutes(s: Services) {
       } catch {
         /* basis data tanpa kunci nasihat: transaksi tunggal sudah cukup */
       }
-      const rows = await tx.select().from(cityClaims).where(and(eq(cityClaims.season, KOTA_MUSIM), eq(cityClaims.status, 'aktif'), sql`(${cityClaims.plotId} = ${input.plotId} or ${cityClaims.ownerId} = ${user.id})`));
+      const rows = await tx.select().from(cityClaims).where(and(eq(cityClaims.city, KOTA_ID), eq(cityClaims.season, KOTA_MUSIM), eq(cityClaims.status, 'aktif'), sql`(${cityClaims.plotId} = ${input.plotId} or ${cityClaims.ownerId} = ${user.id})`));
       const live = (await describe(rows, user.id, tx)).filter((x) => x.state === 'aktif');
       const home = live.find((x) => x.mine && x.kind === 'rumah');
       if (input.kind === 'rumah' && home) throw conflict('quota', 'Musim ini kamu sudah punya satu rumah. Lepaskan dulu kalau ingin pindah.');
@@ -128,7 +128,7 @@ export function kotaRoutes(s: Services) {
       const msId = `n${newId(19)}`;
       const id = `k${newId(19)}`;
       await tx.insert(manuscripts).values({ id: msId, circleId: null, ownerId: user.id, members: [user.id], visibility: 'kota', meta: { plain: { v: 1, title: input.household } }, createdAt: now, updatedAt: now });
-      await tx.insert(cityClaims).values({ id, season: KOTA_MUSIM, regionId: region.id, plotId: input.plotId, ownerId: user.id, household: input.household, fromYear: input.from, toYear: input.to, msId, kind: input.kind, createdAt: now });
+      await tx.insert(cityClaims).values({ id, city: KOTA_ID, season: KOTA_MUSIM, regionId: region.id, plotId: input.plotId, ownerId: user.id, household: input.household, fromYear: input.from, toYear: input.to, msId, kind: input.kind, createdAt: now });
       return { id, msId };
     });
     return c.json(out, 201);
