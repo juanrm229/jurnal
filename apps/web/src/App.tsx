@@ -140,6 +140,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/janji/:id/ubah', page('janji/Form'), true, false],
   ['/janji/:id', page('janji/Detail'), true, false],
   ['/cerita', page('cerita/Cerita'), true, false],
+  ['/cerita/baru', page('cerita/Baru'), true, false],
   ['/cerita/:id', page('cerita/Meja'), true, false],
   ['/kartu', page('Kartu'), false, false],
   ['/tentang-kita', page('TentangKita'), false, false],

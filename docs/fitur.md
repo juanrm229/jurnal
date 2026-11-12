@@ -80,13 +80,16 @@ Semua fitur dari dokumen konsep, dan di mana ia hidup di kode. Layar ada di `app
 
 | Fitur | Di mana |
 | --- | --- |
-| Cerpen 1–5 penulis dalam tiga putaran asinkron; bagian orang lain baru dilepas server setelah semua menyegel; segel bisa ditarik selama belum semua menyegel | `routes/stories.ts`, tabel `stories` & `story_parts`, `test/stories.test.ts` |
-| Tiga premis (kartu prompt lima bagian per tokoh), 12 kartu role Awal, aturan kursi dan serah-terima jejak | `core/cerita.ts` |
-| Meja menulis, ruang baca dengan handshake satu ketukan, pengungkapan + perjalanan jejak, rakit jadi draf Karya | `pages/cerita/Cerita.tsx`, `pages/cerita/Meja.tsx`, `lib/stories.ts` |
-| Cerpen (3), novella (6, dua babak), novel (12, tiga babak); role diundi ulang tiap babak; gelombang di luar premis jadi gelombang bebas (tokoh dan waktu dipilih penulis) | `core/cerita.ts STORY_FORMATS`, `routes/stories.ts advance` |
-| Dek Role Penulis 48 kartu (Awal 12; dek lengkap tanpa kartu berprasyarat 29), dibangkitkan dari dokumen rancangan | `core/ceritaDek.ts` |
-| Premis buatan sendiri (terenkripsi), mode kejutan, lewati penulis yang macet (semua yang sudah menyegel setuju), sanggahan (fakta/pengetahuan/sebab-akibat), jalan lain setelah selesai, notifikasi tanpa isi | `routes/stories.ts`, tabel `story_notes` |
-| Pengungkapan: perjalanan jejak, penghargaan dari bukti nyata, potret penulis + kartu untuk cerita berikutnya, cetak/PDF | `pages/cerita/Meja.tsx` |
+| Peta Pengetahuan: fakta disepakati per kalimat (tahu / mengira / tidak tahu per tokoh, cakupan, misteri disengaja); kartu prompt dirakit dari peta, fakta yang tidak sampai ke tokohmu tampil sebagai bar sensor | `pages/cerita/kit.tsx promptFor`, tabel `story_facts` |
+| Editor naskah dengan sorotan di dalam teks: pilih potongan → jejak (merah) atau kalimat serah-terima (biru) atau bukti role; mode fokus layar penuh; draf di perangkat | `pages/cerita/Editor.tsx` |
+| Jejak dialamatkan ke tokoh yang masuk akal mengetahuinya; maksud penulis dititipkan terpisah | `pages/cerita/Tulis.tsx`, kolom `handoff` & `intent` |
+| Lipatan (Exquisite Corpse): kalimat serah-terima tampil, adegan terlipat; mode kejutan menahan adegan di server sampai pengungkapan | `pages/cerita/Baca.tsx Lipatan`, `routes/stories.ts wire` |
+| Ruang baca: tafsir pembaca (kutip kalimat) lalu maksud penulis dilepas server; handshake fakta setuju/revisi/tunda/tarik; sanggahan dengan empat jalan keluar; tirai tanpa nama; tebak role; peta serah-terima | `pages/cerita/Baca.tsx`, tabel `story_reads` |
+| Lensa bergilir memilih fokus tiap gelombang; giliran buta di tengah karya; pilih satu dari dua kartu role tiap babak | `core/cerita.ts storyLens storyTilt drawStoryOffers` |
+| Peta Cerita: matriks siapa tahu apa, cek kesinambungan, garis waktu, perjalanan jejak, riwayat revisi, palet (ingin ada / garis / tirai) tanpa nama | `pages/cerita/Peta.tsx` |
+| Persiapan empat langkah (pembuka, penulis, bentuk, palet); kapsul lanjutan mengisi pembuka cerita berikutnya | `pages/cerita/Baru.tsx` |
+| Penutupan: pengungkapan, kartu role + tebakan, lima penghargaan yang hanya muncul dengan bukti, Wrapped pribadi + kartu hadiah, susun edisi (urutan, ending, Satu Jendela / Dua Sisi dengan pintu pembaca / Arsip Kehidupan) dengan persetujuan semua penulis, buku di rak, cetak | `pages/cerita/Akhir.tsx` |
+| Cerpen (3), novella (6), novel (12); dek 48 kartu; lewati penulis macet; jalan lain; notifikasi tanpa isi | `core/cerita.ts`, `core/ceritaDek.ts`, `routes/stories.ts` |
 
 ## Desain aman
 

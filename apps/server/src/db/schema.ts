@@ -876,6 +876,14 @@ export const stories = pgTable(
     skips: jsonb('skips').$type<string[]>().notNull().default([]),
     /** Role babak-babak sebelumnya, urut. */
     rolesLog: jsonb('roles_log').$type<Record<string, string>[]>().notNull().default([]),
+    /** Dua kartu yang ditawarkan ke tiap penulis di babak ini (kosong = langsung diundi). */
+    offers: jsonb('offers').$type<Record<string, string[]>>().notNull().default({}),
+    /** Amplop palet tanpa nama pengirim. */
+    palette: jsonb('palette').$type<unknown[]>().notNull().default([]),
+    /** Fokus Lensa per gelombang, terenkripsi. */
+    focus: jsonb('focus').$type<Record<string, unknown>>().notNull().default({}),
+    edition: jsonb('edition'),
+    editionOk: jsonb('edition_ok').$type<string[]>().notNull().default([]),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
@@ -894,6 +902,10 @@ export const storyParts = pgTable(
     agrees: jsonb('agrees').$type<string[]>().notNull().default([]),
     /** 'a' = jalur utama; selain itu cabang "jalan lain". */
     world: text('world').notNull().default('a'),
+    handoff: jsonb('handoff'),
+    intent: jsonb('intent'),
+    perk: boolean('perk').notNull().default(false),
+    veils: jsonb('veils').$type<string[]>().notNull().default([]),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
   (t) => [uniqueIndex('story_parts_once').on(t.storyId, t.round, t.authorId, t.world)],
@@ -908,8 +920,42 @@ export const storyNotes = pgTable(
     partId: text('part_id').notNull().references(() => storyParts.id, { onDelete: 'cascade' }),
     authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     reason: text('reason').notNull(),
+    resolution: text('resolution'),
     envelope: jsonb('envelope').notNull(),
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('story_notes_story_idx').on(t.storyId)],
+);
+
+/** Fakta handshake: kalimat terenkripsi, persetujuan melekat pada versi ini. */
+export const storyFacts = pgTable(
+  'story_facts',
+  {
+    id: text('id').primaryKey(),
+    storyId: text('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+    round: integer('round').notNull(),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    envelope: jsonb('envelope').notNull(),
+    state: text('state').notNull().default('usul'),
+    agrees: jsonb('agrees').$type<string[]>().notNull().default([]),
+    defers: jsonb('defers').$type<string[]>().notNull().default([]),
+    supersedes: text('supersedes'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('story_facts_story_idx').on(t.storyId)],
+);
+
+/** Tafsir pembaca dan tebakan role di ruang baca. */
+export const storyReads = pgTable(
+  'story_reads',
+  {
+    id: text('id').primaryKey(),
+    storyId: text('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+    partId: text('part_id').notNull().references(() => storyParts.id, { onDelete: 'cascade' }),
+    readerId: text('reader_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    envelope: jsonb('envelope').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('story_reads_once').on(t.partId, t.readerId, t.kind)],
 );

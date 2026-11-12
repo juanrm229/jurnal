@@ -1001,6 +1001,8 @@ export function swapTarget(memberIds: string[], meId: string, month: string): st
 
 // ── Hidup Orang Lain (cerita bersama) ───────────────────────────────────────
 
+type Env = { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+
 export const storyBody = z.object({
   id,
   circleId: id.nullable(),
@@ -1009,16 +1011,37 @@ export const storyBody = z.object({
   rounds: z.union([z.literal(3), z.literal(6), z.literal(12)]).default(3),
   deck: z.enum(['awal', 'lengkap']).default('awal'),
   mode: z.enum(['terbuka', 'kejutan']).default('terbuka'),
+  /** Kartu role: diundi langsung, atau pilih satu dari dua tawaran. */
+  pick: z.boolean().default(false),
   /** Wajib untuk premis buatan sendiri ('bebas'). */
   meta: envelopeSchema.optional(),
+  /** Palet pembuka (boleh, garis, tirai) dari pembuka cerita. */
+  palette: envelopeSchema.optional(),
 });
 export const storyNoteBody = z.object({ id, reason: z.enum(['fakta', 'pengetahuan', 'sebab']), envelope: envelopeSchema });
+export const storyResolveBody = z.object({ resolution: z.enum(['dua-perspektif', 'adegan-antara', 'pilih-fakta', 'misteri']) });
 export const storyBranchBody = z.object({ round: z.number().int().min(1).max(12), envelope: envelopeSchema });
+export const storyFactBody = z.object({ id, round: z.number().int().min(1).max(12), envelope: envelopeSchema, supersedes: id.nullable().default(null) });
+export const storyVoteBody = z.object({ vote: z.enum(['setuju', 'tunda', 'batal']) });
+export const storyReadBody = z.object({ id, kind: z.enum(['tafsir', 'tebak']), envelope: envelopeSchema });
+export const storyFocusBody = z.object({ round: z.number().int().min(1).max(12), envelope: envelopeSchema });
+export const storyEditionBody = z.object({
+  order: z.array(z.string().max(200)).max(200),
+  ending: z.array(z.string().max(200)).max(3),
+  template: z.enum(['satu-jendela', 'dua-sisi', 'arsip']),
+});
 export type StoryBody = z.infer<typeof storyBody>;
 
 export const storyPartBody = z.object({
   round: z.number().int().min(1).max(12),
+  /** Adegan penuh. */
   envelope: envelopeSchema,
+  /** Kalimat serah-terima, jejak, dan opsi prompt: boleh dibaca lebih dulu daripada adegan. */
+  handoff: envelopeSchema.optional(),
+  /** Yang ingin penulis simpulkan pembaca: dilepas ke pembaca setelah ia menulis tafsirnya. */
+  intent: envelopeSchema.optional(),
+  /** Memakai keuntungan kartu role di bagian ini. */
+  perk: z.boolean().default(false),
   seal: z.boolean(),
 });
 export type StoryPartBody = z.infer<typeof storyPartBody>;
@@ -1029,13 +1052,21 @@ export interface StoryPartWire {
   id: string;
   round: number;
   authorId: string;
-  /** Kosong selama bagian orang lain belum boleh dibaca. */
-  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] } | null;
+  /** Adegan; kosong selama belum boleh dibaca (mode kejutan: sampai selesai). */
+  envelope: Env | null;
+  /** Serah-terima; kosong selama gelombangnya belum dibuka. */
+  handoff: Env | null;
+  /** Maksud penulis; kosong sampai pembaca menulis tafsirnya. */
+  intent: Env | null;
   sealed: boolean;
-  /** Siapa yang menyepakati jejak bagian ini (handshake). */
+  /** Siapa yang menyepakati jejak bagian ini (handshake cepat, versi lama). */
   agrees: string[];
   /** 'a' jalur utama; selain itu cabang "jalan lain". */
   world: string;
+  perk: boolean;
+  /** Berapa orang meminta adegan ini dibuat terjadi di luar layar (tanpa nama). */
+  veils: number;
+  veiledByMe: boolean;
 }
 
 export interface StoryNoteWire {
@@ -1043,7 +1074,34 @@ export interface StoryNoteWire {
   partId: string;
   authorId: string;
   reason: 'fakta' | 'pengetahuan' | 'sebab';
-  envelope: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] };
+  resolution: 'dua-perspektif' | 'adegan-antara' | 'pilih-fakta' | 'misteri' | null;
+  envelope: Env;
+}
+
+export type StoryFactState = 'usul' | 'sah' | 'tunda' | 'diganti';
+export interface StoryFactWire {
+  id: string;
+  round: number;
+  authorId: string;
+  envelope: Env;
+  state: StoryFactState;
+  agrees: string[];
+  defers: string[];
+  supersedes: string | null;
+}
+
+export interface StoryReadWire {
+  id: string;
+  partId: string;
+  readerId: string;
+  kind: 'tafsir' | 'tebak';
+  envelope: Env;
+}
+
+export interface StoryEdition {
+  order: string[];
+  ending: string[];
+  template: 'satu-jendela' | 'dua-sisi' | 'arsip';
 }
 
 export interface StoryWire {
@@ -1056,16 +1114,25 @@ export interface StoryWire {
   members: string[];
   /** Selama permainan hanya role-mu sendiri; semua role terbuka saat selesai. */
   roles: Record<string, string>;
+  /** Dua kartu yang ditawarkan kepadamu di babak ini (mode pilih). */
+  offers: string[];
   /** Siapa yang siap lanjut dari ruang baca. */
   ready: string[];
   rounds: number;
   deck: 'awal' | 'lengkap';
   mode: 'terbuka' | 'kejutan';
-  meta: { ciphertext: string; recipients: z.infer<typeof recipientWire>[] } | null;
+  meta: Env | null;
+  palette: Env[];
+  /** Fokus tiap gelombang dari Lensa, terenkripsi. */
+  focus: Record<string, Env>;
   skips: string[];
   /** Role babak-babak sebelumnya; hanya terisi saat selesai. */
   rolesLog: Record<string, string>[];
   notes: StoryNoteWire[];
+  facts: StoryFactWire[];
+  reads: StoryReadWire[];
+  edition: StoryEdition | null;
+  editionOk: string[];
   parts: StoryPartWire[];
   createdAt: string;
   updatedAt: string;

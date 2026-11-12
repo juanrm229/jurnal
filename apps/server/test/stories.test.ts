@@ -8,7 +8,7 @@ let sari: Client;
 let duo: string;
 const sid = id();
 
-// Server tidak membaca isi; amplop apa pun yang bentuknya sah cukup untuk menguji giliran.
+// Server tidak membaca isi; amplop apa pun yang bentuknya sah cukup untuk menguji giliran dan akses.
 const amplop = (c: Client, tag: string) => ({ ciphertext: Buffer.from(tag).toString('base64'), recipients: [{ t: 'user', userId: c.userId, wk: 'AAAA' }] });
 
 beforeAll(async () => {
@@ -21,16 +21,20 @@ beforeAll(async () => {
 });
 afterAll(async () => env.services.close());
 
-const part = (c: Client, round: number, seal: boolean, tag = 'x') => c.req('PUT', `/v1/stories/${sid}/parts`, { round, envelope: amplop(c, tag), seal });
+const part = (c: Client, round: number, seal: boolean, tag = 'x', story = sid) =>
+  c.req('PUT', `/v1/stories/${story}/parts`, { round, envelope: amplop(c, `adegan-${tag}`), handoff: amplop(c, `serah-${tag}`), intent: amplop(c, `maksud-${tag}`), seal });
+const get = (c: Client, story = sid) => c.ok('GET', `/v1/stories/${story}`);
 
 describe('hidup orang lain', () => {
-  it('membuka cerita: role berbeda untuk tiap penulis, dan hanya role sendiri yang terlihat', async () => {
-    const st = await raka.ok('POST', '/v1/stories', { id: sid, circleId: duo, premise: 'kunci', members: [naya.userId] });
-    expect(st.members).toEqual([raka.userId, naya.userId]);
+  it('mode pilih: dua kartu ditawarkan, hanya milik sendiri yang terlihat, dan bisa ditukar sebelum menyegel', async () => {
+    const st = await raka.ok('POST', '/v1/stories', { id: sid, circleId: duo, premise: 'kunci', members: [naya.userId], mode: 'kejutan', pick: true, palette: amplop(raka, 'palet') });
+    expect(st.offers).toHaveLength(2);
     expect(Object.keys(st.roles)).toEqual([raka.userId]);
-    const n = await naya.ok('GET', `/v1/stories/${sid}`);
-    expect(Object.keys(n.roles)).toEqual([naya.userId]);
-    expect(n.roles[naya.userId]).not.toBe(st.roles[raka.userId]);
+    expect(st.roles[raka.userId]).toBe(st.offers[0]);
+    const swapped = await raka.ok('POST', `/v1/stories/${sid}/role`, { roleId: st.offers[1] });
+    expect(swapped.roles[raka.userId]).toBe(st.offers[1]);
+    expect((await raka.req('POST', `/v1/stories/${sid}/role`, { roleId: '99' })).status).toBe(400);
+    expect(st.palette).toHaveLength(1);
   });
 
   it('orang di luar lingkaran tidak bisa ikut atau membaca', async () => {
@@ -38,73 +42,94 @@ describe('hidup orang lain', () => {
     expect((await raka.req('POST', '/v1/stories', { id: id(), circleId: duo, premise: 'kunci', members: [sari.userId] })).status).toBe(403);
   });
 
-  it('bagian orang lain tertutup sampai semua menyegel', async () => {
-    expect((await part(raka, 1, true, 'raka-1')).status).toBe(200);
-    const n = await naya.ok('GET', `/v1/stories/${sid}`);
-    expect(n.phase).toBe('write');
-    const p = n.parts.find((x: any) => x.authorId === raka.userId);
-    expect(p.sealed).toBe(true);
-    expect(p.envelope).toBeNull();
+  it('hanya Lensa gelombang ini yang memilih fokus', async () => {
+    expect((await naya.req('PUT', `/v1/stories/${sid}/focus`, { round: 1, envelope: amplop(naya, 'f') })).status).toBe(403);
+    const f = await raka.ok('PUT', `/v1/stories/${sid}/focus`, { round: 1, envelope: amplop(raka, 'kunci') });
+    expect(Object.keys(f.focus)).toEqual(['1']);
   });
 
-  it('segel bisa ditarik selama belum semua menyegel', async () => {
-    await part(raka, 1, false, 'raka-1b');
-    const r = await raka.ok('GET', `/v1/stories/${sid}`);
-    expect(r.parts[0].sealed).toBe(false);
-    await part(raka, 1, true, 'raka-1c');
+  it('selama menulis, bagian orang lain sama sekali tertutup', async () => {
+    expect((await part(raka, 1, true, 'r1')).status).toBe(200);
+    const p = (await get(naya)).parts.find((x: any) => x.authorId === raka.userId);
+    expect([p.sealed, p.envelope, p.handoff, p.intent]).toEqual([true, null, null, null]);
   });
 
-  it('segel terakhir membuka ruang baca; setelah itu bagian tidak bisa diubah', async () => {
-    const r = await part(naya, 1, true, 'naya-1');
+  it('mode kejutan: setelah dibuka, serah-terima terlihat tetapi adegan penuh ditahan', async () => {
+    const r = await part(naya, 1, true, 'n1');
     expect(r.json.phase).toBe('read');
-    expect(r.json.parts.every((x: any) => x.envelope)).toBe(true);
+    const p = r.json.parts.find((x: any) => x.authorId === raka.userId);
+    expect(p.handoff).toBeTruthy();
+    expect(p.envelope).toBeNull();
+    expect(p.intent).toBeNull();
+    expect(r.json.parts.find((x: any) => x.authorId === naya.userId).envelope).toBeTruthy();
     expect((await part(raka, 1, true, 'curang')).status).toBe(409);
   });
 
-  it('jejak disepakati orang lain, bukan pemiliknya', async () => {
-    const st = await naya.ok('GET', `/v1/stories/${sid}`);
-    const rp = st.parts.find((x: any) => x.authorId === raka.userId);
-    expect((await raka.req('PUT', `/v1/stories/${sid}/parts/${rp.id}/agree`)).status).toBe(400);
-    const a = await naya.ok('PUT', `/v1/stories/${sid}/parts/${rp.id}/agree`);
-    expect(a.parts.find((x: any) => x.id === rp.id).agrees).toEqual([naya.userId]);
+  it('maksud penulis baru dilepas setelah pembaca menulis tafsirnya', async () => {
+    const rp = (await get(naya)).parts.find((x: any) => x.authorId === raka.userId);
+    expect((await raka.req('POST', `/v1/stories/${sid}/parts/${rp.id}/reads`, { id: id(), kind: 'tafsir', envelope: amplop(raka, 't') })).status).toBe(400);
+    const after = await naya.ok('POST', `/v1/stories/${sid}/parts/${rp.id}/reads`, { id: id(), kind: 'tafsir', envelope: amplop(naya, 'yang kutangkap') });
+    expect(after.parts.find((x: any) => x.id === rp.id).intent).toBeTruthy();
+    expect(after.reads).toHaveLength(1);
   });
 
-  it('putaran berikutnya baru terbuka saat semua siap; tiga putaran lalu selesai dan role terbuka', async () => {
-    expect((await raka.ok('POST', `/v1/stories/${sid}/ready`)).phase).toBe('read');
-    const two = await naya.ok('POST', `/v1/stories/${sid}/ready`);
-    expect([two.phase, two.round]).toEqual(['write', 2]);
+  it('handshake: fakta sah ketika semua setuju pada versi itu; revisi menggantikan yang lama', async () => {
+    const f1 = id();
+    let st = await naya.ok('POST', `/v1/stories/${sid}/facts`, { id: f1, round: 1, envelope: amplop(naya, 'kunci di laci') });
+    expect(st.facts[0]).toMatchObject({ state: 'usul', agrees: [naya.userId] });
+    st = await raka.ok('PUT', `/v1/stories/${sid}/facts/${f1}`, { vote: 'tunda' });
+    expect(st.facts[0].state).toBe('tunda');
+    st = await raka.ok('PUT', `/v1/stories/${sid}/facts/${f1}`, { vote: 'setuju' });
+    expect(st.facts[0].state).toBe('sah');
+    expect((await raka.req('PUT', `/v1/stories/${sid}/facts/${f1}`, { vote: 'tunda' })).status).toBe(409);
+    const f2 = id();
+    await raka.ok('POST', `/v1/stories/${sid}/facts`, { id: f2, round: 1, envelope: amplop(raka, 'kunci di saku'), supersedes: f1 });
+    st = await naya.ok('PUT', `/v1/stories/${sid}/facts/${f2}`, { vote: 'setuju' });
+    expect(st.facts.find((f: any) => f.id === f1).state).toBe('diganti');
+    expect(st.facts.find((f: any) => f.id === f2).state).toBe('sah');
+  });
+
+  it('sanggahan punya jalan keluar yang dipilih penulis bagian; tirai tanpa nama', async () => {
+    const np = (await get(raka)).parts.find((x: any) => x.authorId === naya.userId);
+    const nid = id();
+    await raka.ok('POST', `/v1/stories/${sid}/parts/${np.id}/notes`, { id: nid, reason: 'pengetahuan', envelope: amplop(raka, 'dari mana tahu?') });
+    expect((await raka.req('PUT', `/v1/stories/${sid}/notes/${nid}`, { resolution: 'misteri' })).status).toBe(403);
+    const res = await naya.ok('PUT', `/v1/stories/${sid}/notes/${nid}`, { resolution: 'adegan-antara' });
+    expect(res.notes[0].resolution).toBe('adegan-antara');
+    const v = await raka.ok('POST', `/v1/stories/${sid}/parts/${np.id}/veil`);
+    expect(v.parts.find((x: any) => x.id === np.id)).toMatchObject({ veils: 1, veiledByMe: true });
+    expect((await get(naya)).parts.find((x: any) => x.id === np.id)).toMatchObject({ veils: 1, veiledByMe: false });
+  });
+
+  it('tiga gelombang lalu selesai: adegan, role, dan maksud semua terbuka; edisi butuh persetujuan semua', async () => {
+    await raka.ok('POST', `/v1/stories/${sid}/ready`);
+    expect((await naya.ok('POST', `/v1/stories/${sid}/ready`)).round).toBe(2);
     for (const round of [2, 3]) {
       await part(raka, round, true);
       await part(naya, round, true);
       await raka.ok('POST', `/v1/stories/${sid}/ready`);
       await naya.ok('POST', `/v1/stories/${sid}/ready`);
     }
-    const done = await raka.ok('GET', `/v1/stories/${sid}`);
+    const done = await get(raka);
     expect(done.phase).toBe('done');
-    expect(Object.keys(done.roles).sort()).toEqual([raka.userId, naya.userId].sort());
-    expect(done.parts).toHaveLength(6);
-  });
-
-  it('setelah selesai: sanggahan dan jalan lain bisa ditambahkan', async () => {
-    const st = await raka.ok('GET', `/v1/stories/${sid}`);
-    const np = st.parts.find((x: any) => x.authorId === naya.userId && x.round === 1);
-    const withNote = await raka.ok('POST', `/v1/stories/${sid}/parts/${np.id}/notes`, { id: id(), reason: 'pengetahuan', envelope: amplop(raka, 'dari mana dina tahu?') });
-    expect(withNote.notes).toHaveLength(1);
+    expect(done.parts.every((p: any) => p.envelope && p.intent)).toBe(true);
+    expect(Object.keys(done.roles)).toHaveLength(2);
+    const order = done.parts.map((p: any) => p.id);
+    const ed = await raka.ok('PUT', `/v1/stories/${sid}/edition`, { order, ending: [order.at(-1)], template: 'dua-sisi' });
+    expect(ed.editionOk).toEqual([raka.userId]);
+    expect((await naya.ok('POST', `/v1/stories/${sid}/edition/approve`)).editionOk.sort()).toEqual([raka.userId, naya.userId].sort());
     const b = await naya.ok('PUT', `/v1/stories/${sid}/branch`, { round: 2, envelope: amplop(naya, 'taksi berhenti') });
     expect(b.parts.filter((x: any) => x.world === 'b')).toHaveLength(1);
-    expect(b.parts).toHaveLength(7);
   });
 
-  it('novella: babak baru mengundi role baru, dan penulis yang macet bisa dilewati', async () => {
+  it('novella: babak baru membagikan tawaran kartu baru, dan penulis yang macet bisa dilewati', async () => {
     const trio = (await raka.createCircle('circle', 'Geng')).id;
     await naya.accept(await raka.invite(trio));
     await sari.accept(await raka.invite(trio));
     const nid = id();
-    const st = await raka.ok('POST', '/v1/stories', { id: nid, circleId: trio, premise: 'kunci', members: [naya.userId, sari.userId], rounds: 6, deck: 'lengkap' });
-    expect([st.rounds, st.deck]).toEqual([6, 'lengkap']);
-    const seal = (c: Client, round: number) => c.ok('PUT', `/v1/stories/${nid}/parts`, { round, envelope: amplop(c, 'x'), seal: true });
+    const st = await raka.ok('POST', '/v1/stories', { id: nid, circleId: trio, premise: 'kunci', members: [naya.userId, sari.userId], rounds: 6, deck: 'lengkap', pick: true });
+    const seal = (c: Client, round: number) => part(c, round, true, 'x', nid);
     const next = (c: Client) => c.ok('POST', `/v1/stories/${nid}/ready`);
-    // Sari tidak menulis: belum boleh melewati sebelum menyegel, dan butuh semua yang sudah menyegel.
     expect((await sari.req('POST', `/v1/stories/${nid}/skip`)).status).toBe(400);
     await seal(raka, 1);
     await seal(naya, 1);
@@ -116,22 +141,18 @@ describe('hidup orang lain', () => {
       for (const c of [raka, naya, sari]) await seal(c, round);
       for (const c of [raka, naya, sari]) await next(c);
     }
-    const four = await raka.ok('GET', `/v1/stories/${nid}`);
+    const four = await get(raka, nid);
     expect([four.round, four.phase]).toEqual([4, 'write']);
-    for (const round of [4, 5, 6]) {
-      for (const c of [raka, naya, sari]) await seal(c, round);
-      for (const c of [raka, naya, sari]) await next(c);
-    }
-    const done = await raka.ok('GET', `/v1/stories/${nid}`);
-    expect(done.phase).toBe('done');
-    expect(done.rolesLog).toHaveLength(1);
+    expect(four.offers).toHaveLength(2);
+    expect(four.offers).not.toEqual(st.offers);
   });
 
-  it('cerita sendiri tidak butuh lingkaran', async () => {
+  it('cerita sendiri: fakta langsung sah', async () => {
     const solo = id();
-    const st = await sari.ok('POST', '/v1/stories', { id: solo, circleId: null, premise: 'warung', members: [] });
-    expect(st.members).toEqual([sari.userId]);
-    const r = await sari.req('PUT', `/v1/stories/${solo}/parts`, { round: 1, envelope: amplop(sari, 's'), seal: true });
+    await sari.ok('POST', '/v1/stories', { id: solo, circleId: null, premise: 'warung', members: [] });
+    const r = await part(sari, 1, true, 's', solo);
     expect(r.json.phase).toBe('read');
+    const f = await sari.ok('POST', `/v1/stories/${solo}/facts`, { id: id(), round: 1, envelope: amplop(sari, 'f') });
+    expect(f.facts[0].state).toBe('sah');
   });
 });
