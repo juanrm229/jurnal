@@ -24,6 +24,7 @@ export default function Patok() {
   const [from, setFrom] = useState(String(free[0]?.from ?? 1950));
   const [to, setTo] = useState(String(Math.min(free[0]?.to ?? 1980, (free[0]?.from ?? 1950) + 30)));
   const [tokoh, setTokoh] = useState('');
+  const [lahir, setLahir] = useState('');
   const [busy, setBusy] = useState(false);
   if (!plot || !region) return <Growing label="persil ini tidak ditemukan" />;
   if (!kota.data) return <Growing label="membuka peta…" />;
@@ -56,7 +57,7 @@ export default function Patok() {
       if (!me.penName) await api.put('/kota/profil', { penName: pena.trim().toLowerCase() });
       const res = await api.post<{ id: string; msId: string }>('/kota/claims', { plotId, household: household.trim(), from: f, to: t, kind: leluhur ? 'leluhur' : 'rumah' });
       if (tokoh.trim()) {
-        const p: NaskahCanonPayload = { v: 1, kind: 'tokoh', name: tokoh.trim(), aliases: [], known: [] };
+        const p: NaskahCanonPayload = { v: 1, kind: 'tokoh', name: tokoh.trim(), aliases: [], known: [], peran: 'utama', born: Number(lahir) || undefined };
         await api.post(`/naskah/${res.msId}/canon`, { id: newNaskahId(), kind: 'tokoh', envelope: { plain: p } });
       }
       void refresh();
@@ -139,7 +140,11 @@ export default function Patok() {
           </label>
         </div>
         {err ? <span className="tiny nk-salah">{err}</span> : null}
-        <input className="field" value={tokoh} maxLength={60} onChange={(e) => setTokoh(e.target.value)} placeholder="tokoh pertama (opsional), mis. Pak Darmo" data-testid="kota-tokoh" />
+        <div className="kpt-tokoh">
+          <input className="field" value={tokoh} maxLength={60} onChange={(e) => setTokoh(e.target.value)} placeholder="tokoh pertama, mis. Pak Darmo" data-testid="kota-tokoh" />
+          <input className="field" value={lahir} inputMode="numeric" maxLength={4} onChange={(e) => setLahir(e.target.value.replace(/\D/g, ''))} placeholder="lahir" aria-label="tahun lahir tokoh pertama" data-testid="kota-lahir" />
+        </div>
+        {tokoh.trim() && !lahir ? <span className="tiny soft">Tahun lahir dipakai kota untuk memeriksa hubungan antar-rumah, misalnya umur orang tua dan anak.</span> : null}
 
         <p className="tiny soft kpt-aturan">
           Kota ini publik. Pakai nama fiksi, jangan tulis data pribadi orang sungguhan. Rumah tanpa adegan terbit dalam {KOTA_TERBENGKALAI_HARI} hari kembali lowong, dan keluargamu tinggal sebagai desas-desus.

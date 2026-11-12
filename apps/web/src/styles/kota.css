@@ -1462,3 +1462,71 @@
 .nk-kota-peristiwa.dengar {
   opacity: 0.8;
 }
+.kpt-tokoh {
+  display: grid;
+  grid-template-columns: 1fr 88px;
+  gap: 8px;
+}
+
+/* ── Rak rumah ── */
+.kr-rak {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 6px;
+}
+.kr-karya {
+  --warna: var(--ink);
+  border-radius: 6px 16px 16px 6px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  border-left: 8px solid var(--warna);
+}
+.kr-karya.bentuk-novel {
+  --warna: #7b3fb8;
+}
+.kr-karya.bentuk-cerpen {
+  --warna: #1f7a4d;
+}
+.kr-karya.bentuk-jurnal {
+  --warna: #2a14d6;
+}
+.kr-karya.bentuk-surat {
+  --warna: #b8860b;
+}
+.kr-karya-sampul {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px 12px;
+  border: 0;
+  background: color-mix(in srgb, var(--warna) 7%, var(--card));
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+.kr-karya-sampul b {
+  font-family: var(--serif-display);
+  font-weight: 600;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.3px;
+}
+.kr-karya-sampul .small {
+  font-family: var(--serif);
+  line-height: 1.5;
+}
+.kr-karya-sampul .tiny {
+  color: var(--warna);
+}
+.kr-karya-jenis {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--warna);
+}
+.kr-karya .kr-adegan {
+  padding-left: 16px;
+  padding-right: 12px;
+}

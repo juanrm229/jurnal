@@ -1005,6 +1005,8 @@ export const msScenes = pgTable(
     id: text('id').primaryKey(),
     msId: text('ms_id').notNull().references(() => manuscripts.id, { onDelete: 'cascade' }),
     authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    /** Karya tempat adegan ini (novel, jurnal, …); kosong = kisah lepas. */
+    workId: text('work_id'),
     chapter: integer('chapter').notNull().default(1),
     order: doublePrecision('order').notNull().default(0),
     status: text('status').notNull().default('draf'),
@@ -1014,6 +1016,22 @@ export const msScenes = pgTable(
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
   (t) => [index('ms_scenes_ms_idx').on(t.msId)],
+);
+
+/** Rak karya sebuah naskah: kisah, cerpen, novel, jurnal tokoh, surat. Semua berbagi Kanon naskahnya. */
+export const msWorks = pgTable(
+  'ms_works',
+  {
+    id: text('id').primaryKey(),
+    msId: text('ms_id').notNull().references(() => manuscripts.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    bentuk: text('bentuk').notNull(),
+    envelope: jsonb('envelope').notNull(),
+    order: doublePrecision('order').notNull().default(0),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('ms_works_ms_idx').on(t.msId)],
 );
 
 /** Riwayat versi adegan yang sudah terbit. */
