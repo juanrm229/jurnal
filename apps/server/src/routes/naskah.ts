@@ -8,6 +8,7 @@
 import {
   naskahBody,
   naskahCanonBody,
+  KOTA_TOKOH_MAKS,
   naskahCanonPatch,
   naskahMetaBody,
   naskahSceneBody,
@@ -23,6 +24,7 @@ import { type AppEnv, body, type Services } from '../context';
 import { schema } from '../db';
 import { pushTo, requireMember } from '../lib/domain';
 import { bad, conflict, forbidden, notFound } from '../lib/errors';
+import { tokohku } from '../lib/kotaTokoh';
 
 const { manuscripts, msScenes, msVersions, msCanon, msWorks, circleMembers, cityClaims, cityHolds } = schema;
 type WorkRow = typeof msWorks.$inferSelect;
@@ -120,6 +122,8 @@ export function naskahRoutes(s: Services) {
   const ownerOnlyKota = (ms: MsRow, userId: string) => {
     if (ms.visibility === 'kota' && ms.ownerId !== userId) throw forbidden('Rak karya rumah ini diatur oleh pemiliknya.');
   };
+  type TokohPlain = { name?: string; aliases?: string[]; peran?: string; born?: number; died?: number; asal?: { claimId: string; tokohId: string } };
+  const tokohPlain = (env: unknown) => (env && typeof env === 'object' && 'plain' in env ? ((env as { plain?: TokohPlain }).plain ?? null) : null);
   /** Rumah kota menyimpan isi terbuka; naskah privat wajib terenkripsi. */
   const envFor = (ms: MsRow, env: unknown) => {
     const plain = !!env && typeof env === 'object' && 'plain' in env;
@@ -315,6 +319,13 @@ export function naskahRoutes(s: Services) {
     envFor(ms, input.envelope);
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msCanon).where(eq(msCanon.msId, ms.id));
     if ((n?.n ?? 0) >= 1000) throw bad('full', 'Kanon naskah ini sudah penuh.');
+    // Kota: tokoh dibuat pemilik rumah, dalam batas tokoh per warga; pindahan hanya lewat patok.
+    if (ms.visibility === 'kota' && input.kind === 'tokoh') {
+      const p = tokohPlain(input.envelope);
+      if (p?.asal) throw bad('asal', 'Tokoh pindahan dibawa lewat patok rumah, bukan dibuat di Kanon.');
+      if (ms.ownerId !== user.id) throw forbidden('Tokoh rumah ini dibuat oleh pemiliknya.');
+      if (p?.peran !== 'figuran' && (await tokohku(s, user.id)).length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh di kota. Jadikan figuran rumah, atau pindahkan tokohmu ke rumah ini lewat patok.`);
+    }
     const now = s.now();
     await s.db.insert(msCanon).values({ id: input.id, msId: ms.id, kind: input.kind, authorId: user.id, updatedBy: user.id, envelope: input.envelope, createdAt: now, updatedAt: now }).onConflictDoNothing();
     return c.json(await send(await touch(ms), user.id), 201);
@@ -329,7 +340,29 @@ export function naskahRoutes(s: Services) {
     if (!e) throw notFound('Entri kanon tidak ditemukan.');
     const h = await held(ms, user.id);
     if (h && e.authorId !== user.id && !h.has(e.id)) throw forbidden('Kanon rumah ini diubah pemiliknya; kamu hanya mengubah tokoh yang kamu pegang.');
-    await s.db.update(msCanon).set({ envelope, updatedBy: user.id, updatedAt: s.now() }).where(eq(msCanon.id, e.id));
+    let env: unknown = envelope;
+    if (ms.visibility === 'kota' && e.kind === 'tokoh') {
+      const lama = tokohPlain(e.envelope);
+      const baru = tokohPlain(envelope);
+      if (JSON.stringify(lama?.asal ?? null) !== JSON.stringify(baru?.asal ?? null)) throw bad('asal', 'Asal tokoh pindahan tidak bisa diubah.');
+      if ((lama?.peran ?? 'utama') !== (baru?.peran ?? 'utama')) {
+        if (h) throw forbidden('Peran tokoh diatur pemilik rumah.');
+        if (!baru?.asal && baru?.peran !== 'figuran' && (await tokohku(s, user.id)).length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh di kota; tokoh ini tetap figuran.`);
+      }
+      if (baru?.asal) {
+        // Pindahan: nama dan masa hidup selalu mengikuti tokoh aslinya.
+        const [asli] = await s.db.select().from(msCanon).where(eq(msCanon.id, baru.asal.tokohId));
+        const a = asli && tokohPlain(asli.envelope);
+        if (a) env = { plain: { ...baru, name: a.name, aliases: a.aliases ?? [], born: a.born, died: a.died } };
+      } else if (baru) {
+        const salinan = await s.db.select().from(msCanon).where(sql`${msCanon.envelope}->'plain'->'asal'->>'tokohId' = ${e.id}`);
+        for (const x of salinan) {
+          const p = tokohPlain(x.envelope);
+          if (p) await s.db.update(msCanon).set({ envelope: { plain: { ...p, name: baru.name, aliases: baru.aliases ?? [], born: baru.born, died: baru.died } }, updatedAt: s.now() }).where(eq(msCanon.id, x.id));
+        }
+      }
+    }
+    await s.db.update(msCanon).set({ envelope: env, updatedBy: user.id, updatedAt: s.now() }).where(eq(msCanon.id, e.id));
     return c.json(await send(await touch(ms), user.id));
   });
 

@@ -258,7 +258,7 @@ export default function Kota() {
           <Doodle id="buku-terbuka" size={18} color="currentColor" />
         </button>
         {mine ? (
-          <button className="kp-glass kp-rumahku" onClick={() => navigate(`/kota/rumah/${mine.id}`)} aria-label="rumahku" data-testid="kota-rumahku">
+          <button className="kp-glass kp-rumahku" onClick={() => navigate('/kota/meja')} aria-label="meja tulis: rumah dan tokohmu" data-testid="kota-rumahku">
             <Doodle id="rumah" size={20} color="currentColor" />
           </button>
         ) : null}
@@ -321,7 +321,7 @@ export default function Kota() {
         {region ? <RegionSheet r={region} claims={claims} year={year} onFocus={() => (focus(region), setRegion(null))} /> : null}
       </Sheet>
       <Sheet open={!!plot} onClose={() => setPlot(null)} title={plot?.address}>
-        {plot ? <PlotSheet p={plot} claims={byPlot.get(plot.id) ?? []} quota={kota.data?.me.quota ?? 0} leluhur={kota.data?.me.leluhur ?? 0} /> : null}
+        {plot ? <PlotSheet p={plot} claims={byPlot.get(plot.id) ?? []} sisa={kota.data ? kota.data.me.patok.maks - kota.data.me.patok.pakai : 0} punya={(kota.data?.me.patok.pakai ?? 0) > 0} /> : null}
       </Sheet>
     </main>
   );
@@ -354,7 +354,7 @@ function RegionSheet({ r, claims, year, onFocus }: { r: KotaRegion; claims: Kota
   );
 }
 
-function PlotSheet({ p, claims, quota, leluhur }: { p: KotaPlot; claims: KotaClaimWire[]; quota: number; leluhur: number }) {
+function PlotSheet({ p, claims, sisa, punya }: { p: KotaPlot; claims: KotaClaimWire[]; sisa: number; punya: boolean }) {
   const r = kotaRegion(p.region)!;
   const live = claims.filter((c) => c.state === 'aktif').sort((a, b) => a.from - b.from);
   const free = kotaFree(live, Math.max(KOTA_TAHUN.min, r.since));
@@ -393,16 +393,12 @@ function PlotSheet({ p, claims, quota, leluhur }: { p: KotaPlot; claims: KotaCla
       )}
       {claims.some((c) => c.state === 'terbengkalai') ? <p className="tiny soft">Ada bekas penghuni yang pergi tanpa cerita. Kini tinggal desas-desus.</p> : null}
       {free.length ? (
-        quota > 0 ? (
+        sisa > 0 ? (
           <button className="btn" onClick={() => navigate(`/kota/patok/${p.id}`)} data-testid="kota-patok">
-            patok persil ini · lowong {free.map((f) => `${f.from}–${f.to === KOTA_TAHUN.max ? 'kini' : f.to}`).join(', ')}
-          </button>
-        ) : leluhur > 0 ? (
-          <button className="btn soft" onClick={() => navigate(`/kota/patok/${p.id}?jenis=leluhur`)} data-testid="kota-patok-leluhur">
-            patok sebagai rumah leluhur · sisa {leluhur}
+            {punya ? 'patok rumah keluarga di sini' : 'patok persil ini'} · lowong {free.map((f) => `${f.from}–${f.to === KOTA_TAHUN.max ? 'kini' : f.to}`).join(', ')}
           </button>
         ) : (
-          <p className="tiny soft">Musim ini kamu sudah punya satu rumah dan rumah leluhurnya. Satu warga, satu rumah per musim.</p>
+          <p className="tiny soft">Jatah 3 patok musim ini sudah terpakai. Lepaskan salah satu rumahmu untuk mematok di sini.</p>
         )
       ) : (
         <p className="tiny soft">Semua zaman di alamat ini sudah dihuni.</p>

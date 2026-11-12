@@ -21,7 +21,9 @@ import {
   type KotaPeristiwaWire,
   kotaPeristiwaBody,
   kotaPeristiwaJawab,
-  KOTA_KUOTA,
+  KOTA_PATOK_MAKS,
+  KOTA_TOKOH_MAKS,
+  kotaHidupDi,
   KOTA_LAPOR_SEMBUNYI,
   KOTA_MUSIM,
   KOTA_TERBENGKALAI_HARI,
@@ -51,6 +53,7 @@ import { pushTo } from '../lib/domain';
 import { bad, conflict, forbidden, notFound } from '../lib/errors';
 import { newId } from '../lib/ids';
 import { rateLimit } from '../lib/rate';
+import { tokohku } from '../lib/kotaTokoh';
 
 const { cityProfiles, cityClaims, cityReports, cityRelations, cityEvents, cityFigures, cityFigureChanges, cityHolds, manuscripts, msScenes, msCanon } = schema;
 type RelRow = typeof cityRelations.$inferSelect;
@@ -96,9 +99,17 @@ export function kotaRoutes(s: Services) {
   r.get('/kota', async (c) => {
     const user = c.get('user');
     const [claims, [pen]] = await Promise.all([describe(await visible(), user.id), s.db.select().from(cityProfiles).where(eq(cityProfiles.userId, user.id))]);
-    const used = (k: 'rumah' | 'leluhur') => claims.filter((x) => x.mine && x.state === 'aktif' && x.kind === k).length;
-    const hasHome = used('rumah') > 0;
-    const res: KotaWire = { season: KOTA_MUSIM, claims, me: { penName: pen?.penName ?? null, quota: Math.max(0, KOTA_KUOTA.rumah - used('rumah')), leluhur: hasHome ? Math.max(0, KOTA_KUOTA.leluhur - used('leluhur')) : 0 } };
+    const mineT = await tokohku(s, user.id);
+    const res: KotaWire = {
+      season: KOTA_MUSIM,
+      claims,
+      me: {
+        penName: pen?.penName ?? null,
+        patok: { pakai: claims.filter((x) => x.mine && x.state === 'aktif').length, maks: KOTA_PATOK_MAKS },
+        tokoh: { pakai: mineT.length, maks: KOTA_TOKOH_MAKS },
+        tokohku: mineT,
+      },
+    };
     return c.json(res);
   });
 
@@ -131,12 +142,35 @@ export function kotaRoutes(s: Services) {
       }
       const rows = await tx.select().from(cityClaims).where(and(eq(cityClaims.city, KOTA_ID), eq(cityClaims.season, KOTA_MUSIM), eq(cityClaims.status, 'aktif'), sql`(${cityClaims.plotId} = ${input.plotId} or ${cityClaims.ownerId} = ${user.id})`));
       const live = (await describe(rows, user.id, tx)).filter((x) => x.state === 'aktif');
-      const home = live.find((x) => x.mine && x.kind === 'rumah');
-      if (input.kind === 'rumah' && home) throw conflict('quota', 'Musim ini kamu sudah punya satu rumah. Lepaskan dulu kalau ingin pindah.');
-      if (input.kind === 'leluhur') {
-        if (!home) throw conflict('quota', 'Patok rumah utamamu dulu, baru rumah leluhurnya.');
-        if (input.from >= home.from) throw bad('range', `Rumah leluhur dimulai sebelum rumah utamamu (${home.from}).`);
-        if (live.filter((x) => x.mine && x.kind === 'leluhur').length >= KOTA_KUOTA.leluhur) throw conflict('quota', `Paling banyak ${KOTA_KUOTA.leluhur} rumah leluhur per musim.`);
+      // Aturan musim: paling banyak 3 patok dan 3 tokoh per warga.
+      const own = live.filter((x) => x.mine);
+      if (own.length >= KOTA_PATOK_MAKS) throw conflict('quota', `Paling banyak ${KOTA_PATOK_MAKS} patok per musim. Lepaskan salah satu rumahmu dulu.`);
+      const kind = own.some((x) => x.kind === 'rumah') ? 'leluhur' : 'rumah';
+      const mineT = await tokohku(s, user.id, tx);
+      const asli = mineT.filter((x) => !x.dipegang);
+      const rentang = { from: input.from, to: input.to };
+      const pindah = [...new Set(input.pindah)].map((tid) => {
+        const x = asli.find((y) => y.id === tid);
+        if (!x) throw bad('pindah', 'Yang pindah ke sini harus tokohmu sendiri.');
+        if (!kotaHidupDi(x, rentang)) throw bad('pindah', `${x.name} tidak hidup di rentang ${input.from}–${input.to}.`);
+        return x;
+      });
+      const baru = input.tokoh;
+      if (!baru && !pindah.length) throw bad('tokoh', 'Setiap patok dihuni minimal satu tokohmu: tokoh baru, atau tokohmu yang pindah dari rumah lain.');
+      let ikat: (typeof asli)[number] | undefined;
+      if (baru) {
+        if (mineT.length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh. Pindahkan salah satu tokohmu ke rumah ini, atau tambahkan figuran.`);
+        if (baru.born && baru.died && baru.died < baru.born) throw bad('tokoh', 'Tahun wafat harus sesudah tahun lahir.');
+        if (!kotaHidupDi(baru, rentang)) throw bad('tokoh', `${baru.name} tidak hidup di rentang ${input.from}–${input.to}.`);
+        const sePersil = own.some((x) => x.plotId === input.plotId);
+        if (own.length && !pindah.length && !sePersil && !input.ikat) throw bad('ikat', 'Tokoh baru di patok tambahan harus keluarga salah satu tokohmu, kecuali ia tinggal di persil rumahmu yang sama.');
+        if (input.ikat) {
+          ikat = asli.find((y) => y.id === input.ikat!.tokohId);
+          const rumahnya = ikat && own.find((x) => x.id === ikat!.claimId);
+          if (!ikat || !rumahnya) throw bad('ikat', 'Ikatan keluarga harus dengan tokohmu sendiri.');
+          const gagal = kotaCekHubungan(input.ikat.type, { name: baru.name, born: baru.born, died: baru.died, from: input.from, to: input.to }, { name: ikat.name, born: ikat.born, died: ikat.died, from: rumahnya.from, to: rumahnya.to }).find((x) => !x.ok);
+          if (gagal) throw bad('ikat', gagal.text);
+        }
       }
       const clash = live.find((x) => x.plotId === input.plotId && kotaOverlap(x, input));
       if (clash) throw conflict('overlap', `Rentang itu bertumpuk dengan ${clash.household} (${clash.from}–${clash.to}).`);
@@ -144,7 +178,24 @@ export function kotaRoutes(s: Services) {
       const msId = `n${newId(19)}`;
       const id = `k${newId(19)}`;
       await tx.insert(manuscripts).values({ id: msId, circleId: null, ownerId: user.id, members: [user.id], visibility: 'kota', meta: { plain: { v: 1, title: input.household } }, createdAt: now, updatedAt: now });
-      await tx.insert(cityClaims).values({ id, city: KOTA_ID, season: KOTA_MUSIM, regionId: region.id, plotId: input.plotId, ownerId: user.id, household: input.household, fromYear: input.from, toYear: input.to, msId, kind: input.kind, createdAt: now });
+      await tx.insert(cityClaims).values({ id, city: KOTA_ID, season: KOTA_MUSIM, regionId: region.id, plotId: input.plotId, ownerId: user.id, household: input.household, fromYear: input.from, toYear: input.to, msId, kind, createdAt: now });
+      const kanon = (cid: string, envelope: unknown) => ({ id: cid, msId, kind: 'tokoh', authorId: user.id, updatedBy: user.id, envelope, createdAt: now, updatedAt: now });
+      if (baru) {
+        const tid = baru.id ?? `c${newId(19)}`;
+        const [ada] = await tx.select({ id: msCanon.id }).from(msCanon).where(eq(msCanon.id, tid));
+        if (ada) throw conflict('id', 'Id tokoh sudah dipakai.');
+        await tx.insert(msCanon).values(kanon(tid, { plain: { v: 1, kind: 'tokoh', name: baru.name, aliases: [], known: [], peran: 'utama', born: baru.born, died: baru.died } }));
+        if (ikat && input.ikat) await tx.insert(cityRelations).values({ id: `r${newId(19)}`, fromClaimId: id, fromTokoh: tid, toClaimId: ikat.claimId, toTokoh: ikat.id, type: input.ikat.type, state: 'kanon', letter: 'diikat saat mematok rumah keluarga', createdAt: now, updatedAt: now });
+      }
+      if (pindah.length) {
+        const asal = await tx.select().from(msCanon).where(inArray(msCanon.id, pindah.map((x) => x.id)));
+        for (const x of pindah) {
+          const p = (asal.find((e) => e.id === x.id)?.envelope as { plain?: Record<string, unknown> } | undefined)?.plain ?? {};
+          // Kunci orangnya tetap tokoh asal pertama, walau yang dipindah sebuah salinan.
+          const kunci = (p.asal as { claimId: string; tokohId: string } | undefined) ?? { claimId: x.claimId, tokohId: x.id };
+          await tx.insert(msCanon).values(kanon(`c${newId(19)}`, { plain: { ...p, known: [], since: undefined, peran: 'utama', asal: kunci } }));
+        }
+      }
       return { id, msId };
     });
     return c.json(out, 201);
@@ -556,11 +607,15 @@ export function kotaRoutes(s: Services) {
     const live = (await describe(claims, user.id)).filter((x) => x.state === 'aktif');
     const canon = live.length ? await s.db.select().from(msCanon).where(and(inArray(msCanon.msId, live.map((x) => x.msId)), eq(msCanon.kind, 'tokoh'))) : [];
     const out: KotaNamaWire[] = [];
+    type P = { name?: string; peran?: string; sapa?: string; born?: number; died?: number; asal?: { tokohId: string } };
+    const pl = (e: { envelope: unknown }) => (e.envelope as { plain?: P }).plain;
     for (const e of canon) {
-      const p = (e.envelope as { plain?: { name?: string; peran?: string; sapa?: string; born?: number; died?: number } }).plain;
+      const p = pl(e);
       const cl = live.find((x) => x.msId === e.msId);
-      if (!p?.name || !cl) continue;
-      out.push({ name: p.name, kind: p.peran === 'figuran' ? 'figuran' : 'warga', claimId: cl.id, household: cl.household, tokohId: e.id, sapa: p.sapa === 'disapa' ? 'disapa' : 'tertutup', born: p.born, died: p.died });
+      if (!p?.name || !cl || p.asal) continue;
+      // Tokoh yang pindah rumah tetap satu orang: semua rumahnya dicatat.
+      const rumah = [cl.id, ...canon.filter((x) => pl(x)?.asal?.tokohId === e.id).flatMap((x) => live.filter((c) => c.msId === x.msId).map((c) => c.id))];
+      out.push({ name: p.name, kind: p.peran === 'figuran' ? 'figuran' : 'warga', claimId: cl.id, household: cl.household, tokohId: e.id, rumah, sapa: p.sapa === 'disapa' ? 'disapa' : 'tertutup', born: p.born, died: p.died });
     }
     for (const f of (await figurWires(user.id)).filter((x) => x.state === 'kanon')) out.push({ name: f.name, kind: 'figur', figurId: f.id, born: f.born, died: f.died, julukan: f.julukan });
     return c.json(out);
@@ -593,6 +648,7 @@ export function kotaRoutes(s: Services) {
     const ada = await s.db.select().from(cityHolds).where(and(eq(cityHolds.claimId, claim.id), eq(cityHolds.tokohId, e.id), inArray(cityHolds.state, ['minta', 'pegang'])));
     if (ada.some((x) => x.state === 'pegang')) throw conflict('dipegang', 'Tokoh ini sudah dipegang penulis lain.');
     if (ada.some((x) => x.requesterId === user.id)) throw conflict('dup', 'Permintaanmu masih menunggu jawaban.');
+    if ((await tokohku(s, user.id)).length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh. Memegang figuran juga memakai satu jatah tokoh.`);
     await rateLimit(s, `kota:pegang:${user.id}`, 6, 24 * 3600);
     const id = `h${newId(19)}`;
     await s.db.insert(cityHolds).values({ id, claimId: claim.id, tokohId: e.id, requesterId: user.id, letter: input.letter });
@@ -611,6 +667,7 @@ export function kotaRoutes(s: Services) {
     const owner = claim.ownerId === user.id;
     const [ms] = await s.db.select().from(manuscripts).where(eq(manuscripts.id, claim.msId));
     if (owner && x.state === 'minta' && (action === 'terima' || action === 'tolak')) {
+      if (action === 'terima' && (await tokohku(s, x.requesterId)).length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', 'Penulis itu sudah memakai semua jatah tokohnya.');
       await s.db.update(cityHolds).set({ state: action === 'terima' ? 'pegang' : 'tolak' }).where(eq(cityHolds.id, x.id));
       if (action === 'terima' && ms) await s.db.update(manuscripts).set({ members: [...new Set([...ms.members, x.requesterId])] }).where(eq(manuscripts.id, ms.id));
       void pushTo(s, [x.requesterId], { body: action === 'terima' ? `Kamu kini memegang satu tokoh di ${claim.household}.` : `${claim.household} belum bisa melepas tokohnya.`, data: { type: 'kota', claimId: claim.id } }).catch(() => {});

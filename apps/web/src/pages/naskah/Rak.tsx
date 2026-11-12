@@ -1,52 +1,128 @@
-/** Studio Naskah: rak naskah dan membuka naskah baru. */
-import type { NaskahMeta, NaskahWire } from '@sehari/core';
-import { type CSSProperties, useState } from 'react';
-import { api } from '@/lib/api';
-import { memberName, useCircles, useMe } from '@/lib/data';
-import { newNaskahId, useNaskahList } from '@/lib/naskah';
+/**
+ * Meja tulis kota: semua penulisan dimulai dari peta. Halaman ini mengumpulkan
+ * rumah-rumahmu (patok), tokoh-tokohmu, dan jatah musim (3 tokoh dalam 3 patok).
+ * Naskah lama di luar kota tetap bisa dibuka di bagian arsip.
+ */
+import type { NaskahMeta } from '@sehari/core';
+import { kotaPlot } from '@sehari/core';
+import type { CSSProperties } from 'react';
+import { useKota } from '@/lib/kota';
+import { useNaskahList } from '@/lib/naskah';
 import { navigate } from '@/lib/router';
-import { useReady } from '@/lib/session';
-import { sealPart, useOpenAny } from '@/lib/stories';
-import { Avatar, Doodle, Header, Sheet, useToast } from '@/ui/kit';
+import { useOpenAny } from '@/lib/stories';
+import { Doodle, Growing, Header } from '@/ui/kit';
 
-export default function Rak() {
-  const me = useMe();
-  const { circles } = useCircles();
+export default function Meja() {
+  const kota = useKota();
   const list = useNaskahList();
   const open = useOpenAny();
-  const [baru, setBaru] = useState(false);
-  const items = list.data ?? [];
+  if (!kota.data) return <Growing label="merapikan meja…" />;
+  const me = kota.data.me;
+  const rumah = kota.data.claims.filter((c) => c.mine && c.state === 'aktif').sort((a, b) => a.from - b.from);
+  const arsip = (list.data ?? []).filter((ms) => ms.visibility !== 'kota');
+  const nama = (id: string) => kota.data!.claims.find((c) => c.id === id)?.household ?? 'rumah';
 
   return (
-    <main className="screen naskah-rak">
-      <Header title="studio naskah" sub="satu adegan, satu pemilik" backTo="/main" />
-      <section className="nk-hero">
-        <p className="rupa-hand">Tulis bersama tanpa saling menimpa. Studio mengingat siapa tahu apa, dan kapan.</p>
-        <button className="btn" onClick={() => setBaru(true)} data-testid="naskah-baru">
-          <Doodle id="buku-terbuka" size={20} color="currentColor" /> naskah baru
-        </button>
+    <main className="screen meja-kota">
+      <Header title="meja tulis" sub="semua kisah berawal dari sebuah alamat" backTo="/kota" />
+
+      <section className="mj-jatah" aria-label="jatah musim ini">
+        <div className="mj-jatah-k">
+          <span className="mj-angka">
+            {me.patok.pakai}
+            <small>/{me.patok.maks}</small>
+          </span>
+          <span className="tiny">patok</span>
+        </div>
+        <div className="mj-jatah-k">
+          <span className="mj-angka">
+            {me.tokoh.pakai}
+            <small>/{me.tokoh.maks}</small>
+          </span>
+          <span className="tiny">tokoh</span>
+        </div>
+        <p className="small mj-aturan">
+          Tiap warga memegang paling banyak {me.tokoh.maks} tokoh dalam {me.patok.maks} patok. Tokohmu boleh pindah ke rumahmu yang lain, dan satu rumah boleh dihuni beberapa tokohmu bila mereka keluarga atau pernah tinggal di sana. Figuran rumah tidak memakai jatah.
+        </p>
       </section>
 
-      {items.length ? (
+      {rumah.length ? (
         <section className="section">
-          <span className="label">rak naskah</span>
+          <span className="label">rumahmu</span>
           <div className="col" style={{ gap: 10 }}>
-            {items.map((ms, i) => {
+            {rumah.map((c, i) => (
+              <article key={c.id} className="mj-rumah" style={{ '--n': i } as CSSProperties} data-testid="meja-rumah">
+                <button className="mj-rumah-isi" onClick={() => navigate(`/kota/rumah/${c.id}`)}>
+                  <span className="kp-musim">
+                    {c.kind === 'rumah' ? 'rumah utama' : 'rumah keluarga'} · {kotaPlot(c.plotId)?.address}
+                  </span>
+                  <b>{c.household}</b>
+                  <span className="tiny soft">
+                    {c.from}–{c.to} · {c.scenes} adegan terbit
+                  </span>
+                </button>
+                <button className="btn sm" onClick={() => navigate(`/naskah/${c.msId}`)} data-testid="meja-tulis">
+                  <Doodle id="pena" size={16} color="currentColor" /> tulis
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="mj-kosong">
+          <Doodle id="rumah" size={44} />
+          <p className="rupa-hand">Menulis di sini dimulai dari peta.</p>
+          <p className="small soft">Pilih satu persil di Kota Sangkala, tentukan zamannya, dan beri nama tokoh pertamamu. Rumah itu jadi meja tulismu.</p>
+        </section>
+      )}
+
+      {me.tokohku.length ? (
+        <section className="section">
+          <span className="label">tokohmu</span>
+          <div className="col" style={{ gap: 8 }}>
+            {me.tokohku.map((t) => (
+              <div key={t.id} className="mj-tokoh" data-testid="meja-tokoh">
+                <span className="mj-tokoh-inisial" aria-hidden>
+                  {t.name.slice(0, 1)}
+                </span>
+                <span className="grow">
+                  <b>{t.name}</b>
+                  <span className="tiny soft">
+                    {t.born ? `${t.born}–${t.died ?? ''} · ` : ''}
+                    {t.dipegang ? `figuran yang kamu pegang di ${t.household}` : `tinggal di ${t.rumah.map(nama).join(', ')}`}
+                  </span>
+                </span>
+              </div>
+            ))}
+            {Array.from({ length: Math.max(0, me.tokoh.maks - me.tokoh.pakai) }, (_, i) => (
+              <div key={`kosong${i}`} className="mj-tokoh kosong" aria-hidden>
+                <span className="mj-tokoh-inisial" />
+                <span className="tiny soft">jatah tokoh yang belum dipakai</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <div className="ka-aksi">
+        <button className="btn" onClick={() => navigate('/kota')} data-testid="meja-peta">
+          <Doodle id="rumah" size={18} color="currentColor" /> {rumah.length ? (me.patok.pakai < me.patok.maks ? 'patok rumah keluarga di peta' : 'buka peta kota') : 'pilih persil di peta'}
+        </button>
+      </div>
+
+      {arsip.length ? (
+        <section className="section">
+          <span className="label">arsip</span>
+          <p className="tiny soft">Naskah lama dan bekas rumah. Hanya kamu dan rekan penulisnya yang membaca.</p>
+          <div className="col" style={{ gap: 8 }}>
+            {arsip.map((ms) => {
               const meta = ms.meta && 'plain' in ms.meta ? (ms.meta.plain as NaskahMeta) : open<NaskahMeta>(ms.meta);
-              const pub = ms.scenes.filter((x) => x.status === 'terbit').length;
-              const drafting = ms.scenes.filter((x) => x.status === 'draf' && x.authorId !== me.user.id).length;
               return (
-                <button key={ms.id} className="card nk-item" style={{ '--n': i } as CSSProperties} onClick={() => navigate(`/naskah/${ms.id}`)} data-testid="naskah-item">
-                  <span className="nk-spine" aria-hidden />
-                  <span className="grow" style={{ minWidth: 0 }}>
-                    <b>
-                      {meta?.title ?? 'naskah'}
-                      {ms.visibility === 'kota' ? <span className="nk-kota-pil">rumah di Kota</span> : null}
-                    </b>
-                    {meta?.logline ? <span className="small soft nk-logline">{meta.logline}</span> : null}
+                <button key={ms.id} className="card mj-arsip" onClick={() => navigate(`/naskah/${ms.id}`)} data-testid="naskah-item">
+                  <span className="grow">
+                    <b>{meta?.title ?? 'naskah'}</b>
                     <span className="tiny soft">
-                      {pub} adegan · {ms.canon.length} kanon · {ms.members.length === 1 ? 'sendiri' : ms.members.map((u) => memberName(circles, u, me.user.id)).join(', ')}
-                      {drafting ? ` · ${drafting} sedang ditulis` : ''}
+                      {ms.visibility === 'arsip' ? 'bekas rumah di kota' : 'naskah lama'} · {ms.scenes.filter((x) => x.status === 'terbit').length} adegan
                     </span>
                   </span>
                   <Doodle id="ui-panah-kanan" size={16} />
@@ -55,86 +131,7 @@ export default function Rak() {
             })}
           </div>
         </section>
-      ) : list.isSuccess ? (
-        <p className="small soft center" style={{ marginTop: 28 }}>
-          Rakmu masih kosong. Mulai satu naskah, atau buka cerita Hidup Orang Lain yang sudah selesai di studio.
-        </p>
       ) : null}
-
-      <Sheet open={baru} onClose={() => setBaru(false)} title="naskah baru">
-        <NaskahBaru onDone={(ms) => navigate(`/naskah/${ms.id}`)} />
-      </Sheet>
     </main>
-  );
-}
-
-function NaskahBaru({ onDone }: { onDone: (ms: NaskahWire) => void }) {
-  const me = useMe();
-  const { identity } = useReady();
-  const toast = useToast();
-  const { circles } = useCircles();
-  const live = circles.filter((c) => c.status === 'active' && c.me?.state === 'active' && c.kind !== 'moment');
-  const [title, setTitle] = useState('');
-  const [logline, setLogline] = useState('');
-  const [circleId, setCircleId] = useState<string | null>(null);
-  const [picked, setPicked] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
-  const circle = live.find((c) => c.id === circleId);
-  const choose = (id: string | null) => {
-    setCircleId(id);
-    setPicked(live.find((c) => c.id === id)?.others.map((m) => m.userId).slice(0, 7) ?? []);
-  };
-
-  return (
-    <div className="col" style={{ gap: 12 }}>
-      <input className="field" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="judul kerja" autoFocus data-testid="nk-judul" />
-      <textarea className="field" rows={2} value={logline} maxLength={240} onChange={(e) => setLogline(e.target.value)} placeholder="satu kalimat: siapa, menginginkan apa, apa yang menghalangi" />
-      <span className="label">ditulis</span>
-      <div className="row wrap" style={{ gap: 6 }}>
-        <button className={`pill ${circleId === null ? 'active' : ''}`} onClick={() => choose(null)}>
-          sendiri
-        </button>
-        {live.map((c) => (
-          <button key={c.id} className={`pill ${circleId === c.id ? 'active' : ''}`} onClick={() => choose(c.id)} data-testid={`nk-l-${c.id}`}>
-            <Doodle id={c.doodle} size={16} color="currentColor" /> {c.name}
-          </button>
-        ))}
-      </div>
-      {circle ? (
-        <div className="row wrap" style={{ gap: 8 }}>
-          {circle.others.map((m) => {
-            const on = picked.includes(m.userId);
-            return (
-              <button key={m.userId} className={`nk-penulis ${on ? 'on' : ''}`} onClick={() => setPicked(on ? picked.filter((x) => x !== m.userId) : [...picked, m.userId])}>
-                <Avatar doodle={m.doodle} size={30} />
-                {m.penName}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-      <button
-        className="btn"
-        disabled={!title.trim() || busy || (!!circle && !picked.length)}
-        onClick={async () => {
-          setBusy(true);
-          try {
-            const meta: NaskahMeta = { v: 1, title: title.trim(), logline: logline.trim() || undefined };
-            const ms = await api.post<NaskahWire>('/naskah', {
-              id: newNaskahId(),
-              circleId: circle?.id ?? null,
-              members: circle ? picked : [],
-              meta: sealPart(meta, circle, { id: me.user.id, publicKey: identity.publicKey }),
-            });
-            onDone(ms);
-          } catch (e) {
-            toast((e as Error).message);
-            setBusy(false);
-          }
-        }}
-        data-testid="nk-buat">
-        {busy ? 'menyiapkan…' : 'buka naskah'}
-      </button>
-    </div>
   );
 }
