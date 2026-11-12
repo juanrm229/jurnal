@@ -1107,3 +1107,24 @@ export const cityRelations = pgTable(
   },
   (t) => [index('city_relations_from_idx').on(t.fromClaimId), index('city_relations_to_idx').on(t.toClaimId)],
 );
+
+/** Peristiwa kota usulan warga. Almanak awal tidak disimpan di sini (ada di @sehari/core). */
+export const cityEvents = pgTable(
+  'city_events',
+  {
+    id: text('id').primaryKey(),
+    city: text('city').notNull().default('sangkala'),
+    title: text('title').notNull(),
+    year: integer('year').notNull(),
+    month: integer('month'),
+    toYear: integer('to_year'),
+    regions: jsonb('regions').$type<string[]>().notNull().default([]),
+    body: text('body').notNull(),
+    proposerId: text('proposer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    endorsers: jsonb('endorsers').$type<string[]>().notNull().default([]),
+    /** 'usul', 'kanon', atau 'tarik'. */
+    state: text('state').notNull().default('usul'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('city_events_city_idx').on(t.city)],
+);

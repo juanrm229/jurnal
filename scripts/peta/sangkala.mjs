@@ -134,6 +134,7 @@ const COAST = chaikin(
   2,
 );
 const LAND = [[0, -5], [2005, -5], ...COAST.slice().reverse()].reverse();
+const coastPath0 = `M${COAST.map(([x, y]) => `${Math.round(x)} ${Math.round(y)}`).join('L')}`;
 const RIVER_C = chaikin([[392, -12], [404, 60], [430, 130], [482, 200], [542, 266], [612, 326], [692, 386], [772, 431], [852, 476], [926, 531], [986, 591], [1036, 651], [1070, 706], [1094, 746], [1102, 790]], 3);
 const RIVER = ribbon(RIVER_C, (t) => 12 + t * t * 40);
 const LAGOON = chaikin([[716, 732], [790, 716], [866, 714], [944, 738], [950, 790], [902, 822], [850, 838], [826, 870], [806, 878], [790, 846], [740, 836], [704, 800]], 3, true);
@@ -265,6 +266,7 @@ function onRoad(p, pad = 3) {
 
 // Rumah: persegi berputar dengan atap pelana.
 const plots = [];
+const FEAT = { houses: [], trees: [] };
 function house(x, y, w, d, ang, opts = {}) {
   const roof = opts.roof ?? pick(C.roofs);
   const r = Math.hypot(w, d) / 2;
@@ -274,12 +276,14 @@ function house(x, y, w, d, ang, opts = {}) {
   L.bld.push(
     `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(ang)})"><rect x="${f1(-w / 2)}" y="${f1(-d / 2)}" width="${f1(w)}" height="${f1(d)}" fill="${roof}"/><path d="${ridge}" class="rg"/>${opts.extra ?? ''}</g>`,
   );
+  const kind = opts.kind ?? (w >= 18 || d >= 18 ? 'gudang' : w < 5.2 && d < 5.2 ? 'lapak' : ['#f4efe4', '#efe8da', '#f7f2e8'].includes(roof) ? 'putih' : 'rumah');
+  FEAT.houses.push([f1(x), f1(y), f1(w), f1(d), f1(ang), roof, kind]);
   if (opts.plot) plots.push({ region: opts.plot.region, block: opts.plot.block, x: f1(x), y: f1(y) });
 }
 function tree(x, y, r, tone) {
   mark(x, y, r * 0.7);
   const g = tone ?? pick(C.green);
-  L.trees.push(`<circle cx="${f1(x + r * 0.25)}" cy="${f1(y + r * 0.3)}" r="${f1(r)}" class="ts"/><circle cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}" fill="${g}"/><circle cx="${f1(x - r * 0.3)}" cy="${f1(y - r * 0.3)}" r="${f1(r * 0.45)}" class="th"/>`);
+  FEAT.trees.push([f1(x), f1(y), f1(r), g]);
 }
 function scatterTrees(poly, n, rmin, rmax, opts = {}) {
   const b = bbox(poly);
@@ -376,7 +380,7 @@ function drawRegion(R) {
   else if (R.kind === 'benteng') fort(R);
   else if (R.kind === 'bakau') mangrove(R);
   else if (R.kind === 'undak') terraces(R);
-  else if (R.kind === 'hutan') scatterTrees(R.poly, 9000, 4, 8.5, { roads: false, tone: undefined });
+  else if (R.kind === 'hutan') (base(R, '#4d7a3a'), scatterTrees(R.poly, 9000, 4, 8.5, { roads: false, tone: undefined }));
   else if (R.kind === 'pulau') island(R);
 }
 
@@ -483,7 +487,7 @@ function port(R) {
     const y = rr(788, 840);
     if (!inside([x, y], R.poly) || !free(x, y, 1.6)) continue;
     mark(x, y, 1.6);
-    L.bld.push(`<rect x="${f1(x)}" y="${f1(y)}" width="5.2" height="2.2" fill="${pick(['#d9534f', '#3f7fbf', '#e0a33a', '#3d9970', '#e8e2d0', '#8e44ad'])}" stroke="${C.line}" stroke-width=".3" transform="rotate(12 ${f1(x)} ${f1(y)})"/>`);
+    L.top.push(`<rect x="${f1(x)}" y="${f1(y)}" width="5.2" height="2.2" fill="${pick(['#d9534f', '#3f7fbf', '#e0a33a', '#3d9970', '#e8e2d0', '#8e44ad'])}" stroke="${C.line}" stroke-width=".3" transform="rotate(12 ${f1(x)} ${f1(y)})"/>`);
   }
   for (const [x, y] of [[1052, 812], [1066, 790], [1020, 846]])
     L.top.push(`<g transform="translate(${x} ${y})" stroke="#d6a22a" stroke-width="1.4" fill="none"><path d="M0 0V-14L10 -12"/><path d="M-3 0H3"/><path d="M8 -12V-6" stroke-width=".6"/></g>`);
@@ -552,7 +556,30 @@ function fort(R) {
   mark(cx, cy, 42);
 }
 function mangrove(R) {
-  L.land.push(`<path d="${pathD(wobble(chaikin(R.poly, 3, true), 14, 0.02, 17), true)}" fill="#8db86a"/>`);
+  L.land.push(`<path d="${pathD(wobble(chaikin(R.poly, 3, true), 14, 0.02, 17), true)}" fill="#5f8f45"/>`);
+  // Alur bakau: dari muara di pantai, berkelok dan bercabang ke darat; makin ke muara makin lebar.
+  const mouths = [1440, 1530, 1610, 1700, 1790, 1880, 1960];
+  const mr = mulberry(311);
+  const grow = (p, ang, w, depth) => {
+    const line = [p];
+    for (let i = 0; i < 26; i++) {
+      ang += (fbm(p[0] * 0.02, p[1] * 0.02, 40 + depth) - 0.5) * 0.9;
+      p = [p[0] + Math.cos(ang) * 9, p[1] + Math.sin(ang) * 9];
+      if (!inside(p, R.poly) || p[1] < 150) break;
+      line.push(p);
+      if (depth < 2 && mr() < 0.12) grow(p, ang + (mr() < 0.5 ? -0.7 : 0.7), w * 0.6, depth + 1);
+    }
+    const sm2 = chaikin(line, 2);
+    L.water.push(`<path d="${pathD(ribbon(sm2, (t) => w * (1 - t * 0.75)), true)}" fill="${C.river}" stroke="#3f6b3a" stroke-opacity=".5" stroke-width=".6"/>`);
+  };
+  for (const x of mouths) {
+    let y = 0;
+    for (const c of COAST) if (Math.abs(c[0] - x) < 30) y = c[1];
+    if (!y) continue;
+    L.land.push(`<ellipse cx="${x + 10}" cy="${y - 4}" rx="${22 + mr() * 18}" ry="${7 + mr() * 5}" fill="${C.sand}" transform="rotate(-12 ${x} ${y})"/>`);
+    grow([x, y + 4], -Math.PI / 2 + (mr() - 0.5) * 0.5, 9 + mr() * 6, 0);
+  }
+  // Jaga urutan acak lama (penempatan persil di wilayah lain bergantung padanya).
   for (let k = 0; k < 14; k++) {
     let p = [rr(1430, 1990), rr(140, 300)];
     const line = [p];
@@ -562,12 +589,8 @@ function mangrove(R) {
       line.push(p);
       if (!inside(p, LAND)) break;
     }
-    const w = rr(3, 7);
-    L.water.push(`<path d="${pathD(chaikin(line, 2))}" fill="none" stroke="${C.river}" stroke-width="${f1(w)}" stroke-linecap="round"/>`);
-    for (let j = 4; j < line.length; j += 6) {
-      const q = [line[j], [line[j][0] + rr(-40, 40), line[j][1] + rr(10, 40)]];
-      L.water.push(`<path d="${pathD(chaikin(q, 1))}" fill="none" stroke="${C.river}" stroke-width="${f1(w * 0.5)}" stroke-linecap="round"/>`);
-    }
+    rr(3, 7);
+    for (let j = 4; j < line.length; j += 6) (rr(-40, 40), rr(10, 40));
   }
   scatterTrees(R.poly, 6000, 3, 6, { roads: false, tone: undefined });
 }
@@ -603,6 +626,7 @@ for (const [k, line] of Object.entries(ROADS)) {
 L.roads.push(`<path d="${pathD(RAIL)}" stroke="#4a3f36" stroke-width="3.2" fill="none"/><path d="${pathD(RAIL)}" stroke="#e8dcc0" stroke-width="1.6" stroke-dasharray="1.2 2" fill="none"/>`);
 for (const id of order) drawRegion(REGIONS.find((r) => r.id === id));
 // Hutan menutup seluruh utara, termasuk sudut timur laut.
+L.land.push(`<path d="${pathD(wobble(chaikin([[1380, -5], [2005, -5], [2005, 150], [1384, 172]], 3, true), 10), true)}" fill="#4d7a3a"/><path d="${pathD(wobble(chaikin([[-5, -5], [2005, -5], [2005, 50], [-5, 50]], 2, true), 6), true)}" fill="#4d7a3a"/>`);
 scatterTrees([[1384, -5], [2005, -5], [2005, 140], [1384, 168]], 5000, 4, 8.5, { roads: false });
 scatterTrees([[-5, -5], [2005, -5], [2005, 60], [-5, 60]], 3000, 4, 8, { roads: false });
 // Pedesaan di sela wilayah: rumpun pohon dan rumah-rumah kecil yang berjauhan.
@@ -613,6 +637,61 @@ for (let i = 0; i < 26000; i++) {
   const d = fbm(p[0] * 0.008, p[1] * 0.008, 61);
   if (d > 0.5 && free(p[0], p[1], 3.4)) tree(p[0], p[1], rr(2.6, 5.4));
   else if (d < 0.32 && hash2(Math.round(p[0]), Math.round(p[1]), 77) < 0.04 && free(p[0], p[1], 5)) house(p[0], p[1], rr(5, 8), rr(5, 7), rr(-20, 20));
+}
+
+// Kebun berbaris di padang kosong: pohon buah dalam petak-petak kecil.
+{
+  const kr = mulberry(512);
+  const inAny2 = (p) => REGIONS.some((r) => inside(p, r.poly));
+  for (let i = 0; i < 70; i++) {
+    const cx = kr() * W;
+    const cy = 120 + kr() * 900;
+    if (inAny2([cx, cy]) || onWater([cx, cy], 20) || onRoad([cx, cy], 20)) continue;
+    const a = kr() * Math.PI;
+    for (let u = -3; u <= 3; u++)
+      for (let v = -2; v <= 2; v++) {
+        const x = cx + Math.cos(a) * u * 7 - Math.sin(a) * v * 7;
+        const y = cy + Math.sin(a) * u * 7 + Math.cos(a) * v * 7;
+        if (!inAny2([x, y]) && !onWater([x, y], 2) && !onRoad([x, y], 2) && free(x, y, 2.6)) tree(x, y, 2.6 + kr() * 0.6, kr() < 0.5 ? '#7aa65c' : '#6f9d55');
+      }
+  }
+}
+
+// Laut: garis kedalaman, beting karang, dan perahu layar.
+{
+  const lr = mulberry(901);
+  for (const [w, o] of [[230, 0.1], [330, 0.07]]) L.top.unshift(`<path d="${coastPath0}" fill="none" stroke="#ffffff" stroke-opacity="${o}" stroke-width="1" stroke-dasharray="2 6" transform="translate(0 ${w / 4})"/>`);
+  const reef = (x, y, rx, ry, a) => L.top.unshift(`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#7fd0d2" fill-opacity=".45" filter="url(#lembut)" transform="rotate(${a} ${x} ${y})"/><ellipse cx="${x}" cy="${y}" rx="${rx * 0.5}" ry="${ry * 0.45}" fill="#b9ecdf" fill-opacity=".45" filter="url(#lembut)" transform="rotate(${a} ${x} ${y})"/>`);
+  reef(560, 1070, 90, 26, -6);
+  reef(1820, 700, 70, 22, 18);
+  reef(1450, 830, 50, 16, -20);
+  for (const [x, y] of [[548, 1066], [574, 1074], [590, 1062], [1812, 694], [1834, 708], [1446, 826]]) L.top.push(`<circle cx="${x}" cy="${y}" r="${1.6 + lr() * 1.6}" fill="#8a8170" stroke="#5b4a3a" stroke-width=".4"/>`);
+  const sail = (x, y, a) => L.top.push(`<g transform="translate(${x} ${y}) rotate(${a})"><path d="M-14 1Q-24 0 -32 1" stroke="#ffffff" stroke-opacity=".5" stroke-width=".8" fill="none"/><path d="M-5 0Q0 2.6 6 0L4.6 -1.4H-4Z" fill="#f4efe4" stroke="${C.line}" stroke-width=".4"/><path d="M0 -1V-10L6 -2Z" fill="#ffffff" stroke="${C.line}" stroke-width=".4"/></g>`);
+  sail(1330, 980, -8);
+  sail(860, 1060, 6);
+  sail(1880, 990, -14);
+  sail(1500, 640, 10);
+  for (let i = 0; i < 16; i++) {
+    const x = 700 + lr() * 1200;
+    const y = 900 + lr() * 200;
+    if (!inside([x, y], LAND)) boat(x, y, lr() * 40 - 20, 0.9);
+  }
+}
+
+// Bangunan penanda di wilayah yang belum dibuka (digambar di atas, tidak mengubah persil).
+const tegak = (x, y, body) => L.top.push(`<g transform="translate(${x} ${y})"><ellipse cx="3" cy="4" rx="13" ry="9" fill="#2a1e14" fill-opacity=".22"/>${body}</g>`);
+tegak(430, 548, `<rect x="-9" y="-9" width="18" height="18" fill="#f3efe4" stroke="${C.line}" stroke-width=".6"/><circle r="6.4" fill="url(#kubah)" stroke="${C.line}" stroke-width=".5"/><circle cy="-6.6" r=".9" fill="#d9b44a"/><rect x="10" y="-13" width="3.2" height="16" fill="#f3efe4" stroke="${C.line}" stroke-width=".5"/><circle cx="11.6" cy="-13.5" r="1.8" fill="url(#kubah)"/>`);
+tegak(992, 404, `<path d="M-4 -12H4V-4H12V4H4V14H-4V4H-12V-4H-4Z" fill="#9aa0a8" stroke="${C.line}" stroke-width=".6"/><path d="M0 -12V14M-12 0H12" stroke="#ffffff" stroke-opacity=".35" stroke-width=".8"/><rect x="-2" y="-18" width="4" height="7" fill="#efe8da" stroke="${C.line}" stroke-width=".5"/>`);
+tegak(1298, 300, `<rect x="-11" y="-8" width="22" height="16" fill="#e8d9b4" stroke="${C.line}" stroke-width=".6"/><path d="M-14 -5Q0 -12 14 -5L12 -1Q0 -6 -12 -1Z" fill="#c23b22" stroke="${C.line}" stroke-width=".5"/><path d="M-14 4Q0 -2 14 4L12 8Q0 3 -12 8Z" fill="#c23b22" stroke="${C.line}" stroke-width=".5"/><circle cx="-16" cy="2" r="1.6" fill="#f2c14e"/><circle cx="16" cy="2" r="1.6" fill="#f2c14e"/>`);
+tegak(566, 588, `<rect x="-22" y="-5" width="44" height="10" fill="#b88a5a" stroke="${C.line}" stroke-width=".6"/><path d="M-22 0H22" stroke="#7a5a3a" stroke-width=".8"/><rect x="-26" y="7" width="52" height="3" fill="#d9d2c4" stroke="${C.line}" stroke-width=".4"/><rect x="-3" y="-9" width="6" height="5" fill="#efe8da" stroke="${C.line}" stroke-width=".4"/>`);
+tegak(1182, 226, `<path d="M-18 -10H18V10H10V-2H-10V10H-18Z" fill="#c9a26a" stroke="${C.line}" stroke-width=".6"/><rect x="-10" y="12" width="20" height="10" fill="#b8d48a" stroke="#f3efe4" stroke-width=".8"/><circle cy="17" r="2" fill="none" stroke="#f3efe4" stroke-width=".5"/>`);
+// Kilau matahari di laut.
+const glint = mulberry(77);
+for (let i = 0; i < 260; i++) {
+  const x = 1100 + glint() * 900;
+  const y = 600 + glint() * 520;
+  if (inside([x, y], LAND) || inside([x, y], ISLAND)) continue;
+  L.top.push(`<path d="M${f1(x)} ${f1(y)}h${f1(2 + glint() * 5)}" stroke="#ffffff" stroke-opacity="${f1(0.25 + glint() * 0.4)}" stroke-width=".7" stroke-linecap="round"/>`);
 }
 
 // Air: laut, kali, laguna.
@@ -697,19 +776,28 @@ ${SEA}
 <g id="jalan">${L.roads.join('')}</g>
 <path d="${pathD(BREAKWATER)}" fill="none" stroke="#9a9488" stroke-width="7" stroke-linecap="round"/><path d="${pathD(BREAKWATER)}" fill="none" stroke="#c9c3b6" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 1.5"/>
 ${bridges.join('')}
-<g id="bayang">${L.shadow.join('')}</g>
-<g id="bangunan">${L.bld.join('')}</g>
-<g id="pohon">${L.trees.join('')}</g>
-<g id="atas">${L.top.join('')}</g>
-<text x="1420" y="1000" font-size="26" letter-spacing="6">Teluk Kelambu</text>
-<text x="1640" y="900" font-size="12" letter-spacing="3">Selat Pelita</text>
-<text x="520" y="248" font-size="10" letter-spacing="2" fill="#2b5d7a" style="fill:#1f4e6a" transform="rotate(42 520 248)">Kali Sirah</text>
-<rect width="${W}" height="${H}" filter="url(#kertas)"/>
 </svg>`;
 
 const OUT = join(HERE, 'out');
 mkdirSync(OUT, { recursive: true });
-writeFileSync(join(OUT, 'sangkala.svg'), svg);
+const top = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W * 2}" height="${H * 2}">
+<defs>
+  <radialGradient id="kubah" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#e9f3e2"/><stop offset=".55" stop-color="#4f9a6a"/><stop offset="1" stop-color="#2c6a46"/></radialGradient>
+  <filter id="kertas" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .35  0 0 0 0 .28  0 0 0 0 .18  0 0 0 .08 0"/></filter>
+  <filter id="lembut" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  <radialGradient id="sudut" cx="50%" cy="50%" r="75%"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1a1408" stop-opacity=".28"/></radialGradient>
+</defs>
+<style>text{font-family:'Fraunces','Georgia',serif;font-style:italic;fill:#e7f3f6}</style>
+<g id="atas">${L.top.join('')}</g>
+<text x="1420" y="1000" font-size="26" letter-spacing="6">Teluk Kelambu</text>
+<text x="1640" y="900" font-size="12" letter-spacing="3">Selat Pelita</text>
+<text x="520" y="248" font-size="10" letter-spacing="2" style="fill:#1f4e6a" transform="rotate(42 520 248)">Kali Sirah</text>
+<rect width="${W}" height="${H}" filter="url(#kertas)"/>
+<rect width="${W}" height="${H}" fill="url(#sudut)"/>
+</svg>`;
+writeFileSync(join(OUT, 'tanah.svg'), svg);
+writeFileSync(join(OUT, 'atas.svg'), top);
+writeFileSync(join(OUT, 'fitur.json'), JSON.stringify({ ...FEAT, land: pathD(LAND, true), island: `${pathD(ISLAND, true)} ${pathD(ISLET, true)}` }));
 
 // ── Persil: rumah di wilayah yang dibuka, dengan alamat per blok ─────────────
 function roman(n) {
@@ -751,4 +839,4 @@ export const SANGKALA_PERSIL: [string, string, number, number, string][] = ${JSO
 `;
 writeFileSync(join(HERE, '../../packages/core/src/kotaData.ts'), ts);
 const per = Object.fromEntries(REGIONS.filter((r) => r.musim).map((r) => [r.id, data.filter((d) => d[1] === r.id).length]));
-console.log('rumah digambar:', L.bld.length, 'pohon:', L.trees.length, 'persil:', data.length, per, 'svg', Math.round(svg.length / 1024), 'KB');
+console.log('rumah digambar:', FEAT.houses.length, 'pohon:', FEAT.trees.length, 'persil:', data.length, per, 'svg', Math.round(svg.length / 1024), 'KB');

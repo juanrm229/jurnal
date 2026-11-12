@@ -197,6 +197,13 @@
       "when": 1794499679214,
       "tag": "0027_kota_sangkala",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794501066353,
+      "tag": "0028_giant_adam_warlock",
+      "breakpoints": true
     }
   ]
 }

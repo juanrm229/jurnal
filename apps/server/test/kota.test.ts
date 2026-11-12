@@ -119,4 +119,30 @@ describe('kota sehari', () => {
     const turun = await sari.ok('GET', `/v1/kota/claims/${darmo.id}/tautan`);
     expect(turun.relations.find((x: any) => x.id === k.json.id).state).toBe('desas');
   });
+
+  it('almanak: peristiwa awal kanon, usulan warga butuh dua persetujuan, kesaksian terkumpul di halaman peristiwa', async () => {
+    const awal = await sari.ok('GET', '/v1/kota/almanak');
+    expect(awal.find((e: any) => e.id === 'awal.banjir')).toMatchObject({ state: 'kanon', year: 1979 });
+    const usul = { title: 'Festival layang-layang pertama', year: 1986, month: 8, regions: ['lorongsumbu'], body: 'Langit di atas Kali Sirah penuh layang-layang dari kertas minyak.' };
+    // Warga tanpa rumah tidak bisa mengusulkan.
+    const tamu = await new Client(env.app, 'tamu-k@contoh.id').signup('Tamu');
+    expect((await tamu.req('POST', '/v1/kota/almanak', usul)).status).toBe(403);
+    const r = await raka.req('POST', '/v1/kota/almanak', usul);
+    expect(r.status).toBe(201);
+    expect((await raka.req('PUT', `/v1/kota/almanak/${r.json.id}`, { action: 'setuju' })).status).toBe(400);
+    expect((await sari.req('PUT', `/v1/kota/almanak/${r.json.id}`, { action: 'setuju' })).status).toBe(403);
+    expect((await patok(sari, 'tujuhlonceng.80', 1950, 1990, 'Keluarga Kapur')).status).toBe(201);
+    const satu = await sari.ok('PUT', `/v1/kota/almanak/${r.json.id}`, { action: 'setuju' });
+    expect(satu.state).toBe('usul');
+    const dua = await tono.ok('PUT', `/v1/kota/almanak/${r.json.id}`, { action: 'setuju' });
+    expect(dua.state).toBe('kanon');
+    // Kesaksian: adegan terbit di rumah kota yang menandai peristiwa.
+    const rumahRaka = (await raka.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine && x.kind === 'rumah');
+    await raka.ok('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'saksi001x', chapter: 2, order: 1, status: 'terbit', envelope: { plain: { v: 1, pov: 'tPakDarmo1921', when: { label: 'malam kedua', sort: '1979-02-15' }, text: 'Air naik sejengkal tiap kali azan.', peristiwa: 'awal.banjir', saksi: 'mengalami' } } });
+    const banjir = await sari.ok('GET', '/v1/kota/peristiwa/awal.banjir');
+    expect(banjir.testimonies).toHaveLength(1);
+    expect(banjir.testimonies[0]).toMatchObject({ household: 'Keluarga Darmo', tokoh: 'Pak Darmo', saksi: 'mengalami' });
+    expect((await sari.ok('GET', '/v1/kota/almanak')).find((e: any) => e.id === 'awal.banjir').testimonies).toBe(1);
+    expect((await raka.ok('GET', `/v1/kota/naskah/${rumahRaka.msId}`)).id).toBe(rumahRaka.id);
+  });
 });

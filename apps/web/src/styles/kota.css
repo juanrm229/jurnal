@@ -172,8 +172,11 @@
 .kp-rumahku {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 0 14px;
+  width: 48px;
+  flex: none;
+  padding: 0;
   color: #c2371f;
   font: inherit;
   font-size: var(--fs-sm);
@@ -1087,4 +1090,375 @@
 .ks-kalimat.desas {
   color: var(--text-soft);
   font-style: italic;
+}
+
+/* ── Almanak ── */
+.kp-almanak {
+  width: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+}
+.kp-peristiwa {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  animation: paper-lay 420ms var(--ease-out) both;
+}
+:root[data-dark='1'] .kp-peristiwa {
+  background: rgba(255, 255, 255, 0.06);
+}
+.kp-peristiwa b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+}
+.kp-peristiwa .tiny {
+  display: block;
+  color: var(--text-soft);
+}
+.kp-peristiwa-titik {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, #c2371f 45%, var(--paper));
+}
+.kp-peristiwa-titik.kini {
+  background: #c2371f;
+  box-shadow: 0 0 0 4px rgba(194, 55, 31, 0.18);
+}
+.ka-pembuka {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  color: var(--ink);
+}
+.ka-usul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--r-card);
+  border: 1px dashed color-mix(in srgb, var(--ink) 40%, var(--line));
+  background: var(--card);
+}
+.ka-usul b {
+  font-family: var(--serif-display);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+}
+.ka-usul .small {
+  margin: 0;
+  font-family: var(--serif);
+  line-height: 1.5;
+}
+.ka-tahun {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: #c2371f;
+  letter-spacing: 0.04em;
+}
+.ka-garis {
+  position: relative;
+  margin-top: var(--sp-5);
+  padding-left: 18px;
+  border-left: 2px solid color-mix(in srgb, var(--ink) 25%, var(--line));
+}
+.ka-dekade h3 {
+  position: relative;
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-family: var(--serif-display);
+  font-weight: 600;
+  font-size: var(--fs-xl);
+  letter-spacing: -0.3px;
+}
+.ka-dekade h3::before {
+  content: '';
+  position: absolute;
+  left: -25px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 4px var(--paper);
+}
+.ka-peristiwa {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  animation: paper-lay 420ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 40ms);
+}
+.ka-peristiwa .ka-tahun {
+  width: 74px;
+  flex: none;
+}
+.ka-peristiwa b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 1.35;
+}
+.ka-peristiwa .tiny {
+  display: block;
+  margin-top: 2px;
+}
+.ka-aksi {
+  margin-top: var(--sp-6);
+}
+
+/* ── Koran Sangkala ── */
+.koran {
+  min-height: 100dvh;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: calc(12px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+  background: #f2ecda;
+  color: #1b1a17;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+:root[data-dark='1'] .koran {
+  background: #f2ecda;
+  color: #1b1a17;
+}
+.kr-kepala {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.kr-kepala-baris {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: #4d4a40;
+}
+.kr-balik {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(27, 26, 23, 0.06);
+  display: grid;
+  place-items: center;
+}
+.kr-kosong {
+  width: 44px;
+}
+.kr-nama {
+  font-family: var(--serif-display);
+  font-weight: 800;
+  font-size: clamp(32px, 10vw, 46px);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.kr-tanggal {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-top: 2px solid #1b1a17;
+  border-bottom: 1px solid #1b1a17;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.kr-judul-berita {
+  margin: 4px 0 0;
+  font-family: var(--serif-display);
+  font-weight: 600;
+  font-size: 31px;
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+}
+.kr-lede {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.kr-lede::first-letter {
+  float: left;
+  margin: 4px 6px 0 0;
+  font-family: var(--serif-display);
+  font-weight: 700;
+  font-size: 46px;
+  line-height: 0.85;
+}
+.kr-foto {
+  position: relative;
+  height: 150px;
+  border: 1px solid #1b1a17;
+  background-repeat: no-repeat;
+  filter: sepia(0.35) contrast(1.05);
+}
+.kr-foto-ket {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 8px;
+  background: rgba(242, 236, 218, 0.92);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.kr-pilih {
+  display: flex;
+  gap: 6px;
+}
+.kr-pilih button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid #1b1a17;
+  background: transparent;
+  color: #1b1a17;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.kr-pilih button.on {
+  background: #1b1a17;
+  color: #f2ecda;
+}
+.kr-kolom {
+  column-count: 2;
+  column-gap: 18px;
+  column-rule: 1px solid #b5ad96;
+}
+@media (max-width: 380px) {
+  .kr-kolom {
+    column-count: 1;
+  }
+}
+.kr-kolom.satu {
+  column-count: 1;
+}
+.kr-kesaksian {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.kr-alamat {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #4d4a40;
+}
+.kr-kesaksian p {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: justify;
+  hyphens: auto;
+}
+.kr-tanda {
+  font-family: var(--hand);
+  font-size: 18px;
+  color: #2a14d6;
+}
+.kr-baca {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #4d4a40;
+  text-decoration: underline;
+}
+.kr-sepi {
+  margin: 8px 0;
+  font-family: var(--serif);
+  font-style: italic;
+  color: #4d4a40;
+}
+.kr-aksi {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #b5ad96;
+}
+
+/* Peristiwa di halaman rumah dan editor */
+.kr-lewat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.kr-lewat-p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-family: var(--serif);
+  text-align: left;
+}
+.kr-lewat-th {
+  width: 70px;
+  flex: none;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: #c2371f;
+}
+.nk-saksi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nk-kota-peristiwa {
+  display: block;
+  padding: 0;
+  margin-bottom: 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.4);
+}
+.nk-kota-peristiwa i {
+  opacity: 0.75;
+}
+.nk-kota-peristiwa.dengar {
+  opacity: 0.8;
 }

@@ -4,7 +4,13 @@
  * terpisah dari jurnal; tidak ada tautan ke halaman pribadi penulis.
  */
 import {
+  KOTA_ALMANAK_AWAL,
   KOTA_ID,
+  KOTA_SETUJU_KANON,
+  type KotaKesaksianWire,
+  type KotaPeristiwaWire,
+  kotaPeristiwaBody,
+  kotaPeristiwaJawab,
   KOTA_KUOTA,
   KOTA_LAPOR_SEMBUNYI,
   KOTA_MUSIM,
@@ -36,7 +42,7 @@ import { bad, conflict, forbidden, notFound } from '../lib/errors';
 import { newId } from '../lib/ids';
 import { rateLimit } from '../lib/rate';
 
-const { cityProfiles, cityClaims, cityReports, cityRelations, manuscripts, msScenes, msCanon } = schema;
+const { cityProfiles, cityClaims, cityReports, cityRelations, cityEvents, manuscripts, msScenes, msCanon } = schema;
 type RelRow = typeof cityRelations.$inferSelect;
 type ClaimRow = typeof cityClaims.$inferSelect;
 
@@ -301,6 +307,116 @@ export function kotaRoutes(s: Services) {
     const msg = set.state === 'kanon' ? `Ketukan antara ${a.household} dan ${b.household} kini jadi kanon.` : set.state === 'desas' ? `${b.household} menerima ketukanmu sebagai desas-desus.` : set.state === 'usul' ? `${b.household} mengusulkan hubungan lain.` : set.state === 'tolak' ? `${b.household} menolak ketukanmu dengan sopan.` : null;
     if (msg && other.ownerId !== user.id) void pushTo(s, [other.ownerId], { body: msg, data: { type: 'kota', claimId: other.id } }).catch(() => {});
     return c.json({ ok: true, state: set.state });
+  });
+
+  // ── Almanak & peristiwa ──
+
+  /** Adegan terbit di rumah-rumah kota yang ditandai sebagai kesaksian peristiwa. */
+  const kesaksian = async (eventId: string | null, viewer: string) => {
+    const claims = await visible();
+    if (!claims.length) return [];
+    const rows = await s.db
+      .select({ id: msScenes.id, msId: msScenes.msId, envelope: msScenes.envelope })
+      .from(msScenes)
+      .where(and(inArray(msScenes.msId, claims.map((c) => c.msId)), eq(msScenes.status, 'terbit'), eventId ? sql`${msScenes.envelope}->'plain'->>'peristiwa' = ${eventId}` : sql`${msScenes.envelope}->'plain'->>'peristiwa' is not null`));
+    const wires = await describe(claims, viewer);
+    const tokoh = await tokohOf(claims);
+    return rows.flatMap((x) => {
+      const p = (x.envelope as { plain?: { peristiwa?: string; saksi?: string; pov?: string; when?: { label?: string }; text?: string } }).plain;
+      const c = wires.find((w) => w.msId === x.msId);
+      if (!p?.peristiwa || !c || c.state !== 'aktif') return [];
+      const k: KotaKesaksianWire & { peristiwa: string } = {
+        peristiwa: p.peristiwa,
+        claimId: c.id,
+        household: c.household,
+        regionId: c.regionId,
+        plotId: c.plotId,
+        penName: c.penName,
+        msId: c.msId,
+        sceneId: x.id,
+        tokoh: tokoh.find((t) => t.id === p.pov)?.name ?? 'seseorang',
+        when: p.when?.label ?? '',
+        text: (p.text ?? '').slice(0, 1600),
+        saksi: p.saksi === 'mendengar' ? 'mendengar' : 'mengalami',
+      };
+      return [k];
+    });
+  };
+  const eventWires = async (viewer: string): Promise<KotaPeristiwaWire[]> => {
+    const [rows, saksi] = await Promise.all([s.db.select().from(cityEvents).where(and(eq(cityEvents.city, KOTA_ID), inArray(cityEvents.state, ['usul', 'kanon']))), kesaksian(null, viewer)]);
+    const pens = rows.length ? await s.db.select().from(cityProfiles).where(inArray(cityProfiles.userId, [...new Set(rows.map((x) => x.proposerId))])) : [];
+    const count = (id: string) => saksi.filter((k) => (k as { peristiwa: string }).peristiwa === id).length;
+    return [
+      ...KOTA_ALMANAK_AWAL.map((e) => ({ ...e, state: 'kanon' as const, proposer: null, endorsements: 0, endorsedByMe: false, mine: false, testimonies: count(e.id) })),
+      ...rows.map((e) => ({
+        id: e.id,
+        title: e.title,
+        year: e.year,
+        month: e.month ?? undefined,
+        toYear: e.toYear ?? undefined,
+        regions: e.regions,
+        body: e.body,
+        state: e.state as 'kanon' | 'usul',
+        proposer: pens.find((p) => p.userId === e.proposerId)?.penName ?? 'warga',
+        endorsements: e.endorsers.length,
+        endorsedByMe: e.endorsers.includes(viewer),
+        mine: e.proposerId === viewer,
+        testimonies: count(e.id),
+      })),
+    ].sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0));
+  };
+  /** Warga = punya rumah aktif di kota ini. */
+  const warga = async (userId: string) => (await describe((await visible()).filter((x) => x.ownerId === userId), userId)).some((x) => x.state === 'aktif');
+
+  r.get('/kota/almanak', async (c) => c.json(await eventWires(c.get('user').id)));
+
+  r.get('/kota/peristiwa/:id', async (c) => {
+    const user = c.get('user');
+    const event = (await eventWires(user.id)).find((e) => e.id === c.req.param('id'));
+    if (!event) throw notFound('Peristiwa tidak ditemukan.');
+    return c.json({ event, testimonies: await kesaksian(event.id, user.id) });
+  });
+
+  r.post('/kota/almanak', async (c) => {
+    const user = c.get('user');
+    const input = await body(c, kotaPeristiwaBody);
+    if (!(await warga(user.id))) throw forbidden('Usulan peristiwa datang dari warga yang punya rumah di kota.');
+    if (input.toYear !== undefined && input.toYear < input.year) throw bad('range', 'Tahun selesai harus sesudah tahun mulai.');
+    if (input.regions.some((r) => !kotaRegion(r))) throw bad('region', 'Wilayah tidak dikenal.');
+    await rateLimit(s, `kota:peristiwa:${user.id}`, 5, 24 * 3600);
+    const id = `p${newId(19)}`;
+    await s.db.insert(cityEvents).values({ id, city: KOTA_ID, title: input.title, year: input.year, month: input.month ?? null, toYear: input.toYear ?? null, regions: input.regions, body: input.body, proposerId: user.id });
+    return c.json({ id }, 201);
+  });
+
+  /** Setuju (warga lain yang punya rumah) atau tarik (pengusul). Kanon setelah cukup warga setuju. */
+  r.put('/kota/almanak/:id', async (c) => {
+    const user = c.get('user');
+    const { action } = await body(c, kotaPeristiwaJawab);
+    const [e] = await s.db.select().from(cityEvents).where(eq(cityEvents.id, c.req.param('id')));
+    if (!e || e.state === 'tarik') throw notFound('Usulan tidak ditemukan.');
+    if (action === 'tarik') {
+      if (e.proposerId !== user.id) throw forbidden('Hanya pengusul yang bisa menarik usulannya.');
+      if (e.state === 'kanon') throw conflict('kanon', 'Peristiwa yang sudah kanon tidak bisa ditarik.');
+      await s.db.update(cityEvents).set({ state: 'tarik' }).where(eq(cityEvents.id, e.id));
+      return c.json({ ok: true, state: 'tarik' });
+    }
+    if (e.proposerId === user.id) throw bad('own', 'Usulanmu sendiri butuh persetujuan warga lain.');
+    if (!(await warga(user.id))) throw forbidden('Hanya warga yang punya rumah di kota yang bisa menyetujui.');
+    const endorsers = [...new Set([...e.endorsers, user.id])];
+    const state = endorsers.length >= KOTA_SETUJU_KANON ? 'kanon' : e.state;
+    await s.db.update(cityEvents).set({ endorsers, state }).where(eq(cityEvents.id, e.id));
+    if (state === 'kanon' && e.state !== 'kanon') void pushTo(s, [e.proposerId], { body: `Usulanmu "${e.title}" kini tercatat di almanak kota.`, data: { type: 'kota' } }).catch(() => {});
+    return c.json({ ok: true, state });
+  });
+
+  /** Rumah kota pemilik sebuah naskah: dipakai editor untuk "dari kota". */
+  r.get('/kota/naskah/:msId', async (c) => {
+    const user = c.get('user');
+    const [x] = await s.db.select().from(cityClaims).where(and(eq(cityClaims.msId, c.req.param('msId')), eq(cityClaims.status, 'aktif')));
+    if (!x) throw notFound('Naskah ini bukan rumah di kota.');
+    const [w] = await describe([x], user.id);
+    return c.json(w);
   });
 
   return r;

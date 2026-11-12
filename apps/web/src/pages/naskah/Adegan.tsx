@@ -14,9 +14,12 @@ import {
   naskahMentions,
   naskahWarnings,
   naskahYear,
+  kotaDariKota,
+  kotaRegion,
 } from '@sehari/core';
 import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import { tanggal, useAlmanak, useRumahNaskah } from '@/lib/kota';
 import { firstLine, type NaskahModel, povColor, type Scene, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
@@ -61,6 +64,11 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const [pov, setPov] = useState(p0.pov);
   const [label, setLabel] = useState(p0.when.label);
   const [sort, setSort] = useState(p0.when.sort);
+  const [peristiwa, setPeristiwa] = useState(p0.peristiwa ?? '');
+  const [saksi, setSaksi] = useState<'mengalami' | 'mendengar'>(p0.saksi ?? 'mengalami');
+  const kota = m.ms.visibility === 'kota';
+  const rumah = useRumahNaskah(m.ms.id, kota);
+  const almanak = useAlmanak(kota);
   const [saved, setSaved] = useState<'ok' | 'saving' | 'dirty'>('ok');
   const [sel, setSel] = useState('');
   const [lens, setLens] = useState(true);
@@ -80,6 +88,9 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const view = useMemo(() => naskahKacamata(pov, at, m.canon, chrono), [pov, at, m.canon, chrono]);
   const warnings = useMemo(() => naskahWarnings(text, pov, at, m.canon, chrono, naskahYear(sortOk ? sort : '')), [text, pov, at, m.canon, chrono, sort, sortOk]);
   const shown = warnings.filter((w) => !dismissed.includes(`${w.kind}:${w.term.toLowerCase()}`));
+  const tahun = naskahYear(sortOk ? sort : '') ?? rumah.data?.from ?? null;
+  const kanonKota = (almanak.data ?? []).filter((e) => e.state === 'kanon');
+  const dariKota = rumah.data && tahun ? kotaDariKota(kanonKota, rumah.data.regionId, tahun) : null;
   const spans: Span[] = [
     ...shown.map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'belum' ? 'w-belum' : 'w-zaman' })),
     ...naskahMentions(text, view.tahu).map((x) => ({ ...x, cls: 'm-tahu' })),
@@ -87,7 +98,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   ];
 
   // Simpan otomatis, terenkripsi, sedikit setelah berhenti mengetik.
-  const payload = (): NaskahScenePayload => ({ v: 1, title: title.trim() || undefined, pov, when: { label: label.trim(), sort: sortOk ? sort.trim() : '' }, text });
+  const payload = (): NaskahScenePayload => ({ v: 1, title: title.trim() || undefined, pov, when: { label: label.trim(), sort: sortOk ? sort.trim() : '' }, text, peristiwa: peristiwa || undefined, saksi: peristiwa ? saksi : undefined });
   const first = useRef(true);
   useEffect(() => {
     if (!mine) return;
@@ -107,7 +118,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
       }
     }, 1200);
     return () => clearTimeout(t);
-  }, [text, title, pov, label, sort]);
+  }, [text, title, pov, label, sort, peristiwa, saksi]);
 
   useLayoutEffect(() => {
     const el = ta.current;
@@ -166,6 +177,29 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
           </div>
           {!sortOk ? <span className="tiny nk-salah">Tulis tanggal sebagai 1979, 1979-02, 1979-02-15, atau 1979-02-15 06:10.</span> : null}
           <input className="field nk-judul-adegan" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="judul adegan (opsional)" />
+          {kota && kanonKota.length ? (
+            <div className="nk-saksi">
+              <select className="field" value={peristiwa} onChange={(e) => setPeristiwa(e.target.value)} aria-label="kesaksian untuk peristiwa kota" data-testid="nk-peristiwa">
+                <option value="">bukan kesaksian peristiwa kota</option>
+                {[...kanonKota]
+                  .sort((a, b) => Math.abs(a.year - (tahun ?? a.year)) - Math.abs(b.year - (tahun ?? b.year)))
+                  .map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {tanggal(e)} · {e.title}
+                    </option>
+                  ))}
+              </select>
+              {peristiwa ? (
+                <div className="row" style={{ gap: 6 }}>
+                  {(['mengalami', 'mendengar'] as const).map((k) => (
+                    <button key={k} className={`pill sm ${saksi === k ? 'active' : ''}`} onClick={() => setSaksi(k)}>
+                      {k}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : (
         <p className="nk-baca-meta tiny soft">
@@ -281,6 +315,29 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
                 <i>tidak ada</i>
               )}
             </dd>
+            {dariKota ? (
+              <>
+                <dt>dari kota</dt>
+                <dd>
+                  {dariKota.mengalami.length || dariKota.mendengar.length ? (
+                    <>
+                      {dariKota.mengalami.slice(0, 3).map((e) => (
+                        <button key={e.id} className="nk-kota-peristiwa" onClick={() => navigate(`/kota/peristiwa/${e.id}`)}>
+                          {e.title} <i>({tanggal(e)}, mengalami)</i>
+                        </button>
+                      ))}
+                      {dariKota.mendengar.slice(0, 2).map((e) => (
+                        <button key={e.id} className="nk-kota-peristiwa dengar" onClick={() => navigate(`/kota/peristiwa/${e.id}`)}>
+                          {e.title} <i>({tanggal(e)}, mendengar dari {kotaRegion(e.regions[0] ?? '')?.name ?? 'kota'})</i>
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    <i>belum ada peristiwa sebelum {tahun}</i>
+                  )}
+                </dd>
+              </>
+            ) : null}
           </dl>
           <span className="tiny nk-kacamata-catat">Dihitung dari Kanon. Tandai kata di naskah lalu “jadikan kanon” untuk menambah yang diketahui tokoh.</span>
         </section>

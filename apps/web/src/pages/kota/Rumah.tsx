@@ -2,7 +2,7 @@
 import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, type KotaHubungan, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { kalimat, kotaCrop, useKota, useKotaClaim, useKotaRefresh, useTautan } from '@/lib/kota';
+import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useTautan } from '@/lib/kota';
 import { firstLine, povColor, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
@@ -19,6 +19,7 @@ export default function Rumah() {
   const refresh = useKotaRefresh();
   const [lapor, setLapor] = useState(false);
   const tautan = useTautan(c?.id ?? '');
+  const almanak = useAlmanak();
   const kota = useKota();
   const punyaRumah = (kota.data?.claims ?? []).some((x) => x.mine && x.state === 'aktif');
   if (!c) return q.isError ? <Growing label="rumah ini tidak ditemukan" /> : <Growing label="mengetuk pintu…" />;
@@ -62,6 +63,21 @@ export default function Rumah() {
         ) : null}
 
         {tautan.data ? <Tautan c={c} t={tautan.data} reload={() => void tautan.refetch()} /> : null}
+        {(() => {
+          const lewat = (almanak.data ?? []).filter((e) => e.state === 'kanon' && e.year >= c.from && e.year <= c.to && (!e.regions.length || e.regions.includes(c.regionId)));
+          return lewat.length ? (
+            <section className="kr-lewat">
+              <span className="label">peristiwa yang dilewati rumah ini</span>
+              {lewat.map((e) => (
+                <button key={e.id} className="kr-lewat-p" onClick={() => navigate(`/kota/peristiwa/${e.id}`)}>
+                  <span className="kr-lewat-th">{tanggal(e)}</span>
+                  <span className="grow">{e.title}</span>
+                  <Doodle id="ui-panah-kanan" size={14} />
+                </button>
+              ))}
+            </section>
+          ) : null;
+        })()}
 
         {chapters.length ? (
           <section className="kr-bab">
