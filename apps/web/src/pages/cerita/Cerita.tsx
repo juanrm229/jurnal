@@ -37,6 +37,9 @@ export default function Cerita() {
         <button className="btn" onClick={() => navigate('/cerita/baru')} data-testid="cerita-baru">
           <Doodle id="pena" size={20} color="currentColor" /> siapkan meja baru
         </button>
+        <Link to="/naskah" className="tiny nk-ke-studio">
+          Ingin menulis lebih panjang tanpa giliran? Buka Studio Naskah →
+        </Link>
       </section>
 
       {list.length ? (

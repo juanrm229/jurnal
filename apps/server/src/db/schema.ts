@@ -9,6 +9,7 @@ import {
   boolean,
   customType,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -975,4 +976,69 @@ export const storyResearch = pgTable(
     createdAt: ts('created_at').notNull().defaultNow(),
   },
   (t) => [index('story_research_story_idx').on(t.storyId)],
+);
+
+// ── Studio Naskah ───────────────────────────────────────────────────────────
+
+/** Naskah bersama: adegan per bab, Kanon, dan Kacamata Tokoh. Isi terenkripsi. */
+export const manuscripts = pgTable(
+  'manuscripts',
+  {
+    id: text('id').primaryKey(),
+    circleId: text('circle_id').references(() => circles.id, { onDelete: 'cascade' }),
+    ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    members: jsonb('members').$type<string[]>().notNull(),
+    /** Judul dan logline, terenkripsi. */
+    meta: jsonb('meta').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('manuscripts_owner_idx').on(t.ownerId)],
+);
+
+/** Satu adegan, satu pemilik. Draf hanya terlihat oleh penulisnya. */
+export const msScenes = pgTable(
+  'ms_scenes',
+  {
+    id: text('id').primaryKey(),
+    msId: text('ms_id').notNull().references(() => manuscripts.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    chapter: integer('chapter').notNull().default(1),
+    order: doublePrecision('order').notNull().default(0),
+    status: text('status').notNull().default('draf'),
+    envelope: jsonb('envelope').notNull(),
+    version: integer('version').notNull().default(0),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('ms_scenes_ms_idx').on(t.msId)],
+);
+
+/** Riwayat versi adegan yang sudah terbit. */
+export const msVersions = pgTable(
+  'ms_versions',
+  {
+    id: text('id').primaryKey(),
+    sceneId: text('scene_id').notNull().references(() => msScenes.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    envelope: jsonb('envelope').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('ms_versions_scene_idx').on(t.sceneId)],
+);
+
+/** Kanon: tokoh, benda, tempat, fakta, dan siapa tahu sejak kapan. */
+export const msCanon = pgTable(
+  'ms_canon',
+  {
+    id: text('id').primaryKey(),
+    msId: text('ms_id').notNull().references(() => manuscripts.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    updatedBy: text('updated_by').notNull(),
+    envelope: jsonb('envelope').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [index('ms_canon_ms_idx').on(t.msId)],
 );

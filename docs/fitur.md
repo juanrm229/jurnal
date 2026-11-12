@@ -107,3 +107,11 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Dari harimu**: Kalimat Terakhir dari hari yang sudah disegel bisa jadi benih premis.
 - **Ekspor**: EPUB 3, DOCX, dan Markdown dirakit di perangkat.
 - **AI (opsional)**: rangkuman kejadian (terjadi vs diyakini) dan dua sinopsis, usulan jejak dari naskah, dan cek kesinambungan. Aktif hanya bila semua anggota lingkaran setuju dan server punya kunci AI; teks yang dikirim disebutkan sebelum tombol ditekan.
+
+### Studio Naskah
+
+- **Naskah berbasis adegan**: bab dan adegan, urutan baca bisa diatur siapa pun di naskah. Satu adegan, satu pemilik: hanya penulisnya yang mengubah isi; draf hanya terlihat olehnya sampai diterbitkan. Riwayat versi tersimpan saat terbit.
+- **Kanon**: tokoh, benda, tempat, dan fakta, dengan siapa yang tahu atau mengira dan sejak adegan mana. Kanon milik bersama.
+- **Kacamata Tokoh**: saat menulis dari sudut pandang seorang tokoh, studio menandai hal yang belum ia ketahui pada waktu cerita itu, kata yang belum ada di zamannya, dan menampilkan panel tahu / mengira / belum tahu. Semua dihitung di perangkat; isi tetap terenkripsi.
+- **Garis waktu**: adegan menurut urutan kejadian per tokoh, terpisah dari urutan baca.
+- Cerita Hidup Orang Lain yang selesai bisa dilanjutkan di studio: tokoh dan fakta sah jadi Kanon, bagian jadi adegan.

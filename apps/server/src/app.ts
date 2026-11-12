@@ -19,6 +19,7 @@ import { meRoutes, userRoutes } from './routes/me';
 import { workRoutes } from './routes/works';
 import { storyRoutes } from './routes/stories';
 import { storyAiRoutes } from './routes/storyAi';
+import { naskahRoutes } from './routes/naskah';
 import { meetRoutes } from './routes/meets';
 import { boardRoutes } from './routes/board';
 import { boothRoutes } from './routes/booths';
@@ -83,6 +84,7 @@ export function createApp(s: Services) {
   authed.route('/', workRoutes(s));
   authed.route('/', storyRoutes(s));
   authed.route('/', storyAiRoutes(s));
+  authed.route('/', naskahRoutes(s));
   authed.route('/', meetRoutes(s));
   authed.route('/', dreamRoutes(s));
   authed.route('/', berduaRoutes(s));
