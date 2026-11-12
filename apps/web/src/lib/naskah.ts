@@ -21,7 +21,7 @@ export function useNaskahList() {
   return useQuery({ queryKey: nk.all, queryFn: () => api.get<NaskahWire[]>('/naskah'), refetchInterval: 60_000 });
 }
 export function useNaskah(id: string) {
-  return useQuery({ queryKey: nk.one(id), queryFn: () => api.get<NaskahWire>(`/naskah/${id}`), refetchInterval: 15_000 });
+  return useQuery({ queryKey: nk.one(id), queryFn: () => api.get<NaskahWire>(`/naskah/${id}`), refetchInterval: 15_000, enabled: !!id });
 }
 export function useNaskahCache() {
   const qc = useQueryClient();
@@ -52,14 +52,18 @@ export function useNaskahModel(ms: NaskahWire | undefined) {
   return useMemo(() => {
     if (!ms) return null;
     const circle = circles.find((c) => c.id === ms.circleId);
-    const meta = open<NaskahMeta>(ms.meta) ?? { v: 1, title: 'naskah tanpa judul' };
-    const scenes: Scene[] = ms.scenes.map((x) => ({ ...x, p: open<NaskahScenePayload>(x.envelope) }));
-    const canon: NaskahEntry[] = ms.canon.map((x) => ({ id: x.id, p: open<NaskahCanonPayload>(x.envelope)! })).filter((x) => !!x.p);
+    // Rumah di Kota menyimpan isi terbuka ({ plain }); naskah privat terenkripsi.
+    const pub = ms.visibility !== 'privat';
+    const unwrap = <T,>(env: unknown): T | null => (env && typeof env === 'object' && 'plain' in env ? ((env as { plain: T }).plain ?? null) : open<T>(env as never));
+    const meta = unwrap<NaskahMeta>(ms.meta) ?? { v: 1, title: 'naskah tanpa judul' };
+    const scenes: Scene[] = ms.scenes.map((x) => ({ ...x, p: unwrap<NaskahScenePayload>(x.envelope) }));
+    const canon: NaskahEntry[] = ms.canon.map((x) => ({ id: x.id, p: unwrap<NaskahCanonPayload>(x.envelope)! })).filter((x) => !!x.p);
     const chrono = naskahChrono(scenes);
     const tokoh = canon.filter((e) => e.p.kind === 'tokoh');
     const nameOf = (cid: string | undefined) => canon.find((e) => e.id === cid)?.p.name ?? 'tanpa tokoh';
     const chapters = [...new Set(scenes.map((s) => s.chapter))].sort((a, b) => a - b);
-    const seal = (v: unknown) => sealPart(v, circle, { id: meId, publicKey: identity.publicKey });
+    const seal = (v: unknown) => (pub ? { plain: v } : sealPart(v, circle, { id: meId, publicKey: identity.publicKey }));
+    const canWrite = ms.members.includes(meId);
     const call = async (f: () => Promise<NaskahWire>) => {
       const next = await f();
       cache(next);
@@ -70,7 +74,7 @@ export function useNaskahModel(ms: NaskahWire | undefined) {
     const del = (path: string) => call(() => api.del<NaskahWire>(`/naskah/${ms.id}${path}`));
     const who = (uid: string) => memberName(circles, uid, meId);
     const face = (uid: string) => (uid === meId ? me.user.doodle : (circle?.members.find((m) => m.userId === uid)?.doodle ?? 'tunas'));
-    return { ms, meta, scenes, canon, chrono, tokoh, nameOf, chapters, seal, post, put, del, who, face, meId, circle };
+    return { ms, meta, scenes, canon, chrono, tokoh, nameOf, chapters, seal, post, put, del, who, face, meId, circle, pub, canWrite, unwrap };
   }, [ms, circles, open, meId]);
 }
 export type NaskahModel = NonNullable<ReturnType<typeof useNaskahModel>>;

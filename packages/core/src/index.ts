@@ -81,3 +81,4 @@ export * from './wrapLong';
 export * from './cerita';
 export * from './ceritaDek';
 export * from './naskah';
+export * from './kota';

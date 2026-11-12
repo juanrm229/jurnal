@@ -115,3 +115,11 @@ Gratis (2 lingkaran) · Plus Rp29.000/bln atau Rp249.000/thn · Plus Duo · hadi
 - **Kacamata Tokoh**: saat menulis dari sudut pandang seorang tokoh, studio menandai hal yang belum ia ketahui pada waktu cerita itu, kata yang belum ada di zamannya, dan menampilkan panel tahu / mengira / belum tahu. Semua dihitung di perangkat; isi tetap terenkripsi.
 - **Garis waktu**: adegan menurut urutan kejadian per tokoh, terpisah dari urutan baca.
 - Cerita Hidup Orang Lain yang selesai bisa dilanjutkan di studio: tokoh dan fakta sah jadi Kanon, bagian jadi adegan.
+
+### Kota Sehari (Musim 1: Kota Lirih)
+
+- **Peta kota** ilustrasi yang bisa digeser, dicubit, dan digulir, dengan 16 wilayah. Musim 1 membuka Bantaran Kali, Kampung Air, dan Kota Tua (±760 persil beralamat).
+- **Penggeser zaman** 1900–sekarang: peta menua ke sepia, wilayah yang belum dihuni diarsir, dan rumah tampil sesuai rentang hidupnya.
+- **Patok**: satu persil × rentang tahun. Server menolak rentang yang bertumpuk; satu rumah per warga per musim. Butuh nama pena kota yang terpisah dari jurnal.
+- **Rumah**: isinya Studio Naskah terbuka. Warga membaca adegan yang sudah terbit, hanya pemilik yang menulis. Rumah tanpa adegan terbit dalam 14 hari jadi desas-desus dan persilnya lowong lagi.
+- **Laporan**: tiga laporan dari warga berbeda menyembunyikan rumah sampai ditinjau. Melepas rumah mengosongkan persil; naskahnya tetap milik penulis.

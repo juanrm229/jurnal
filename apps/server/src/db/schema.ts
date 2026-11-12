@@ -988,8 +988,10 @@ export const manuscripts = pgTable(
     circleId: text('circle_id').references(() => circles.id, { onDelete: 'cascade' }),
     ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     members: jsonb('members').$type<string[]>().notNull(),
-    /** Judul dan logline, terenkripsi. */
+    /** Judul dan logline, terenkripsi (atau terbuka untuk rumah di Kota). */
     meta: jsonb('meta').notNull(),
+    /** 'privat' (terenkripsi) atau 'kota' (publik: isi rumah di Kota Sehari). */
+    visibility: text('visibility').notNull().default('privat'),
     createdAt: ts('created_at').notNull().defaultNow(),
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
@@ -1041,4 +1043,46 @@ export const msCanon = pgTable(
     updatedAt: ts('updated_at').notNull().defaultNow(),
   },
   (t) => [index('ms_canon_ms_idx').on(t.msId)],
+);
+
+// ── Kota Sehari ─────────────────────────────────────────────────────────────
+
+/** Nama pena khusus kota: identitas publik yang terpisah dari jurnal. */
+export const cityProfiles = pgTable('city_profiles', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  penName: text('pen_name').notNull().unique(),
+  createdAt: ts('created_at').notNull().defaultNow(),
+});
+
+/** Patok: satu persil, satu rentang tahun, satu rumah tangga. Isinya naskah publik. */
+export const cityClaims = pgTable(
+  'city_claims',
+  {
+    id: text('id').primaryKey(),
+    city: text('city').notNull().default('lirih'),
+    season: integer('season').notNull(),
+    regionId: text('region_id').notNull(),
+    plotId: text('plot_id').notNull(),
+    ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    household: text('household').notNull(),
+    fromYear: integer('from_year').notNull(),
+    toYear: integer('to_year').notNull(),
+    msId: text('ms_id').notNull().references(() => manuscripts.id, { onDelete: 'cascade' }),
+    /** 'aktif', 'dilepas', atau 'disembunyikan' (laporan). */
+    status: text('status').notNull().default('aktif'),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('city_claims_plot_idx').on(t.plotId), index('city_claims_owner_idx').on(t.ownerId)],
+);
+
+export const cityReports = pgTable(
+  'city_reports',
+  {
+    id: text('id').primaryKey(),
+    claimId: text('claim_id').notNull().references(() => cityClaims.id, { onDelete: 'cascade' }),
+    reporterId: text('reporter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(),
+    createdAt: ts('created_at').notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('city_reports_once').on(t.claimId, t.reporterId)],
 );

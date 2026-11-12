@@ -32,14 +32,17 @@ export default function Rak() {
           <span className="label">rak naskah</span>
           <div className="col" style={{ gap: 10 }}>
             {items.map((ms, i) => {
-              const meta = open<NaskahMeta>(ms.meta);
+              const meta = ms.meta && 'plain' in ms.meta ? (ms.meta.plain as NaskahMeta) : open<NaskahMeta>(ms.meta);
               const pub = ms.scenes.filter((x) => x.status === 'terbit').length;
               const drafting = ms.scenes.filter((x) => x.status === 'draf' && x.authorId !== me.user.id).length;
               return (
                 <button key={ms.id} className="card nk-item" style={{ '--n': i } as CSSProperties} onClick={() => navigate(`/naskah/${ms.id}`)} data-testid="naskah-item">
                   <span className="nk-spine" aria-hidden />
                   <span className="grow" style={{ minWidth: 0 }}>
-                    <b>{meta?.title ?? 'naskah'}</b>
+                    <b>
+                      {meta?.title ?? 'naskah'}
+                      {ms.visibility === 'kota' ? <span className="nk-kota-pil">rumah di Kota</span> : null}
+                    </b>
                     {meta?.logline ? <span className="small soft nk-logline">{meta.logline}</span> : null}
                     <span className="tiny soft">
                       {pub} adegan · {ms.canon.length} kanon · {ms.members.length === 1 ? 'sendiri' : ms.members.map((u) => memberName(circles, u, me.user.id)).join(', ')}

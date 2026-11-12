@@ -66,6 +66,14 @@ export default function RuangMain() {
         </span>
         <Doodle id="ui-panah-kanan" size={18} color="currentColor" />
       </Link>
+      <Link to="/kota" className="kota-pintu" data-testid="rm-kota">
+        <span className="kota-pintu-peta" aria-hidden />
+        <span className="kota-pintu-isi">
+          <span className="kp-musim">kota sehari · musim 1</span>
+          <b>Kota Lirih</b>
+          <span className="small">Patok satu rumah di peta kota, pilih zamannya, dan tulis keluarganya. Kota ini dibangun oleh warganya.</span>
+        </span>
+      </Link>
       <Link to="/naskah" className="cerita-pintu nk-pintu" data-testid="rm-naskah">
         <Doodle id="buku-terbuka" size={40} color="currentColor" />
         <span className="grow">

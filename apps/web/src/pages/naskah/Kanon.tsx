@@ -23,6 +23,7 @@ export function KanonList({ m }: { m: NaskahModel }) {
               <span className="label">{KIND_LABEL[k]}</span>
               <button
                 className="pill sm"
+                hidden={!m.canWrite}
                 onClick={() => {
                   setKind(k);
                   setEdit('baru');
@@ -34,7 +35,7 @@ export function KanonList({ m }: { m: NaskahModel }) {
             {items.length ? (
               <div className="col" style={{ gap: 8 }}>
                 {items.map((e, i) => (
-                  <button key={e.id} className="card nk-entri" style={{ '--n': i } as CSSProperties} onClick={() => setEdit(e.id)} data-testid="kanon-entri">
+                  <button key={e.id} className="card nk-entri" style={{ '--n': i } as CSSProperties} onClick={() => m.canWrite && setEdit(e.id)} data-testid="kanon-entri">
                     {k === 'tokoh' ? <span className="nk-dot" style={{ background: povColor(m, e.id) }} /> : <Doodle id={KIND_DOODLE[k]} size={20} />}
                     <span className="grow" style={{ minWidth: 0 }}>
                       <b>{e.p.name}</b>

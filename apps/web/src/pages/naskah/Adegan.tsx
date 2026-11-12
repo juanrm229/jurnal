@@ -19,7 +19,6 @@ import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo
 import { api } from '@/lib/api';
 import { firstLine, type NaskahModel, povColor, type Scene, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
-import { useOpenAny } from '@/lib/stories';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
 import { KanonForm, sceneLabel } from './Kanon';
 
@@ -214,7 +213,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
           ) : (
             <>
               <span className="seditor-n ok">{words} kata</span>
-              <span className="seditor-hint">{mine ? (saved === 'ok' ? 'tersimpan, terenkripsi' : saved === 'saving' ? 'menyimpan…' : 'belum tersimpan') : 'hanya baca · beri saran lewat catatan'}</span>
+              <span className="seditor-hint">{mine ? (saved === 'ok' ? (m.pub ? 'tersimpan' : 'tersimpan, terenkripsi') : saved === 'saving' ? 'menyimpan…' : 'belum tersimpan') : 'hanya baca · beri saran lewat catatan'}</span>
             </>
           )}
         </div>
@@ -335,7 +334,6 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
 }
 
 function Versi({ m, s, onRestore }: { m: NaskahModel; s: Scene; onRestore?: (t: string) => void }) {
-  const open = useOpenAny();
   const [list, setList] = useState<NaskahVersionWire[] | null>(null);
   useEffect(() => {
     void api.get<NaskahVersionWire[]>(`/naskah/${m.ms.id}/scenes/${s.id}/versions`).then(setList);
@@ -345,7 +343,7 @@ function Versi({ m, s, onRestore }: { m: NaskahModel; s: Scene; onRestore?: (t: 
   return (
     <div className="col" style={{ gap: 8 }}>
       {list.map((v) => {
-        const p = open<NaskahScenePayload>(v.envelope);
+        const p = m.unwrap<NaskahScenePayload>(v.envelope);
         return (
           <div key={v.id} className="card nk-versi">
             <div className="row" style={{ justifyContent: 'space-between' }}>

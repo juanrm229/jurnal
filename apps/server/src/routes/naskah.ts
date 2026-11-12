@@ -37,8 +37,11 @@ function wire(ms: MsRow, scenes: SceneRow[], canon: CanonRow[], viewer: string):
     circleId: ms.circleId,
     ownerId: ms.ownerId,
     members: ms.members,
+    visibility: ms.visibility as 'privat' | 'kota' | 'arsip',
     meta: ms.meta as never,
     scenes: scenes
+      // Pembaca kota (bukan penulis) hanya melihat adegan yang sudah terbit.
+      .filter((x) => ms.members.includes(viewer) || x.status === 'terbit')
       .sort((a, b) => a.chapter - b.chapter || a.order - b.order)
       .map((x) => ({
         id: x.id,
@@ -72,6 +75,18 @@ export function naskahRoutes(s: Services) {
     const [ms] = await s.db.select().from(manuscripts).where(eq(manuscripts.id, id));
     if (!ms || !ms.members.includes(userId)) throw notFound('Naskah tidak ditemukan.');
     return ms;
+  };
+  /** Naskah rumah di Kota boleh dibaca siapa pun yang masuk; naskah privat hanya penulisnya. */
+  const readable = async (id: string, userId: string): Promise<MsRow> => {
+    const [ms] = await s.db.select().from(manuscripts).where(eq(manuscripts.id, id));
+    if (!ms || (!ms.members.includes(userId) && ms.visibility !== 'kota')) throw notFound('Naskah tidak ditemukan.');
+    return ms;
+  };
+  /** Rumah kota menyimpan isi terbuka; naskah privat wajib terenkripsi. */
+  const envFor = (ms: MsRow, env: unknown) => {
+    const plain = !!env && typeof env === 'object' && 'plain' in env;
+    if (plain !== (ms.visibility !== 'privat')) throw bad('envelope', ms.visibility !== 'privat' ? 'Rumah di Kota ditulis terbuka untuk dibaca warga.' : 'Naskah privat harus terenkripsi.');
+    return env;
   };
   const touch = async (ms: MsRow) => {
     const [next] = await s.db.update(manuscripts).set({ updatedAt: s.now() }).where(eq(manuscripts.id, ms.id)).returning();
@@ -126,12 +141,13 @@ export function naskahRoutes(s: Services) {
     return c.json(await send(ms!, user.id), 201);
   });
 
-  r.get('/naskah/:id', async (c) => c.json(await send(await mine(c.req.param('id'), c.get('user').id), c.get('user').id)));
+  r.get('/naskah/:id', async (c) => c.json(await send(await readable(c.req.param('id'), c.get('user').id), c.get('user').id)));
 
   r.put('/naskah/:id/meta', async (c) => {
     const user = c.get('user');
     const { meta } = await body(c, naskahMetaBody);
     const ms = await mine(c.req.param('id'), user.id);
+    envFor(ms, meta);
     const [next] = await s.db.update(manuscripts).set({ meta, updatedAt: s.now() }).where(eq(manuscripts.id, ms.id)).returning();
     return c.json(await send(next!, user.id));
   });
@@ -150,6 +166,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahSceneBody);
     const ms = await mine(c.req.param('id'), user.id);
+    envFor(ms, input.envelope);
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msScenes).where(eq(msScenes.msId, ms.id));
     if ((n?.n ?? 0) >= 2000) throw bad('full', 'Naskah ini sudah terlalu panjang.');
     const now = s.now();
@@ -171,6 +188,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahScenePatch);
     const ms = await mine(c.req.param('id'), user.id);
+    if (input.envelope) envFor(ms, input.envelope);
     const [sc] = await s.db.select().from(msScenes).where(and(eq(msScenes.id, c.req.param('sid')), eq(msScenes.msId, ms.id)));
     if (!sc || (sc.status === 'draf' && sc.authorId !== user.id)) throw notFound('Adegan tidak ditemukan.');
     if ((input.envelope || input.status) && sc.authorId !== user.id) throw forbidden('Adegan ini milik penulis lain. Beri saran lewat catatan.');
@@ -200,7 +218,7 @@ export function naskahRoutes(s: Services) {
   /** Riwayat versi adegan terbit (dan draf sendiri). */
   r.get('/naskah/:id/scenes/:sid/versions', async (c) => {
     const user = c.get('user');
-    const ms = await mine(c.req.param('id'), user.id);
+    const ms = await readable(c.req.param('id'), user.id);
     const [sc] = await s.db.select().from(msScenes).where(and(eq(msScenes.id, c.req.param('sid')), eq(msScenes.msId, ms.id)));
     if (!sc || (sc.status === 'draf' && sc.authorId !== user.id)) throw notFound('Adegan tidak ditemukan.');
     const rows = await s.db.select().from(msVersions).where(eq(msVersions.sceneId, sc.id)).orderBy(desc(msVersions.version));
@@ -213,6 +231,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahCanonBody);
     const ms = await mine(c.req.param('id'), user.id);
+    envFor(ms, input.envelope);
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msCanon).where(eq(msCanon.msId, ms.id));
     if ((n?.n ?? 0) >= 1000) throw bad('full', 'Kanon naskah ini sudah penuh.');
     const now = s.now();
@@ -224,6 +243,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const { envelope } = await body(c, naskahCanonPatch);
     const ms = await mine(c.req.param('id'), user.id);
+    envFor(ms, envelope);
     const [e] = await s.db.select().from(msCanon).where(and(eq(msCanon.id, c.req.param('cid')), eq(msCanon.msId, ms.id)));
     if (!e) throw notFound('Entri kanon tidak ditemukan.');
     await s.db.update(msCanon).set({ envelope, updatedBy: user.id, updatedAt: s.now() }).where(eq(msCanon.id, e.id));
