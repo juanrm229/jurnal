@@ -202,8 +202,8 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
             ))}
           </div>
           <div className="nk-kapan">
-            <input className="field" value={label} maxLength={80} onChange={(e) => setLabel(e.target.value)} placeholder={bentuk === 'jurnal' ? 'suasana hari itu (opsional), mis. hujan sejak subuh' : 'kapan? mis. subuh, hari kedua banjir'} data-testid="nk-kapan" />
-            <input className={`field ${sortOk ? '' : 'salah'}`} value={sort} maxLength={16} onChange={(e) => setSort(e.target.value)} placeholder="1979-02-15 06:10" inputMode="numeric" aria-label="tanggal cerita untuk garis waktu" data-testid="nk-tanggal" />
+            <input className="field" value={label} maxLength={80} onChange={(e) => setLabel(e.target.value)} placeholder={bentuk === 'jurnal' ? 'suasana hari itu' : 'kapan? mis. subuh'} data-testid="nk-kapan" />
+            <input className={`field ${sortOk ? '' : 'salah'}`} value={sort} maxLength={16} onChange={(e) => setSort(e.target.value)} placeholder="1979-02-15" inputMode="numeric" aria-label="tanggal cerita untuk garis waktu" data-testid="nk-tanggal" />
           </div>
           {bentuk === 'jurnal' && sortOk && sort.trim() ? <span className="nk-tgl-hias">{tglPanjang(sort.trim())}</span> : null}
           {!sortOk ? <span className="tiny nk-salah">Tulis tanggal sebagai 1979, 1979-02, 1979-02-15, atau 1979-02-15 06:10.</span> : null}
@@ -351,7 +351,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
 
       {lens ? (
         <section className="nk-kacamata" data-testid="nk-kacamata">
-          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div className="nk-kacamata-kepala">
             <b>Kacamata {m.nameOf(pov)}</b>
             <span className="tiny">{label || 'waktu belum ditentukan'}</span>
           </div>

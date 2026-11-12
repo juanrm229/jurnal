@@ -63,7 +63,8 @@ export function applyTheme(t: ThemeChoice) {
   const color = phase === 'senja' ? mixHex(chosen.color, DUSK_TINT, 0.26) : paper.color;
   const root = document.documentElement;
   // Tinta gelap di kertas malam diterangkan supaya tetap terbaca.
-  const ink = paper.dark ? `color-mix(in srgb, ${t.ink} 55%, #ffffff)` : t.ink;
+  const tinta = /^#[0-9a-f]{6}$/i.test(t.ink) ? t.ink : INKS[0].id;
+  const ink = paper.dark ? `color-mix(in srgb, ${tinta} 55%, #ffffff)` : tinta;
   root.style.setProperty('--ink', ink);
   root.style.setProperty('--paper', color);
   root.dataset.dark = paper.dark ? '1' : '0';

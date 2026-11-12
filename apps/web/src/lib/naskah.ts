@@ -96,9 +96,13 @@ export type NaskahModel = NonNullable<ReturnType<typeof useNaskahModel>>;
 
 /** Warna tetap per tokoh, supaya sudut pandang mudah dikenali di daftar dan garis waktu. */
 const POV_COLORS = ['#2a14d6', '#c2371f', '#1f7a4d', '#b8860b', '#7b3fb8', '#0f6f8f', '#b2456e', '#5a5a14'];
+/** Versi terang untuk kertas malam: tetap terbaca di atas latar gelap. */
+const POV_MALAM = ['#9d93ff', '#ff8f75', '#5fd39a', '#f0c35a', '#c7a0ff', '#5fc8ea', '#f292b8', '#cfcf6a'];
 export const povColor = (m: NaskahModel, cid: string | undefined) => {
   const i = m.tokoh.findIndex((t) => t.id === cid);
-  return i < 0 ? '#8a8a92' : POV_COLORS[i % POV_COLORS.length]!;
+  const malam = typeof document !== 'undefined' && document.documentElement.dataset.dark === '1';
+  const set = malam ? POV_MALAM : POV_COLORS;
+  return i < 0 ? '#8a8a92' : set[i % set.length]!;
 };
 
 export const firstLine = (t: string | undefined, n = 90) => {

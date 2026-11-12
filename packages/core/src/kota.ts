@@ -138,7 +138,7 @@ export function kotaCekHubungan(type: KotaHubungan, a: KotaJiwa, b: KotaJiwa): K
   const older = (p: KotaJiwa, c: KotaJiwa, gap: number, what: string) => {
     if (p.born === undefined || c.born === undefined) return;
     const d = c.born - p.born;
-    out.push(d >= gap ? { ok: true, text: `${p.name} ${d} tahun lebih tua dari ${c.name}.` } : { ok: false, text: `${what} perlu setidaknya ${gap} tahun lebih tua; selisihnya ${d} tahun.` });
+    out.push(d >= gap ? { ok: true, text: `${p.name} ${d} tahun lebih tua dari ${c.name}.` } : { ok: false, text: d < 0 ? `${what} perlu setidaknya ${gap} tahun lebih tua, padahal ${p.name} justru ${-d} tahun lebih muda dari ${c.name}.` : `${what} perlu setidaknya ${gap} tahun lebih tua; selisihnya baru ${d} tahun.` });
     if (gap < 30 && p.died !== undefined && p.died < c.born - 1) out.push({ ok: false, text: `${p.name} wafat ${p.died}, sebelum ${c.name} lahir (${c.born}).` });
   };
   if (type === 'anak') older(b, a, 15, `${b.name} sebagai orang tua`);

@@ -128,7 +128,7 @@ export default function Patok() {
         ) : (
           <span className="tiny soft">menulis sebagai {me.penName}</span>
         )}
-        <input className="field kpt-nama" value={household} maxLength={60} onChange={(e) => setHousehold(e.target.value)} placeholder="nama rumah tangga, mis. Keluarga Darmo" data-testid="kota-keluarga" />
+        <input className="field kpt-nama" value={household} maxLength={60} onChange={(e) => setHousehold(e.target.value)} placeholder="nama keluarga, mis. Darmo" data-testid="kota-keluarga" />
         <div className="kpt-tahun">
           <label className="col" style={{ gap: 4 }}>
             <span className="tiny soft">menghuni dari</span>
@@ -141,7 +141,7 @@ export default function Patok() {
         </div>
         {err ? <span className="tiny nk-salah">{err}</span> : null}
         <div className="kpt-tokoh">
-          <input className="field" value={tokoh} maxLength={60} onChange={(e) => setTokoh(e.target.value)} placeholder="tokoh pertama, mis. Pak Darmo" data-testid="kota-tokoh" />
+          <input className="field" value={tokoh} maxLength={60} onChange={(e) => setTokoh(e.target.value)} placeholder="tokoh pertama" data-testid="kota-tokoh" />
           <input className="field" value={lahir} inputMode="numeric" maxLength={4} onChange={(e) => setLahir(e.target.value.replace(/\D/g, ''))} placeholder="lahir" aria-label="tahun lahir tokoh pertama" data-testid="kota-lahir" />
         </div>
         {tokoh.trim() && !lahir ? <span className="tiny soft">Tahun lahir dipakai kota untuk memeriksa hubungan antar-rumah, misalnya umur orang tua dan anak.</span> : null}
