@@ -53,7 +53,6 @@ export default function Kota() {
   const view = useRef<View>({ x: 0, y: 0, s: 1 });
   const size = useRef({ w: 390, h: 700 });
   const claims = kota.data?.claims ?? [];
-  const mine = claims.find((c) => c.mine && c.state === 'aktif');
   const kabar = useKabar();
   // Lampu jendela: di kertas malam (atau senja), peta ikut gelap dan rumah yang penulisnya
   // menulis dalam 24 jam terakhir menyala. Bisa juga diintip kapan saja.
@@ -285,11 +284,9 @@ export default function Kota() {
         <button className="kp-glass kp-almanak" onClick={() => navigate('/kota/almanak')} aria-label="almanak kota" data-testid="kota-almanak">
           <Doodle id="buku-terbuka" size={18} color="currentColor" />
         </button>
-        {mine ? (
-          <button className="kp-glass kp-rumahku" onClick={() => navigate('/kota/meja')} aria-label="meja tulis: rumah dan tokohmu" data-testid="kota-rumahku">
-            <Doodle id="rumah" size={20} color="currentColor" />
-          </button>
-        ) : null}
+        <button className="kp-glass kp-rumahku" onClick={() => navigate('/kota/meja')} aria-label="meja tulis: rumah, tokoh, dan jatahmu" title="meja tulis" data-testid="kota-rumahku">
+          <Doodle id="pena" size={20} color="currentColor" />
+        </button>
       </header>
 
       <section className="kp-glass kp-zaman" aria-label="penggeser zaman">
