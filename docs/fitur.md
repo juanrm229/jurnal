@@ -136,6 +136,10 @@ Studio tidak lagi berdiri sendiri di menu: ia adalah meja tulis setiap rumah di 
 - **Silsilah**: rumah-rumah yang tersambung digambar di atas peta kota, dengan garis generasi dari tahun lahir dan wafat.
 - **Almanak & Peristiwa Kota**: 12 peristiwa awal kanon (Benteng Lima Sudut 1702, lonceng ketujuh 1858, mercusuar 1891, kereta pertama 1909, Banjir Kali Sirah 1979, Kota gelap tiga malam 1998, …). Warga yang punya rumah bisa mengusulkan peristiwa; jadi kanon setelah dua warga lain setuju. Adegan rumah kota bisa ditandai sebagai kesaksian (mengalami/mendengar); halaman peristiwa bergaya **Koran Sangkala** mengumpulkannya. Kacamata Tokoh di rumah kota menampilkan baris "dari kota" sesuai tahun dan wilayah. Peta menampilkan peristiwa tahun yang sedang dipilih; halaman rumah menampilkan peristiwa yang dilewatinya.
 - **Peta versi lukis**: relief bukit dari peta ketinggian, atap tiga dimensi berbayang, tajuk pohon bergradasi, delta bakau bercabang, beting karang, perahu layar, serta masjid, gereja, klenteng, stasiun, dan sekolah. Tata letak dan id persil tetap sama.
+- **Peta sudut miring**: dinding selatan bangunan terlihat dengan jendela dan pintu, atap menjorok terangkat setinggi dinding, bayangan memanjang sesuai tinggi, pohon bertajuk terangkat, tekstur kertas dan sapuan cat air. Tapak (titik persil) tetap di tanah, jadi tata letak tidak berubah.
+- **Pasang ilustrasi sendiri**: `scripts/peta/panduan.mjs` membuat lembar panduan dan lapisan transparan; `scripts/peta/pasang.py` memasang gambar (render atau ilustrasi) ke aplikasi dan membuat lembar periksa. Lihat `docs/peta-ilustrasi.md`.
+- **Kabar Kota** (`/kota/kabar`, tombol surat di peta, titik merah bila ada yang baru): rumah baru, adegan terbit, ikatan kanon, peristiwa almanak, warga kota baru, dan perubahan besar, 60 hari terakhir.
+- **Silsilah orang yang sama**: rumah-rumah yang dihuni tokoh pindahan tersambung garis titik hijau; generasi menghitung tokoh itu sekali.
 
 ### Rak karya (Studio Naskah & rumah Kota)
 

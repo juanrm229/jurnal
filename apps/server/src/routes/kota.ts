@@ -44,6 +44,8 @@ import {
   kotaRegion,
   kotaReportBody,
   type KotaWire,
+  type KotaKabarWire,
+  KOTA_HUBUNGAN,
 } from '@sehari/core';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -252,9 +254,9 @@ export function kotaRoutes(s: Services) {
     if (!rows.length) return [];
     const canon = await s.db.select().from(msCanon).where(and(inArray(msCanon.msId, rows.map((x) => x.msId)), eq(msCanon.kind, 'tokoh')));
     return canon.flatMap((e) => {
-      const p = (e.envelope as { plain?: { name?: string; born?: number; died?: number } }).plain;
+      const p = (e.envelope as { plain?: { name?: string; born?: number; died?: number; asal?: { tokohId: string } } }).plain;
       const claim = rows.find((x) => x.msId === e.msId);
-      return p?.name && claim ? [{ id: e.id, claimId: claim.id, name: p.name, born: p.born, died: p.died }] : [];
+      return p?.name && claim ? [{ id: e.id, claimId: claim.id, name: p.name, born: p.born, died: p.died, asal: p.asal?.tokohId }] : [];
     });
   };
   const jiwa = (t: KotaTokohWire, c: ClaimRow): KotaJiwa => ({ name: t.name, born: t.born, died: t.died, from: c.fromYear, to: c.toYear });
@@ -301,25 +303,60 @@ export function kotaRoutes(s: Services) {
   });
 
   /** Silsilah: semua rumah yang tersambung lewat hubungan kanon atau desas-desus. */
+  /** Pasangan rumah yang dihuni orang yang sama, untuk rumah-rumah aktif tertentu. */
+  const samaDi = async (ids: string[]) => {
+    if (!ids.length) return [];
+    const rows = await s.db.select().from(cityClaims).where(and(inArray(cityClaims.id, ids), eq(cityClaims.status, 'aktif')));
+    const salinan = await s.db
+      .select()
+      .from(msCanon)
+      .where(and(eq(msCanon.kind, 'tokoh'), sql`${msCanon.envelope}->'plain'->'asal' is not null`, sql`(${msCanon.msId} in ${rows.length ? rows.map((x) => x.msId) : ['-']} or ${msCanon.envelope}->'plain'->'asal'->>'claimId' in ${ids})`));
+    const msClaim = salinan.length ? await s.db.select().from(cityClaims).where(and(inArray(cityClaims.msId, salinan.map((x) => x.msId)), eq(cityClaims.status, 'aktif'))) : [];
+    return salinan.flatMap((e) => {
+      const p = (e.envelope as { plain?: { name?: string; asal?: { claimId: string } } }).plain;
+      const a = msClaim.find((x) => x.msId === e.msId);
+      return a && p?.asal && a.id !== p.asal.claimId ? [{ a: a.id, b: p.asal.claimId, tokoh: p.name ?? 'tokoh' }] : [];
+    });
+  };
+
+  /** Silsilah: semua rumah yang tersambung lewat hubungan kanon/desas-desus, atau dihuni orang yang sama. */
   r.get('/kota/silsilah/:id', async (c) => {
     const user = c.get('user');
     const me = await claimById(c.req.param('id'));
     if (!me || me.status !== 'aktif') throw notFound('Rumah tidak ditemukan.');
     const seen = new Set([me.id]);
     const rels = new Map<string, RelRow>();
+    const sama = new Map<string, { a: string; b: string; tokoh: string }>();
     let frontier = [me.id];
     while (frontier.length && seen.size < 40) {
-      const step = await s.db
-        .select()
-        .from(cityRelations)
-        .where(and(inArray(cityRelations.state, PUBLIC), sql`(${cityRelations.fromClaimId} in ${frontier} or ${cityRelations.toClaimId} in ${frontier})`));
-      frontier = [];
+      const [step, kembar] = await Promise.all([
+        s.db
+          .select()
+          .from(cityRelations)
+          .where(and(inArray(cityRelations.state, PUBLIC), sql`(${cityRelations.fromClaimId} in ${frontier} or ${cityRelations.toClaimId} in ${frontier})`)),
+        samaDi(frontier),
+      ]);
+      const next: string[] = [];
+      const add = (id: string) => {
+        if (!seen.has(id) && seen.size < 40) (seen.add(id), next.push(id));
+      };
       for (const x of step) {
         rels.set(x.id, x);
-        for (const id of [x.fromClaimId, x.toClaimId]) if (!seen.has(id) && seen.size < 40) (seen.add(id), frontier.push(id));
+        add(x.fromClaimId);
+        add(x.toClaimId);
       }
+      for (const x of kembar) {
+        sama.set(`${x.a}:${x.b}`, x);
+        add(x.a);
+        add(x.b);
+      }
+      frontier = next;
     }
-    return c.json(await bundle([...rels.values()], [me], user.id));
+    const extra = [...seen].filter((id) => id !== me.id);
+    const seed = [me, ...(extra.length ? await s.db.select().from(cityClaims).where(inArray(cityClaims.id, extra)) : [])];
+    const t = await bundle([...rels.values()], seed, user.id);
+    const ada = new Set(t.claims.map((x) => x.id));
+    return c.json({ ...t, sama: [...sama.values()].filter((x) => ada.has(x.a) && ada.has(x.b)) });
   });
 
   r.post('/kota/ketuk', async (c) => {
@@ -689,6 +726,64 @@ export function kotaRoutes(s: Services) {
       if (!still.length && ms) await s.db.update(manuscripts).set({ members: ms.members.filter((m) => m !== x.requesterId) }).where(eq(manuscripts.id, ms.id));
     } else throw forbidden('Langkah itu tidak bisa dilakukan sekarang.');
     return c.json({ ok: true });
+  });
+
+  /**
+   * Kabar kota: yang terjadi di kota 60 hari terakhir, terbaru dulu. Hanya isi publik:
+   * rumah baru, adegan terbit, ikatan kanon, peristiwa, figuran, dan perubahan besar.
+   */
+  r.get('/kota/kabar', async (c) => {
+    const user = c.get('user');
+    const since = new Date(s.now().getTime() - 60 * 86_400_000);
+    const rows = await visible();
+    const claims = (await describe(rows, user.id)).filter((x) => x.state === 'aktif');
+    const byId = new Map(claims.map((x) => [x.id, x]));
+    const byMs = new Map(claims.map((x) => [x.msId, x]));
+    const out: KotaKabarWire[] = [];
+    for (const x of claims)
+      if (new Date(x.createdAt) >= since) out.push({ id: `r:${x.id}`, jenis: 'rumah', at: x.createdAt, judul: `${x.penName} mematok ${kotaPlot(x.plotId)?.address ?? 'sebuah persil'}`, isi: `${x.household} · ${x.from}–${x.to}`, ke: `/kota/rumah/${x.id}` });
+    if (claims.length) {
+      const scenes = await s.db
+        .select({ id: msScenes.id, msId: msScenes.msId, envelope: msScenes.envelope, at: msScenes.updatedAt })
+        .from(msScenes)
+        .where(and(inArray(msScenes.msId, claims.map((x) => x.msId)), eq(msScenes.status, 'terbit'), sql`${msScenes.updatedAt} >= ${since}`))
+        .orderBy(sql`${msScenes.updatedAt} desc`)
+        .limit(80);
+      const perRumah = new Map<string, number>();
+      for (const x of scenes) {
+        const h = byMs.get(x.msId)!;
+        const n = (perRumah.get(h.id) ?? 0) + 1;
+        perRumah.set(h.id, n);
+        if (n > 3) continue;
+        const p = (x.envelope as { plain?: { title?: string; text?: string; when?: { label?: string } } }).plain;
+        const isi = (p?.title || (p?.text ?? '').replace(/\s+/g, ' ').slice(0, 140)).trim();
+        out.push({ id: `a:${x.id}`, jenis: 'adegan', at: x.at.toISOString(), judul: `${h.household} menerbitkan adegan${p?.when?.label ? ` · ${p.when.label}` : ''}`, isi, ke: `/naskah/${x.msId}/a/${x.id}` });
+      }
+      const rels = await s.db.select().from(cityRelations).where(and(eq(cityRelations.state, 'kanon'), sql`${cityRelations.updatedAt} >= ${since}`));
+      const tokoh = await tokohOf(rows);
+      for (const x of rels) {
+        const a = byId.get(x.fromClaimId);
+        const b = byId.get(x.toClaimId);
+        if (!a || !b) continue;
+        const ta = tokoh.find((t2) => t2.id === x.fromTokoh)?.name ?? 'seseorang';
+        const tb = tokoh.find((t2) => t2.id === x.toTokoh)?.name ?? 'seseorang';
+        out.push({ id: `k:${x.id}`, jenis: 'ikatan', at: x.updatedAt.toISOString(), judul: `${ta} kini ${KOTA_HUBUNGAN[x.type as KotaHubungan]?.label ?? x.type} dari ${tb}`, isi: a.id === b.id ? a.household : `${a.household} · ${b.household}`, ke: `/kota/rumah/${a.id}` });
+      }
+    }
+    const [events, figures, changes] = await Promise.all([
+      s.db.select().from(cityEvents).where(and(inArray(cityEvents.state, ['usul', 'kanon']), sql`${cityEvents.createdAt} >= ${since}`)),
+      s.db.select().from(cityFigures).where(and(inArray(cityFigures.state, ['usul', 'kanon']), sql`${cityFigures.createdAt} >= ${since}`)),
+      s.db.select().from(cityFigureChanges).where(and(inArray(cityFigureChanges.state, ['usul', 'kanon']), sql`${cityFigureChanges.createdAt} >= ${since}`)),
+    ]);
+    for (const e of events) out.push({ id: `p:${e.id}`, jenis: 'peristiwa', at: e.createdAt.toISOString(), judul: e.state === 'kanon' ? `Almanak: ${e.title}` : `Usulan peristiwa: ${e.title}`, isi: e.body.slice(0, 140), ke: e.state === 'kanon' ? `/kota/peristiwa/${e.id}` : '/kota/almanak' });
+    for (const f of figures) out.push({ id: `f:${f.id}`, jenis: 'figur', at: f.createdAt.toISOString(), judul: f.state === 'kanon' ? `Warga kota baru: ${f.name}` : `Usulan warga kota: ${f.name}`, isi: f.julukan ?? f.ciri.slice(0, 120), ke: f.state === 'kanon' ? `/kota/warga/${f.id}` : '/kota/warga' });
+    if (changes.length) {
+      const nama = new Map([...KOTA_WARGA_AWAL.map((f) => [f.id, f.name] as const), ...(await s.db.select({ id: cityFigures.id, name: cityFigures.name }).from(cityFigures)).map((f) => [f.id, f.name] as const)]);
+      const label = { wafat: 'wafat', pindah: 'pindah', fakta: 'fakta baru' } as Record<string, string>;
+      for (const u of changes) out.push({ id: `u:${u.id}`, jenis: 'ubah', at: u.createdAt.toISOString(), judul: `${nama.get(u.figureId) ?? 'Warga kota'}: ${label[u.kind] ?? u.kind}${u.year ? ` (${u.year})` : ''}${u.state === 'kanon' ? '' : ', diusulkan'}`, isi: u.text.slice(0, 140), ke: `/kota/warga/${u.figureId}` });
+    }
+    out.sort((a, b) => b.at.localeCompare(a.at));
+    return c.json(out.slice(0, 80));
   });
 
   return r;

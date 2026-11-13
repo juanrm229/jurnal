@@ -1,6 +1,8 @@
 /* Pelukis peta Sangkala (berjalan di Chromium). Membaca window.FITUR dari generator:
- * relief bukit dari peta ketinggian, atap tiga dimensi dengan sisi terang/gelap,
- * bayangan jatuh ke tenggara, dan tajuk pohon bergradasi. Cahaya dari barat laut. */
+ * relief bukit dari peta ketinggian, bangunan bersudut miring (dinding selatan terlihat,
+ * jendela, atap menjorok terangkat setinggi dinding), bayangan memanjang ke tenggara,
+ * dan pohon bertajuk terangkat. Cahaya dari barat laut. Tapak bangunan (titik persil)
+ * tetap di tanah, jadi tata letak dan id persil tidak berubah. */
 (function () {
   const F = window.FITUR;
   const W = 2000;
@@ -112,7 +114,19 @@
   const houses = F.houses.map(([x, y, w, d, a, roof, kind]) => ({ x, y, w, d, a: (a * Math.PI) / 180, roof, kind }));
   const trees = F.trees.map(([x, y, r, g]) => ({ x, y, r, g }));
 
-  // Bayangan: rumah dan pohon dilukis di kanvas terpisah, lalu diburamkan sekali.
+  // ── Sudut miring: setiap bangunan punya tinggi; dinding yang menghadap selatan
+  // terlihat, atap terangkat setinggi dinding. Tapak (titik persil) tetap di tanah.
+  const TINGGI = { rumah: 2.5, lapak: 1.5, gudang: 3.8, putih: 4.4 };
+  const DINDING = { rumah: '#efe2c8', lapak: '#d9d2c3', gudang: '#cdc7bb', putih: '#f5f1e7' };
+  for (const h of houses) {
+    const k = Math.max(0.8, Math.min(1.4, (h.w + h.d) / 12));
+    h.H = (TINGGI[h.kind] ?? 2.5) * k * (0.9 + 0.2 * hash2(Math.round(h.x * 3), Math.round(h.y * 3), 17));
+    h.C = [[-h.w / 2, -h.d / 2], [h.w / 2, -h.d / 2], [h.w / 2, h.d / 2], [-h.w / 2, h.d / 2]].map((p) => rot(p, h.a)).map(([px, py]) => [h.x + px, h.y + py]);
+    h.base = Math.max(...h.C.map((c) => c[1]));
+  }
+
+  // Bayangan: dilukis di kanvas terpisah lalu diburamkan sekali. Bangunan tinggi
+  // menjatuhkan bayangan lebih panjang (sapuan tapak ke arah tenggara).
   {
     const sc = document.createElement('canvas');
     sc.width = W * S;
@@ -121,71 +135,124 @@
     sx.scale(S, S);
     sx.fillStyle = 'rgb(38,30,22)';
     for (const h of houses) {
-      const s = h.kind === 'gudang' ? 3.2 : h.kind === 'putih' ? 4 : h.kind === 'lapak' ? 1 : 2.4;
-      const c = [[-h.w / 2, -h.d / 2], [h.w / 2, -h.d / 2], [h.w / 2, h.d / 2], [-h.w / 2, h.d / 2]].map((p) => rot(p, h.a)).map(([px, py]) => [h.x + px + s * 0.9, h.y + py + s]);
-      sx.beginPath();
-      c.forEach((p, i) => (i ? sx.lineTo(p[0], p[1]) : sx.moveTo(p[0], p[1])));
-      sx.closePath();
-      sx.fill();
+      const L = h.H * 1.05;
+      for (const f of [0, 0.34, 0.67, 1]) {
+        sx.beginPath();
+        h.C.forEach(([px, py], i) => (i ? sx.lineTo(px + L * 0.85 * f, py + L * 0.6 * f) : sx.moveTo(px + L * 0.85 * f, py + L * 0.6 * f)));
+        sx.closePath();
+        sx.fill();
+      }
     }
     sx.fillStyle = 'rgb(28,40,20)';
     for (const t of trees) {
       sx.beginPath();
-      sx.ellipse(t.x + t.r * 0.55, t.y + t.r * 0.7, t.r * 1.02, t.r * 0.92, 0, 0, Math.PI * 2);
+      sx.ellipse(t.x + t.r * 0.9, t.y + t.r * 0.45, t.r * 1.1, t.r * 0.8, 0.5, 0, Math.PI * 2);
       sx.fill();
     }
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 0.3;
-    ctx.filter = 'blur(2.4px)';
+    ctx.filter = 'blur(2.6px)';
     ctx.drawImage(sc, 0, 0);
     ctx.restore();
   }
 
-  // Atap.
-  ctx.lineJoin = 'round';
-  for (const h of houses) {
-    const hip = h.kind === 'putih' || (h.kind === 'rumah' && hash2(Math.round(h.x * 3), Math.round(h.y * 3), 5) < 0.38);
+  const NORMAL = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  const quad = (a, b, c, d) => poly([a, b, c, d]);
+  const up = ([x, y], dy) => [x, y - dy];
+  const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+
+  function rumah(h) {
+    const Hh = h.H;
     const flat = h.kind === 'lapak';
-    const faces = flat ? [[[[-h.w / 2, -h.d / 2], [h.w / 2, -h.d / 2], [h.w / 2, h.d / 2], [-h.w / 2, h.d / 2]], [0, 0]]] : roofFaces(h.w, h.d, hip);
-    const k = h.kind === 'gudang' ? 0.1 : h.kind === 'putih' ? 0.12 : 0.26;
+    // Dinding yang terlihat (normal menghadap ke bawah layar), dari yang paling belakang.
+    const walls = NORMAL.map((n, i) => ({ i, n: rot(n, h.a) })).filter((x) => x.n[1] > 0.02).sort((a, b) => a.n[1] - b.n[1]);
+    for (const { i, n } of walls) {
+      const A = h.C[i];
+      const B = h.C[(i + 1) % 4];
+      const b = n[0] * LP[0] + n[1] * LP[1];
+      ctx.fillStyle = tone(DINDING[h.kind] ?? DINDING.rumah, b * 0.32 - 0.04);
+      quad(A, B, up(B, Hh), up(A, Hh));
+      ctx.fill();
+      const len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+      // Jendela dan pintu: guratan gelap kecil di dinding yang cukup lebar.
+      if (!flat && len > 2.6 && Hh > 1.8) {
+        ctx.fillStyle = h.kind === 'putih' ? 'rgba(70,80,95,0.5)' : 'rgba(62,44,32,0.55)';
+        const nwin = Math.max(1, Math.floor(len / 2.4));
+        for (let j = 0; j < nwin; j++) {
+          const t0 = (j + 0.3) / nwin;
+          const t1 = (j + 0.62) / nwin;
+          const p0 = lerp(A, B, t0);
+          const p1 = lerp(A, B, t1);
+          const door = h.kind === 'rumah' && j === Math.floor(nwin / 2) && n[1] > 0.6;
+          const lo = door ? 0 : Hh * 0.32;
+          const hi = Hh * (door ? 0.68 : 0.66);
+          quad(up(p0, lo), up(p1, lo), up(p1, hi), up(p0, hi));
+          ctx.fill();
+        }
+      }
+      // Bayang tritisan di bawah atap.
+      ctx.strokeStyle = 'rgba(40,26,16,0.35)';
+      ctx.lineWidth = 0.55;
+      ctx.beginPath();
+      ctx.moveTo(...up(A, Hh - 0.25));
+      ctx.lineTo(...up(B, Hh - 0.25));
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(64,40,28,0.35)';
+      ctx.lineWidth = 0.3;
+      quad(A, B, up(B, Hh), up(A, Hh));
+      ctx.stroke();
+    }
+    // Atap, sedikit menjorok (tritisan), terangkat setinggi dinding.
+    const hip = h.kind === 'putih' || (h.kind === 'rumah' && hash2(Math.round(h.x * 3), Math.round(h.y * 3), 5) < 0.38);
+    const ow = h.w * (flat ? 1.0 : 1.1);
+    const od = h.d * (flat ? 1.0 : 1.12);
+    const faces = flat ? [[[[-ow / 2, -od / 2], [ow / 2, -od / 2], [ow / 2, od / 2], [-ow / 2, od / 2]], [0, 0]]] : roofFaces(ow, od, hip);
+    const kk = h.kind === 'gudang' ? 0.1 : h.kind === 'putih' ? 0.12 : 0.28;
     const jitter = (hash2(Math.round(h.x * 7), Math.round(h.y * 7), 11) - 0.5) * 0.16;
+    const rx = h.x;
+    const ry = h.y - Hh;
     for (const [ps, n] of faces) {
       const wn = rot(n, h.a);
-      const b = flat ? 0 : wn[0] * LP[0] + wn[1] * LP[1];
-      ctx.fillStyle = tone(h.roof, b * k + jitter);
-      poly(ps.map((p) => rot(p, h.a)).map(([px, py]) => [h.x + px, h.y + py]));
+      // Sisi atap yang menghadap pemirsa sedikit lebih terang (sudut miring).
+      const b = flat ? 0.04 : wn[0] * LP[0] + wn[1] * LP[1] + wn[1] * 0.25;
+      ctx.fillStyle = tone(h.roof, b * kk + jitter);
+      poly(ps.map((p) => rot(p, h.a)).map(([px, py]) => [rx + px, ry + py]));
       ctx.fill();
     }
-    // Garis bubungan dan tepi.
     ctx.strokeStyle = 'rgba(64,40,28,0.55)';
     ctx.lineWidth = 0.35;
-    poly([[-h.w / 2, -h.d / 2], [h.w / 2, -h.d / 2], [h.w / 2, h.d / 2], [-h.w / 2, h.d / 2]].map((p) => rot(p, h.a)).map(([px, py]) => [h.x + px, h.y + py]));
+    poly([[-ow / 2, -od / 2], [ow / 2, -od / 2], [ow / 2, od / 2], [-ow / 2, od / 2]].map((p) => rot(p, h.a)).map(([px, py]) => [rx + px, ry + py]));
     ctx.stroke();
     if (h.kind === 'gudang') {
       ctx.strokeStyle = 'rgba(255,255,255,0.18)';
       ctx.lineWidth = 0.3;
-      const long = h.w >= h.d;
-      for (let t = -0.45; t <= 0.45; t += 0.06) {
-        const a = long ? [t * h.w, -h.d / 2] : [-h.w / 2, t * h.d];
-        const b2 = long ? [t * h.w, h.d / 2] : [h.w / 2, t * h.d];
+      const long = ow >= od;
+      for (let t2 = -0.45; t2 <= 0.45; t2 += 0.06) {
+        const a2 = rot(long ? [t2 * ow, -od / 2] : [-ow / 2, t2 * od], h.a);
+        const b2 = rot(long ? [t2 * ow, od / 2] : [ow / 2, t2 * od], h.a);
         ctx.beginPath();
-        const A = rot(a, h.a);
-        const B = rot(b2, h.a);
-        ctx.moveTo(h.x + A[0], h.y + A[1]);
-        ctx.lineTo(h.x + B[0], h.y + B[1]);
+        ctx.moveTo(rx + a2[0], ry + a2[1]);
+        ctx.lineTo(rx + b2[0], ry + b2[1]);
         ctx.stroke();
       }
     }
   }
 
-  // Pohon: tajuk bergradasi, sedikit benjolan supaya tidak seperti bola.
-  trees.sort((a, b) => a.y - b.y);
-  for (const t of trees) {
-    const g = ctx.createRadialGradient(t.x - t.r * 0.38, t.y - t.r * 0.42, t.r * 0.08, t.x, t.y, t.r * 1.08);
-    g.addColorStop(0, tone(t.g, 0.32));
+  function pohon(t) {
+    // Batang pendek, tajuk terangkat; tajuk bergradasi dengan benjolan.
+    const cy = t.y - t.r * 0.62;
+    ctx.strokeStyle = 'rgba(86,60,38,0.9)';
+    ctx.lineWidth = Math.max(0.4, t.r * 0.2);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(t.x, t.y);
+    ctx.lineTo(t.x, cy + t.r * 0.3);
+    ctx.stroke();
+    const g = ctx.createRadialGradient(t.x - t.r * 0.38, cy - t.r * 0.45, t.r * 0.08, t.x, cy, t.r * 1.08);
+    g.addColorStop(0, tone(t.g, 0.34));
     g.addColorStop(0.55, t.g);
-    g.addColorStop(1, tone(t.g, -0.38));
+    g.addColorStop(1, tone(t.g, -0.4));
     ctx.fillStyle = g;
     ctx.beginPath();
     const n = 7;
@@ -193,7 +260,7 @@
       const a = (i / (n * 2)) * Math.PI * 2;
       const rr = t.r * (0.92 + 0.12 * hash2(Math.round(t.x * 5) + i, Math.round(t.y * 5), 3));
       const px = t.x + Math.cos(a) * rr;
-      const py = t.y + Math.sin(a) * rr;
+      const py = cy + Math.sin(a) * rr * 0.92;
       i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
     }
     ctx.closePath();
@@ -202,5 +269,11 @@
     ctx.lineWidth = 0.3;
     ctx.stroke();
   }
+
+  // Lukis dari belakang ke depan supaya yang dekat menutupi yang jauh.
+  ctx.lineJoin = 'round';
+  const semua = [...houses.map((h) => ({ y: h.base, f: () => rumah(h) })), ...trees.map((t) => ({ y: t.y + t.r * 0.2, f: () => pohon(t) }))];
+  semua.sort((a, b) => a.y - b.y);
+  for (const x of semua) x.f();
   window.SELESAI = true;
 })();

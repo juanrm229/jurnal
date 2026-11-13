@@ -18,7 +18,7 @@ import {
   kotaRegion,
 } from '@sehari/core';
 import { type CSSProperties, type PointerEvent as RPointerEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { KOTA_IMG, liveAt, tanggal, useAlmanak, useKota } from '@/lib/kota';
+import { KOTA_IMG, kabarDilihat, liveAt, tanggal, useAlmanak, useKabar, useKota } from '@/lib/kota';
 import { navigate } from '@/lib/router';
 import { store } from '@/lib/storage';
 import { Doodle, Sheet } from '@/ui/kit';
@@ -54,6 +54,8 @@ export default function Kota() {
   const size = useRef({ w: 390, h: 700 });
   const claims = kota.data?.claims ?? [];
   const mine = claims.find((c) => c.mine && c.state === 'aktif');
+  const kabar = useKabar();
+  const kabarBaru = !!kabar.data?.[0] && kabar.data[0].at > kabarDilihat();
   const openRegions = KOTA_WILAYAH.filter(kotaOpen);
   const plots = useMemo(() => openRegions.flatMap((r) => kotaPlots(r.id)), []);
   const byPlot = useMemo(() => {
@@ -254,6 +256,10 @@ export default function Kota() {
           <span className="kp-musim">kota sehari · musim 1</span>
           <b>Kota Sangkala</b>
         </div>
+        <button className="kp-glass kp-almanak kp-kabar" onClick={() => navigate('/kota/kabar')} aria-label={kabarBaru ? 'kabar kota, ada yang baru' : 'kabar kota'} data-testid="kota-kabar">
+          <Doodle id="surat-terbuka" size={18} color="currentColor" />
+          {kabarBaru ? <span className="kp-titik" aria-hidden /> : null}
+        </button>
         <button className="kp-glass kp-almanak" onClick={() => navigate('/kota/almanak')} aria-label="almanak kota" data-testid="kota-almanak">
           <Doodle id="buku-terbuka" size={18} color="currentColor" />
         </button>

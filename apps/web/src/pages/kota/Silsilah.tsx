@@ -29,7 +29,9 @@ export default function Silsilah() {
   const oy = h / 2 - ((b.y0 + b.y1) / 2) * s;
   const color = (cid: string) => WARNA[Math.max(0, t.claims.findIndex((c) => c.id === cid)) % WARNA.length]!;
   const root = t.claims.find((c) => c.id === id);
-  const lifes = t.tokoh.filter((x) => x.born);
+  // Tokoh pindahan dihitung sekali: salinannya disembunyikan bila tokoh asalnya ikut tampil.
+  const lifes = t.tokoh.filter((x) => x.born && !(x.asal && t.tokoh.some((y) => y.id === x.asal)));
+  const sama = t.sama ?? [];
   const y0 = Math.min(1900, ...lifes.map((x) => x.born!));
   const span = 2030 - y0;
 
@@ -70,6 +72,17 @@ export default function Silsilah() {
                 />
               );
             })}
+            {sama.map((x) => {
+              const a = pts.get(x.a);
+              const c = pts.get(x.b);
+              if (!a || !c) return null;
+              return (
+                <g key={`${x.a}${x.b}`} className="ks-garis">
+                  <line x1={a.x} y1={a.y} x2={c.x} y2={c.y} stroke="rgba(255,255,255,0.85)" strokeWidth={4 / s} strokeLinecap="round" />
+                  <line x1={a.x} y1={a.y} x2={c.x} y2={c.y} stroke="#0b6b3a" strokeWidth={5 / s} strokeDasharray={`${0.1 / s} ${8 / s}`} strokeLinecap="round" />
+                </g>
+              );
+            })}
             {t.claims.map((c) => {
               const p = pts.get(c.id);
               if (!p) return null;
@@ -95,6 +108,11 @@ export default function Silsilah() {
         <span>
           <i className="putus" /> desas-desus
         </span>
+        {sama.length ? (
+          <span>
+            <i className="titik" /> orang yang sama
+          </span>
+        ) : null}
       </div>
 
       {lifes.length ? (
@@ -132,6 +150,12 @@ export default function Silsilah() {
               </p>
             );
           })}
+          {sama.map((x) => (
+            <p key={`${x.a}${x.b}`} className="ks-kalimat sama">
+              <b>{x.tokoh}</b> tinggal di <b>{t.claims.find((c) => c.id === x.b)?.household}</b> dan <b>{t.claims.find((c) => c.id === x.a)?.household}</b>
+              <span className="tiny soft"> · orang yang sama</span>
+            </p>
+          ))}
         </div>
       </section>
     </main>

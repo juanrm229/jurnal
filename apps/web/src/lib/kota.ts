@@ -1,7 +1,8 @@
 /** Kota Sehari: data kota, patok, dan potongan peta untuk sampul rumah. */
-import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot } from '@sehari/core';
+import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaKabarWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot } from '@sehari/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
+import { store } from './storage';
 
 export const kk = { all: ['kota'] as const, one: (id: string) => ['kota', id] as const };
 
@@ -101,3 +102,11 @@ export function usePena(m: { ms: { id: string; visibility: string }; meId: strin
   const t = useTautan(kota ? (rumah.data?.id ?? '') : '');
   return (u: string) => (!kota ? m.who(u) : u === m.meId ? 'kamu' : rumah.data?.ownerId === u ? rumah.data.penName : (t.data?.pegang?.find((x) => x.requesterId === u)?.penName ?? m.who(u)));
 }
+
+/** Kabar kota 60 hari terakhir; "belum dibaca" diingat di perangkat ini. */
+export function useKabar() {
+  return useQuery({ queryKey: ['kota', 'kabar'], queryFn: () => api.get<KotaKabarWire[]>('/kota/kabar'), staleTime: 60_000 });
+}
+const LIHAT = 'kota.kabar.lihat';
+export const kabarDilihat = () => store.get(LIHAT) ?? '';
+export const tandaiKabar = (at: string) => store.set(LIHAT, at);
