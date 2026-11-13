@@ -158,6 +158,12 @@ export default function Today() {
   }, [q.data, ring, day]);
 
   const [selected, setSelected] = useState<string | null>(null);
+  // Petunjuk sekali saja: cara menggeser, mengubah ukuran, dan memutar tempelan.
+  useEffect(() => {
+    if (!selected || store.get('hari.petunjuk-tempel')) return;
+    store.set('hari.petunjuk-tempel', '1');
+    toast('Seret untuk memindah. Sudut kanan bawah: ukuran. Bulatan di atas: putar. Ketuk lagi tulisan untuk mengubahnya.');
+  }, [selected]);
   const [editing, setEditing] = useState<string | null>(null);
   const [sheet, setSheet] = useState<null | 'sticker' | 'mood' | 'song' | 'voice' | 'prompt' | 'silent' | 'audience' | 'more' | 'caption' | 'save'>(null);
   const [caption, setCaption] = useState('');
@@ -458,8 +464,19 @@ export default function Today() {
   const toolsFor = (it: Item) => {
     const k = it.payload.kind;
     const p = it.payload;
+ // Ukuran dan kemiringan lewat tombol: alternatif untuk gerakan jari.
+    const tata = (f: (l: PageLayout) => PageLayout) => restyle(it.id, (x) => ({ ...x, layout: f(x.layout ?? { x: 90, y: 230, w: defaultWidth(x.kind), rot: 0, z: nextZ() }) }));
+    const skala = (k: number) =>
+      tata((l) => {
+        const w = Math.round(Math.max(70, Math.min(1000, l.w * k)));
+        return { ...l, w, x: Math.round(Math.max(0, Math.min(PAGE_W - 60, l.x + (l.w - w) / 2))) };
+      });
+    const miring = (p.layout?.rot ?? 0) !== 0;
     const common = (
       <>
+        <DockBtn glyph="besar" label="perbesar" onClick={() => skala(1.15)} />
+        <DockBtn glyph="kecil" label="perkecil" onClick={() => skala(1 / 1.15)} />
+        {miring ? <DockBtn glyph="lurus" label="luruskan" onClick={() => tata((l) => ({ ...l, rot: 0 }))} /> : null}
         <DockBtn icon="ui-tambah" label="ke depan" onClick={() => restyle(it.id, (x) => ({ ...x, layout: { ...x.layout!, z: nextZ() } }))} />
         <DockBtn icon={it.audience === 'self' ? 'ui-gembok' : 'ui-gembok-buka'} label={it.audience === 'self' ? 'hanya aku' : 'bersama'} onClick={() => restyle(it.id, (x) => x, it.audience === 'self' ? (circleIds.length ? 'circle' : 'self') : 'self')} />
         <DockBtn icon="ui-hapus" label="hapus" danger onClick={() => void remove(it.id)} />

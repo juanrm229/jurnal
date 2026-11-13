@@ -3,10 +3,25 @@ import { useEffect, useState } from 'react';
 import { Scene } from '@/ui/art';
 import { Doodle } from '@/ui/kit';
 
-export function DockBtn({ icon, swatch, label, onClick, danger }: { icon?: string; swatch?: string; label: string; onClick: () => void; danger?: boolean }) {
+/** Ikon kecil yang tidak ada di koleksi doodle. */
+const GLIF = {
+  besar: 'M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15',
+  kecil: 'M9 4 V9 H4 M20 9 H15 V4 M15 20 V15 H20 M4 15 H9 V20',
+  lurus: 'M4 18 H20 M12 4 V18 M8 8 L12 4 L16 8',
+} as const;
+
+export function DockBtn({ icon, glyph, swatch, label, onClick, danger }: { icon?: string; glyph?: keyof typeof GLIF; swatch?: string; label: string; onClick: () => void; danger?: boolean }) {
   return (
     <button type="button" className={`dock-btn ${danger ? 'danger' : ''}`} onClick={onClick} onMouseDown={(e) => e.preventDefault()}>
-      {swatch ? <span className="dock-swatch" style={{ background: swatch === 'none' ? 'repeating-linear-gradient(45deg, var(--card) 0 4px, var(--pill) 4px 8px)' : swatch }} /> : <Doodle id={icon ?? 'tunas'} size={24} color="currentColor" />}
+      {swatch ? (
+        <span className="dock-swatch" style={{ background: swatch === 'none' ? 'repeating-linear-gradient(45deg, var(--card) 0 4px, var(--pill) 4px 8px)' : swatch }} />
+      ) : glyph ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+          <path d={GLIF[glyph]} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <Doodle id={icon ?? 'tunas'} size={24} color="currentColor" />
+      )}
       <span>{label}</span>
     </button>
   );
