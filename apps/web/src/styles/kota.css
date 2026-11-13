@@ -2026,3 +2026,126 @@
 .kr-berakar {
   margin: 0;
 }
+
+/* ── Kabar kota ── */
+.kp-kabar {
+  position: relative;
+}
+.kp-titik {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c2371f;
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.kb-hari h3 {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-family: var(--serif-display);
+  font-weight: 500;
+  font-size: var(--fs-lg);
+}
+.kb-hari:first-of-type h3 {
+  margin-top: var(--sp-2);
+}
+.kb-kabar {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--card-edge);
+  border-radius: var(--r-card);
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  animation: paper-lay 420ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 30ms);
+}
+.kb-kabar.baru::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c2371f;
+}
+.kb-ikon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: var(--ink);
+}
+.kb-kabar.ikatan .kb-ikon,
+.kb-kabar.rumah .kb-ikon {
+  background: color-mix(in srgb, #c2371f 14%, transparent);
+  color: #c2371f;
+}
+.kb-jenis {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+.kb-kabar b {
+  display: block;
+  padding-right: 14px;
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 1.35;
+}
+.kb-isi {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-soft);
+  font-family: var(--serif);
+  font-style: italic;
+  line-height: 1.45;
+}
+.kk-sepi {
+  margin-top: var(--sp-5);
+}
+.ks-legenda i.titik {
+  height: 0;
+  border-top: 3px dotted #1f7a4d;
+}
+/* Kepala peta: empat tombol tetap muat satu baris di layar sempit. */
+.kp-head {
+  gap: 6px;
+}
+.kp-head .kp-back,
+.kp-head .kp-almanak,
+.kp-head .kp-rumahku {
+  width: 44px;
+}
+.kp-title {
+  min-width: 0;
+  padding: 8px 12px;
+}
+.kp-title b,
+.kp-title .kp-musim {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 400px) {
+  .kp-title b {
+    font-size: 20px;
+  }
+  .kp-title .kp-musim {
+    font-size: 15px;
+  }
+}

@@ -1270,6 +1270,8 @@ export interface KotaTokohWire {
   name: string;
   born?: number;
   died?: number;
+  /** Tokoh pindahan: id tokoh asalnya (orang yang sama). */
+  asal?: string;
 }
 export interface KotaRelasiWire {
   id: string;
@@ -1292,6 +1294,18 @@ export interface KotaTautanWire {
   relations: KotaRelasiWire[];
   tokoh: KotaTokohWire[];
   claims: KotaClaimWire[];
+  /** Rumah-rumah yang dihuni orang yang sama (tokoh pindah rumah). */
+  sama?: { a: string; b: string; tokoh: string }[];
+}
+
+export interface KotaKabarWire {
+  id: string;
+  jenis: 'rumah' | 'adegan' | 'ikatan' | 'peristiwa' | 'figur' | 'ubah';
+  at: string;
+  judul: string;
+  isi?: string;
+  /** Rute di aplikasi. */
+  ke: string;
 }
 
 export interface KotaClaimWire {

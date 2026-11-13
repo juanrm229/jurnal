@@ -6,6 +6,8 @@ let raka: Client;
 let naya: Client;
 let sari: Client;
 let tono: Client;
+let ana: Client;
+let bima: Client;
 let rumah: { id: string; msId: string };
 
 beforeAll(async () => {
@@ -220,8 +222,8 @@ describe('kota sehari', () => {
   });
 
   it('konsistensi: rumah lowong tak hidup lagi, masa hidup tokoh, tautan tak dihapus sepihak, perjumpaan semasa', async () => {
-    const ana = await new Client(env.app, 'ana-k@contoh.id').signup('Ana');
-    const bima = await new Client(env.app, 'bima-k@contoh.id').signup('Bima');
+    ana = await new Client(env.app, 'ana-k@contoh.id').signup('Ana');
+    bima = await new Client(env.app, 'bima-k@contoh.id').signup('Bima');
     await ana.ok('PUT', '/v1/kota/profil', { penName: 'ana.kota' });
     await bima.ok('PUT', '/v1/kota/profil', { penName: 'bima.kota' });
     const lama = (await patok(ana, 'tiangseribu.20', 1950, 1970, 'Keluarga Lama', { id: 'tAnaLama001', name: 'Ana Lama', born: 1940 })).json;
@@ -241,5 +243,26 @@ describe('kota sehari', () => {
     // Tokoh yang sedang tertaut tidak bisa dihapus sepihak.
     await ana.ok('POST', '/v1/kota/ketuk', { fromClaimId: rumahAna.id, fromTokoh: 'tAnaUtama01', toClaimId: baru.id, toTokoh: 'tBimaBaru01', type: 'tetangga', letter: 'Pak Bima, saya Ana dari rumah sebelah.' });
     expect((await ana.req('DELETE', `/v1/naskah/${rumahAna.msId}/canon/tAnaUtama01`)).status).toBe(409);
+  });
+
+  it('kabar kota dan silsilah orang yang sama', async () => {
+    // Bima menerima ketukan Ana: ikatan kanon masuk kabar. Rumah yang lewat masa fondasi tidak.
+    const rumahBima = (await bima.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine);
+    const ketukan = (await bima.ok('GET', `/v1/kota/claims/${rumahBima.id}/tautan`)).relations.find((x: any) => x.state === 'ketuk');
+    await bima.ok('PUT', `/v1/kota/ketuk/${ketukan.id}`, { action: 'kanon' });
+    const kabar = await sari.ok('GET', '/v1/kota/kabar');
+    const jenis = new Set(kabar.map((x: any) => x.jenis));
+    for (const j of ['rumah', 'adegan', 'ikatan', 'peristiwa', 'figur', 'ubah']) expect(jenis.has(j)).toBe(true);
+    expect(kabar.find((x: any) => x.jenis === 'ikatan').judul).toMatch(/Ana kini tetangga dari Bima Baru/);
+    expect(kabar.some((x: any) => x.isi?.includes('Keluarga Sitorus'))).toBe(false);
+    expect([...kabar].map((x: any) => x.at)).toEqual([...kabar].map((x: any) => x.at).sort().reverse());
+    // Draf tidak pernah muncul di kabar.
+    expect(kabar.some((x: any) => x.id === 'a:adegan2x')).toBe(false);
+    const rumah = (await raka.ok('GET', '/v1/kota')).claims.filter((x: any) => x.mine);
+    const dinas = rumah.find((x: any) => x.household === 'Rumah Dinas');
+    const darmo = rumah.find((x: any) => x.household === 'Keluarga Darmo');
+    const sil = await sari.ok('GET', `/v1/kota/silsilah/${dinas.id}`);
+    expect(sil.sama).toEqual([{ a: dinas.id, b: darmo.id, tokoh: 'Pak Darmo' }]);
+    expect(sil.claims.map((x: any) => x.household)).toEqual(expect.arrayContaining(['Rumah Dinas', 'Keluarga Darmo']));
   });
 });
