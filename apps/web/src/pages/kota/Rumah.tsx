@@ -142,16 +142,23 @@ export default function Rumah() {
               <button className="btn" onClick={() => navigate(`/naskah/${c.msId}`)} data-testid="kota-tulis">
                 <Doodle id="pena" size={18} color="currentColor" /> tulis di rumah ini
               </button>
-              <button
-                className="btn ghost"
-                onClick={async () => {
-                  if (!confirm('Lepaskan rumah ini? Persilnya lowong lagi; naskahmu pindah ke arsip meja tulis, hanya untukmu. Tokohmu yang juga tinggal di rumahmu yang lain tetap ada di sana.')) return;
-                  await api.del(`/kota/claims/${c.id}`);
-                  void refresh();
-                  navigate('/kota', { replace: true });
-                }}>
-                lepaskan rumah
-              </button>
+              {c.state === 'terbengkalai' ? (
+                <p className="tiny kr-desas">Rumah ini lewat masa fondasi tanpa adegan terbit, jadi persilnya kembali lowong. Naskahnya tetap di meja tulismu; patok ulang dari peta untuk melanjutkan.</p>
+              ) : c.scenes > 0 ? (
+                <p className="tiny soft kr-berakar">Rumah ini sudah berakar: adegannya bagian dari sejarah kota, jadi tidak bisa dilepas.</p>
+              ) : null}
+              {c.scenes > 0 ? null : (
+                <button
+                  className="btn ghost"
+                  onClick={async () => {
+                    if (!confirm('Lepaskan rumah ini? Persilnya lowong lagi; naskahmu pindah ke arsip meja tulis, hanya untukmu. Tokohmu yang juga tinggal di rumahmu yang lain tetap ada di sana.')) return;
+                    await api.del(`/kota/claims/${c.id}`);
+                    void refresh();
+                    navigate('/kota', { replace: true });
+                  }}>
+                  lepaskan rumah
+                </button>
+              )}
             </>
           ) : (
             <>

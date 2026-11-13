@@ -245,7 +245,7 @@ export default function Patok() {
         </section>
 
         <p className="tiny soft kpt-aturan">
-          Kota ini publik. Pakai nama fiksi, jangan tulis data pribadi orang sungguhan. Rumah tanpa adegan terbit dalam {KOTA_TERBENGKALAI_HARI} hari kembali lowong, dan keluargamu tinggal sebagai desas-desus.
+          Kota ini publik. Pakai nama fiksi, jangan tulis data pribadi orang sungguhan. Masa fondasi {KOTA_TERBENGKALAI_HARI} hari: terbitkan adegan pertama, atau persilnya kembali lowong dan keluargamu tinggal sebagai desas-desus. Setelah adegan pertama terbit, rumah ini berakar dan permanen.
         </p>
         <button className="btn" disabled={!ok || busy} onClick={() => void submit()} data-testid="kota-pasang">
           {busy ? 'memasang patok…' : slot > 0 ? `pasang patok · ${Number.isFinite(f) ? f : ''}–${Number.isFinite(t) ? t : ''}` : `jatah ${me.patok.maks} patok musim ini sudah terpakai`}

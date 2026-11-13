@@ -61,3 +61,18 @@ export async function tokohku(s: Services, userId: string, db: Db = s.db): Promi
   }
   return out;
 }
+
+/** Rumah kota yang sudah kembali lowong (tanpa adegan terbit melewati masa fondasi): tidak bisa dihidupkan lagi. */
+export async function rumahLowong(s: Services, msId: string): Promise<boolean> {
+  const [c] = await s.db.select().from(cityClaims).where(and(eq(cityClaims.msId, msId), eq(cityClaims.status, 'aktif')));
+  if (!c) return false;
+  const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msScenes).where(and(eq(msScenes.msId, msId), eq(msScenes.status, 'terbit')));
+  return (n?.n ?? 0) === 0 && c.createdAt.getTime() < s.now().getTime() - KOTA_TERBENGKALAI_HARI * 86_400_000;
+}
+
+/** Rumah-rumah (milik pemilik naskah) tempat seorang tokoh tinggal, untuk memeriksa masa hidupnya. */
+export async function rumahTokoh(s: Services, kunci: string) {
+  const entri = await s.db.select({ msId: msCanon.msId }).from(msCanon).where(sql`${msCanon.id} = ${kunci} or ${msCanon.envelope}->'plain'->'asal'->>'tokohId' = ${kunci}`);
+  if (!entri.length) return [];
+  return s.db.select().from(cityClaims).where(and(inArray(cityClaims.msId, entri.map((e) => e.msId)), eq(cityClaims.status, 'aktif')));
+}

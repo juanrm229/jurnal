@@ -19,7 +19,8 @@ export default function Meja() {
   if (!kota.data) return <Growing label="merapikan meja…" />;
   const me = kota.data.me;
   const rumah = kota.data.claims.filter((c) => c.mine && c.state === 'aktif').sort((a, b) => a.from - b.from);
-  const arsip = (list.data ?? []).filter((ms) => ms.visibility !== 'kota');
+  const lowong = kota.data.claims.filter((c) => c.mine && c.state === 'terbengkalai');
+  const arsip = (list.data ?? []).filter((ms) => ms.visibility !== 'kota' || lowong.some((c) => c.msId === ms.id));
   const nama = (id: string) => kota.data!.claims.find((c) => c.id === id)?.household ?? 'rumah';
 
   return (
@@ -75,6 +76,22 @@ export default function Meja() {
           <p className="small soft">Pilih satu persil di Kota Sangkala, tentukan zamannya, dan beri nama tokoh pertamamu. Rumah itu jadi meja tulismu.</p>
         </section>
       )}
+
+      {lowong.length ? (
+        <section className="section">
+          <span className="label">kembali lowong</span>
+          {lowong.map((c) => (
+            <div key={c.id} className="mj-lowong">
+              <span className="grow small">
+                <b>{c.household}</b> lewat masa fondasi tanpa adegan terbit. Naskahnya tetap di arsip; persilnya bisa kamu patok ulang bila belum diambil warga lain.
+              </span>
+              <button className="pill sm" onClick={() => navigate(`/kota/patok/${c.plotId}`)}>
+                patok ulang
+              </button>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       {me.tokohku.length ? (
         <section className="section">

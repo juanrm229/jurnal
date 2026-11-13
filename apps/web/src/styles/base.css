@@ -1,6 +1,11 @@
 /* Sehari — estetika kertas, bukan layar.
    Semua warna turunan dari dua variabel: --ink (tinta doodle) dan --paper. */
 
+/* Atribut hidden selalu menang atas display milik kelas (.btn, .pill, flex). */
+[hidden] {
+  display: none !important;
+}
+
 :root {
   --ink: #2a14d6;
   --paper: #f7f7f4;

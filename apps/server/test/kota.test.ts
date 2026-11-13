@@ -79,6 +79,9 @@ describe('kota sehari', () => {
     expect((await raka.ok('GET', '/v1/kota')).claims.some((x: any) => x.id === wirya.id)).toBe(false);
     expect((await raka.req('GET', `/v1/naskah/${wirya.msId}`)).status).toBe(404);
     expect((await naya.req('DELETE', `/v1/kota/claims/${rumah.id}`)).status).toBe(403);
+    // Rumah yang sudah punya adegan terbit berakar: tidak bisa dilepas.
+    expect((await raka.req('DELETE', `/v1/kota/claims/${rumah.id}`)).status).toBe(409);
+    await raka.ok('DELETE', `/v1/naskah/${rumah.msId}/scenes/adegan1x`);
     await raka.ok('DELETE', `/v1/kota/claims/${rumah.id}`);
     expect((await sari.req('GET', `/v1/naskah/${rumah.msId}`)).status).toBe(404);
     expect((await raka.ok('GET', `/v1/naskah/${rumah.msId}`)).visibility).toBe('arsip');
@@ -214,5 +217,29 @@ describe('kota sehari', () => {
     expect(t.pegang).toEqual([expect.objectContaining({ tokoh: 'Bu Sri', state: 'pegang', letter: null })]);
     await tono.ok('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'lepas' });
     expect((await tono.req('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'sri00002x', chapter: 1, order: 11, envelope: { plain: { v: 1, pov: 'tBuSri00001', when: { label: '', sort: '' }, text: 'x' } } })).status).toBe(404);
+  });
+
+  it('konsistensi: rumah lowong tak hidup lagi, masa hidup tokoh, tautan tak dihapus sepihak, perjumpaan semasa', async () => {
+    const ana = await new Client(env.app, 'ana-k@contoh.id').signup('Ana');
+    const bima = await new Client(env.app, 'bima-k@contoh.id').signup('Bima');
+    await ana.ok('PUT', '/v1/kota/profil', { penName: 'ana.kota' });
+    await bima.ok('PUT', '/v1/kota/profil', { penName: 'bima.kota' });
+    const lama = (await patok(ana, 'tiangseribu.20', 1950, 1970, 'Keluarga Lama', { id: 'tAnaLama001', name: 'Ana Lama', born: 1940 })).json;
+    env.advanceDays(15);
+    const adegan = (id: string, pov: string, sort: string, text: string, extra = {}) => ({ id, chapter: 1, order: 1, status: 'terbit', envelope: { plain: { v: 1, pov, when: { label: '', sort }, text, ...extra } } });
+    // Lewat masa fondasi tanpa adegan terbit: rumah tidak bisa dihidupkan lagi.
+    expect((await ana.req('POST', `/v1/naskah/${lama.msId}/scenes`, adegan('lama0001x', 'tAnaLama001', '', 'Hidup lagi?'))).status).toBe(409);
+    // Patok baru di persil itu meresmikan kepergiannya.
+    const baru = await bima.ok('POST', '/v1/kota/claims', { plotId: 'tiangseribu.20', household: 'Keluarga Baru', from: 1955, to: 1965, tokoh: { id: 'tBimaBaru01', name: 'Bima Baru', born: 1930 } });
+    expect((await ana.ok('GET', `/v1/naskah/${lama.msId}`)).visibility).toBe('arsip');
+    // Masa hidup tokoh harus cocok dengan rumah tempat ia tinggal.
+    const rumahAna = await ana.ok('POST', '/v1/kota/claims', { plotId: 'tiangseribu.21', household: 'Keluarga Ana', from: 1960, to: 1990, tokoh: { id: 'tAnaUtama01', name: 'Ana', born: 1950 } });
+    expect((await ana.req('PUT', `/v1/naskah/${rumahAna.msId}/canon/tAnaUtama01`, { envelope: { plain: { v: 1, kind: 'tokoh', name: 'Ana', aliases: [], known: [], born: 1950, died: 1955 } } })).status).toBe(400);
+    // Perjumpaan di luar masa hidup figur (Mbah Tembang wafat 1984) tidak dihitung.
+    await ana.ok('POST', `/v1/naskah/${rumahAna.msId}/scenes`, adegan('jumpa002x', 'tAnaUtama01', '1989', 'Mbah Tembang bernyanyi lagi.', { jumpa: ['warga.tembang'] }));
+    expect((await ana.ok('GET', '/v1/kota/warga/warga.tembang')).perjumpaan.some((x: any) => x.sceneId === 'jumpa002x')).toBe(false);
+    // Tokoh yang sedang tertaut tidak bisa dihapus sepihak.
+    await ana.ok('POST', '/v1/kota/ketuk', { fromClaimId: rumahAna.id, fromTokoh: 'tAnaUtama01', toClaimId: baru.id, toTokoh: 'tBimaBaru01', type: 'tetangga', letter: 'Pak Bima, saya Ana dari rumah sebelah.' });
+    expect((await ana.req('DELETE', `/v1/naskah/${rumahAna.msId}/canon/tAnaUtama01`)).status).toBe(409);
   });
 });
