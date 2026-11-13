@@ -348,7 +348,33 @@ function Movable({
   }, []);
   const [dragging, setDragging] = useState(false);
   const last = useRef<PageLayout>(L);
-  last.current = L;
+  if (!drag.current?.moved) last.current = L;
+  // Selama digeser, hanya elemen ini yang bergerak (transform di GPU, sekali per bingkai);
+  // halaman baru digambar ulang saat jari diangkat.
+  const frame = useRef(0);
+  const lukis = (l: PageLayout, start: PageLayout) => {
+    last.current = l;
+    if (frame.current) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0;
+      const el = box.current;
+      const n = last.current;
+      if (!el) return;
+      el.style.width = `${n.w * scale}px`;
+      el.style.transform = `translate3d(${(n.x - start.x) * scale}px, ${(n.y - start.y) * scale}px, 0) rotate(${n.rot}deg)`;
+    });
+  };
+  const tetapkan = (l: PageLayout) => {
+    // Posisi akhir ditulis langsung, sama dengan yang akan digambar React.
+    cancelAnimationFrame(frame.current);
+    frame.current = 0;
+    const el = box.current;
+    if (!el) return;
+    el.style.left = `${l.x * scale}px`;
+    el.style.top = `${l.y * scale}px`;
+    el.style.width = `${l.w * scale}px`;
+    el.style.transform = `rotate(${l.rot}deg)`;
+  };
 
   useEffect(() => {
     if (!selected) drag.current = null;
@@ -418,19 +444,19 @@ function Movable({
     d.moved = true;
     setDragging(true);
     if (d.kind === 'move') {
-      onLive({ ...d.start, x: Math.round(d.start.x + dx / scale), y: Math.max(0, Math.round(d.start.y + dy / scale)) });
+      lukis({ ...d.start, x: Math.round(d.start.x + dx / scale), y: Math.max(0, Math.round(d.start.y + dy / scale)) }, d.start);
     } else if (d.kind === 'size') {
       // Sudut: hanya ukuran, kemiringan tetap.
       const dist = Math.hypot(e.clientX - d.cx!, e.clientY - d.cy!);
       const w = Math.max(70, Math.min(1000, d.start.w * (dist / Math.max(1, d.d0!))));
-      onLive({ ...d.start, w: Math.round(w) });
+      lukis({ ...d.start, w: Math.round(w) }, d.start);
     } else {
       // Bulatan atas: hanya putar; menempel lurus di dekat 0°, 90°, 180°.
       const a = Math.atan2(e.clientY - d.cy!, e.clientX - d.cx!);
       let rot = d.start.rot + ((a - d.a0!) * 180) / Math.PI;
       rot = ((((rot + 180) % 360) + 360) % 360) - 180;
       for (const snap of [-180, -90, 0, 90, 180]) if (Math.abs(rot - snap) < 4) rot = snap;
-      onLive({ ...d.start, rot: Math.round(rot * 10) / 10 });
+      lukis({ ...d.start, rot: Math.round(rot * 10) / 10 }, d.start);
     }
   };
 
@@ -441,7 +467,10 @@ function Movable({
     if (!d) return;
     window.clearTimeout(d.timer);
     if (gesture.current) return;
-    if (d.moved) onCommit(last.current);
+    if (d.moved) {
+      tetapkan(last.current);
+      onCommit(last.current);
+    }
     else if (d.kind === 'move' && selected && editable && !d.armed) onEdit();
     else if (d.touch && !d.armed && !selected) onSelect();
     void e;
@@ -465,7 +494,10 @@ function Movable({
       onPointerCancel={() => {
         // Peramban mengambil alih untuk menggulir: batalkan tanpa memilih apa pun.
         if (drag.current) window.clearTimeout(drag.current.timer);
-        if (drag.current?.moved) onCommit(last.current);
+        if (drag.current?.moved) {
+          tetapkan(last.current);
+          onCommit(last.current);
+        }
         drag.current = null;
         setDragging(false);
       }}
