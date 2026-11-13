@@ -79,6 +79,8 @@ function routeFor(d) {
       return d.storyId ? `/cerita/${d.storyId}` : '/cerita';
     case 'kota':
       return d.claimId ? `/kota/rumah/${d.claimId}` : '/kota';
+    case 'kota-kabar':
+      return '/kota/kabar';
     case 'naskah':
       return d.msId ? `/naskah/${d.msId}` : '/naskah';
     case 'meet':
@@ -115,7 +117,7 @@ self.addEventListener('push', (e) => {
   const d = msg.data || {};
   // Tag per lingkaran & jenis: kabar sejenis dari lingkaran yang sama saling menggantikan
   // (tidak menumpuk), tapi kabar berbeda tetap muncul masing-masing, dan selalu berbunyi.
-  const tag = [d.type || 'sehari', d.circleId || '', d.meetId || d.letterId || d.boothId || ''].join(':');
+  const tag = [d.type || 'sehari', d.circleId || d.claimId || '', d.meetId || d.letterId || d.boothId || ''].join(':');
   e.waitUntil(
     Promise.all([
       self.registration.showNotification(msg.title || 'Sehari', {

@@ -3,7 +3,7 @@
  * pernah terlihat di sini — hanya isi yang secara sadar dikirim pelapor.
  */
 import { isDayKey } from '@sehari/core';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Services } from '../context';
@@ -24,6 +24,52 @@ export function adminRoutes(s: Services) {
   r.patch('/reports/:id', async (c) => {
     const { status } = z.object({ status: z.enum(['open', 'reviewing', 'closed']) }).parse(await c.req.json());
     await s.db.update(schema.reports).set({ status }).where(eq(schema.reports.id, c.req.param('id')));
+    return c.json({ ok: true });
+  });
+
+  /**
+   * Antrean tinjau Kota: rumah yang disembunyikan karena laporan warga, dan rumah aktif yang
+   * mulai dilaporkan. Isi rumah kota memang publik, jadi cuplikan adegan terbitnya ikut tampil.
+   */
+  r.get('/kota/laporan', async (c) => {
+    const reports = await s.db.select().from(schema.cityReports);
+    const ids = [...new Set(reports.map((x) => x.claimId))];
+    if (!ids.length) return c.json([]);
+    const claims = await s.db.select().from(schema.cityClaims).where(inArray(schema.cityClaims.id, ids));
+    const pens = await s.db.select().from(schema.cityProfiles).where(inArray(schema.cityProfiles.userId, claims.map((x) => x.ownerId)));
+    const scenes = await s.db.select().from(schema.msScenes).where(and(inArray(schema.msScenes.msId, claims.map((x) => x.msId)), eq(schema.msScenes.status, 'terbit')));
+    return c.json(
+      claims
+        .filter((x) => x.status === 'aktif' || x.status === 'disembunyikan')
+        .map((x) => ({
+          id: x.id,
+          status: x.status,
+          household: x.household,
+          plotId: x.plotId,
+          penName: pens.find((p) => p.userId === x.ownerId)?.penName ?? null,
+          laporan: reports.filter((r2) => r2.claimId === x.id).map((r2) => ({ reason: r2.reason, createdAt: r2.createdAt })),
+          cuplikan: scenes
+            .filter((sc) => sc.msId === x.msId)
+            .slice(0, 3)
+            .map((sc) => ((sc.envelope as { plain?: { text?: string } }).plain?.text ?? '').slice(0, 400)),
+        }))
+        .sort((a, b) => b.laporan.length - a.laporan.length),
+    );
+  });
+
+  /** Putusan tim: pulihkan (laporan dihapus) atau tutup (tetap tersembunyi, naskah jadi arsip pemiliknya). */
+  r.patch('/kota/claims/:id', async (c) => {
+    const { aksi } = z.object({ aksi: z.enum(['pulihkan', 'tutup']) }).parse(await c.req.json());
+    const [x] = await s.db.select().from(schema.cityClaims).where(eq(schema.cityClaims.id, c.req.param('id')));
+    if (!x) throw bad('not_found', 'Rumah tidak ditemukan.');
+    if (aksi === 'pulihkan') {
+      await s.db.update(schema.cityClaims).set({ status: 'aktif' }).where(eq(schema.cityClaims.id, x.id));
+      await s.db.update(schema.manuscripts).set({ visibility: 'kota' }).where(eq(schema.manuscripts.id, x.msId));
+      await s.db.delete(schema.cityReports).where(eq(schema.cityReports.claimId, x.id));
+    } else {
+      await s.db.update(schema.cityClaims).set({ status: 'ditutup' }).where(eq(schema.cityClaims.id, x.id));
+      await s.db.update(schema.manuscripts).set({ visibility: 'arsip' }).where(eq(schema.manuscripts.id, x.msId));
+    }
     return c.json({ ok: true });
   });
 

@@ -5,7 +5,7 @@
 import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, type KotaClaimWire, type KotaHubungan, type KotaTokohWire, kotaCekHubungan, kotaPlot } from '@sehari/core';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { useKota, useKotaClaim, useTautan } from '@/lib/kota';
+import { useKota, useKotaClaim, useTautan, waktuTiba } from '@/lib/kota';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, useToast } from '@/ui/kit';
 
@@ -139,8 +139,8 @@ export default function Ketuk() {
               onClick={async () => {
                 setBusy(true);
                 try {
-                  const r = await api.post<{ state: string }>('/kota/ketuk', { fromClaimId: from.id, fromTokoh: ta!.id, toClaimId: b.id, toTokoh: tb!.id, type, letter: letter.trim() });
-                  toast(r.state === 'kanon' ? 'Kedua rumahmu kini tersambung.' : 'Ketukanmu sampai. Tunggu jawaban dari dalam rumah.');
+                  const r = await api.post<{ state: string; sampaiAt?: string }>('/kota/ketuk', { fromClaimId: from.id, fromTokoh: ta!.id, toClaimId: b.id, toTokoh: tb!.id, type, letter: letter.trim() });
+                  toast(r.state === 'kanon' ? 'Kedua rumahmu kini tersambung.' : `Bang Jamil mengantar suratmu ke ${b.household}; tiba ${waktuTiba(r.sampaiAt ?? new Date().toISOString())}.`);
                   navigate(`/kota/rumah/${b.id}`, { replace: true });
                 } catch (e) {
                   toast((e as Error).message);

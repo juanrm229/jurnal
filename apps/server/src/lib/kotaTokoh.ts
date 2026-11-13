@@ -3,6 +3,9 @@
  * hidup (bukan salinan pindahan, bukan figuran), ditambah figuran rumah lain yang ia pegang.
  */
 import { KOTA_ID, KOTA_MUSIM, KOTA_TERBENGKALAI_HARI, type KotaTokohku } from '@sehari/core';
+
+/** Jatah tokoh musim ini: tokoh dari rumah musim lalu tetap milikmu, tapi tidak dihitung. */
+export const jatahTokoh = (list: KotaTokohku[]) => list.filter((t) => (t.musim ?? KOTA_MUSIM) === KOTA_MUSIM).length;
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { Services } from '../context';
 import { schema } from '../db';
@@ -14,7 +17,7 @@ const plain = (e: { envelope: unknown }) => (e.envelope as { plain?: Plain }).pl
 
 /** Rumah aktif (belum terbengkalai) milik warga di musim ini. */
 export async function rumahHidup(s: Services, userId: string, db: Db = s.db) {
-  const rows = await db.select().from(cityClaims).where(and(eq(cityClaims.city, KOTA_ID), eq(cityClaims.season, KOTA_MUSIM), eq(cityClaims.status, 'aktif'), eq(cityClaims.ownerId, userId)));
+  const rows = await db.select().from(cityClaims).where(and(eq(cityClaims.city, KOTA_ID), eq(cityClaims.status, 'aktif'), eq(cityClaims.ownerId, userId)));
   if (!rows.length) return rows;
   const counts = await db
     .select({ msId: msScenes.msId, n: sql<number>`count(*)::int` })
@@ -44,11 +47,12 @@ export async function tokohku(s: Services, userId: string, db: Db = s.db): Promi
       const wakil = es.find((e) => e.id === kunci) ?? es[0]!;
       const p = plain(wakil)!;
       const c = claimOf(wakil.msId);
-      out.push({ id: wakil.id, claimId: c.id, household: c.household, name: p.name!, born: p.born, died: p.died, rumah: [...new Set(es.map((e) => claimOf(e.msId).id))] });
+      // Musim orang ini: musim terbaru di antara rumah-rumahnya (pindah ke musim baru memakai jatahnya).
+      out.push({ id: wakil.id, claimId: c.id, household: c.household, name: p.name!, born: p.born, died: p.died, rumah: [...new Set(es.map((e) => claimOf(e.msId).id))], musim: Math.max(...es.map((e) => claimOf(e.msId).season)) });
     }
   }
   const holds = await db
-    .select({ tokohId: cityHolds.tokohId, claimId: cityHolds.claimId, household: cityClaims.household, msId: cityClaims.msId })
+    .select({ tokohId: cityHolds.tokohId, claimId: cityHolds.claimId, household: cityClaims.household, msId: cityClaims.msId, season: cityClaims.season })
     .from(cityHolds)
     .innerJoin(cityClaims, eq(cityClaims.id, cityHolds.claimId))
     .where(and(eq(cityHolds.requesterId, userId), eq(cityHolds.state, 'pegang'), eq(cityClaims.status, 'aktif')));
@@ -56,7 +60,7 @@ export async function tokohku(s: Services, userId: string, db: Db = s.db): Promi
     const canon = await db.select().from(msCanon).where(inArray(msCanon.id, holds.map((h) => h.tokohId)));
     for (const h of holds) {
       const p = plain(canon.find((e) => e.id === h.tokohId) ?? { envelope: {} });
-      out.push({ id: h.tokohId, claimId: h.claimId, household: h.household, name: p?.name ?? 'tokoh', born: p?.born, died: p?.died, dipegang: true, rumah: [h.claimId] });
+      out.push({ id: h.tokohId, claimId: h.claimId, household: h.household, name: p?.name ?? 'tokoh', born: p?.born, died: p?.died, dipegang: true, rumah: [h.claimId], musim: h.season });
     }
   }
   return out;

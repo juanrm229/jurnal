@@ -2,7 +2,7 @@
 import { KOTA_HUBUNGAN, KOTA_HUBUNGAN_IDS, NASKAH_BENTUK, type KotaHubungan, type KotaPegangWire, type KotaRelasiWire, type KotaTautanWire, kotaPlot, kotaRegion } from '@sehari/core';
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useNamaKota, useTautan } from '@/lib/kota';
+import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useNamaKota, useTautan, waktuTiba } from '@/lib/kota';
 import { firstLine, type NaskahModel, povColor, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
@@ -250,7 +250,7 @@ function Tautan({ c, t, reload }: { c: { id: string; mine: boolean }; t: KotaTau
         const k = kalimat(r, t, c.id);
         return (
           <article key={r.id} className="kr-ketukan keluar">
-            <span className="kp-musim">{r.state === 'usul' ? 'usul balik untukmu' : 'ketukanmu menunggu'}</span>
+            <span className="kp-musim">{r.state === 'usul' ? 'usul balik untukmu' : r.sampaiAt && new Date(r.sampaiAt) > new Date() ? `Bang Jamil masih di jalan · tiba ${waktuTiba(r.sampaiAt)}` : 'ketukanmu sudah sampai, menunggu jawaban'}</span>
             <p className="kr-ketukan-k">
               {k.aku} sebagai {r.state === 'usul' && r.counter ? <b>{KOTA_HUBUNGAN[r.counter].label}</b> : <b>{k.jenis}</b>} dari {k.dia} · {k.rumah}
             </p>
@@ -365,7 +365,7 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
               </button>
             ) : !c.mine && !held ? (
               mintaku ? (
-                <span className="tiny soft">permintaanmu menunggu</span>
+                <span className="tiny soft">{mintaku.sampaiAt && new Date(mintaku.sampaiAt) > new Date() ? `suratmu tiba ${waktuTiba(mintaku.sampaiAt)}` : 'permintaanmu menunggu'}</span>
               ) : (
                 <button className="pill sm" onClick={() => setMinta(t.id)} data-testid="kota-pegang-minta">
                   minta memegang
@@ -402,8 +402,8 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
             disabled={surat.trim().length < 10}
             onClick={async () => {
               try {
-                await api.post('/kota/pegang', { claimId: c.id, tokohId: minta, letter: surat.trim() });
-                toast('Suratmu terkirim ke pemilik rumah.');
+                const r = await api.post<{ sampaiAt?: string }>('/kota/pegang', { claimId: c.id, tokohId: minta, letter: surat.trim() });
+                toast(`Bang Jamil mengantar suratmu; tiba ${waktuTiba(r.sampaiAt ?? new Date().toISOString())}.`);
                 setMinta(null);
                 setSurat('');
                 reload();

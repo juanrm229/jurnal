@@ -21,9 +21,9 @@ import {
   kotaDariKota,
   kotaRegion,
 } from '@sehari/core';
-import { type CSSProperties, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, Fragment, type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
-import { tanggal, useAlmanak, useKota, useNamaKota, usePegangan, usePena, useRumahNaskah, useTautan } from '@/lib/kota';
+import { tanggal, useAlmanak, useIngatan, useKota, useNamaKota, usePegangan, usePena, useRumahNaskah, useTautan } from '@/lib/kota';
 import { firstLine, tglPanjang, type NaskahModel, povColor, type Scene, useNaskah, useNaskahModel } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
@@ -115,12 +115,24 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   // Tokoh pindahan: rumah-rumahnya yang lain di zaman sebelum (atau semasa) adegan ini.
   const kotaQ = useKota();
   const kunci = m.canon.find((e) => e.id === pov)?.p.asal?.tokohId ?? pov;
+  // Rumah-rumah orang ini: dari daftar tokohmu (selalu segar), atau indeks nama kota.
+  const rumahOrang = kotaQ.data?.me.tokohku.find((x) => x.id === kunci)?.rumah ?? nama.data?.find((n) => n.tokohId === kunci)?.rumah ?? [];
   const rumahLama = kota
-    ? (nama.data?.find((n) => n.tokohId === kunci)?.rumah ?? [])
+    ? rumahOrang
         .filter((id) => id !== claimId)
         .map((id) => kotaQ.data?.claims.find((c) => c.id === id))
         .filter((c): c is NonNullable<typeof c> => !!c && (!tahun || c.from <= tahun))
     : [];
+  const ingatan = useIngatan(rumahLama, kunci, tahun);
+  // Yang sudah ia ketahui di rumah lamanya (nama atau sebutan sama) tidak lagi ditandai "belum tahu".
+  const diingat = new Set(ingatan.flatMap((x) => [...x.tahu, ...x.mengira]).flatMap((e) => [e.p.name, ...e.p.aliases].map((n) => n.toLowerCase())));
+  const tampil = shown.filter((w) => !(w.kind === 'belum' && w.entry && [w.entry.p.name, ...w.entry.p.aliases].some((n) => diingat.has(n.toLowerCase()))));
+  const spans: Span[] = [
+    ...cekKota.filter((w) => cekShown.some((x) => x.kind === w.kind && x.term === w.term)).map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'rumah-lain' ? 'w-rumah' : w.kind === 'figur-waktu' ? 'w-zaman' : 'm-jumpa' })),
+    ...tampil.map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'belum' ? 'w-belum' : 'w-zaman' })),
+    ...naskahMentions(text, view.tahu).map((x) => ({ ...x, cls: 'm-tahu' })),
+    ...naskahMentions(text, view.mengira).map((x) => ({ ...x, cls: 'm-kira' })),
+  ];
   // Waktu adegan: kilas balik, usia tokoh, dan masa rumah.
   const tahunAdegan = naskahYear(sortOk ? sort : '');
   const kilas = useMemo(
@@ -131,23 +143,23 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const usia = naskahUsia(povEntri?.p, tahunAdegan);
   const luarRumah = !!(kota && rumah.data && tahunAdegan && (tahunAdegan < rumah.data.from || tahunAdegan > rumah.data.to));
   const rumahSaatItu = luarRumah
-    ? (nama.data?.find((n) => n.tokohId === kunci)?.rumah ?? [])
+    ? rumahOrang
         .filter((id) => id !== claimId)
         .map((id) => kotaQ.data?.claims.find((c) => c.id === id))
         .find((c) => !!c && c.from <= tahunAdegan! && c.to >= tahunAdegan!)
     : undefined;
+  // Kesaksian: "mengalami" hanya bila rumah berdiri di tahun dan wilayah peristiwa (diperiksa juga di server).
+  const pilihan = kanonKota.find((e) => e.id === peristiwa);
+  const bisaMengalami = !pilihan || !rumah.data || (rumah.data.from <= (pilihan.toYear ?? pilihan.year) && rumah.data.to >= pilihan.year && (!pilihan.regions.length || pilihan.regions.includes(rumah.data.regionId)));
+  useEffect(() => {
+    if (!bisaMengalami && saksi === 'mengalami') setSaksi('mendengar');
+  }, [bisaMengalami, saksi]);
   const figurNama = (fid: string) => nama.data?.find((n) => n.figurId === fid)?.name ?? 'figuran kota';
   const kenal = useMemo(() => {
     const ids = new Set<string>();
     for (const x of m.scenes) if (x.id !== s.id && x.p?.pov === pov && x.p.jumpa?.length && chrono[x.id]! < at) x.p.jumpa.forEach((j) => ids.add(j));
     return [...ids];
   }, [m.scenes, s.id, pov, chrono, at]);
-  const spans: Span[] = [
-    ...cekKota.filter((w) => cekShown.some((x) => x.kind === w.kind && x.term === w.term)).map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'rumah-lain' ? 'w-rumah' : w.kind === 'figur-waktu' ? 'w-zaman' : 'm-jumpa' })),
-    ...shown.map((w) => ({ at: w.at, end: w.end, cls: w.kind === 'belum' ? 'w-belum' : 'w-zaman' })),
-    ...naskahMentions(text, view.tahu).map((x) => ({ ...x, cls: 'm-tahu' })),
-    ...naskahMentions(text, view.mengira).map((x) => ({ ...x, cls: 'm-kira' })),
-  ];
 
   /**
    * Terbit: tokoh rumah lain yang belum tertaut tidak boleh masuk kanon diam-diam.
@@ -317,12 +329,16 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
                   ))}
               </select>
               {peristiwa ? (
-                <div className="row" style={{ gap: 6 }}>
-                  {(['mengalami', 'mendengar'] as const).map((k) => (
-                    <button key={k} className={`pill sm ${saksi === k ? 'active' : ''}`} onClick={() => setSaksi(k)}>
-                      {k}
-                    </button>
-                  ))}
+                <div className="col" style={{ gap: 4 }}>
+                  <div className="row" style={{ gap: 6 }}>
+                    {(['mengalami', 'mendengar'] as const).map((k) => (
+                      <button key={k} className={`pill sm ${saksi === k ? 'active' : ''}`} disabled={k === 'mengalami' && !bisaMengalami} onClick={() => setSaksi(k)}>
+                        {k}
+                      </button>
+                    ))}
+                  </div>
+                  {!bisaMengalami ? <span className="tiny soft">Rumah ini tidak berdiri di tempat atau tahun peristiwa itu, jadi tokohnya hanya bisa mendengar kabarnya.</span> : null}
+                  {saksi === 'mendengar' && pilihan && tahunAdegan && tahunAdegan < pilihan.year ? <span className="tiny nk-salah">Kabarnya baru ada sejak {pilihan.year}; ubah tanggal adegan.</span> : null}
                 </div>
               ) : null}
             </div>
@@ -380,7 +396,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
         </div>
       </article>
 
-      {lens && (shown.length || cekShown.length) ? (
+      {lens && (tampil.length || cekShown.length) ? (
         <section className="nk-coretan" aria-label="catatan pinggir">
           {cekShown.map((w) => (
             <CatatanKota
@@ -393,7 +409,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
               onBiar={() => setDismissed([...dismissed, `kota:${w.kind}:${w.term.toLowerCase()}`])}
             />
           ))}
-          {shown.map((w, i) => (
+          {tampil.map((w, i) => (
             <div key={`${w.kind}-${w.at}-${i}`} className={`nk-coret ${w.kind}`}>
               <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true">
                 <path d="M4 2 C 4 12, 8 16, 18 18 M14 14 L18 18 L13 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -465,8 +481,11 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
                 </dd>
               </>
             ) : null}
-            {rumahLama.map((c) => (
-              <IngatanLama key={c.id} msId={c.msId} household={c.household} kunci={kunci} sampai={Math.min(tahun ?? c.to, c.to)} />
+            {ingatan.map((x) => (
+              <Fragment key={x.id}>
+                <dt>ingat dari {x.household}</dt>
+                <dd data-testid="nk-ingat">{x.tahu.length || x.mengira.length ? [...x.tahu.map((e) => e.p.name), ...x.mengira.map((e) => `${e.p.name} (mengira)`)].join(' · ') : <i>belum ada yang dicatat di sana</i>}</dd>
+              </Fragment>
             ))}
             {dariKota ? (
               <>
@@ -627,19 +646,3 @@ function CatatanKota({ w, tahun, mine, onDesas, onJumpa, onBiar }: { w: KotaCekN
   );
 }
 
-/** Ingatan tokoh pindahan dari rumahnya yang lain: yang ia tahu di sana, sampai tahun adegan ini. */
-function IngatanLama({ msId, household, kunci, sampai }: { msId: string; household: string; kunci: string; sampai: number }) {
-  const q = useNaskah(msId);
-  const m2 = useNaskahModel(q.data);
-  if (!m2) return null;
-  const diri = m2.canon.find((e) => e.p.kind === 'tokoh' && (e.id === kunci || e.p.asal?.tokohId === kunci));
-  if (!diri) return null;
-  const v = naskahKacamata(diri.id, `${sampai}~9999`, m2.canon, m2.chrono);
-  const ingat = [...v.tahu, ...v.mengira];
-  return (
-    <>
-      <dt>ingat dari {household}</dt>
-      <dd data-testid="nk-ingat">{ingat.length ? ingat.map((e) => `${e.p.name}${v.mengira.includes(e) ? ' (mengira)' : ''}`).join(' · ') : <i>belum ada yang dicatat di sana</i>}</dd>
-    </>
-  );
-}

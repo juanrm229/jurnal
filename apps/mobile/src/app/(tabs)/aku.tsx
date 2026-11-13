@@ -1,6 +1,8 @@
 import { getCity, limitsFor, zoneLabel } from '@sehari/core';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { View } from 'react-native';
+import { API_URL } from '@/lib/api';
 import { useMe } from '@/lib/data';
 import { useSession } from '@/lib/session';
 import { Avatar } from '@/ui/Avatar';
@@ -54,6 +56,11 @@ export default function MeTab() {
         <ListItem icon="kado" title="Hadiah & kode" subtitle="hadiahkan Plus atau tukar kode" onPress={() => router.push('/aku/hadiah')} />
         <ListItem icon="tiket" title="Pesanan" onPress={() => router.push('/aku/pesanan')} />
       </Section>
+      <Section title="menulis">
+        {/* Kota Sangkala belum ada di aplikasi ini; dibuka di aplikasi web Sehari (server yang sama). */}
+        <ListItem icon="rumah" title="Kota Sangkala" subtitle="patok rumah dan tulis tokohmu · dibuka di web" onPress={() => void WebBrowser.openBrowserAsync(`${API_URL}/kota`).catch(() => {})} testID="kota-web" />
+      </Section>
+
       <Section title="lainnya">
         <ListItem icon="lilin" title="Bantuan & dukungan" subtitle="kalau hari terasa terlalu berat" onPress={() => router.push('/bantuan')} />
         <ListItem icon="ui-bendera-lapor" title="Diblokir" onPress={() => router.push('/aku/blokir')} />

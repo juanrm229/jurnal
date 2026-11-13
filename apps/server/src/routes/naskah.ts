@@ -9,6 +9,8 @@ import {
   naskahBody,
   naskahCanonBody,
   KOTA_TOKOH_MAKS,
+  KOTA_MUSIM,
+  KOTA_ALMANAK_AWAL,
   kotaHidupDi,
   naskahCanonPatch,
   naskahMetaBody,
@@ -25,9 +27,9 @@ import { type AppEnv, body, type Services } from '../context';
 import { schema } from '../db';
 import { pushTo, requireMember } from '../lib/domain';
 import { bad, conflict, forbidden, notFound } from '../lib/errors';
-import { rumahLowong, rumahTokoh, tokohku } from '../lib/kotaTokoh';
+import { jatahTokoh, rumahLowong, rumahTokoh, tokohku } from '../lib/kotaTokoh';
 
-const { manuscripts, msScenes, msVersions, msCanon, msWorks, circleMembers, cityClaims, cityHolds, cityRelations } = schema;
+const { manuscripts, msScenes, msVersions, msCanon, msWorks, circleMembers, cityClaims, cityHolds, cityRelations, cityEvents } = schema;
 type WorkRow = typeof msWorks.$inferSelect;
 type MsRow = typeof manuscripts.$inferSelect;
 type SceneRow = typeof msScenes.$inferSelect;
@@ -123,6 +125,50 @@ export function naskahRoutes(s: Services) {
   const ownerOnlyKota = (ms: MsRow, userId: string) => {
     if (ms.visibility === 'kota' && ms.ownerId !== userId) throw forbidden('Rak karya rumah ini diatur oleh pemiliknya.');
   };
+  /**
+   * Kesaksian peristiwa kota harus masuk akal: "mengalami" hanya bila rumahnya berdiri di
+   * tahun itu dan di wilayah yang terkena; "mendengar" tidak boleh sebelum peristiwanya terjadi.
+   */
+  const cekKesaksian = async (ms: MsRow, env: unknown) => {
+    if (ms.visibility !== 'kota') return;
+    const p = (env as { plain?: { peristiwa?: string; saksi?: string; when?: { sort?: string } } }).plain;
+    if (!p?.peristiwa) return;
+    const awal = KOTA_ALMANAK_AWAL.find((e) => e.id === p.peristiwa);
+    const [db] = awal ? [] : await s.db.select().from(cityEvents).where(and(eq(cityEvents.id, p.peristiwa), eq(cityEvents.state, 'kanon')));
+    const e = awal ?? (db ? { title: db.title, year: db.year, toYear: db.toYear ?? undefined, regions: db.regions } : null);
+    if (!e) throw bad('peristiwa', 'Peristiwa itu belum tercatat di almanak.');
+    const [rumah] = await s.db.select().from(cityClaims).where(eq(cityClaims.msId, ms.id));
+    if (!rumah) return;
+    const akhir = e.toYear ?? e.year;
+    if (p.saksi === 'mengalami') {
+      if (rumah.fromYear > akhir || rumah.toYear < e.year) throw bad('saksi', `Rumah ini berdiri ${rumah.fromYear}–${rumah.toYear}, jadi tidak mengalami ${e.title} (${e.year}). Tandai sebagai mendengar.`);
+      if (e.regions.length && !e.regions.includes(rumah.regionId)) throw bad('saksi', `${e.title} tidak terjadi di wilayah rumah ini. Tandai sebagai mendengar.`);
+    }
+    const tahun = Number(p.when?.sort?.slice(0, 4)) || null;
+    if (p.saksi === 'mendengar' && tahun && tahun < e.year) throw bad('saksi', `Kabar ${e.title} baru ada sejak ${e.year}; adegan ini bertahun ${tahun}.`);
+  };
+  /** Sebutan desas-desus: kabari pemilik tokoh rumah lain yang namanya disebut, sekali per adegan. */
+  const kabariDesas = async (ms: MsRow, sceneId: string, env: unknown, penulis: string) => {
+    if (ms.visibility !== 'kota') return;
+    const desas = (env as { plain?: { desas?: string[] } }).plain?.desas ?? [];
+    if (!desas.length) return;
+    const [rumah] = await s.db.select().from(cityClaims).where(eq(cityClaims.msId, ms.id));
+    if (!rumah) return;
+    const lain = await s.db.select().from(cityClaims).where(and(eq(cityClaims.status, 'aktif'), sql`${cityClaims.ownerId} <> ${penulis}`));
+    if (!lain.length) return;
+    const tokoh = await s.db.select().from(msCanon).where(and(inArray(msCanon.msId, lain.map((x) => x.msId)), eq(msCanon.kind, 'tokoh')));
+    const kena = new Map<string, { claimId: string; nama: string }>();
+    for (const e of tokoh) {
+      const nama = tokohPlain(e.envelope)?.name;
+      const c = lain.find((x) => x.msId === e.msId);
+      if (nama && c && desas.some((d) => d.toLowerCase() === nama.toLowerCase())) kena.set(c.ownerId, { claimId: c.id, nama });
+    }
+    for (const [owner, k] of kena) {
+      const [baru] = await s.db.insert(schema.notificationLog).values({ key: `kota-desas:${sceneId}:${owner}` }).onConflictDoNothing().returning();
+      if (baru) void pushTo(s, [owner], { body: `${rumah.household} menyebut ${k.nama} sebagai desas-desus. Ingin menjadikannya kanon? Ketuk pintunya.`, data: { type: 'kota', claimId: rumah.id } }).catch(() => {});
+    }
+  };
+  const musimRumah = async (msId: string) => (await s.db.select({ season: cityClaims.season }).from(cityClaims).where(eq(cityClaims.msId, msId)))[0]?.season ?? KOTA_MUSIM;
   type TokohPlain = { name?: string; aliases?: string[]; peran?: string; born?: number; died?: number; asal?: { claimId: string; tokohId: string } };
   const tokohPlain = (env: unknown) => (env && typeof env === 'object' && 'plain' in env ? ((env as { plain?: TokohPlain }).plain ?? null) : null);
   /** Rumah kota menyimpan isi terbuka; naskah privat wajib terenkripsi. */
@@ -211,6 +257,7 @@ export function naskahRoutes(s: Services) {
     const ms = await mine(c.req.param('id'), user.id);
     envFor(ms, input.envelope);
     await povOk(ms, user.id, input.envelope);
+    await cekKesaksian(ms, input.envelope);
     if (input.status === 'terbit' && ms.visibility === 'kota' && (await rumahLowong(s, ms.id))) throw conflict('lowong', 'Rumah ini sudah kembali lowong karena lewat masa fondasi tanpa adegan terbit. Patok ulang persilnya dari peta.');
     const [n] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msScenes).where(eq(msScenes.msId, ms.id));
     if ((n?.n ?? 0) >= 2000) throw bad('full', 'Naskah ini sudah terlalu panjang.');
@@ -224,6 +271,7 @@ export function naskahRoutes(s: Services) {
       const version = await snapshot(row, input.envelope, now);
       await s.db.update(msScenes).set({ version }).where(eq(msScenes.id, row.id));
       void kabar(ms, user.id, `${user.penName ?? 'Seseorang'} menerbitkan adegan baru.`);
+      void kabariDesas(ms, input.id, input.envelope, user.id).catch(() => {});
     }
     return c.json(await send(await touch(ms), user.id), 201);
   });
@@ -233,7 +281,7 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const input = await body(c, naskahScenePatch);
     const ms = await mine(c.req.param('id'), user.id);
-    if (input.envelope) (envFor(ms, input.envelope), await povOk(ms, user.id, input.envelope));
+    if (input.envelope) (envFor(ms, input.envelope), await povOk(ms, user.id, input.envelope), await cekKesaksian(ms, input.envelope));
     const [sc] = await s.db.select().from(msScenes).where(and(eq(msScenes.id, c.req.param('sid')), eq(msScenes.msId, ms.id)));
     if (!sc || (sc.status === 'draf' && sc.authorId !== user.id)) throw notFound('Adegan tidak ditemukan.');
     if ((input.envelope || input.status || input.workId !== undefined) && sc.authorId !== user.id) throw forbidden('Adegan ini milik penulis lain. Beri saran lewat catatan.');
@@ -249,6 +297,7 @@ export function naskahRoutes(s: Services) {
       .set({ workId, chapter: input.chapter ?? sc.chapter, order: input.order ?? sc.order, status, envelope, version, ...(input.envelope || input.status ? { updatedAt: now } : {}) })
       .where(eq(msScenes.id, sc.id));
     if (status === 'terbit' && sc.status !== 'terbit') void kabar(ms, user.id, `${user.penName ?? 'Seseorang'} menerbitkan adegan baru.`);
+    if (status === 'terbit') void kabariDesas(ms, sc.id, envelope, user.id).catch(() => {});
     return c.json(await send(await touch(ms), user.id));
   });
 
@@ -327,7 +376,8 @@ export function naskahRoutes(s: Services) {
       const p = tokohPlain(input.envelope);
       if (p?.asal) throw bad('asal', 'Tokoh pindahan dibawa lewat patok rumah, bukan dibuat di Kanon.');
       if (ms.ownerId !== user.id) throw forbidden('Tokoh rumah ini dibuat oleh pemiliknya.');
-      if (p?.peran !== 'figuran' && (await tokohku(s, user.id)).length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh di kota. Jadikan figuran rumah, atau pindahkan tokohmu ke rumah ini lewat patok.`);
+      if (p?.peran !== 'figuran' && (await musimRumah(ms.id)) !== KOTA_MUSIM) throw conflict('musim', 'Rumah dari musim lalu tetap bisa ditulis, tapi tokoh utama baru hanya di rumah musim ini. Tambahkan sebagai figuran, atau pindahkan tokohmu lewat patok.');
+      if (p?.peran !== 'figuran' && jatahTokoh(await tokohku(s, user.id)) >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh di kota. Jadikan figuran rumah, atau pindahkan tokohmu ke rumah ini lewat patok.`);
     }
     const now = s.now();
     await s.db.insert(msCanon).values({ id: input.id, msId: ms.id, kind: input.kind, authorId: user.id, updatedBy: user.id, envelope: input.envelope, createdAt: now, updatedAt: now }).onConflictDoNothing();
@@ -352,7 +402,8 @@ export function naskahRoutes(s: Services) {
         if (h) throw forbidden('Peran tokoh diatur pemilik rumah.');
         const [dipegang] = await s.db.select({ id: cityHolds.id }).from(cityHolds).where(and(eq(cityHolds.tokohId, e.id), eq(cityHolds.state, 'pegang')));
         if (dipegang) throw conflict('dipegang', 'Tokoh ini sedang dipegang penulis lain; perannya tetap figuran sampai dilepas.');
-        if (!baru?.asal && baru?.peran !== 'figuran' && (await tokohku(s, user.id)).length >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh di kota; tokoh ini tetap figuran.`);
+        if (!baru?.asal && baru?.peran !== 'figuran' && (await musimRumah(ms.id)) !== KOTA_MUSIM) throw conflict('musim', 'Di rumah musim lalu, figuran tidak bisa dinaikkan jadi tokoh utama.');
+        if (!baru?.asal && baru?.peran !== 'figuran' && jatahTokoh(await tokohku(s, user.id)) >= KOTA_TOKOH_MAKS) throw conflict('tokoh', `Kamu sudah memakai ${KOTA_TOKOH_MAKS} tokoh di kota; tokoh ini tetap figuran.`);
       }
       if (baru?.asal) {
         // Pindahan: nama dan masa hidup selalu mengikuti tokoh aslinya.

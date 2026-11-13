@@ -168,3 +168,16 @@ Pertanyaan pokoknya: kalau sebuah kisah memakai tokoh yang tidak dipatok siapa p
 - Kacamata Tokoh menghitung yang diketahui tokoh **pada tanggal adegan**, jadi kilas balik tidak membocorkan hal yang baru ia ketahui kemudian.
 - Editor memeriksa: tokoh sudut pandang belum lahir atau sudah wafat pada tahun itu (sarankan menulis dari tokoh yang mengingat, bertanggal saat ia mengingat); adegan di luar masa rumah; dan bila pada tahun itu tokoh tinggal di rumahmu yang lain, menawarkan "tulis di sana" supaya kanonnya berada di alamat yang benar.
 - Tokoh rumah lain yang muncul dalam kilas balik tetap mengikuti aturan ketuk atau desas-desus.
+
+### Kota yang hidup (lapisan imersif)
+
+- **Lampu jendela**: di kertas malam atau senja (atau tombol ☾ di penggeser zaman), peta Sangkala menggelap dan rumah yang penulisnya menulis dalam 24 jam terakhir menyala. Yang terlihat hanya "ada yang terjaga", tidak pernah isinya.
+- **Lonceng ketujuh**: sekali sehari pukul 19.00 waktu setempat, warga kota menerima satu kabar ringkas (rumah baru, adegan terbit, ikatan kanon, dan surat yang menunggu di pintunya). Tidak dikirim bila kota sunyi; mengikuti pengaturan notifikasi aktivitas.
+- **Pos Sangkala**: surat ketukan dan permintaan memegang figuran diantar Bang Jamil. Lama antarnya mengikuti jarak di peta (15 menit + setengah menit per satuan peta, tambah 3 jam ke pulau, paling lama 16 jam). Tuan rumah baru melihat dan bisa menjawab setelah surat sampai, dan dikabari saat itu. Surat-surat ini tampil di **Kotak Surat** (bagian "surat dari/ke Sangkala") berprangko Pos Sangkala.
+- **Nama pena** bisa diganti dari Meja Tulis, sekali per 30 hari; nama lama tercatat dan ditampilkan.
+- **Musim**: rumah dari musim lalu tetap berdiri dan bisa terus ditulis, tapi tidak memakai jatah musim baru dan hanya bisa menambah figuran. Tokoh yang pindah ke rumah musim baru memakai jatah musim itu.
+- **Kesaksian** diperiksa server: "mengalami" hanya bila rumah berdiri di tahun dan wilayah peristiwa; "mendengar" tidak sebelum peristiwanya terjadi.
+- **Desas-desus dikabari**: pemilik tokoh yang disebut sebagai desas-desus di rumah lain mendapat notifikasi, dengan ajakan mengetuk untuk menjadikannya kanon.
+- **Ingatan rumah lama** meredam peringatan "belum tahu" untuk hal yang sudah diketahui tokoh pindahan di rumahnya yang lain.
+- **Moderasi**: tim meninjau rumah yang dilaporkan lewat `GET /admin/kota/laporan` dan memutuskan `PATCH /admin/kota/claims/:id` (`pulihkan` atau `tutup`), dengan ADMIN_TOKEN.
+- **Aplikasi HP**: menu Aku → Kota Sangkala membuka Kota di aplikasi web.

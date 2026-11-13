@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client, setup } from './helpers';
+import { antarSuratKota } from '../src/lib/kotaPos';
+import { loncengKetujuh } from '../src/lib/kotaLonceng';
 
 let env: Awaited<ReturnType<typeof setup>>;
 let raka: Client;
@@ -46,7 +48,7 @@ describe('kota sehari', () => {
     expect((await patok(naya, 'lorongsumbu.12', 1995, 2030, 'Keluarga Wirya')).status).toBe(201);
     const kota = await sari.ok('GET', '/v1/kota');
     expect(kota.claims.map((x: any) => [x.household, x.penName])).toEqual(expect.arrayContaining([['Keluarga Darmo', 'padiwangi'], ['Keluarga Wirya', 'lampukamis']]));
-    expect(kota.me).toEqual({ penName: 'sari.kali', patok: { pakai: 0, maks: 3 }, tokoh: { pakai: 0, maks: 3 }, tokohku: [] });
+    expect(kota.me).toEqual({ penName: 'sari.kali', penaLama: [], penaBolehGanti: null, patok: { pakai: 0, maks: 3 }, tokoh: { pakai: 0, maks: 3 }, tokohku: [] });
     expect((await raka.ok('GET', '/v1/kota')).me.tokohku.map((x: any) => x.name)).toEqual(['Kepala Keluarga Darmo']);
   });
 
@@ -101,6 +103,14 @@ describe('kota sehari', () => {
     const k = await ketuk(naya, laras, 'tLaras1977', darmo, 'tPakDarmo1921', 'anak');
     expect(k.status).toBe(201);
     expect((await ketuk(naya, laras, 'tLaras1977', darmo, 'tPakDarmo1921', 'teman')).status).toBe(409);
+    // Pos Sangkala: surat masih diantar Bang Jamil; tuan rumah belum melihat dan belum bisa menjawab.
+    expect(k.json.sampaiAt).toBeTruthy();
+    expect((await raka.ok('GET', `/v1/kota/claims/${darmo.id}/tautan`)).relations).toHaveLength(0);
+    expect((await raka.req('PUT', `/v1/kota/ketuk/${k.json.id}`, { action: 'kanon' })).status).toBe(409);
+    expect((await naya.ok('GET', '/v1/kota/surat'))[0]).toMatchObject({ jenis: 'ketuk', arah: 'keluar', sampai: false });
+    expect(await raka.ok('GET', '/v1/kota/surat')).toHaveLength(0);
+    env.advanceDays(1);
+    expect((await raka.ok('GET', '/v1/kota/surat'))[0]).toMatchObject({ jenis: 'ketuk', arah: 'masuk', sampai: true, dari: 'Laras · Kos Laras' });
     // Warga lain belum melihat ketukan yang menunggu; pemilik melihat suratnya.
     expect((await sari.ok('GET', `/v1/kota/claims/${darmo.id}/tautan`)).relations).toHaveLength(0);
     expect((await raka.ok('GET', `/v1/kota/claims/${darmo.id}/tautan`)).relations[0].letter).toMatch(/Laras/);
@@ -209,6 +219,8 @@ describe('kota sehari', () => {
     const minta = await tono.ok('POST', '/v1/kota/pegang', { claimId: rumahRaka.id, tokohId: 'tBuSri00001', letter: 'Aku ingin menulis Bu Sri dari mesin jahitnya.' });
     expect((await tono.req('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'sri00001x', chapter: 1, order: 9, envelope: { plain: { v: 1, pov: 'tBuSri00001', when: { label: '', sort: '' }, text: 'x' } } })).status).toBe(404);
     expect((await tono.req('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'terima' })).status).toBe(403);
+    expect((await raka.req('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'terima' })).status).toBe(409);
+    env.advanceDays(1);
     await raka.ok('PUT', `/v1/kota/pegang/${minta.id}`, { action: 'terima' });
     // Pemegang menulis dari Bu Sri, tapi tidak dari Pak Darmo, dan tidak mengubah kanon Pak Darmo.
     await tono.ok('POST', `/v1/naskah/${rumahRaka.msId}/scenes`, { id: 'sri00001x', chapter: 1, order: 9, envelope: { plain: { v: 1, pov: 'tBuSri00001', when: { label: '', sort: '' }, text: 'Mesin jahit berhenti.' } } });
@@ -247,6 +259,7 @@ describe('kota sehari', () => {
 
   it('kabar kota dan silsilah orang yang sama', async () => {
     // Bima menerima ketukan Ana: ikatan kanon masuk kabar. Rumah yang lewat masa fondasi tidak.
+    env.advanceDays(1);
     const rumahBima = (await bima.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine);
     const ketukan = (await bima.ok('GET', `/v1/kota/claims/${rumahBima.id}/tautan`)).relations.find((x: any) => x.state === 'ketuk');
     await bima.ok('PUT', `/v1/kota/ketuk/${ketukan.id}`, { action: 'kanon' });
@@ -264,5 +277,52 @@ describe('kota sehari', () => {
     const sil = await sari.ok('GET', `/v1/kota/silsilah/${dinas.id}`);
     expect(sil.sama).toEqual([{ a: dinas.id, b: darmo.id, tokoh: 'Pak Darmo' }]);
     expect(sil.claims.map((x: any) => x.household)).toEqual(expect.arrayContaining(['Rumah Dinas', 'Keluarga Darmo']));
+  });
+
+  it('ganti nama pena, pos sangkala di penjadwal, dan lonceng ketujuh', async () => {
+    await tono.ok('PUT', '/v1/kota/profil', { penName: 'tono.baru' });
+    const me = (await tono.ok('GET', '/v1/kota')).me;
+    expect(me).toMatchObject({ penName: 'tono.baru', penaLama: ['tono'] });
+    expect(me.penaBolehGanti).toBeTruthy();
+    expect((await tono.req('PUT', '/v1/kota/profil', { penName: 'tono.lagi' })).status).toBe(409);
+    expect((await sari.req('PUT', '/v1/kota/profil', { penName: 'tono.baru' })).status).toBe(409);
+    env.advanceDays(31);
+    await tono.ok('PUT', '/v1/kota/profil', { penName: 'tono' });
+    expect((await tono.ok('GET', '/v1/kota')).me.penaLama).toEqual(['tono.baru']);
+    // Penjadwal: surat yang sudah sampai dikabari sekali saja.
+    const pertama = await antarSuratKota(env.services);
+    expect(await antarSuratKota(env.services)).toBe(0);
+    expect(pertama).toBeGreaterThanOrEqual(0);
+    // Lonceng ketujuh: sekali sehari per warga, mulai pukul 19.
+    const keys: string[] = [];
+    const once = async (k: string) => (keys.includes(k) ? false : (keys.push(k), true));
+    const u = { id: (await tono.ok('GET', '/v1/me')).user.id };
+    await loncengKetujuh(env.services, u, '2026-12-01', 18, once);
+    expect(keys).toHaveLength(0);
+    await loncengKetujuh(env.services, u, '2026-12-01', 19, once);
+    await loncengKetujuh(env.services, u, '2026-12-01', 20, once);
+    expect(keys).toEqual([`lonceng:${u.id}:2026-12-01`]);
+  });
+
+  it('moderasi, validasi kesaksian, dan kabar desas-desus', async () => {
+    const admin = (method: string, path: string, body?: unknown) => env.app.request(path, { method, headers: { 'x-admin-token': 'admin', 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    expect((await env.app.request('/admin/kota/laporan')).status).toBe(401);
+    const antrean = await (await admin('GET', '/admin/kota/laporan')).json();
+    const wirya = antrean.find((x: any) => x.household === 'Keluarga Wirya');
+    expect(wirya).toMatchObject({ status: 'disembunyikan' });
+    expect(wirya.laporan).toHaveLength(3);
+    await admin('PATCH', `/admin/kota/claims/${wirya.id}`, { aksi: 'pulihkan' });
+    expect((await sari.ok('GET', '/v1/kota')).claims.some((x: any) => x.id === wirya.id)).toBe(true);
+    await admin('PATCH', `/admin/kota/claims/${wirya.id}`, { aksi: 'tutup' });
+    expect((await sari.ok('GET', '/v1/kota')).claims.some((x: any) => x.id === wirya.id)).toBe(false);
+    // Kesaksian: rumah Ana (1960–1990) tidak mengalami Telaga Mangu digali (1925), dan tidak bisa mendengarnya sebelum terjadi.
+    const rumahAna = (await ana.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine && x.state === 'aktif');
+    const saksi = (id: string, saksi: string, sort: string) => ({ id, chapter: 2, order: 1, status: 'draf', envelope: { plain: { v: 1, pov: 'tAnaUtama01', when: { label: '', sort }, text: 'Kabar dari telaga.', peristiwa: 'awal.telaga', saksi } } });
+    const awal = (await sari.ok('GET', '/v1/kota/almanak')).find((e: any) => e.year === 1925);
+    const s2 = (id: string, kind: string, sort: string) => ({ ...saksi(id, kind, sort), envelope: { plain: { ...saksi(id, kind, sort).envelope.plain, peristiwa: awal.id } } });
+    expect((await ana.req('POST', `/v1/naskah/${rumahAna.msId}/scenes`, s2('saksi0002x', 'mengalami', '1925'))).status).toBe(400);
+    expect((await ana.req('POST', `/v1/naskah/${rumahAna.msId}/scenes`, s2('saksi0003x', 'mendengar', '1920'))).status).toBe(400);
+    await ana.ok('POST', `/v1/naskah/${rumahAna.msId}/scenes`, s2('saksi0004x', 'mendengar', '1965'));
+    expect((await ana.req('POST', `/v1/naskah/${rumahAna.msId}/scenes`, { ...s2('saksi0005x', 'mendengar', '1965'), envelope: { plain: { ...s2('saksi0005x', 'mendengar', '1965').envelope.plain, peristiwa: 'tidak.ada' } } })).status).toBe(400);
   });
 });
