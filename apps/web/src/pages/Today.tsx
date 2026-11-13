@@ -2,6 +2,7 @@
  * Halaman hari ini: selembar kertas untuk satu hari. Tulis di mana saja,
  * seret foto ke atasnya, tempel stiker, rekam suara — lalu segel saat senja.
  */
+import { HariIniSangkala } from './kota/HariIni';
 import {
   addDays,
   type Audience,
@@ -799,6 +800,8 @@ export default function Today() {
           ) : null}
         </div>
       )}
+
+      {day === today ? <HariIniSangkala day={day} /> : null}
 
       <Sheet open={sheet === 'more'} onClose={() => setSheet(null)} title="tambahkan">
         <div className="tile-grid">

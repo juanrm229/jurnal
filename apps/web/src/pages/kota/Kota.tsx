@@ -7,6 +7,9 @@ import {
   KOTA_WILAYAH,
   KOTA_TAHUN,
   type KotaClaimWire,
+  type KotaFigurWire,
+  kotaFigurHidup,
+  kotaTitikFigur,
   type KotaPlot,
   type KotaRegion,
   kotaBBox,
@@ -18,7 +21,7 @@ import {
   kotaRegion,
 } from '@sehari/core';
 import { type CSSProperties, type PointerEvent as RPointerEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { KOTA_IMG, kabarDilihat, liveAt, tanggal, useAlmanak, useKabar, useKota } from '@/lib/kota';
+import { KOTA_IMG, kabarDilihat, liveAt, masaHidup, tanggal, useAlmanak, useKabar, useKota, useWargaKota } from '@/lib/kota';
 import { navigate } from '@/lib/router';
 import { store } from '@/lib/storage';
 import { Doodle, Sheet } from '@/ui/kit';
@@ -54,6 +57,15 @@ export default function Kota() {
   const size = useRef({ w: 390, h: 700 });
   const claims = kota.data?.claims ?? [];
   const kabar = useKabar();
+  // Warga kota hadir di peta pada masa hidupnya, di tempat mereka biasa ditemui.
+  const wargaQ = useWargaKota();
+  const [figur, setFigur] = useState<KotaFigurWire | null>(null);
+  const figurHidup = (wargaQ.data ?? [])
+    .filter((f) => f.state === 'kanon' && kotaFigurHidup(f, year))
+    .flatMap((f) => {
+      const p = kotaTitikFigur(f);
+      return p ? [{ f, p }] : [];
+    });
   // Lampu jendela: di kertas malam (atau senja), peta ikut gelap dan rumah yang penulisnya
   // menulis dalam 24 jam terakhir menyala. Bisa juga diintip kapan saja.
   const malamOtomatis = typeof document !== 'undefined' && (document.documentElement.dataset.dark === '1' || ['malam', 'senja'].includes(document.documentElement.dataset.sky ?? ''));
@@ -179,6 +191,14 @@ export default function Kota() {
   const tap = (p: { x: number; y: number }) => {
     const v = view.current;
     const w: [number, number] = [(p.x - v.x) / v.s, (p.y - v.y) / v.s];
+    // Warga kota lebih dulu: penandanya kecil dan berdiri di atas rumah-rumah.
+    const dekat = figurHidup.map((f) => ({ f, d: Math.hypot(f.p[0] - w[0], f.p[1] - w[1]) })).sort((a, b) => a.d - b.d)[0];
+    if (dekat && dekat.d < 14 / v.s) {
+      setPlot(null);
+      setFigur(dekat.f.f);
+      navigator.vibrate?.(6);
+      return;
+    }
     if (v.s >= PLOT_AT) {
       let best: KotaPlot | null = null;
       let bd = 16 / v.s;
@@ -259,6 +279,14 @@ export default function Kota() {
                   ) : null;
                 })
               : null}
+            {figurHidup.map(({ f, p }) => (
+              <g key={f.id} transform={`translate(${p[0]} ${p[1]})`} className={`kp-figur ${figur?.id === f.id ? 'pilih' : ''}`} data-testid="kota-figur">
+                <rect x={-7 / scale} y={-7 / scale} width={14 / scale} height={14 / scale} rx={2.5 / scale} transform="rotate(45)" style={{ strokeWidth: 1.6 / scale }} />
+                <text y={4 / scale} style={{ fontSize: 10 / scale }}>
+                  {f.name.replace(/^(dr\.|Pak|Bu|Mbah|Wak|Ma|Bang|Koh|Nyai|Cik|Mbok|Kapten|Mang|Babah|Nenek|Mamak|Mandor|Oom|Ki|Teh|Sinyo|Mbak|Bu Guru|Pak Mantri)\s+/i, '').slice(0, 1)}
+                </text>
+              </g>
+            ))}
             {plot ? <circle cx={plot.x} cy={plot.y} r={14 / scale} className="kp-cincin" style={{ strokeWidth: 2.4 / scale }} /> : null}
             {KOTA_WILAYAH.map((r) => (
               <text key={r.id} x={r.label[0]} y={r.label[1]} className={`kp-label ${kotaOpen(r) ? 'buka' : ''}`} style={{ fontSize: lbl * (kotaOpen(r) ? 1.25 : 1), strokeWidth: lbl / 3.2, opacity: showPlots && !kotaOpen(r) ? 0.4 : 1 }}>
@@ -348,6 +376,25 @@ export default function Kota() {
       <Sheet open={!!region} onClose={() => setRegion(null)} title={region?.name}>
         {region ? <RegionSheet r={region} claims={claims} year={year} onFocus={() => (focus(region), setRegion(null))} /> : null}
       </Sheet>
+      <Sheet open={!!figur} onClose={() => setFigur(null)} title={figur?.name}>
+        {figur ? (
+          <div className="col kp-figur-kartu" style={{ gap: 8 }}>
+            {figur.julukan ? <span className="rj-julukan">{figur.julukan}</span> : null}
+            <span className="tiny soft">
+              {figur.tempat} · {kotaRegion(figur.region)?.name} · {masaHidup(figur)}
+            </span>
+            <p className="small" style={{ margin: 0, fontFamily: 'var(--serif)', lineHeight: 1.5 }}>
+              {figur.ciri}
+            </p>
+            <span className="tiny soft">
+              Pada {year} ia {figur.born ? `berumur ${year - figur.born} tahun` : 'ada di sini'}. {figur.jumpa ? `${figur.jumpa} rumah pernah menuliskan perjumpaan dengannya.` : 'Belum ada rumah yang menuliskan perjumpaan dengannya.'}
+            </span>
+            <button className="btn soft" onClick={() => navigate(`/kota/warga/${figur.id}`)} data-testid="kota-figur-lembar">
+              buka lembar warganya
+            </button>
+          </div>
+        ) : null}
+      </Sheet>
       <Sheet open={!!plot} onClose={() => setPlot(null)} title={plot?.address}>
         {plot ? <PlotSheet p={plot} claims={byPlot.get(plot.id) ?? []} sisa={kota.data ? kota.data.me.patok.maks - kota.data.me.patok.pakai : 0} punya={(kota.data?.me.patok.pakai ?? 0) > 0} /> : null}
       </Sheet>
@@ -371,6 +418,11 @@ function RegionSheet({ r, claims, year, onFocus }: { r: KotaRegion; claims: Kota
         ) : null}
       </div>
       {year < r.since ? <p className="tiny soft">Pada {year}, wilayah ini belum dihuni.</p> : null}
+      {year >= r.since ? (
+        <button className="btn soft" onClick={() => navigate(`/kota/jalan/${r.id}?tahun=${year}`)} data-testid="kota-jalan">
+          jalan-jalan di sini, tahun {year}
+        </button>
+      ) : null}
       {open ? (
         <button className="btn" onClick={onFocus} data-testid="kota-dekati">
           dekati dan lihat persilnya

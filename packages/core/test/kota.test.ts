@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KOTA_WARGA_AWAL, KOTA_WILAYAH, kotaCekHubungan, kotaCekTeks, kotaFigurKini, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots } from '../src/kota';
+import { KOTA_WARGA_AWAL, KOTA_WILAYAH, kotaCekHubungan, kotaCekTeks, kotaFigurKini, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots, kotaTitikFigur } from '../src/kota';
 import { naskahKilas, naskahUsia } from '../src/naskah';
 
 describe('kota sangkala', () => {
@@ -62,5 +62,15 @@ describe('kilas balik', () => {
     expect(naskahUsia({ born: 1921, died: 1979 }, 1915)).toBe('belum');
     expect(naskahUsia({ born: 1921, died: 1979 }, 1985)).toBe('wafat');
     expect(naskahUsia({ born: 1921 }, 1950)).toBeNull();
+  });
+});
+
+describe('tempat warga kota', () => {
+  it('titik tetap, di dalam wilayahnya, untuk semua warga awal', () => {
+    for (const f of KOTA_WARGA_AWAL) {
+      const p = kotaTitikFigur(f)!;
+      expect(kotaInside(p, KOTA_WILAYAH.find((r) => r.id === f.region)!.poly)).toBe(true);
+      expect(kotaTitikFigur(f)).toEqual(p);
+    }
   });
 });

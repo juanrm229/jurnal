@@ -2,11 +2,11 @@
  * Buku Warga Kota: figuran kota bersama. Siapa pun boleh menulis perjumpaan
  * dengan mereka; perubahan besar (wafat, pindah, fakta baru) sah lewat warga.
  */
-import { KOTA_SETUJU_KANON, KOTA_WILAYAH, type KotaFigurWire, type KotaUbahWire, kotaRegion } from '@sehari/core';
+import { KOTA_SETUJU_KANON, KOTA_WILAYAH, type KotaFigurWire, type KotaUbahWire, kotaRegion, kotaTitikFigur } from '@sehari/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { type CSSProperties, useState } from 'react';
 import { api } from '@/lib/api';
-import { masaHidup, useFigur, useKota, useWargaKota } from '@/lib/kota';
+import { kotaCropAt, masaHidup, useFigur, useKota, useWargaKota } from '@/lib/kota';
 import { firstLine } from '@/lib/naskah';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
@@ -179,6 +179,17 @@ export function Figur() {
   return (
     <main className="screen kota-figur">
       <Header title={f.name} sub={f.julukan} backTo="/kota/warga" />
+      {(() => {
+        const p = kotaTitikFigur(f);
+        return p ? (
+          <button className="kw-peta" style={kotaCropAt(p[0], p[1], 358, 150, 2.6)} onClick={() => navigate('/kota')} aria-label={`${f.name} biasa ditemui di ${f.tempat}`} data-testid="kw-peta">
+            <span className="kw-peta-tanda" aria-hidden />
+            <span className="kw-peta-ket tiny">
+              {f.tempat} · {masaHidup(f) || 'masa hidup tak tercatat'}
+            </span>
+          </button>
+        ) : null;
+      })()}
       <article className="kw-lembar">
         <span className="kw-cap" aria-hidden>
           BUKU WARGA KOTA SANGKALA

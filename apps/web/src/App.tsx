@@ -149,6 +149,7 @@ const ROUTES: [string, ComponentType, boolean, boolean][] = [
   ['/kota', page('kota/Kota'), true, false],
   ['/kota/meja', page('naskah/Rak'), true, false],
   ['/kota/kabar', page('kota/Kabar'), true, false],
+  ['/kota/jalan/:wilayah', page('kota/Jalan'), true, false],
   ['/kota/patok/:plotId', page('kota/Patok'), true, false],
   ['/kota/rumah/:id', page('kota/Rumah'), true, false],
   ['/kota/ketuk/:id', page('kota/Ketuk'), true, false],

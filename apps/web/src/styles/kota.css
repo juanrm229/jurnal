@@ -2301,3 +2301,232 @@
   font: inherit;
   font-size: var(--fs-sm);
 }
+
+/* ── Warga kota di peta ── */
+.kp-figur rect {
+  fill: #fff7e3;
+  stroke: #8a5a2b;
+}
+.kp-figur text {
+  fill: #6b3f17;
+  font-family: var(--serif-display);
+  font-weight: 600;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.kp-figur.pilih rect {
+  fill: #8a5a2b;
+}
+.kp-figur.pilih text {
+  fill: #fff7e3;
+}
+.kw-peta {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  margin-top: var(--sp-2);
+  border: 0;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.kw-peta-tanda {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  background: #8a5a2b;
+  box-shadow: 0 0 0 3px #fff7e3, 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.kw-peta-ket {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 250, 238, 0.92);
+  color: #3b2a14;
+}
+
+/* ── Jalan-jalan ── */
+.jl-tahun {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+.jl-tahun b {
+  font-family: var(--serif-display);
+  font-size: 28px;
+  min-width: 64px;
+}
+.jl-tahun input {
+  flex: 1;
+  accent-color: var(--ink);
+}
+.jl-jalur {
+  position: relative;
+  margin: 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.jl-jalur::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 6px;
+  border-left: 2px dotted color-mix(in srgb, var(--ink) 40%, var(--line));
+}
+.jl-jendela,
+.jl-papas {
+  position: relative;
+  animation: paper-lay 480ms var(--ease-out) both;
+  animation-delay: calc(var(--n, 0) * 60ms);
+}
+.jl-jendela::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: #ffd56b;
+  box-shadow: 0 0 0 3px var(--paper), 0 0 14px rgba(255, 190, 70, 0.8);
+}
+.jl-jendela {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--r-card);
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+}
+.jl-dari b {
+  font-weight: 600;
+}
+.jl-kalimat {
+  margin: 0;
+  font-family: var(--hand);
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--text);
+}
+.jl-bawah {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.jl-papas::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  background: #8a5a2b;
+  box-shadow: 0 0 0 3px var(--paper);
+}
+.jl-papas button {
+  border: 0;
+  padding: 2px 0;
+  background: none;
+  color: var(--text-soft);
+  font: inherit;
+  font-family: var(--serif);
+  font-style: italic;
+  text-align: left;
+  line-height: 1.45;
+}
+.jl-papas b {
+  color: var(--text);
+  font-style: normal;
+}
+.jl-mulai,
+.jl-akhir {
+  font-style: italic;
+}
+.jl-sepi {
+  margin-top: var(--sp-5);
+}
+
+/* ── Hari ini di Sangkala (halaman jurnal) ── */
+.hs {
+  margin: var(--sp-5) 6px 96px;
+  padding: 12px 14px 14px;
+  border-radius: 6px;
+  background: #f2ecda;
+  color: #1b1a17;
+  box-shadow: 0 1px 0 #d8ccaa, 0 10px 22px -16px rgba(60, 40, 10, 0.5);
+}
+.hs-kepala {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1b1a17;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+.hs-cap {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+.hs-tutup {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: none;
+  color: #4d4a40;
+  font-size: 18px;
+}
+.hs-isi {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.hs-tanggal {
+  font-family: var(--serif-display);
+  font-weight: 600;
+  font-size: var(--fs-md, 16px);
+}
+.hs-kalimat {
+  font-family: var(--serif);
+  font-style: italic;
+  line-height: 1.5;
+}
+.hs-baca {
+  color: #6b5a3a;
+}
+.mj-ajakan {
+  width: 100%;
+  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--sticky-yellow) 45%, var(--paper));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.kr-fig-ajak {
+  flex-basis: 100%;
+  margin: 0;
+}
