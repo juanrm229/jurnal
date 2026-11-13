@@ -157,3 +157,10 @@ Pertanyaan pokoknya: kalau sebuah kisah memakai tokoh yang tidak dipatok siapa p
 - Figuran kota yang disebut di luar masa hidupnya → peringatan waktu.
 - Figuran kota yang disebut → saran **catat perjumpaan**; perjumpaan muncul di lembar figurnya seperti kliping koran, dan Kacamata Tokoh menambah baris **kenal di kota** untuk adegan-adegan berikutnya dari sudut pandang yang sama.
 - Kanon: membuat tokoh dengan nama yang sudah dipakai rumah lain atau figuran kota memunculkan peringatan nama kembar.
+
+### Kilas balik (flashback)
+
+- Setiap adegan punya **tanggal cerita** yang terpisah dari **urutan baca**. Adegan yang tanggalnya lebih awal dari tanggal terjauh yang sudah dilewati pembaca otomatis dianggap **kilas balik**: berlabel di susunan dan di mode baca ("kilas balik · 1948").
+- Kacamata Tokoh menghitung yang diketahui tokoh **pada tanggal adegan**, jadi kilas balik tidak membocorkan hal yang baru ia ketahui kemudian.
+- Editor memeriksa: tokoh sudut pandang belum lahir atau sudah wafat pada tahun itu (sarankan menulis dari tokoh yang mengingat, bertanggal saat ia mengingat); adegan di luar masa rumah; dan bila pada tahun itu tokoh tinggal di rumahmu yang lain, menawarkan "tulis di sana" supaya kanonnya berada di alamat yang benar.
+- Tokoh rumah lain yang muncul dalam kilas balik tetap mengikuti aturan ketuk atau desas-desus.

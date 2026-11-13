@@ -11,6 +11,8 @@ import {
   type NaskahWarning,
   naskahChrono,
   naskahKacamata,
+  naskahKilas,
+  naskahUsia,
   naskahMentions,
   naskahWarnings,
   naskahYear,
@@ -119,6 +121,21 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
         .map((id) => kotaQ.data?.claims.find((c) => c.id === id))
         .filter((c): c is NonNullable<typeof c> => !!c && (!tahun || c.from <= tahun))
     : [];
+  // Waktu adegan: kilas balik, usia tokoh, dan masa rumah.
+  const tahunAdegan = naskahYear(sortOk ? sort : '');
+  const kilas = useMemo(
+    () => naskahKilas(m.scenesOf(s.workId ?? null).map((x) => (x.id === s.id ? { ...x, p: { ...p0, when: { label, sort: sortOk ? sort.trim() : '' } } } : x)).filter((x) => x.p))[s.id],
+    [m, s.id, s.workId, label, sort, sortOk],
+  );
+  const povEntri = m.canon.find((e) => e.id === pov);
+  const usia = naskahUsia(povEntri?.p, tahunAdegan);
+  const luarRumah = !!(kota && rumah.data && tahunAdegan && (tahunAdegan < rumah.data.from || tahunAdegan > rumah.data.to));
+  const rumahSaatItu = luarRumah
+    ? (nama.data?.find((n) => n.tokohId === kunci)?.rumah ?? [])
+        .filter((id) => id !== claimId)
+        .map((id) => kotaQ.data?.claims.find((c) => c.id === id))
+        .find((c) => !!c && c.from <= tahunAdegan! && c.to >= tahunAdegan!)
+    : undefined;
   const figurNama = (fid: string) => nama.data?.find((n) => n.figurId === fid)?.name ?? 'figuran kota';
   const kenal = useMemo(() => {
     const ids = new Set<string>();
@@ -236,6 +253,35 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
             <input className={`field ${sortOk ? '' : 'salah'}`} value={sort} maxLength={16} onChange={(e) => setSort(e.target.value)} placeholder="1979-02-15" inputMode="numeric" aria-label="tanggal cerita untuk garis waktu" data-testid="nk-tanggal" />
           </div>
           {bentuk === 'jurnal' && sortOk && sort.trim() ? <span className="nk-tgl-hias">{tglPanjang(sort.trim())}</span> : null}
+          {kilas || usia || luarRumah ? (
+            <div className="nk-waktu-catat" data-testid="nk-waktu-catat">
+              {kilas ? (
+                <p>
+                  <b>Kilas balik</b> ke {tglPanjang(kilas.ke) || kilas.ke}; pembaca baru saja berada di {tglPanjang(kilas.dari) || kilas.dari}. Kacamata memakai yang diketahui {m.nameOf(pov)} pada {kilas.ke.slice(0, 4)}, bukan sekarang.
+                </p>
+              ) : null}
+              {usia ? (
+                <p className="salah">
+                  {m.nameOf(pov)} {usia === 'belum' ? `belum lahir pada ${tahunAdegan} (lahir ${povEntri?.p.born})` : `sudah wafat pada ${tahunAdegan} (wafat ${povEntri?.p.died})`}. Untuk kenangan tentangnya, tulis dari sudut pandang tokoh yang mengingat, bertanggal saat ia mengingat.
+                </p>
+              ) : null}
+              {luarRumah ? (
+                <p>
+                  {tahunAdegan} di luar masa rumah ini ({rumah.data!.from}–{rumah.data!.to}).{' '}
+                  {rumahSaatItu ? (
+                    <>
+                      Saat itu {m.nameOf(pov)} tinggal di <b>{rumahSaatItu.household}</b>; adegan di sana lebih kokoh sebagai kanon.{' '}
+                      <button className="pill sm" onClick={() => navigate(`/naskah/${rumahSaatItu.msId}`)} data-testid="nk-tulis-di-sana">
+                        tulis di sana
+                      </button>
+                    </>
+                  ) : (
+                    'Boleh sebagai kilas balik di tempat lain; alamat yang dihuni rumah lain tetap perlu ketuk atau desas-desus.'
+                  )}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {!sortOk ? <span className="tiny nk-salah">Tulis tanggal sebagai 1979, 1979-02, 1979-02-15, atau 1979-02-15 06:10.</span> : null}
           <input className="field nk-judul-adegan" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="judul adegan (opsional)" />
           {kota && (desas.length || jumpa.length) ? (

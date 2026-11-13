@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { KOTA_WARGA_AWAL, KOTA_WILAYAH, kotaCekHubungan, kotaCekTeks, kotaFigurKini, kotaFree, kotaInside, kotaOpen, kotaOverlap, kotaPlot, kotaPlots } from '../src/kota';
+import { naskahKilas, naskahUsia } from '../src/naskah';
 
 describe('kota sangkala', () => {
   it('persil deterministik di dalam wilayah yang dibuka, dengan alamat', () => {
@@ -49,5 +50,17 @@ describe('kota sangkala', () => {
     expect(kini.died).toBe(2019);
     expect(kini.tetap.at(-1)).toBe('Sepedanya disimpan di kantor pos.');
     expect(jamil.died).toBeUndefined();
+  });
+});
+
+describe('kilas balik', () => {
+  it('menandai adegan yang mundur dari tanggal terjauh dalam urutan baca', () => {
+    const sc = (id: string, chapter: number, order: number, sort: string) => ({ id, chapter, order, p: { v: 1 as const, pov: 't', when: { label: '', sort }, text: '' } });
+    const k = naskahKilas([sc('a', 1, 1, '1979-02-15'), sc('b', 1, 2, '1948'), sc('c', 1, 3, '1979'), sc('d', 2, 1, '1980'), sc('e', 2, 2, '1979-03')]);
+    expect(Object.keys(k)).toEqual(['b', 'e']);
+    expect(k.b).toEqual({ ke: '1948', dari: '1979-02-15' });
+    expect(naskahUsia({ born: 1921, died: 1979 }, 1915)).toBe('belum');
+    expect(naskahUsia({ born: 1921, died: 1979 }, 1985)).toBe('wafat');
+    expect(naskahUsia({ born: 1921 }, 1950)).toBeNull();
   });
 });
