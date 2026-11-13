@@ -172,6 +172,12 @@ export function kotaRoutes(s: Services) {
           if (gagal) throw bad('ikat', gagal.text);
         }
       }
+      // Rumah terbengkalai yang bertumpuk dengan patok baru resmi pergi: naskahnya jadi arsip pemiliknya.
+      const pergi = (await describe(rows, user.id, tx)).filter((x) => x.state === 'terbengkalai' && x.plotId === input.plotId && kotaOverlap(x, input));
+      for (const x of pergi) {
+        await tx.update(cityClaims).set({ status: 'dilepas' }).where(eq(cityClaims.id, x.id));
+        await tx.update(manuscripts).set({ visibility: 'arsip' }).where(eq(manuscripts.id, x.msId));
+      }
       const clash = live.find((x) => x.plotId === input.plotId && kotaOverlap(x, input));
       if (clash) throw conflict('overlap', `Rentang itu bertumpuk dengan ${clash.household} (${clash.from}–${clash.to}).`);
       const now = s.now();
@@ -215,6 +221,8 @@ export function kotaRoutes(s: Services) {
     const [x] = await s.db.select().from(cityClaims).where(eq(cityClaims.id, c.req.param('id')));
     if (!x) throw notFound('Rumah tidak ditemukan.');
     if (x.ownerId !== user.id) throw forbidden('Hanya pemilik rumah yang bisa melepasnya.');
+    const [terbit] = await s.db.select({ n: sql<number>`count(*)::int` }).from(msScenes).where(and(eq(msScenes.msId, x.msId), eq(msScenes.status, 'terbit')));
+    if ((terbit?.n ?? 0) > 0) throw conflict('berakar', 'Rumah ini sudah berakar: adegannya bagian dari sejarah kota, jadi tidak bisa dilepas.');
     await s.db.update(cityClaims).set({ status: 'dilepas' }).where(eq(cityClaims.id, x.id));
     // Naskahnya tetap terbuka (tidak terenkripsi), tapi kini hanya terbaca oleh penulisnya.
     await s.db.update(manuscripts).set({ visibility: 'arsip' }).where(eq(manuscripts.id, x.msId));
@@ -483,6 +491,7 @@ export function kotaRoutes(s: Services) {
 
   // ── Buku Warga Kota ──
 
+  const semasa = (f: { born?: number; died?: number }, year: number | null) => !year || ((!f.born || year >= f.born) && (!f.died || year <= f.died));
   /** Adegan terbit di rumah aktif yang memenuhi syarat (kesaksian, perjumpaan). */
   const adeganKota = async (cond: ReturnType<typeof sql>, viewer: string) => {
     const claims = await visible();
@@ -491,10 +500,10 @@ export function kotaRoutes(s: Services) {
     const wires = await describe(claims, viewer);
     const tokoh = await tokohOf(claims);
     return rows.flatMap((x) => {
-      const p = (x.envelope as { plain?: { pov?: string; when?: { label?: string }; text?: string; jumpa?: string[] } }).plain;
+      const p = (x.envelope as { plain?: { pov?: string; when?: { label?: string; sort?: string }; text?: string; jumpa?: string[] } }).plain;
       const c = wires.find((w) => w.msId === x.msId);
       if (!p || !c || c.state !== 'aktif') return [];
-      return [{ claimId: c.id, household: c.household, regionId: c.regionId, plotId: c.plotId, penName: c.penName, msId: c.msId, sceneId: x.id, tokoh: tokoh.find((t) => t.id === p.pov)?.name ?? 'seseorang', when: p.when?.label ?? '', text: (p.text ?? '').slice(0, 1600), saksi: 'mengalami' as const, jumpa: p.jumpa ?? [] }];
+      return [{ claimId: c.id, household: c.household, regionId: c.regionId, plotId: c.plotId, penName: c.penName, msId: c.msId, sceneId: x.id, tokoh: tokoh.find((t) => t.id === p.pov)?.name ?? 'seseorang', when: p.when?.label ?? '', text: (p.text ?? '').slice(0, 1600), saksi: 'mengalami' as const, jumpa: p.jumpa ?? [], year: Number(p.when?.sort?.slice(0, 4)) || null }];
     });
   };
   const figurWires = async (viewer: string): Promise<KotaFigurWire[]> => {
@@ -510,16 +519,18 @@ export function kotaRoutes(s: Services) {
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
         .map((x) => ({ id: x.id, figurId: x.figureId, kind: x.kind as never, text: x.text, year: x.year ?? undefined, region: x.region ?? undefined, state: x.state as never, proposer: pens.get(x.proposerId) ?? 'warga', endorsements: x.endorsers.length, endorsedByMe: x.endorsers.includes(viewer), mine: x.proposerId === viewer, createdAt: x.createdAt.toISOString() }));
     const kini = (f: Parameters<typeof kotaFigurKini>[0], u: KotaUbahWire[]) => kotaFigurKini(f, u.filter((x) => x.state === 'kanon'));
-    const n = (id: string) => jumpa.filter((j) => j.jumpa.includes(id)).length;
+    const n = (f: { id: string; born?: number; died?: number }) => jumpa.filter((j) => j.jumpa.includes(f.id) && semasa(f, j.year)).length;
     return [
       ...KOTA_WARGA_AWAL.map((f) => {
         const u = ubahOf(f.id);
-        return { ...kini(f, u), state: 'kanon' as const, proposer: null, endorsements: 0, endorsedByMe: false, mine: false, jumpa: n(f.id), ubah: u };
+        const k = kini(f, u);
+        return { ...k, state: 'kanon' as const, proposer: null, endorsements: 0, endorsedByMe: false, mine: false, jumpa: n(k), ubah: u };
       }),
       ...rows.map((r) => {
         const u = ubahOf(r.id);
         const f = { id: r.id, name: r.name, julukan: r.julukan ?? undefined, region: r.region, tempat: r.tempat, ciri: r.ciri, born: r.born ?? undefined, died: r.died ?? undefined, tetap: r.tetap };
-        return { ...kini(f, u), state: r.state as 'kanon' | 'usul', proposer: pens.get(r.proposerId) ?? 'warga', endorsements: r.endorsers.length, endorsedByMe: r.endorsers.includes(viewer), mine: r.proposerId === viewer, jumpa: n(r.id), ubah: u };
+        const k = kini(f, u);
+        return { ...k, state: r.state as 'kanon' | 'usul', proposer: pens.get(r.proposerId) ?? 'warga', endorsements: r.endorsers.length, endorsedByMe: r.endorsers.includes(viewer), mine: r.proposerId === viewer, jumpa: n(k), ubah: u };
       }),
     ];
   };
@@ -531,7 +542,8 @@ export function kotaRoutes(s: Services) {
     const figur = (await figurWires(user.id)).find((f) => f.id === c.req.param('id'));
     if (!figur) throw notFound('Figuran tidak ditemukan.');
     const perjumpaan = await adeganKota(sql`${msScenes.envelope}->'plain'->'jumpa' @> ${JSON.stringify([figur.id])}::jsonb`, user.id);
-    return c.json({ figur, perjumpaan: perjumpaan.map(({ jumpa: _j, ...x }) => x) });
+    // Perjumpaan di luar masa hidup figur tidak dihitung sebagai kanon.
+    return c.json({ figur, perjumpaan: perjumpaan.filter((x) => semasa(figur, x.year)).map(({ jumpa: _j, year: _y, ...x }) => x) });
   });
 
   r.post('/kota/warga', async (c) => {
