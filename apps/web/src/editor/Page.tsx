@@ -327,7 +327,7 @@ function Movable({
 }) {
   const L = item.layout;
   const box = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ kind: 'move' | 'turn'; sx: number; sy: number; start: PageLayout; moved: boolean; touch?: boolean; armed?: boolean; timer?: number; cx?: number; cy?: number; a0?: number; d0?: number } | null>(null);
+  const drag = useRef<{ kind: 'move' | 'size' | 'turn'; sx: number; sy: number; start: PageLayout; moved: boolean; touch?: boolean; armed?: boolean; timer?: number; cx?: number; cy?: number; a0?: number; d0?: number } | null>(null);
   // Ukur tinggi sebenarnya (dalam satuan halaman) supaya halaman ikut memanjang.
   useEffect(() => {
     const el = box.current;
@@ -354,11 +354,13 @@ function Movable({
     if (!selected) drag.current = null;
   }, [selected]);
 
-  const begin = (e: React.PointerEvent, kind: 'move' | 'turn') => {
+  const begin = (e: React.PointerEvent, kind: 'move' | 'size' | 'turn') => {
     if (editing && kind === 'move') return;
     e.stopPropagation();
     if (!editable) return;
-    const touch = e.pointerType === 'touch' && kind === 'move';
+    // Belum dipilih: tekan-tahan dulu supaya geser cepat tetap menggulir halaman.
+    // Sudah dipilih: langsung bisa digeser dengan satu jari.
+    const touch = e.pointerType === 'touch' && kind === 'move' && !selected;
     if (!touch) (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const r = box.current!.getBoundingClientRect();
     const cx = r.left + r.width / 2;
@@ -389,7 +391,7 @@ function Movable({
         setDragging(true);
         if (!selected) onSelect();
         navigator.vibrate?.(12);
-      }, 280);
+      }, 240);
       return;
     }
     if (!selected) onSelect();
@@ -417,13 +419,18 @@ function Movable({
     setDragging(true);
     if (d.kind === 'move') {
       onLive({ ...d.start, x: Math.round(d.start.x + dx / scale), y: Math.max(0, Math.round(d.start.y + dy / scale)) });
-    } else {
-      const a = Math.atan2(e.clientY - d.cy!, e.clientX - d.cx!);
+    } else if (d.kind === 'size') {
+      // Sudut: hanya ukuran, kemiringan tetap.
       const dist = Math.hypot(e.clientX - d.cx!, e.clientY - d.cy!);
-      let rot = d.start.rot + ((a - d.a0!) * 180) / Math.PI;
-      if (Math.abs(rot) < 3) rot = 0;
       const w = Math.max(70, Math.min(1000, d.start.w * (dist / Math.max(1, d.d0!))));
-      onLive({ ...d.start, rot: Math.round(rot * 10) / 10, w: Math.round(w) });
+      onLive({ ...d.start, w: Math.round(w) });
+    } else {
+      // Bulatan atas: hanya putar; menempel lurus di dekat 0°, 90°, 180°.
+      const a = Math.atan2(e.clientY - d.cy!, e.clientX - d.cx!);
+      let rot = d.start.rot + ((a - d.a0!) * 180) / Math.PI;
+      rot = ((((rot + 180) % 360) + 360) % 360) - 180;
+      for (const snap of [-180, -90, 0, 90, 180]) if (Math.abs(rot - snap) < 4) rot = snap;
+      onLive({ ...d.start, rot: Math.round(rot * 10) / 10 });
     }
   };
 
@@ -474,9 +481,19 @@ function Movable({
       <div className="el-body">{children}</div>
       {tools ? createPortal(<div className="el-toolbar" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>{tools}</div>, document.body) : null}
       {selected && editable && !editing ? (
-        <span className="handle" aria-label="putar & ubah ukuran" onPointerDown={(e) => begin(e, 'turn')} onPointerMove={move} onPointerUp={end} onPointerCancel={end}>
-          <Doodle id="ui-panah-kanan" size={14} color="currentColor" sw={3} />
-        </span>
+        <>
+          <span className="handle handle-size" role="button" aria-label="ubah ukuran" title="tarik untuk mengubah ukuran" onPointerDown={(e) => begin(e, 'size')} onPointerMove={move} onPointerUp={end} onPointerCancel={end} data-testid="el-ukuran">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M5 11 L11 5 M7 13 L13 7 M3 9 L9 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="handle-stalk" aria-hidden />
+          <span className="handle handle-turn" role="button" aria-label="putar" title="tarik untuk memutar" onPointerDown={(e) => begin(e, 'turn')} onPointerMove={move} onPointerUp={end} onPointerCancel={end} data-testid="el-putar">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M12.5 6.5 A5 5 0 1 0 13 9.5 M12.8 3 V6.8 H9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </>
       ) : null}
       {item.reactions.length ? (
         <div className="react-badges">

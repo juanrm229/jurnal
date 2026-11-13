@@ -957,10 +957,15 @@ a.hadir-row:active {
   box-shadow: var(--shadow);
   animation: rail-in 560ms var(--ease-spring) 380ms both;
 }
+/* Animasi masuk hanya menggeser: bila animasi tertahan (iOS, tab di latar), dok tetap terlihat utuh. */
 @keyframes rail-in {
   from {
-    opacity: 0;
     transform: translateY(26px) scale(0.9);
+  }
+}
+@keyframes dock-pop {
+  from {
+    transform: scale(0.6);
   }
 }
 .rail .dock-btn {
@@ -969,7 +974,7 @@ a.hadir-row:active {
   border-radius: var(--r-pill);
   font-size: var(--fs-xs);
   gap: 1px;
-  animation: pop-in 460ms var(--ease-spring) both;
+  animation: dock-pop 460ms var(--ease-spring) both;
 }
 .rail .dock-btn:nth-child(1) {
   animation-delay: 460ms;
@@ -995,7 +1000,6 @@ a.hadir-row:active {
 }
 @keyframes dock-in {
   from {
-    opacity: 0;
     transform: translateY(24px) scale(0.96);
   }
 }
