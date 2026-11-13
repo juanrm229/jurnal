@@ -245,6 +245,11 @@ export function naskahRoutes(s: Services) {
     const user = c.get('user');
     const ms = await mine(c.req.param('id'), user.id);
     if (ms.ownerId !== user.id) throw forbidden('Hanya pembuka naskah yang bisa menghapusnya.');
+    // Rumah kota yang masih hidup dilepas dari halamannya (dan rumah berakar tidak bisa dilepas);
+    // yang boleh dihapus di sini hanya arsip, naskah lama, dan rumah yang sudah kembali lowong.
+    if (ms.visibility === 'kota' && !(await rumahLowong(s, ms.id))) throw forbidden('Rumah ini masih berdiri di kota. Lepaskan dulu dari halaman rumahnya.');
+    const [rumah] = await s.db.select().from(cityClaims).where(eq(cityClaims.msId, ms.id));
+    if (rumah?.status === 'disembunyikan') throw forbidden('Rumah ini sedang ditinjau tim. Arsipnya bisa dihapus setelah ditinjau.');
     await s.db.delete(manuscripts).where(eq(manuscripts.id, ms.id));
     return c.json({ ok: true });
   });
