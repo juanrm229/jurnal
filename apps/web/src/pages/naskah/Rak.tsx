@@ -53,6 +53,20 @@ export default function Meja() {
         </p>
       </section>
 
+      {me.undangan?.length ? (
+        <section className="section">
+          <span className="label">ajakan dari teman</span>
+          {me.undangan.map((u) => (
+            <button key={u.id} className="mj-lowong mj-ajakan" onClick={() => navigate(`/kota/rumah/${u.claimId}`)} data-testid="meja-ajakan">
+              <span className="grow small">
+                <b>{u.household}</b> mengajakmu memegang <b>{u.tokoh}</b>. Buka rumahnya untuk menerima atau menolak.
+              </span>
+              <Doodle id="ui-panah-kanan" size={16} />
+            </button>
+          ))}
+        </section>
+      ) : null}
+
       {rumah.length ? (
         <section className="section">
           <span className="label">rumahmu</span>

@@ -389,3 +389,31 @@ export function kotaAntar(a: { x: number; y: number }, b: { x: number; y: number
   const d = Math.hypot(a.x - b.x, a.y - b.y);
   return Math.min(16 * 60, Math.round(15 + d * 0.5 + (pulau ? 180 : 0)));
 }
+
+/**
+ * Tempat warga kota di peta: titik tetap di dalam wilayah tempat ia biasa ditemui,
+ * diturunkan dari id-nya (jadi sama di setiap perangkat). Pindah wilayah lewat
+ * perubahan besar ikut memindahkan titiknya. Warga kota tidak memakai persil.
+ */
+export function kotaTitikFigur(f: { id: string; region: string }): KotaPoint | null {
+  const r = kotaRegion(f.region);
+  if (!r) return null;
+  let h = 2166136261;
+  for (const ch of f.id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const acak = () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+  const xs = r.poly.map((p) => p[0]);
+  const ys = r.poly.map((p) => p[1]);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  for (let i = 0; i < 60; i++) {
+    const p: KotaPoint = [Math.round(x0 + acak() * (x1 - x0)), Math.round(y0 + acak() * (y1 - y0))];
+    // Jauhkan dari tepi wilayah: titik dan empat tetangganya harus di dalam.
+    if ([p, [p[0] + 12, p[1]], [p[0] - 12, p[1]], [p[0], p[1] + 12], [p[0], p[1] - 12]].every((q) => kotaInside(q as KotaPoint, r.poly))) return p;
+  }
+  return r.label;
+}
+/** Apakah warga kota hidup pada tahun tertentu (lahir dan wafat bila diketahui). */
+export const kotaFigurHidup = (f: { born?: number; died?: number }, year: number) => (!f.born || f.born <= year) && (!f.died || f.died >= year);

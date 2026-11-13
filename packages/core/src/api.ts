@@ -1313,6 +1313,27 @@ export interface KotaSuratWire {
   ke: string;
 }
 
+/** Jalan-jalan menyusuri satu wilayah pada satu tahun: jendela rumah dan warga kota yang dijumpai. */
+export type KotaLangkahWire =
+  | { jenis: 'rumah'; claimId: string; household: string; penName: string; address: string; from: number; to: number; msId: string; sceneId: string; workId: string | null; tokoh: string; kalimat: string; when: string }
+  | { jenis: 'warga'; figurId: string; name: string; julukan?: string; tempat: string };
+export interface KotaJalanWire {
+  wilayah: string;
+  tahun: number;
+  langkah: KotaLangkahWire[];
+  /** Rumah yang hidup tahun itu tapi belum punya adegan terbit (jendelanya gelap). */
+  sunyi: number;
+}
+
+/** Hari ini di Sangkala: adegan bertanggal hari dan bulan yang sama, atau peristiwa bulan ini. */
+export interface KotaHariIniWire {
+  jenis: 'adegan' | 'peristiwa';
+  tanggal: string;
+  tempat: string;
+  kalimat: string;
+  ke: string;
+}
+
 export interface KotaKabarWire {
   id: string;
   jenis: 'rumah' | 'adegan' | 'ikatan' | 'peristiwa' | 'figur' | 'ubah';
@@ -1403,6 +1424,8 @@ export const kotaFigurBody = z.object({
 export const kotaUbahBody = z.object({ kind: z.enum(['fakta', 'wafat', 'pindah']), text: z.string().trim().min(5).max(400), year: z.number().int().min(1700).max(2030).optional(), region: z.string().max(40).optional() });
 export const kotaPegangBody = z.object({ claimId: z.string().max(40), tokohId: z.string().max(40), letter: z.string().trim().min(10).max(800) });
 export const kotaPegangJawab = z.object({ action: z.enum(['terima', 'tolak', 'lepas']) });
+/** Pemilik rumah mengajak teman selingkaran memegang figuran. */
+export const kotaPegangUndang = z.object({ claimId: z.string().max(40), tokohId: z.string().max(40), userId: z.string().max(40) });
 
 export interface KotaUbahWire {
   id: string;
@@ -1462,7 +1485,8 @@ export interface KotaPegangWire {
   requesterId: string;
   penName: string;
   letter: string | null;
-  state: 'minta' | 'pegang' | 'tolak' | 'lepas';
+  /** 'undang': diajak pemilik rumah (teman selingkaran), menunggu jawaban yang diajak. */
+  state: 'minta' | 'undang' | 'pegang' | 'tolak' | 'lepas';
   sampaiAt?: string;
 }
 
@@ -1478,6 +1502,8 @@ export interface KotaWire {
     tokoh: { pakai: number; maks: number };
     /** Tokoh-tokohmu (asli, bukan salinan pindahan) dan figuran yang kamu pegang. */
     tokohku: KotaTokohku[];
+    /** Ajakan memegang figuran dari teman selingkaran yang menunggu jawabanmu. */
+    undangan?: { id: string; claimId: string; household: string; tokoh: string }[];
   };
 }
 export interface KotaTokohku {

@@ -1,5 +1,5 @@
 /** Kota Sehari: data kota, patok, dan potongan peta untuk sampul rumah. */
-import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaKabarWire, type KotaSuratWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot, type NaskahCanonPayload, type NaskahEntry, type NaskahScenePayload, type NaskahWire, naskahChrono, naskahKacamata } from '@sehari/core';
+import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaKabarWire, type KotaSuratWire, type KotaJalanWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot, type NaskahCanonPayload, type NaskahEntry, type NaskahScenePayload, type NaskahWire, naskahChrono, naskahKacamata } from '@sehari/core';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { store } from './storage';
@@ -142,4 +142,9 @@ export function useIngatan(rumah: { id: string; msId: string; household: string;
     const v = naskahKacamata(diri.id, `${Math.min(tahun ?? c.to, c.to)}~9999`, entri, naskahChrono(adegan));
     return [{ id: c.id, household: c.household, tahu: v.tahu, mengira: v.mengira }];
   });
+}
+
+/** Jalan-jalan di satu wilayah pada satu tahun. */
+export function useJalan(wilayah: string, tahun: number) {
+  return useQuery({ queryKey: ['kota', 'jalan', wilayah, tahun], queryFn: () => api.get<KotaJalanWire>(`/kota/jalan?wilayah=${encodeURIComponent(wilayah)}&tahun=${tahun}`), staleTime: 60_000 });
 }

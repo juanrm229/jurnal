@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { kalimat, kotaCrop, tanggal, useAlmanak, useKota, useKotaClaim, useKotaRefresh, useNamaKota, useTautan, waktuTiba } from '@/lib/kota';
 import { firstLine, type NaskahModel, povColor, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
+import { useCircles } from '@/lib/data';
 import { navigate, useParams } from '@/lib/router';
 import { Doodle, Growing, Sheet, useToast } from '@/ui/kit';
 
@@ -319,6 +320,9 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
   const toast = useToast();
   const [minta, setMinta] = useState<string | null>(null);
   const [surat, setSurat] = useState('');
+  const [ajak, setAjak] = useState<string | null>(null);
+  const { circles } = useCircles();
+  const teman = [...new Map(circles.filter((x) => x.status === 'active').flatMap((x) => x.others).map((o) => [o.userId, o])).values()];
   const fig = m.tokoh.filter((t) => t.p.peran === 'figuran');
   if (!fig.length) return null;
   const jawab = async (x: KotaPegangWire, action: 'terima' | 'tolak' | 'lepas') => {
@@ -336,6 +340,8 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
       {fig.map((t) => {
         const held = pegang.find((x) => x.tokohId === t.id && x.state === 'pegang');
         const mohon = pegang.filter((x) => x.tokohId === t.id && x.state === 'minta');
+        const diajak = pegang.filter((x) => x.tokohId === t.id && x.state === 'undang');
+        const ajakanku = diajak.find((x) => x.requesterId === m.meId);
         const punyaku = held?.requesterId === m.meId;
         const mintaku = mohon.find((x) => x.requesterId === m.meId);
         return (
@@ -359,6 +365,19 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
                   lepas
                 </button>
               </span>
+            ) : ajakanku ? (
+              <span className="col" style={{ gap: 4 }}>
+                <button className="pill sm active" onClick={() => void jawab(ajakanku, 'terima')} data-testid="kota-ajak-terima">
+                  terima ajakan
+                </button>
+                <button className="pill sm" onClick={() => void jawab(ajakanku, 'tolak')}>
+                  tolak
+                </button>
+              </span>
+            ) : c.mine && !held ? (
+              <button className="pill sm" onClick={() => setAjak(t.id)} data-testid="kota-ajak">
+                ajak teman
+              </button>
             ) : c.mine && held ? (
               <button className="pill sm" onClick={() => void jawab(held, 'lepas')}>
                 ambil kembali
@@ -371,6 +390,16 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
                   minta memegang
                 </button>
               )
+            ) : null}
+            {c.mine && diajak.length ? (
+              <p className="tiny soft kr-fig-ajak">
+                menunggu jawaban {diajak.map((x) => x.penName).join(', ')}{' '}
+                {diajak.map((x) => (
+                  <button key={x.id} className="kr-pindah-l" onClick={() => void jawab(x, 'tolak')}>
+                    batalkan
+                  </button>
+                ))}
+              </p>
             ) : null}
             {c.mine
               ? mohon.map((x) => (
@@ -393,6 +422,33 @@ function Figuran({ c, m, pegang, reload }: { c: { id: string; mine: boolean; msI
           </article>
         );
       })}
+      <Sheet open={!!ajak} onClose={() => setAjak(null)} title={`ajak teman memegang ${m.nameOf(ajak ?? '')}`}>
+        <div className="col" style={{ gap: 8 }}>
+          <p className="small soft">Teman dari lingkaranmu menulis tokoh ini dari sudut pandangnya, di rumahmu. Ajakan langsung sampai tanpa surat; ia perlu punya nama pena kota, dan tokoh ini memakai satu jatah tokohnya.</p>
+          {teman.length ? (
+            teman.map((o) => (
+              <button
+                key={o.userId}
+                className="btn soft"
+                onClick={async () => {
+                  try {
+                    await api.post('/kota/pegang/undang', { claimId: c.id, tokohId: ajak, userId: o.userId });
+                    toast(`${o.penName} diajak memegang ${m.nameOf(ajak ?? '')}.`);
+                    setAjak(null);
+                    reload();
+                  } catch (e) {
+                    toast((e as Error).message);
+                  }
+                }}
+                data-testid="kota-ajak-teman">
+                {o.penName}
+              </button>
+            ))
+          ) : (
+            <p className="small">Kamu belum punya lingkaran aktif. Ajak teman lewat halaman Lingkaran dulu.</p>
+          )}
+        </div>
+      </Sheet>
       <Sheet open={!!minta} onClose={() => setMinta(null)} title={`memegang ${m.nameOf(minta ?? '')}`}>
         <div className="col" style={{ gap: 10 }}>
           <p className="small soft">Pemegang menulis adegan dari sudut pandang tokoh ini, di rumah ini. Pemilik rumah tetap menjaga kanonnya: fakta tokoh hanya berubah lewat pemilik.</p>

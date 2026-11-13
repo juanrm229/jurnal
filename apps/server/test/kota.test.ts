@@ -48,7 +48,7 @@ describe('kota sehari', () => {
     expect((await patok(naya, 'lorongsumbu.12', 1995, 2030, 'Keluarga Wirya')).status).toBe(201);
     const kota = await sari.ok('GET', '/v1/kota');
     expect(kota.claims.map((x: any) => [x.household, x.penName])).toEqual(expect.arrayContaining([['Keluarga Darmo', 'padiwangi'], ['Keluarga Wirya', 'lampukamis']]));
-    expect(kota.me).toEqual({ penName: 'sari.kali', penaLama: [], penaBolehGanti: null, patok: { pakai: 0, maks: 3 }, tokoh: { pakai: 0, maks: 3 }, tokohku: [] });
+    expect(kota.me).toEqual({ penName: 'sari.kali', penaLama: [], penaBolehGanti: null, patok: { pakai: 0, maks: 3 }, tokoh: { pakai: 0, maks: 3 }, tokohku: [], undangan: [] });
     expect((await raka.ok('GET', '/v1/kota')).me.tokohku.map((x: any) => x.name)).toEqual(['Kepala Keluarga Darmo']);
   });
 
@@ -338,5 +338,48 @@ describe('kota sehari', () => {
     expect(almanak.filter((e: any) => e.state === 'kanon').length).toBeGreaterThanOrEqual(39);
     expect(almanak.map((e: any) => e.year)).toEqual([...almanak.map((e: any) => e.year)].sort((a: number, b: number) => a - b));
     expect((await ana.ok('GET', '/v1/kota/warga')).filter((f: any) => f.state === 'kanon').length).toBeGreaterThanOrEqual(34);
+  });
+
+  it('jalan-jalan: jendela rumah dan warga kota yang dijumpai', async () => {
+    const j = await sari.ok('GET', '/v1/kota/jalan?wilayah=lorongsumbu&tahun=1975');
+    const rumah = j.langkah.filter((l: any) => l.jenis === 'rumah');
+    expect(rumah.map((l: any) => l.household)).toContain('Keluarga Darmo');
+    expect(rumah.find((l: any) => l.household === 'Keluarga Darmo').kalimat.length).toBeGreaterThan(10);
+    const warga = j.langkah.filter((l: any) => l.jenis === 'warga').map((l: any) => l.name);
+    expect(warga).toEqual(expect.arrayContaining(['Wak Lebai', 'Bang Jamil']));
+    expect(warga).not.toContain('Mbah Tembang');
+    expect((await sari.req('GET', '/v1/kota/jalan?wilayah=entah')).status).toBe(400);
+  });
+
+  it('hari ini di sangkala: adegan bertanggal sama, atau peristiwa bulan ini', async () => {
+    // saksi001x bertanggal 1979-02-15 di rumah Darmo.
+    const a = await sari.ok('GET', '/v1/kota/hari-ini?md=02-15');
+    expect(a).toMatchObject({ jenis: 'adegan', tanggal: '15 Februari 1979' });
+    const b = await sari.ok('GET', '/v1/kota/hari-ini?md=09-03');
+    expect(b.jenis).toBe('peristiwa');
+    expect(b.tanggal).toMatch(/^September/);
+    expect((await sari.req('GET', '/v1/kota/hari-ini?md=2-15')).status).toBe(400);
+  });
+
+  it('ajak teman selingkaran memegang figuran', async () => {
+    const lin = await new Client(env.app, 'lin-k@contoh.id').signup('Lin');
+    const nur = await new Client(env.app, 'nur-k@contoh.id').signup('Nur');
+    await lin.ok('PUT', '/v1/kota/profil', { penName: 'lin.kota' });
+    const rumah = await lin.ok('POST', '/v1/kota/claims', { plotId: 'tiangseribu.30', household: 'Keluarga Lin', from: 1960, to: 1990, tokoh: { id: 'tLinUtama001', name: 'Lin', born: 1950 } });
+    await lin.ok('POST', `/v1/naskah/${rumah.msId}/canon`, { id: 'tAdikLin001', kind: 'tokoh', envelope: { plain: { v: 1, kind: 'tokoh', name: 'Adik Lin', aliases: [], known: [], peran: 'figuran' } } });
+    const nurId = (await nur.ok('GET', '/v1/me')).user.id;
+    const undang = { claimId: rumah.id, tokohId: 'tAdikLin001', userId: nurId };
+    // Belum satu lingkaran: ditolak.
+    expect((await lin.req('POST', '/v1/kota/pegang/undang', undang)).status).toBe(403);
+    const circle = await lin.createCircle('circle', 'Lingkar Lin');
+    await nur.accept(await lin.invite(circle.id));
+    expect((await lin.req('POST', '/v1/kota/pegang/undang', undang)).status).toBe(409);
+    await nur.ok('PUT', '/v1/kota/profil', { penName: 'nur.kota' });
+    const u = await lin.ok('POST', '/v1/kota/pegang/undang', undang);
+    expect((await nur.ok('GET', '/v1/kota')).me.undangan).toEqual([expect.objectContaining({ id: u.id, tokoh: 'Adik Lin', household: 'Keluarga Lin' })]);
+    expect((await lin.req('PUT', `/v1/kota/pegang/${u.id}`, { action: 'terima' })).status).toBe(403);
+    await nur.ok('PUT', `/v1/kota/pegang/${u.id}`, { action: 'terima' });
+    await nur.ok('POST', `/v1/naskah/${rumah.msId}/scenes`, { id: 'adiklin01x', chapter: 1, order: 1, envelope: { plain: { v: 1, pov: 'tAdikLin001', when: { label: '', sort: '' }, text: 'Adik Lin mendayung ke sekolah.' } } });
+    expect((await nur.ok('GET', '/v1/kota')).me.tokoh.pakai).toBe(1);
   });
 });
