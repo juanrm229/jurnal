@@ -4,13 +4,14 @@
  * Naskah lama di luar kota tetap bisa dibuka di bagian arsip.
  */
 import type { NaskahMeta } from '@sehari/core';
-import { kotaPlot } from '@sehari/core';
-import type { CSSProperties } from 'react';
-import { useKota } from '@/lib/kota';
+import { KOTA_MUSIM, KOTA_PENA_RE, kotaPlot } from '@sehari/core';
+import { type CSSProperties, useState } from 'react';
+import { api } from '@/lib/api';
+import { useKota, useKotaRefresh } from '@/lib/kota';
 import { useNaskahList } from '@/lib/naskah';
 import { navigate } from '@/lib/router';
 import { useOpenAny } from '@/lib/stories';
-import { Doodle, Growing, Header } from '@/ui/kit';
+import { Doodle, Growing, Header, useToast } from '@/ui/kit';
 
 export default function Meja() {
   const kota = useKota();
@@ -26,6 +27,8 @@ export default function Meja() {
   return (
     <main className="screen meja-kota">
       <Header title="meja tulis" sub="semua kisah berawal dari sebuah alamat" backTo="/kota" />
+
+      {me.penName ? <NamaPena nama={me.penName} lama={me.penaLama ?? []} boleh={me.penaBolehGanti ?? null} /> : null}
 
       <section className="mj-jatah" aria-label="jatah musim ini">
         <div className="mj-jatah-k">
@@ -59,7 +62,7 @@ export default function Meja() {
                   </span>
                   <b>{c.household}</b>
                   <span className="tiny soft">
-                    {c.from}–{c.to} · {c.scenes} adegan terbit
+                    {c.from}–{c.to} · {c.scenes} adegan terbit{c.musim !== KOTA_MUSIM ? ` · musim ${c.musim}, tidak memakai jatah` : ''}
                   </span>
                 </button>
                 <button className="btn sm" onClick={() => navigate(`/naskah/${c.msId}`)} data-testid="meja-tulis">
@@ -150,5 +153,62 @@ export default function Meja() {
         </section>
       ) : null}
     </main>
+  );
+}
+
+/** Nama pena kota: bisa diganti sekali per 30 hari; nama lama tetap tercatat. */
+function NamaPena({ nama, lama, boleh }: { nama: string; lama: string[]; boleh: string | null }) {
+  const toast = useToast();
+  const refresh = useKotaRefresh();
+  const [ubah, setUbah] = useState(false);
+  const [v, setV] = useState(nama);
+  const [busy, setBusy] = useState(false);
+  const tunggu = boleh && new Date(boleh) > new Date() ? new Date(boleh) : null;
+  const ok = KOTA_PENA_RE.test(v.trim().toLowerCase()) && v.trim().toLowerCase() !== nama;
+  return (
+    <section className="mj-pena" aria-label="nama pena kota">
+      <div className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+        <span className="col" style={{ gap: 2, minWidth: 0 }}>
+          <span className="tiny soft">menulis sebagai</span>
+          <b className="mj-pena-nama">{nama}</b>
+          {lama.length ? <span className="tiny soft">dulu: {lama.join(', ')}</span> : null}
+        </span>
+        {!ubah ? (
+          <button className="pill sm" disabled={!!tunggu} onClick={() => setUbah(true)} data-testid="meja-ganti-pena">
+            {tunggu ? `bisa diganti ${tunggu.getDate()}/${tunggu.getMonth() + 1}` : 'ganti nama pena'}
+          </button>
+        ) : null}
+      </div>
+      {ubah ? (
+        <div className="col" style={{ gap: 8, marginTop: 10 }}>
+          <input className="field" value={v} maxLength={24} autoCapitalize="off" onChange={(e) => setV(e.target.value.toLowerCase())} placeholder="nama pena baru" data-testid="meja-pena-baru" />
+          <span className="tiny soft">Huruf kecil, angka, titik. Nama pena tampil di semua rumahmu; hanya bisa diganti sekali dalam 30 hari, dan nama lamamu tetap tercatat supaya pembaca bisa menelusurimu.</span>
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn ghost auto" onClick={() => (setUbah(false), setV(nama))}>
+              batal
+            </button>
+            <button
+              className="btn grow"
+              disabled={!ok || busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  await api.put('/kota/profil', { penName: v.trim().toLowerCase() });
+                  toast(`Kini kamu menulis sebagai ${v.trim().toLowerCase()}.`);
+                  setUbah(false);
+                  void refresh();
+                } catch (e) {
+                  toast((e as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              data-testid="meja-pena-simpan">
+              {busy ? 'menyimpan…' : 'simpan nama pena'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }

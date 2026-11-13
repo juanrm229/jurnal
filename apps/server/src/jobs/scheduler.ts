@@ -11,6 +11,8 @@ import { pushTo, userToday } from '../lib/domain';
 import { closeChapterIfReadyForce } from '../routes/lore';
 import { deliverDueLetters } from '../routes/letters';
 import { cleanupPulseDedupe } from '../routes/community';
+import { antarSuratKota } from '../lib/kotaPos';
+import { loncengKetujuh } from '../lib/kotaLonceng';
 
 async function once(s: Services, key: string): Promise<boolean> {
   const rows = await s.db.insert(schema.notificationLog).values({ key }).onConflictDoNothing().returning();
@@ -72,6 +74,7 @@ export async function runJobs(s: Services): Promise<void> {
   const now = s.now();
   await deliverDueLetters(s);
   await remindMeets(s);
+  await antarSuratKota(s).catch((e) => console.error('pos kota', e));
 
   // Kapsul waktu yang terbuka hari ini.
   const capsules = await s.db
@@ -99,6 +102,7 @@ export async function runJobs(s: Services): Promise<void> {
     const p = localParts(u.tz, now);
     const today = userToday(u, now);
     if (p.hour >= 8) await remindDates(s, u, today);
+    await loncengKetujuh(s, u, today, p.hour, (k) => once(s, k)).catch((e) => console.error('lonceng', e));
     // Minggu sore: rol dibuka, sebelum Minggu Kita jadi jam tujuh malam.
     if (weekday(today) === 0 && p.hour >= 16 && (await once(s, `roll:${u.id}:${isoWeek(today)}`))) {
       await pushTo(s, [u.id], { body: say(COPY.notifications.rollOpen), data: { type: 'roll', week: isoWeek(today), ...(await onlyCircle(s, u.id)) } }, 'notifyWraps');

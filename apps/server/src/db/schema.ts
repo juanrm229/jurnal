@@ -1069,6 +1069,9 @@ export const msCanon = pgTable(
 export const cityProfiles = pgTable('city_profiles', {
   userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
   penName: text('pen_name').notNull().unique(),
+  /** Nama pena sebelumnya (terbaru di depan) dan kapan terakhir diganti. */
+  penaLama: jsonb('pena_lama').$type<string[]>().notNull().default([]),
+  penaAt: ts('pena_at'),
   createdAt: ts('created_at').notNull().defaultNow(),
 });
 

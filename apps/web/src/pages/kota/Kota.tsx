@@ -55,6 +55,11 @@ export default function Kota() {
   const claims = kota.data?.claims ?? [];
   const mine = claims.find((c) => c.mine && c.state === 'aktif');
   const kabar = useKabar();
+  // Lampu jendela: di kertas malam (atau senja), peta ikut gelap dan rumah yang penulisnya
+  // menulis dalam 24 jam terakhir menyala. Bisa juga diintip kapan saja.
+  const malamOtomatis = typeof document !== 'undefined' && (document.documentElement.dataset.dark === '1' || ['malam', 'senja'].includes(document.documentElement.dataset.sky ?? ''));
+  const [malam, setMalam] = useState(malamOtomatis);
+  const menyala = claims.filter((c) => c.state === 'aktif' && c.menyala);
   const kabarBaru = !!kabar.data?.[0] && kabar.data[0].at > kabarDilihat();
   const openRegions = KOTA_WILAYAH.filter(kotaOpen);
   const plots = useMemo(() => openRegions.flatMap((r) => kotaPlots(r.id)), []);
@@ -207,8 +212,14 @@ export default function Kota() {
         <div ref={inner} className="kp-world" style={{ width: W, height: H, backgroundImage: `url(${KOTA_IMG.kecil})` }}>
           <img className="kp-img" src={KOTA_IMG.sedang} alt="Peta ilustrasi Kota Sangkala" draggable={false} style={{ filter: `sepia(${(sepia * 0.7).toFixed(2)}) saturate(${(1 - sepia * 0.3).toFixed(2)})` }} />
           {scale > 1.25 ? <img className="kp-img" src={KOTA_IMG.besar} alt="" aria-hidden draggable={false} style={{ filter: `sepia(${(sepia * 0.7).toFixed(2)}) saturate(${(1 - sepia * 0.3).toFixed(2)})` }} /> : null}
+          {malam ? <div className="kp-malam" aria-hidden /> : null}
           <svg className="kp-svg" viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden>
             <defs>
+              <radialGradient id="kp-lampu">
+                <stop offset="0%" stopColor="#fff6c8" stopOpacity="1" />
+                <stop offset="25%" stopColor="#ffd56b" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#ffb13b" stopOpacity="0" />
+              </radialGradient>
               <pattern id="kp-kosong" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
                 <rect width="10" height="10" fill="#efe6cf" fillOpacity="0.55" />
                 <path d="M0 5 H10" stroke="#a08a5c" strokeOpacity="0.45" strokeWidth="1.2" />
@@ -238,6 +249,17 @@ export default function Kota() {
                     const q = plots.find((x) => x.id === c.plotId);
                     return q ? <circle key={c.id} cx={q.x} cy={q.y} r={7 / scale} className={`kp-rumah ${c.mine ? 'milikku' : ''}`} style={{ strokeWidth: 2 / scale }} /> : null;
                   })}
+            {malam
+              ? menyala.map((c) => {
+                  const q = plots.find((x) => x.id === c.plotId);
+                  return q ? (
+                    <g key={`l${c.id}`} className="kp-lampu" data-testid="kota-lampu">
+                      <circle cx={q.x} cy={q.y} r={24 / Math.sqrt(scale)} fill="url(#kp-lampu)" />
+                      <circle cx={q.x} cy={q.y} r={1.6 / Math.sqrt(scale)} fill="#fffbe6" />
+                    </g>
+                  ) : null;
+                })
+              : null}
             {plot ? <circle cx={plot.x} cy={plot.y} r={14 / scale} className="kp-cincin" style={{ strokeWidth: 2.4 / scale }} /> : null}
             {KOTA_WILAYAH.map((r) => (
               <text key={r.id} x={r.label[0]} y={r.label[1]} className={`kp-label ${kotaOpen(r) ? 'buka' : ''}`} style={{ fontSize: lbl * (kotaOpen(r) ? 1.25 : 1), strokeWidth: lbl / 3.2, opacity: showPlots && !kotaOpen(r) ? 0.4 : 1 }}>
@@ -253,7 +275,7 @@ export default function Kota() {
           <Doodle id="ui-kembali" size={20} />
         </button>
         <div className="kp-glass kp-title">
-          <span className="kp-musim">kota sehari · musim 1</span>
+          <span className="kp-musim">{malam ? `malam di Sangkala · ${menyala.length} jendela menyala` : 'kota sehari · musim 1'}</span>
           <b>Kota Sangkala</b>
         </div>
         <button className="kp-glass kp-almanak kp-kabar" onClick={() => navigate('/kota/kabar')} aria-label={kabarBaru ? 'kabar kota, ada yang baru' : 'kabar kota'} data-testid="kota-kabar">
@@ -273,6 +295,9 @@ export default function Kota() {
       <section className="kp-glass kp-zaman" aria-label="penggeser zaman">
         <div className="kp-zaman-top">
           <b>{year}</b>
+          <button className={`kp-malam-btn ${malam ? 'on' : ''}`} onClick={() => setMalam(!malam)} aria-pressed={malam} aria-label={malam ? 'kembali ke siang' : 'lihat kota di malam hari'} data-testid="kota-malam">
+            {malam ? '☾' : '☼'}
+          </button>
           <span className="tiny">
             {claims.filter((c) => liveAt(c, year)).length} rumah hidup tahun ini · {showPlots ? 'ketuk persil' : 'ketuk wilayah bergaris'}
           </span>

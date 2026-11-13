@@ -1,6 +1,6 @@
 /** Kota Sehari: data kota, patok, dan potongan peta untuk sampul rumah. */
-import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaKabarWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot } from '@sehari/core';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { KOTA_HUBUNGAN, type KotaClaimWire, type KotaKabarWire, type KotaSuratWire, type KotaFigurDetail, type KotaFigurWire, type KotaNamaWire, type KotaPeristiwaDetail, type KotaPeristiwaWire, type KotaRelasiWire, type KotaTautanWire, type KotaWire, kotaPlot, type NaskahCanonPayload, type NaskahEntry, type NaskahScenePayload, type NaskahWire, naskahChrono, naskahKacamata } from '@sehari/core';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { store } from './storage';
 
@@ -110,3 +110,36 @@ export function useKabar() {
 const LIHAT = 'kota.kabar.lihat';
 export const kabarDilihat = () => store.get(LIHAT) ?? '';
 export const tandaiKabar = (at: string) => store.set(LIHAT, at);
+
+/** Surat dari Sangkala (ketukan dan permintaan pegang) untuk Kotak Surat. */
+export function useSuratKota() {
+  return useQuery({ queryKey: ['kota', 'surat'], queryFn: () => api.get<KotaSuratWire[]>('/kota/surat'), staleTime: 30_000 });
+}
+/** "pukul 14.20" hari ini, "besok pukul 08.05", atau tanggal. */
+export function waktuTiba(iso: string) {
+  const d = new Date(iso);
+  const kini = new Date();
+  const jam = `${String(d.getHours()).padStart(2, '0')}.${String(d.getMinutes()).padStart(2, '0')}`;
+  const hari = Math.round((new Date(d.toDateString()).getTime() - new Date(kini.toDateString()).getTime()) / 86_400_000);
+  return hari === 0 ? `pukul ${jam}` : hari === 1 ? `besok pukul ${jam}` : hari === -1 ? `kemarin pukul ${jam}` : `${d.getDate()}/${d.getMonth() + 1} pukul ${jam}`;
+}
+
+/**
+ * Ingatan tokoh pindahan dari rumah-rumahnya yang lain (isi rumah kota terbuka):
+ * yang ia tahu atau kira di sana sampai tahun adegan. Dipakai Kacamata dan untuk
+ * meredam peringatan "belum tahu" atas hal yang sebenarnya sudah ia ketahui.
+ */
+export function useIngatan(rumah: { id: string; msId: string; household: string; to: number }[], kunci: string, tahun: number | null) {
+  const qs = useQueries({ queries: rumah.map((c) => ({ queryKey: ['kota', 'ingatan', c.msId], queryFn: () => api.get<NaskahWire>(`/naskah/${c.msId}`), staleTime: 60_000 })) });
+  return rumah.flatMap((c, i) => {
+    const w = qs[i]?.data;
+    if (!w) return [];
+    const plain = (env: unknown) => (env && typeof env === 'object' && 'plain' in env ? (env as { plain: unknown }).plain : null);
+    const entri = w.canon.map((e) => ({ id: e.id, p: plain(e.envelope) as NaskahCanonPayload | null })).filter((e): e is NaskahEntry => !!e.p);
+    const adegan = w.scenes.map((x) => ({ id: x.id, chapter: x.chapter, order: x.order, p: plain(x.envelope) as NaskahScenePayload | null }));
+    const diri = entri.find((e) => e.p.kind === 'tokoh' && (e.id === kunci || e.p.asal?.tokohId === kunci));
+    if (!diri) return [];
+    const v = naskahKacamata(diri.id, `${Math.min(tahun ?? c.to, c.to)}~9999`, entri, naskahChrono(adegan));
+    return [{ id: c.id, household: c.household, tahu: v.tahu, mengira: v.mengira }];
+  });
+}

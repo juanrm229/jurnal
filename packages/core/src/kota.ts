@@ -324,3 +324,17 @@ export function kotaCekTeks(text: string, nama: KotaNama[], o: { claimId: string
   }
   return out.sort((a, b) => a.at - b.at);
 }
+
+// ── Pos Sangkala: surat antar-rumah diantar Bang Jamil ──────────────────────
+
+/** Kantor pos kota (dekat Pasar Senja), asal surat dari warga yang belum punya rumah. */
+export const KOTA_KANTOR_POS = { x: 1180, y: 330 };
+/**
+ * Lama pengantaran surat (menit) menurut jarak di peta (ruang 2000×1125, kira-kira
+ * 3 meter per satuan). Bang Jamil bersepeda: 15 menit menyiapkan, lalu setengah menit
+ * per satuan; ke pulau naik perahu. Paling lama 16 jam.
+ */
+export function kotaAntar(a: { x: number; y: number }, b: { x: number; y: number }, pulau = false): number {
+  const d = Math.hypot(a.x - b.x, a.y - b.y);
+  return Math.min(16 * 60, Math.round(15 + d * 0.5 + (pulau ? 180 : 0)));
+}

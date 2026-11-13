@@ -1287,6 +1287,8 @@ export interface KotaRelasiWire {
   /** Surat ketukan: hanya untuk kedua pemilik rumah. */
   letter: string | null;
   createdAt: string;
+  /** Kapan surat ketukannya sampai di pintu (diantar Bang Jamil). */
+  sampaiAt?: string;
 }
 export interface KotaTautanWire {
   /** Permintaan dan pegangan figuran rumah ini (yang relevan bagi penonton). */
@@ -1296,6 +1298,19 @@ export interface KotaTautanWire {
   claims: KotaClaimWire[];
   /** Rumah-rumah yang dihuni orang yang sama (tokoh pindah rumah). */
   sama?: { a: string; b: string; tokoh: string }[];
+}
+
+/** Surat dari Sangkala di Kotak Surat: ketukan dan permintaan pegang, masuk dan keluar. */
+export interface KotaSuratWire {
+  id: string;
+  jenis: 'ketuk' | 'pegang';
+  arah: 'masuk' | 'keluar';
+  dari: string;
+  kepada: string;
+  isi: string;
+  sampaiAt: string;
+  sampai: boolean;
+  ke: string;
 }
 
 export interface KotaKabarWire {
@@ -1325,6 +1340,10 @@ export interface KotaClaimWire {
   /** 'rumah' utama, atau 'leluhur' di zaman lebih awal. */
   kind: 'rumah' | 'leluhur';
   mine: boolean;
+  /** Musim saat rumah ini dipatok. Rumah musim lalu tetap berdiri, tapi tidak memakai jatah musim ini. */
+  musim: number;
+  /** Penulisnya menulis dalam 24 jam terakhir: lampu jendelanya menyala di peta malam. */
+  menyala?: boolean;
   createdAt: string;
 }
 export const kotaPeristiwaBody = z.object({
@@ -1444,6 +1463,7 @@ export interface KotaPegangWire {
   penName: string;
   letter: string | null;
   state: 'minta' | 'pegang' | 'tolak' | 'lepas';
+  sampaiAt?: string;
 }
 
 export interface KotaWire {
@@ -1451,6 +1471,9 @@ export interface KotaWire {
   claims: KotaClaimWire[];
   me: {
     penName: string | null;
+    /** Nama pena sebelumnya dan kapan terakhir diganti (sekali per 30 hari). */
+    penaLama?: string[];
+    penaBolehGanti?: string | null;
     patok: { pakai: number; maks: number };
     tokoh: { pakai: number; maks: number };
     /** Tokoh-tokohmu (asli, bukan salinan pindahan) dan figuran yang kamu pegang. */
@@ -1468,4 +1491,6 @@ export interface KotaTokohku {
   dipegang?: boolean;
   /** Rumah-rumahmu tempat tokoh ini tinggal (asli dan pindahan). */
   rumah: string[];
+  /** Musim rumah asalnya; jatah tokoh dihitung per musim. */
+  musim?: number;
 }

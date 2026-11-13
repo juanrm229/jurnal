@@ -218,6 +218,13 @@
       "when": 1794503130556,
       "tag": "0030_nostalgic_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794531442760,
+      "tag": "0031_amused_boomerang",
+      "breakpoints": true
     }
   ]
 }

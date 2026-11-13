@@ -11,6 +11,7 @@ import { navigate } from '@/lib/router';
 import { Doodle, Empty, ErrorNote, Growing, Header, MoodDot, Screen, Section, Sheet, Sticky } from '@/ui/kit';
 import { openSong, Photo } from '../story/cards';
 import { Envelope } from '../story/Envelope';
+import { SuratSangkala } from './SuratSangkala';
 import { formatWhen, KIND_DOODLE, KIND_LABEL, milestoneName, stickyColorFor, tiltFor, useAllLetters } from '../story/letters';
 
 type Tab = 'inbox' | 'outbox';
@@ -63,6 +64,7 @@ export default function Letters() {
       </div>
 
       <div style={{ height: 16 }} />
+      <SuratSangkala arah={tab === 'inbox' ? 'masuk' : 'keluar'} />
       {list.isLoading ? (
         <Growing />
       ) : list.error ? (
