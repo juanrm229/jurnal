@@ -951,13 +951,11 @@ a.hadir-row:active {
   padding: 4px;
   border-radius: var(--r-pill);
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--card) 90%, transparent);
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  /* Latar padat, tanpa backdrop-filter dan tanpa animasi: di Safari iOS isi elemen
+     berkaca-buram yang beranimasi kadang tidak tergambar (dok jadi pil polos). */
+  background: color-mix(in srgb, var(--card) 97%, var(--paper));
   box-shadow: var(--shadow);
-  animation: rail-in 560ms var(--ease-spring) 380ms both;
 }
-/* Animasi masuk hanya menggeser: bila animasi tertahan (iOS, tab di latar), dok tetap terlihat utuh. */
 @keyframes rail-in {
   from {
     transform: translateY(26px) scale(0.9);
@@ -974,7 +972,6 @@ a.hadir-row:active {
   border-radius: var(--r-pill);
   font-size: var(--fs-xs);
   gap: 1px;
-  animation: dock-pop 460ms var(--ease-spring) both;
 }
 .rail .dock-btn:nth-child(1) {
   animation-delay: 460ms;
@@ -2773,4 +2770,12 @@ button.cerita-premis {
   .top {
     display: none !important;
   }
+}
+
+/* Dok alat (elemen terpilih): sama, tanpa kaca buram dan tanpa animasi masuk. */
+.dock.context {
+  animation: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: color-mix(in srgb, var(--text) 96%, var(--paper));
 }

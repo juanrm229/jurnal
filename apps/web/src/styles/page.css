@@ -69,7 +69,12 @@
 }
 .el.dragging {
   cursor: grabbing;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.18));
+  /* Tanpa filter saat digeser: drop-shadow menggambar ulang elemen tiap bingkai (tersendat di iPhone). */
+  will-change: transform;
+}
+.el.dragging > .el-body {
+  outline-style: solid;
+  opacity: 0.94;
 }
 .el.selected > .el-body {
   outline: 1.5px dashed var(--ink);
