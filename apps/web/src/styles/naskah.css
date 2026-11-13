@@ -1083,3 +1083,35 @@
 :root[data-dark='1'] .nk-pov.on {
   color: #111116;
 }
+
+/* ── Kilas balik ── */
+.nk-pill.kilas {
+  background: color-mix(in srgb, var(--sticky-blue) 70%, transparent);
+  color: var(--text);
+}
+.nk-baca-kilas {
+  display: block;
+  margin: 0 0 6px;
+  font-family: var(--hand);
+  font-size: 19px;
+  color: #6a5a3a;
+}
+:root[data-dark='1'] .nk-baca-kilas {
+  color: #d9c49a;
+}
+.nk-waktu-catat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sticky-blue) 45%, var(--paper));
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.nk-waktu-catat p {
+  margin: 0;
+}
+.nk-waktu-catat .salah {
+  color: var(--lak-deep);
+}

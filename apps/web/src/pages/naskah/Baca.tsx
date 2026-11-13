@@ -3,7 +3,7 @@
  * tokoh seperti buku harian; surat seperti bundel surat. Pembaca hanya melihat
  * yang sudah terbit; penulis juga melihat drafnya sendiri.
  */
-import { NASKAH_BENTUK } from '@sehari/core';
+import { NASKAH_BENTUK, naskahKilas } from '@sehari/core';
 import { type CSSProperties, useEffect, useState } from 'react';
 import { useRumahNaskah } from '@/lib/kota';
 import { type NaskahModel, type Scene, tglPanjang, useNaskah, useNaskahModel } from '@/lib/naskah';
@@ -46,6 +46,7 @@ function Buku({ m, wid }: { m: NaskahModel; wid: string }) {
     .filter((s) => s.p && (s.status === 'terbit' || s.authorId === m.meId))
     .sort(bentuk === 'jurnal' || bentuk === 'surat' ? (a, b) => m.chrono[a.id]!.localeCompare(m.chrono[b.id]!) : (a, b) => a.chapter - b.chapter || a.order - b.order);
   const chapters = [...new Set(list.map((s) => s.chapter))];
+  const kilas = bentuk === 'jurnal' || bentuk === 'surat' ? {} : naskahKilas(list);
   const title = w?.p.title ?? (m.works.length ? 'Kisah lepas' : m.meta.title);
   const back = () => (history.length > 1 ? history.back() : navigate(rumah.data ? `/kota/rumah/${rumah.data.id}` : `/naskah/${m.ms.id}`));
 
@@ -117,6 +118,7 @@ function Buku({ m, wid }: { m: NaskahModel; wid: string }) {
               .map((s, i) => (
                 <article key={s.id} className="nk-adegan-baca">
                   {i ? <div className="nk-pemisah" aria-hidden>⁂</div> : null}
+                  {kilas[s.id] ? <span className="nk-baca-kilas">kilas balik · {tglPanjang(kilas[s.id]!.ke) || kilas[s.id]!.ke}</span> : null}
                   <span className="nk-baca-pov">
                     {m.nameOf(s.p!.pov)}
                     {s.p!.when.label ? ` · ${s.p!.when.label}` : ''}

@@ -2,7 +2,7 @@
  * Ruang naskah: susunan bab dan adegan (urutan baca), garis waktu (urutan
  * kejadian per tokoh), dan Kanon.
  */
-import { NASKAH_BENTUK, type NaskahScenePayload } from '@sehari/core';
+import { NASKAH_BENTUK, type NaskahScenePayload, naskahKilas } from '@sehari/core';
 import { type CSSProperties, useState } from 'react';
 import { usePegangan, usePena, useRumahNaskah } from '@/lib/kota';
 import { firstLine, type NaskahModel, newNaskahId, povColor, type Scene, tglPanjang, useNaskah, useNaskahModel, type Work } from '@/lib/naskah';
@@ -92,6 +92,7 @@ function Susunan({ m, w, goKanon }: { m: NaskahModel; w: Work | null; goKanon: (
   const pool = m.scenesOf(w?.id ?? null);
   const pegangan = usePegangan(m.ms, m.meId);
   const pena = usePena(m);
+  const kilas = naskahKilas(pool.filter((s) => s.p));
   const chapters = [...new Set(pool.map((s) => s.chapter))].sort((a, b) => a - b);
   if (!chapters.length) chapters.push(1);
   const bentuk = w?.bentuk ?? 'kisah';
@@ -188,6 +189,7 @@ function Susunan({ m, w, goKanon }: { m: NaskahModel; w: Work | null; goKanon: (
                       <span className="nk-adegan-bawah">
                         <Avatar doodle={m.face(s.authorId)} size={18} />
                         <span className="tiny soft">{mine ? 'milikmu' : pena(s.authorId)}</span>
+                        {kilas[s.id] ? <span className="nk-pill kilas">kilas balik · {kilas[s.id]!.ke.slice(0, 4)}</span> : null}
                         {s.status === 'draf' ? <span className="nk-pill draf">draf</span> : <span className="tiny soft">v{s.version}</span>}
                       </span>
                     </button>

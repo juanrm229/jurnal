@@ -214,3 +214,24 @@ export interface NaskahWorkPayload {
   /** Judul bab untuk novel dan cerpen. */
   bab?: Record<string, string>;
 }
+
+/**
+ * Kilas balik: dalam urutan baca, adegan yang tanggal ceritanya lebih awal dari
+ * tanggal terjauh yang sudah dilewati pembaca. Tidak perlu ditandai manual; Kacamata
+ * tetap menghitung pengetahuan tokoh pada tanggal adegan itu.
+ */
+export function naskahKilas(scenes: NaskahSceneLite[]): Record<string, { ke: string; dari: string }> {
+  const out: Record<string, { ke: string; dari: string }> = {};
+  let jauh = '';
+  for (const s of [...scenes].sort((a, b) => a.chapter - b.chapter || a.order - b.order)) {
+    const sort = s.p?.when.sort?.trim() ?? '';
+    if (!sort || !NASKAH_SORT_RE.test(sort)) continue;
+    if (jauh && sort < jauh && !jauh.startsWith(sort)) out[s.id] = { ke: sort, dari: jauh };
+    if (sort > jauh) jauh = sort;
+  }
+  return out;
+}
+
+/** Apakah tokoh hidup pada tahun adegan: 'belum' lahir, 'wafat', atau null bila hidup / tak diketahui. */
+export const naskahUsia = (t: { born?: number; died?: number } | undefined, year: number | null): 'belum' | 'wafat' | null =>
+  !t || !year ? null : t.born && year < t.born ? 'belum' : t.died && year > t.died ? 'wafat' : null;
