@@ -2274,3 +2274,30 @@
   line-height: 1;
   color: var(--ink);
 }
+.card.mj-arsip {
+  padding: 0;
+  overflow: hidden;
+}
+.mj-arsip-buka {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.mj-arsip-hapus {
+  align-self: stretch;
+  padding: 0 16px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: none;
+  color: var(--lak-deep, #a1341f);
+  font: inherit;
+  font-size: var(--fs-sm);
+}

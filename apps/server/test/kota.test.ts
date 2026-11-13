@@ -325,4 +325,18 @@ describe('kota sehari', () => {
     await ana.ok('POST', `/v1/naskah/${rumahAna.msId}/scenes`, s2('saksi0004x', 'mendengar', '1965'));
     expect((await ana.req('POST', `/v1/naskah/${rumahAna.msId}/scenes`, { ...s2('saksi0005x', 'mendengar', '1965'), envelope: { plain: { ...s2('saksi0005x', 'mendengar', '1965').envelope.plain, peristiwa: 'tidak.ada' } } })).status).toBe(400);
   });
+
+  it('arsip bisa dihapus; rumah yang masih berdiri tidak', async () => {
+    const rumahAna = (await ana.ok('GET', '/v1/kota')).claims.find((x: any) => x.mine && x.state === 'aktif');
+    expect((await ana.req('DELETE', `/v1/naskah/${rumahAna.msId}`)).status).toBe(403);
+    // Rumah lama Ana sudah jadi arsip saat persilnya dipatok Bima: boleh dihapus.
+    const arsip = (await ana.ok('GET', '/v1/naskah')).find((x: any) => x.visibility === 'arsip');
+    await ana.ok('DELETE', `/v1/naskah/${arsip.id}`);
+    expect((await ana.req('GET', `/v1/naskah/${arsip.id}`)).status).toBe(404);
+    // Almanak dan Buku Warga lebih kaya, almanak berurutan menurut tahun.
+    const almanak = await ana.ok('GET', '/v1/kota/almanak');
+    expect(almanak.filter((e: any) => e.state === 'kanon').length).toBeGreaterThanOrEqual(39);
+    expect(almanak.map((e: any) => e.year)).toEqual([...almanak.map((e: any) => e.year)].sort((a: number, b: number) => a - b));
+    expect((await ana.ok('GET', '/v1/kota/warga')).filter((f: any) => f.state === 'kanon').length).toBeGreaterThanOrEqual(34);
+  });
 });

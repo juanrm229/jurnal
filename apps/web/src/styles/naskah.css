@@ -1115,3 +1115,69 @@
 .nk-waktu-catat .salah {
   color: var(--lak-deep);
 }
+
+/* ── Rujukan kota ── */
+.nk-rujuk-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rj {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rj-tab {
+  align-self: flex-start;
+  margin-bottom: 0;
+}
+.rj-catat {
+  margin: 0;
+  line-height: 1.45;
+}
+.rj-daftar {
+  gap: 8px;
+}
+.rj-baris {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--card-edge);
+  background: var(--card);
+}
+.rj-baris.redup {
+  opacity: 0.6;
+}
+.rj-baris b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+.rj-baris .tiny,
+.rj-baris .ka-tahun {
+  display: block;
+}
+.rj-julukan {
+  display: block;
+  font-family: var(--hand);
+  font-size: 18px;
+  line-height: 1.1;
+  color: #8a5a2b;
+}
+:root[data-dark='1'] .rj-julukan {
+  color: #e0b07a;
+}
+.rj-ciri {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--serif);
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+.rj-aksi {
+  gap: 6px;
+  flex: none;
+}

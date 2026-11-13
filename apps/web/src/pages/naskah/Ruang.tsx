@@ -10,6 +10,7 @@ import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, useToast } from '@/ui/kit';
 import { JudulBab, keBaca, LEPAS, RakKarya } from './Karya';
 import { KanonList } from './Kanon';
+import { RujukanKota } from './Rujukan';
 
 export default function Ruang() {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +20,7 @@ export default function Ruang() {
   return <Workspace m={m} />;
 }
 
-type Tab = 'naskah' | 'waktu' | 'kanon';
+type Tab = 'naskah' | 'waktu' | 'kanon' | 'kota';
 
 function Workspace({ m }: { m: NaskahModel }) {
   const [tab, setTab] = useState<Tab>(m.tokoh.length ? 'naskah' : 'kanon');
@@ -66,9 +67,9 @@ function Workspace({ m }: { m: NaskahModel }) {
         ))}
       </div>
       <nav className="meja-tab" role="tablist">
-        {(['naskah', 'waktu', 'kanon'] as Tab[]).map((t) => (
+        {(rumah.data ? (['naskah', 'waktu', 'kanon', 'kota'] as Tab[]) : (['naskah', 'waktu', 'kanon'] as Tab[])).map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)} data-testid={`nk-tab-${t}`}>
-            <Doodle id={t === 'naskah' ? 'buku-terbuka' : t === 'waktu' ? 'jam-dinding' : 'kacamata'} size={16} color="currentColor" /> {t}
+            <Doodle id={t === 'naskah' ? 'buku-terbuka' : t === 'waktu' ? 'jam-dinding' : t === 'kota' ? 'rumah' : 'kacamata'} size={16} color="currentColor" /> {t}
           </button>
         ))}
       </nav>
@@ -78,7 +79,7 @@ function Workspace({ m }: { m: NaskahModel }) {
             <RakKarya m={m} sel={w ? w.id : LEPAS} onSel={setSel} />
             <Susunan key={sel} m={m} w={w} goKanon={() => setTab('kanon')} />
           </>
-        ) : tab === 'waktu' ? <GarisWaktu m={m} /> : <KanonList m={m} />}
+        ) : tab === 'waktu' ? <GarisWaktu m={m} /> : tab === 'kota' && rumah.data ? <RujukanKota rumah={rumah.data} tahun={null} /> : <KanonList m={m} />}
         {m.pub ? <p className="tiny soft nk-publik">{m.ms.visibility === 'kota' ? 'Rumah ini ada di Kota Sangkala: adegan yang terbit bisa dibaca semua warga. Draf tetap hanya untukmu.' : 'Bekas rumah di Kota. Kini hanya terbaca olehmu.'}</p> : null}
       </div>
     </main>

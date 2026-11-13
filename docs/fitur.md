@@ -181,3 +181,10 @@ Pertanyaan pokoknya: kalau sebuah kisah memakai tokoh yang tidak dipatok siapa p
 - **Ingatan rumah lama** meredam peringatan "belum tahu" untuk hal yang sudah diketahui tokoh pindahan di rumahnya yang lain.
 - **Moderasi**: tim meninjau rumah yang dilaporkan lewat `GET /admin/kota/laporan` dan memutuskan `PATCH /admin/kota/claims/:id` (`pulihkan` atau `tutup`), dengan ADMIN_TOKEN.
 - **Aplikasi HP**: menu Aku → Kota Sangkala membuka Kota di aplikasi web.
+
+### Rujukan kota dan arsip
+
+- **Almanak** berisi 39 peristiwa kanon awal (1702–2023) di semua wilayah, dari kapal karam di Beting Karang, undak terakhir Bukit Seribu Undak, musim demam kota tua, jembatan kayu Kali Sirah, radio kota, sampai mural sumbu di Lorong Sumbu.
+- **Buku Warga Kota** berisi 34 figuran kota lintas zaman dan wilayah (Kapten Halim si syahbandar, Bu Guru Arum, Babah Liong, Mbah Karto penjaga pintu air, Ratna penyiar radio, Wak Omar pembuat perahu, Cik Mei penjahit kebaya, Lukas penjaga suar terakhir, dan lainnya), masing-masing dengan ciri dan "hal yang tetap".
+- **Rujukan kota** di ruang menulis rumah kota: tab **kota** di studio, dan tombol **rujukan kota** di editor adegan. Isinya warga kota (urut dari yang hidup pada tahun adegan dan yang tinggal di wilayah rumah), peristiwa almanak (urut dari yang terdekat, dengan keterangan dialami/didengar rumah ini), dan tetangga yang boleh disebut (tertaut atau "boleh disapa"). Dari editor: **jumpai** menyisipkan nama dan mencatat perjumpaan, **sebut** hanya menyisipkan, **jadikan kesaksian** mengisi peristiwa adegan.
+- **Arsip** di Meja Tulis bisa dihapus untuk selamanya (naskah lama, bekas rumah, rumah yang kembali lowong). Rumah yang masih berdiri di kota tidak bisa dihapus lewat jalan ini, dan rumah yang sedang ditinjau tim baru bisa dihapus setelah ditinjau.

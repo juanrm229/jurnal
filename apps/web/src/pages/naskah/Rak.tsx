@@ -5,8 +5,10 @@
  */
 import type { NaskahMeta } from '@sehari/core';
 import { KOTA_MUSIM, KOTA_PENA_RE, kotaPlot } from '@sehari/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { type CSSProperties, useState } from 'react';
 import { api } from '@/lib/api';
+import { useMe } from '@/lib/data';
 import { useKota, useKotaRefresh } from '@/lib/kota';
 import { useNaskahList } from '@/lib/naskah';
 import { navigate } from '@/lib/router';
@@ -17,6 +19,7 @@ export default function Meja() {
   const kota = useKota();
   const list = useNaskahList();
   const open = useOpenAny();
+  const meId = useMe().user.id;
   if (!kota.data) return <Growing label="merapikan meja…" />;
   const me = kota.data.me;
   const rumah = kota.data.claims.filter((c) => c.mine && c.state === 'aktif').sort((a, b) => a.from - b.from);
@@ -137,16 +140,20 @@ export default function Meja() {
           <div className="col" style={{ gap: 8 }}>
             {arsip.map((ms) => {
               const meta = ms.meta && 'plain' in ms.meta ? (ms.meta.plain as NaskahMeta) : open<NaskahMeta>(ms.meta);
+              const milikku = ms.ownerId === meId;
               return (
-                <button key={ms.id} className="card mj-arsip" onClick={() => navigate(`/naskah/${ms.id}`)} data-testid="naskah-item">
-                  <span className="grow">
-                    <b>{meta?.title ?? 'naskah'}</b>
-                    <span className="tiny soft">
-                      {ms.visibility === 'arsip' ? 'bekas rumah di kota' : 'naskah lama'} · {ms.scenes.filter((x) => x.status === 'terbit').length} adegan
+                <div key={ms.id} className="card mj-arsip">
+                  <button className="mj-arsip-buka" onClick={() => navigate(`/naskah/${ms.id}`)} data-testid="naskah-item">
+                    <span className="grow">
+                      <b>{meta?.title ?? 'naskah'}</b>
+                      <span className="tiny soft">
+                        {ms.visibility === 'arsip' ? 'bekas rumah di kota' : ms.visibility === 'kota' ? 'rumah yang kembali lowong' : 'naskah lama'} · {ms.scenes.filter((x) => x.status === 'terbit').length} adegan
+                      </span>
                     </span>
-                  </span>
-                  <Doodle id="ui-panah-kanan" size={16} />
-                </button>
+                    <Doodle id="ui-panah-kanan" size={16} />
+                  </button>
+                  {milikku ? <HapusArsip id={ms.id} judul={meta?.title ?? 'naskah ini'} /> : null}
+                </div>
               );
             })}
           </div>
@@ -210,5 +217,30 @@ function NamaPena({ nama, lama, boleh }: { nama: string; lama: string[]; boleh: 
         </div>
       ) : null}
     </section>
+  );
+}
+
+/** Hapus arsip untuk selamanya: adegan, kanon, dan versi ikut terhapus. */
+function HapusArsip({ id, judul }: { id: string; judul: string }) {
+  const toast = useToast();
+  const qc = useQueryClient();
+  return (
+    <button
+      className="mj-arsip-hapus"
+      aria-label={`hapus ${judul}`}
+      onClick={async () => {
+        if (!confirm(`Hapus "${judul}" untuk selamanya? Semua adegan, kanon, dan versinya ikut terhapus dan tidak bisa dikembalikan.`)) return;
+        try {
+          await api.del(`/naskah/${id}`);
+          toast('Arsip dihapus.');
+          void qc.invalidateQueries({ queryKey: ['naskah'] });
+          void qc.invalidateQueries({ queryKey: ['kota'] });
+        } catch (e) {
+          toast((e as Error).message);
+        }
+      }}
+      data-testid="meja-hapus-arsip">
+      hapus
+    </button>
   );
 }

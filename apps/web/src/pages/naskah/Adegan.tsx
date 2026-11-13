@@ -28,6 +28,7 @@ import { firstLine, tglPanjang, type NaskahModel, povColor, type Scene, useNaska
 import { navigate, useParams } from '@/lib/router';
 import { Avatar, Doodle, Growing, Header, Sheet, useToast } from '@/ui/kit';
 import { KanonForm, sceneLabel } from './Kanon';
+import { RujukanKota } from './Rujukan';
 
 export default function Adegan() {
   const { id, sid } = useParams<{ id: string; sid: string }>();
@@ -87,6 +88,7 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
   const [lens, setLens] = useState(true);
   const [peek, setPeek] = useState(false);
   const [kanon, setKanon] = useState<NaskahCanonPayload | null>(null);
+  const [rujuk, setRujuk] = useState(false);
   const [versions, setVersions] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
   const ta = useRef<HTMLTextAreaElement>(null);
@@ -160,6 +162,20 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
     for (const x of m.scenes) if (x.id !== s.id && x.p?.pov === pov && x.p.jumpa?.length && chrono[x.id]! < at) x.p.jumpa.forEach((j) => ids.add(j));
     return [...ids];
   }, [m.scenes, s.id, pov, chrono, at]);
+
+  /** Sisipkan teks di posisi kursor (atau di akhir), lalu kembalikan kursor setelahnya. */
+  const sisip = (n: string) => {
+    const el = ta.current;
+    const at = el ? el.selectionStart : text.length;
+    const sebelum = text.slice(0, at);
+    const isi = `${sebelum && !/\s$/.test(sebelum) ? ' ' : ''}${n}`;
+    setText(sebelum + isi + text.slice(at));
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(at + isi.length, at + isi.length);
+    });
+  };
 
   /**
    * Terbit: tokoh rumah lain yang belum tertaut tidak boleh masuk kanon diam-diam.
@@ -296,6 +312,11 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
           ) : null}
           {!sortOk ? <span className="tiny nk-salah">Tulis tanggal sebagai 1979, 1979-02, 1979-02-15, atau 1979-02-15 06:10.</span> : null}
           <input className="field nk-judul-adegan" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="judul adegan (opsional)" />
+          {kota && rumah.data ? (
+            <button className="pill sm nk-rujuk-btn" onClick={() => setRujuk(true)} data-testid="nk-rujukan">
+              <Doodle id="rumah" size={14} color="currentColor" /> rujukan kota: warga, peristiwa, tetangga
+            </button>
+          ) : null}
           {kota && (desas.length || jumpa.length) ? (
             <div className="nk-tanda-kota" aria-label="tanda kota di adegan ini">
               {jumpa.map((f) => (
@@ -552,6 +573,25 @@ function Editor({ m, s }: { m: NaskahModel; s: Scene }) {
         ) : null}
       </div>
 
+      <Sheet open={rujuk} onClose={() => setRujuk(false)} title="rujukan kota">
+        {rujuk && rumah.data ? (
+          <RujukanKota
+            rumah={rumah.data}
+            tahun={tahunAdegan}
+            onSisip={(n, figurId) => {
+              sisip(n);
+              if (figurId && !jumpa.includes(figurId)) setJumpa([...jumpa, figurId]);
+              setRujuk(false);
+              toast(figurId ? `${n} disisipkan dan dicatat sebagai perjumpaan.` : `${n} disisipkan.`);
+            }}
+            onSaksi={(eid) => {
+              setPeristiwa(eid);
+              setRujuk(false);
+              toast('Adegan ini kini kesaksian peristiwa kota.');
+            }}
+          />
+        ) : null}
+      </Sheet>
       <Sheet open={!!kanon} onClose={() => setKanon(null)} title="jadikan kanon">
         {kanon ? <KanonForm key={kanon.name} m={m} init={kanon} onDone={() => setKanon(null)} /> : null}
       </Sheet>
