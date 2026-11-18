@@ -13,7 +13,8 @@ const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1
 const valueIdx = ['--stills', '--musik', '--gain'].map((n) => args.indexOf(n)).filter((i) => i >= 0).map((i) => i + 1);
 const stills = opt('--stills') ? opt('--stills').split(',').map(Number) : null;
 const musik = path.resolve(opt('--musik') || path.join(DIR, 'musik.m4a'));
-const MUSIK_GAIN = +(opt('--gain') || 1);
+const MUSIK_GAIN = +(opt('--gain') || 0.85);
+const { MUSIC_START } = require('./timing.js');
 const SFX_GAIN = 0.25; // efek suara pelan di bawah lagu
 const out = path.resolve(args.find((a, i) => !a.startsWith('--') && !valueIdx.includes(i)) || path.join(DIR, '..', 'sehari-dulu-kita-menulis.mp4'));
 const FPS = 30;
@@ -43,10 +44,10 @@ const FPS = 30;
   if (!hasMusik) console.log('musik.m4a tidak ada: memakai musik latar sementara');
 
   const frames = Math.round(duration * FPS);
-  const fadeAt = (duration - 1.2).toFixed(2);
+  const fadeAt = (duration - 1.6).toFixed(2);
   const audioArgs = hasMusik
     ? ['-i', musik, '-i', wav, '-filter_complex',
-      `[1:a]atrim=0:${duration},asetpts=PTS-STARTPTS,volume=${MUSIK_GAIN},afade=t=out:st=${fadeAt}:d=1.2[m];` +
+      `[1:a]atrim=${MUSIC_START}:${MUSIC_START + duration},asetpts=PTS-STARTPTS,volume=${MUSIK_GAIN},afade=t=in:d=0.15,afade=t=out:st=${fadeAt}:d=1.6[m];` +
       `[2:a]atrim=0:${duration},volume=${SFX_GAIN}[s];[m][s]amix=inputs=2:normalize=0:duration=first,alimiter=limit=0.95[a]`,
       '-map', '0:v', '-map', '[a]']
     : ['-i', wav, '-filter_complex', `[1:a]atrim=0:${duration},loudnorm=I=-17:TP=-1.5,afade=t=out:st=${fadeAt}:d=1.2[a]`, '-map', '0:v', '-map', '[a]'];

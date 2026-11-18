@@ -1,6 +1,6 @@
 # Video "Dulu Kita Menulis"
 
-Hasil jadi: [`../sehari-dulu-kita-menulis.mp4`](../sehari-dulu-kita-menulis.mp4). Formatnya 1080×1920 (9:16), 30 fps, durasi 67 detik.
+Hasil jadi: [`../sehari-dulu-kita-menulis.mp4`](../sehari-dulu-kita-menulis.mp4). Formatnya 1080×1920 (9:16), 30 fps, durasi 71 detik, dengan lagu "Prayer for Her" (detik 0:19–1:30) yang dipaskan ke beat.
 
 Strukturnya meniru video esai sejarah (babak I → babak II → kutipan → produk → logo). Versi 2 bergaya **scrapbook jurnal**: foto arsip asli (domain publik / CC, lihat [`arsip/CREDITS.md`](arsip/CREDITS.md)) diberi duotone biru Sehari, ditempel di halaman bertitik dengan selotip dan coretan tangan. Kamera terus bergerak, transisinya menyambung (tinta menyebar, kertas sobek, menembus telapak tangan), dan teks muncul per huruf dengan bobot huruf yang ikut bergerak. Bagian aplikasi memakai ilustrasi Sehari.
 
@@ -23,8 +23,9 @@ Strukturnya meniru video esai sejarah (babak I → babak II → kutipan → prod
 
 ## Musik & sinkron beat
 
-- Taruh lagu di `musik.m4a` di folder ini (tidak di-commit), atau pakai `--musik file`. Tanpa lagu, render memakai musik latar sementara dari `audio.cjs --latar`.
-- `timing.js` memetakan waktu video (ikut lagu) ke waktu animasi. Isi `BEATS` dengan beat lagu dan `ANCHORS` dengan pasangan [waktu adegan, beat], lalu render ulang.
+- Lagu: "Prayer for Her", dipakai dari detik **0:19** (awal bait) sampai **±1:30**. Taruh file lagunya sebagai `musik.m4a` di folder ini (tidak di-commit), atau pakai `--musik file`. Tanpa lagu, render memakai musik latar sementara dari `audio.cjs --latar`.
+- Kenapa bagian itu: bait yang tegas di 0:19 membuka video. Reff di 0:50 jatuh di montase surat (video 31, saat lak dihantamkan). Jeda hampir hening di 1:11,8–1:13,4 menampung "jadi, kami membuat sebuah", lalu reff besar di 1:13,56 jadi momen lak **kapsul.** dihantamkan dan Sehari muncul.
+- `timing.js` berisi beat lagu (`BEATS`), titik jangkar [waktu adegan, beat] (`ANCHORS`), dan `MUSIC_START` (detik lagu = video 0).
 
 ```bash
 node docs/brand/video-sejarah/render.cjs
