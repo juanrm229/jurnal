@@ -2,23 +2,22 @@
 
 Hasil jadi: [`../sehari-dulu-kita-menulis.mp4`](../sehari-dulu-kita-menulis.mp4). Formatnya 1080×1920 (9:16), 30 fps, durasi 67 detik.
 
-Strukturnya meniru video esai sejarah (babak I → babak II → kutipan → produk → logo), tapi semua gambar adalah doodle dan ilustrasi garis bergaya Sehari, tanpa footage pihak lain.
+Strukturnya meniru video esai sejarah (babak I → babak II → kutipan → produk → logo). Versi 2 bergaya **scrapbook jurnal**: foto arsip asli (domain publik / CC, lihat [`arsip/CREDITS.md`](arsip/CREDITS.md)) diberi duotone biru Sehari, ditempel di halaman bertitik dengan selotip dan coretan tangan. Kamera terus bergerak, transisinya menyambung (tinta menyebar, kertas sobek, menembus telapak tangan), dan teks muncul per huruf dengan bobot huruf yang ikut bergerak. Bagian aplikasi memakai ilustrasi Sehari.
 
 | Detik | Adegan | Isi & sumber |
 | --- | --- | --- |
 | 0–4,6 | ‹ jauh sebelum ada huruf › | goresan tinta berkumpul |
-| 4,4–8,6 | kolase gua + **67.800** | cap tangan di Liang Metanduno, Muna, setidaknya 67.800 tahun (Nature, Jan 2026) |
-| 8,6–10,8 | ✳ kita meninggalkan tanda. | cap tangan bercahaya |
-| 10,8–15,4 | 6 plate sejarah | ± 3.300 SM lempeng Uruk · ± 400 M Yupa Kutai · lontar (pengutik) · 1746 kantor pos Batavia · 1899–1904 surat Kartini · 1940 kapsul waktu, dibuka 8113 |
-| 15,4–21,6 | cetak biru alat tulis | kalam → pengutik → pena bulu → pena → mesin tik, "Alatnya berganti. *rindunya sama.*" |
+| 4,3–10,9 | foto cap tangan gua Maros + **67.800** → kamera menembus telapak → "✳ kita meninggalkan *tanda*." | cap tangan di Liang Metanduno, Muna, setidaknya 67.800 tahun (Nature, Jan 2026) |
+| 10,6–15,8 | kamera meluncur turun di halaman jurnal | lempeng Uruk ± 3.300 SM · Yupa Kutai ± 400 M · lontar Bali · kantor pos Batavia 1746 · Kartini 1899–1904 |
+| 15,6–21,9 | cetak biru alat tulis (foto kalam, pena, mesin tik + ilustrasi pena bulu) | "Alatnya berganti. *rindunya sama.*" |
 | 21,6–24,4 | ‹ BABAK II — SURAT › | jaringan rute pos |
 | 24,4–32,6 | disegel · diantar · Kartini · buku harian · telegram · ditunggu | |
 | 32,6–38,4 | barisan alat tulis | "Kita tidak pernah berhenti menulis —" |
 | 38,4–42 | chat menggulung | "— hanya berhenti *menyimpannya.*" + surat pos AS 103,6 miliar (2001) → 44,3 miliar (2024) |
 | 42–48,2 | kutipan | Pramoedya Ananta Toer: "Orang boleh pandai setinggi langit…" |
 | 48,2–51,2 | dinding kata | *tulis, simpan, kirim.* |
-| 51,2–53,8 | jadi, kami membuat sebuah *kapsul.* | |
-| 53,8–60 | Sehari adalah kapsul waktu harian | tulis · foto & suara · segel · buka bersama · surat tersesat (1–12 bulan) · kapsul terkunci (1–25 tahun) |
+| 51,5–55,3 | disegel 1940 · dibuka **8113** → jadi, kami membuat sebuah *kapsul.* | Crypt of Civilization |
+| 55,3–60,7 | Sehari adalah kapsul waktu harian (HP + label fitur) | tulis · foto · suara · surat tersesat · kapsul 1–25 tahun |
 | 60–63,2 | ✳ selamat malam, *penulis.* | |
 | 63,2–67 | langit malam, logo, sehari.online | |
 

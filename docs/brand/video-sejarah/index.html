@@ -9,38 +9,74 @@
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,300..800;1,9..144,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=block" rel="stylesheet" />
 <style>
   :root {
-    --blue: #2a14d6; --night: #0b0733; --paper: #e6e6e8; --sheet: #f7f7f4; --text: #16161a; --lilac: #b9b0ff; --sky: #cfe3ff;
+    --blue: #2a14d6; --night: #0b0733; --paper: #e6e6e8; --sheet: #f7f7f4; --text: #16161a; --lilac: #b9b0ff;
     --mono: 'IBM Plex Mono', ui-monospace, monospace; --hand: 'Caveat', cursive; --serif: 'Fraunces', Georgia, serif;
   }
   html, body { margin: 0; background: #0b0b10; }
   body { display: grid; place-items: center; min-height: 100vh; overflow: hidden; }
   #fit { width: 1080px; height: 1920px; }
-  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--night); }
   #shake { position: absolute; inset: 0; }
   .scene { position: absolute; inset: 0; overflow: hidden; display: none; }
   .grain::after {
-    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .55;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
+  .dots { background-image: radial-gradient(circle, rgba(42,20,214,.16) 2px, transparent 2.6px); background-size: 40px 40px; }
+  .ch { display: inline-block; will-change: transform; }
+  .wd { display: inline-block; white-space: nowrap; }
+  img { display: block; }
   .caret { display: inline-block; width: 0.07em; height: 0.85em; margin-left: 0.05em; background: currentColor; vertical-align: -0.08em; }
   .pill { display: flex; align-items: center; gap: 16px; border-radius: 999px; white-space: nowrap; }
 </style>
 </head>
 <body>
+<!-- filter warna untuk foto arsip -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- malam: hitam → biru malam, putih → lilac pucat -->
+    <filter id="duoNight" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="0.035 0.16 0.93"/>
+        <feFuncG type="table" tableValues="0.02 0.08 0.91"/>
+        <feFuncB type="table" tableValues="0.17 0.84 1"/>
+      </feComponentTransfer>
+    </filter>
+    <!-- tinta: gelap → biru tinta, terang → kertas -->
+    <filter id="duoInk" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="0.1 0.165 0.97"/>
+        <feFuncG type="table" tableValues="0.04 0.078 0.97"/>
+        <feFuncB type="table" tableValues="0.55 0.84 0.955"/>
+      </feComponentTransfer>
+    </filter>
+    <!-- tinta terbalik: latar hitam → kertas, benda terang → biru tinta -->
+    <filter id="duoInv" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="0.97 0.4 0.165 0.1"/>
+        <feFuncG type="table" tableValues="0.97 0.33 0.078 0.04"/>
+        <feFuncB type="table" tableValues="0.955 0.88 0.84 0.55"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+</svg>
 <div id="fit"><div id="stage"><div id="shake"></div></div></div>
 <script src="doodles.js"></script>
 <script src="timing.js"></script>
 <script>
 'use strict';
 /* =====================================================================
-   "Dulu kita menulis" — video cerita Sehari (9:16, 1080×1920).
-   Strukturnya mengikuti video esai bersejarah: babak I (jejak & alat tulis),
-   babak II (surat), kutipan, lalu Sehari. Semua gerak dihitung dari waktu.
+   "Dulu kita menulis" — v2: scrapbook jurnal dengan foto arsip.
+   Kamera terus bergerak, transisi menyambung (tinta menyebar, kertas
+   disobek, potongan yang cocok bentuknya), teks muncul per huruf.
    ===================================================================== */
-const DURATION = 67; // waktu animasi; pemetaan ke lagu ada di timing.js
+const DURATION = 67;
 const BLUE = '#2a14d6', NIGHT = '#0b0733', PAPER = '#e6e6e8', SHEET = '#f7f7f4', WHITE = '#ffffff', LILAC = '#b9b0ff', TEXT = '#16161a';
 
-// ---------- easing & util ----------
+// ---------- util ----------
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const P = (t, a, b) => clamp((t - a) / (b - a));
 const lerp = (a, b, x) => a + (b - a) * x;
@@ -50,9 +86,9 @@ const eio = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x < 0.5 ? Math.pow(2, 20 * x - 10)
 const cub = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const spring = (s, f = 1.6, d = 7) => (s <= 0 ? 0 : 1 - Math.exp(-d * s) * Math.cos(f * 2 * Math.PI * s));
 const hash = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-const SERIF = 'font-family:var(--serif);font-variation-settings:"opsz" 144;font-weight:500;letter-spacing:-0.03em;';
-
 const NS = 'http://www.w3.org/2000/svg';
+const SERIF = (w = 500) => `font-family:var(--serif);font-variation-settings:"opsz" 144, "wght" ${w};letter-spacing:-0.03em;`;
+
 function el(parent, css = '', html = '', tag = 'div') {
   const e = document.createElement(tag);
   e.style.cssText = 'position:absolute;' + css;
@@ -72,33 +108,23 @@ function svg(parent, css, w, h, inner, vb) {
 function set(e, { x = 0, y = 0, s = 1, sx, sy, r = 0, o = 1, b = 0 } = {}) {
   e.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) rotate(${r.toFixed(3)}deg) scale(${(sx ?? s).toFixed(4)},${(sy ?? s).toFixed(4)})`;
   e.style.opacity = clamp(o).toFixed(3);
-  e.style.filter = b > 0.1 ? `blur(${b.toFixed(1)}px)` : 'none';
+  e.style.filter = b > 0.15 ? `blur(${b.toFixed(1)}px)` : '';
 }
-function show(root, t, a, b) {
-  const on = t >= a && t < b;
-  root.style.display = on ? 'block' : 'none';
-  return on;
-}
+function show(root, t, a, b) { const on = t >= a && t < b; root.style.display = on ? 'block' : 'none'; return on; }
+const lc = (w, c) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" pathLength="1"`;
 function doodle(id, { size = 100, color = WHITE, sw = 4 } = {}) {
   const d = window.DOODLES[id];
   const s = document.createElementNS(NS, 'svg');
   s.setAttribute('viewBox', '0 0 64 64'); s.setAttribute('width', size); s.setAttribute('height', size);
   s.style.overflow = 'visible'; s.style.display = 'block';
-  for (const p of d.s) s.innerHTML += `<path d="${p}" pathLength="1" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  for (const p of d.s) s.innerHTML += `<path d="${p}" ${lc(sw, color)}/>`;
   for (const f of d.f) s.innerHTML += `<path d="${f}" fill="${color}" data-fill="1"/>`;
   return s;
 }
-function dbox(parent, id, css, opt) {
-  const b = el(parent, css);
-  const d = doodle(id, opt);
-  b.appendChild(d);
-  return { b, d };
-}
-// gambar garis (path ber-pathLength) satu per satu, pr 0..1
+function dbox(parent, id, css, opt) { const b = el(parent, css); const d = doodle(id, opt); b.appendChild(d); return { b, d }; }
 function draw(s, pr, stagger = 0.35) {
   const ps = s.querySelectorAll('[pathLength]');
-  const n = ps.length;
-  const span = 1 + stagger * Math.max(0, n - 1);
+  const span = 1 + stagger * Math.max(0, ps.length - 1);
   ps.forEach((p, i) => {
     const lp = clamp(pr * span - i * stagger);
     p.style.strokeDasharray = '1 1';
@@ -107,111 +133,114 @@ function draw(s, pr, stagger = 0.35) {
   });
   s.querySelectorAll('[data-fill]').forEach((f) => (f.style.opacity = clamp((pr - 0.85) / 0.15)));
 }
-function mline(parent, css, html, innerCss = '') {
-  const w = el(parent, css + ';overflow:hidden;');
-  const i = el(w, 'position:relative;display:block;' + innerCss, html, 'span');
-  return { w, i };
+// foto arsip; filter duotone dipasang di pembungkus supaya set() bebas memakai blur
+function photo(parent, src, css, filter = 'duoInk') {
+  const wrap = el(parent, css + 'overflow:hidden;');
+  const i = el(wrap, `inset:0;width:100%;height:100%;object-fit:${/contain/.test(css) ? 'contain' : 'cover'};filter:url(#${filter});`, '', 'img');
+  i.src = 'arsip/' + src + '.jpg';
+  return wrap;
 }
-function reveal(m, t, a, dur = 0.7) {
-  const h = m.w.offsetHeight || 200;
-  set(m.i, { y: (1 - eo(P(t, a, a + dur))) * h * 1.05 });
+// cetakan foto ditempel di jurnal: bingkai putih, bayangan, selotip
+function print(parent, src, { x, y, w, h, r = 0, filter = 'duoInk', pad = 18 }) {
+  const box = el(parent, `left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fdfdfb;box-shadow:0 2px 0 rgba(0,0,0,.04),0 24px 50px rgba(20,16,80,.22);transform-origin:50% 0;`);
+  photo(box, src, `left:${pad}px;top:${pad}px;width:${w - pad * 2}px;height:${h - pad * 2}px;`, filter);
+  el(box, `left:${w / 2 - 70}px;top:-22px;width:140px;height:44px;background:rgba(207,227,255,.78);transform:rotate(${(hash(x + y) - 0.5) * 10}deg);box-shadow:0 2px 6px rgba(0,0,0,.06);`);
+  return box;
 }
-function letters(parent, css, text, innerCss) {
-  const w = el(parent, css + ';display:flex;justify-content:center;');
-  const spans = [...text].map((ch) => {
-    const m = el(w, 'position:relative;overflow:hidden;padding:0 0.01em 0.14em;', '', 'span');
-    return el(m, 'position:relative;display:block;' + innerCss, ch === ' ' ? '&nbsp;' : ch, 'span');
+// teks kinetik: per huruf, dengan bobot huruf yang ikut bergerak
+function kin(parent, css, parts, base = '') {
+  const w = el(parent, css);
+  const chars = [];
+  let n = 0;
+  parts.forEach(([text, style = '']) => {
+    text.split(/( )/).forEach((tok) => {
+      if (tok === ' ') { w.appendChild(document.createTextNode(' ')); return; }
+      if (!tok) return;
+      const wd = el(w, 'position:relative;', '', 'span'); wd.className = 'wd';
+      [...tok].forEach((c) => {
+        const s = el(wd, 'position:relative;' + base + style, c, 'span'); s.className = 'ch';
+        chars.push({ e: s, i: n++, style });
+      });
+    });
   });
-  return { w, spans };
+  return { w, chars, n };
 }
-function lettersReveal(L, t, a, step = 0.045, dur = 0.65) {
-  L.spans.forEach((s, i) => { const p = eo(P(t, a + i * step, a + i * step + dur)); set(s, { y: (1 - p) * 260, r: (1 - p) * 12 }); });
+function kinIn(K, t, a, { step = 0.028, dur = 0.6, mode = 'rise', w0 = 250, w1 = 560, em = 90 } = {}) {
+  K.chars.forEach((c) => {
+    const p = eo(P(t, a + c.i * step, a + c.i * step + dur));
+    const wt = lerp(w0, w1, p);
+    c.e.style.fontVariationSettings = `"opsz" 144, "wght" ${wt.toFixed(0)}`;
+    if (mode === 'rise') set(c.e, { y: (1 - p) * em, r: (1 - p) * 12, o: p, b: (1 - p) * 12 });
+    else if (mode === 'scatter') set(c.e, { x: (hash(c.i + 3) - 0.5) * 700 * (1 - p), y: (hash(c.i + 9) - 0.5) * 900 * (1 - p), r: (hash(c.i) - 0.5) * 180 * (1 - p), o: p, b: (1 - p) * 20 });
+    else if (mode === 'slam') set(c.e, { s: lerp(2.4, 1, p), o: p, b: (1 - p) * 16 });
+    else if (mode === 'drop') set(c.e, { y: (1 - p) * -em * 1.2, o: p, b: (1 - p) * 8 });
+  });
+}
+function kinOut(K, t, a, { step = 0.02, dur = 0.45 } = {}) {
+  if (t < a) return;
+  K.chars.forEach((c) => {
+    const p = ei(P(t, a + c.i * step, a + c.i * step + dur));
+    if (p <= 0) return;
+    set(c.e, { y: p * 260 * (0.6 + hash(c.i)), r: p * (hash(c.i + 1) - 0.5) * 120, o: 1 - p, b: p * 10 });
+  });
+}
+// angka slot (setiap digit berputar)
+function slot(parent, css, str, digitCss) {
+  const w = el(parent, css + ';display:flex;justify-content:center;');
+  const cols = [...str].map((ch) => {
+    const m = el(w, 'position:relative;overflow:hidden;height:1.02em;' + digitCss, '', 'span');
+    if (!/\d/.test(ch)) { el(m, 'position:relative;display:block;', ch, 'span'); return null; }
+    const strip = el(m, 'position:relative;display:block;', Array.from({ length: 30 }, (_, k) => `<span style="display:block;height:1.02em;line-height:1.02em">${k % 10}</span>`).join(''), 'span');
+    return { strip, target: 20 + +ch };
+  });
+  return { w, cols: cols.filter(Boolean) };
+}
+function slotRoll(S, t, a, dur = 1.4) {
+  S.cols.forEach((c, i) => {
+    const p = eo(P(t, a + i * 0.08, a + i * 0.08 + dur));
+    c.strip.style.transform = `translateY(${(-p * c.target * 1.02).toFixed(3)}em)`;
+    c.strip.style.filter = p > 0 && p < 0.92 ? `blur(${((1 - p) * 6).toFixed(1)}px)` : '';
+  });
+}
+// partikel debu / percikan tinta
+function dust(parent, n, color, seed = 1, size = 5) {
+  const ps = Array.from({ length: n }, (_, i) => ({ e: el(parent, `left:${hash(i * 3 + seed) * 1080}px;top:${hash(i * 7 + seed) * 1920}px;width:${size * (0.4 + hash(i + seed))}px;height:${size * (0.4 + hash(i + seed))}px;border-radius:50%;background:${color};`), i }));
+  return (t, k = 1) => ps.forEach((p) => {
+    const sp = 20 + hash(p.i + seed + 5) * 50;
+    const yy = ((hash(p.i * 7 + seed) * 1920 - t * sp) % 1920 + 1920) % 1920 - hash(p.i * 7 + seed) * 1920;
+    set(p.e, { x: Math.sin(t * 0.4 + p.i) * 30, y: yy, o: k * (0.25 + 0.5 * hash(p.i + 11)) * (0.6 + 0.4 * Math.sin(t * 2 + p.i)) });
+  });
+}
+// gumpalan tinta yang membesar (transisi)
+function blob(cx, cy, R, t, seed = 1) {
+  if (R <= 0) return 'circle(0px at 0 0)';
+  if (R > 2500) return 'none';
+  const pts = [];
+  for (let k = 0; k < 72; k++) {
+    const a = (k / 72) * Math.PI * 2;
+    const r = R * (1 + 0.11 * Math.sin(3 * a + seed) + 0.07 * Math.sin(7 * a + seed * 2 + t * 3) + 0.04 * Math.sin(13 * a + seed * 3 - t * 2));
+    pts.push(`${(cx + Math.cos(a) * r).toFixed(1)}px ${(cy + Math.sin(a) * r).toFixed(1)}px`);
+  }
+  return `polygon(${pts.join(',')})`;
+}
+// tepi kertas sobek di atas (transisi kertas naik)
+function torn(topY, seed = 1) {
+  if (topY < -60) return 'none';
+  const pts = [];
+  for (let k = 0; k <= 40; k++) pts.push(`${(k * 27).toFixed(0)}px ${(topY + (hash(k * 5 + seed) - 0.5) * 34).toFixed(1)}px`);
+  return `polygon(${pts.join(',')},1080px 2200px,0px 2200px)`;
 }
 function typed(e, html, p, t, caret = true) {
-  // html boleh berisi <span ...>…</span>; tag tidak dihitung sebagai huruf
   const parts = html.split(/(<[^>]+>)/);
   const total = parts.reduce((n, s) => n + (s.startsWith('<') ? 0 : s.length), 0);
   let left = Math.round(total * clamp(p)), out = '';
-  for (const s of parts) {
-    if (s.startsWith('<')) { out += s; continue; }
-    out += s.slice(0, Math.max(0, left)); left -= s.length;
-  }
+  for (const s of parts) { if (s.startsWith('<')) { out += s; continue; } out += s.slice(0, Math.max(0, left)); left -= s.length; }
   const on = caret && (p < 1 || Math.floor(t * 2.6) % 2 === 0);
   e.innerHTML = out + (caret ? `<span class="caret" style="opacity:${on ? 1 : 0}"></span>` : '');
 }
-// kata demi kata
-function words(parent, css, text, wordCss = '') {
-  const w = el(parent, css);
-  const list = text.split(' ').map((tok) => {
-    const s = el(w, 'position:relative;display:inline-block;margin-right:0.26em;' + wordCss, tok, 'span');
-    return s;
-  });
-  return { w, list };
-}
-function wordsReveal(W, t, a, step, dur = 0.5) {
-  W.list.forEach((s, i) => { const p = eo(P(t, a + i * step, a + i * step + dur)); set(s, { y: (1 - p) * 30, o: p, b: (1 - p) * 8 }); });
-}
-function clipCircle(e, r, x, y) { e.style.clipPath = r >= 2600 ? 'none' : `circle(${r.toFixed(1)}px at ${x}px ${y}px)`; }
-const lineCss = (w, c) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" pathLength="1"`;
-
-// ---------- ilustrasi buatan sendiri ----------
-const HAND = 'M70 250 L62 172 Q42 152 31 122 L18 95 Q14 83 25 80 Q35 78 41 90 L57 121 L50 40 Q49 27 61 27 Q72 27 73 40 L79 110 L85 22 Q86 9 97 10 Q108 11 108 24 L105 108 L115 31 Q117 19 128 21 Q138 23 136 36 L127 116 L141 61 Q144 50 154 52 Q163 55 161 67 L147 141 Q141 176 136 201 L133 250 Z';
-function stencil(parent, css, size, color, id) {
-  // cap tangan: semprotan tinta di sekeliling telapak (seperti di dinding gua)
-  return svg(parent, css, size, size * 1.3, `
-    <defs><filter id="sp${id}" x="-60%" y="-60%" width="220%" height="220%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="${id}" result="n"/>
-      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="b"/>
-      <feComposite in="b" in2="n" operator="arithmetic" k1="1.6" k2="0.2" k3="0" k4="0"/>
-    </filter></defs>
-    <path d="${HAND}" fill="none" stroke="${color}" stroke-width="34" filter="url(#sp${id})" opacity=".95"/>
-    <path d="${HAND}" fill="var(--hand-bg, #e6e6e8)"/>`, '-10 -10 200 280');
-}
-const ART = {
-  tablet: (c) => {
-    let marks = '';
-    for (let r = 0; r < 7; r++) for (let k = 0; k < 5; k++) {
-      const x = 70 + k * 60 + (hash(r * 9 + k) - 0.5) * 14, y = 90 + r * 62;
-      marks += `<path d="M${x} ${y} l18 6 l-18 6 z M${x + 18} ${y + 6} l22 0" ${lineCss(5, c)}/>`;
-    }
-    return `<path d="M60 30 Q30 30 30 70 L34 520 Q36 560 76 560 L330 556 Q370 554 370 514 L366 66 Q364 28 326 28 Z" ${lineCss(7, c)}/>${marks}`;
-  },
-  yupa: (c) => {
-    let l = '';
-    for (let r = 0; r < 9; r++) l += `<path d="M150 ${170 + r * 40} q 15 -10 30 0 t 30 0 t 30 0 t 30 0" ${lineCss(5, c)}/>`;
-    return `<path d="M140 560 L130 160 Q130 110 200 60 Q270 110 270 160 L260 560 Z" ${lineCss(7, c)}/><path d="M110 560 L290 560" ${lineCss(7, c)}/>${l}`;
-  },
-  lontar: (c) => {
-    let s = '';
-    for (let i = 0; i < 4; i++) {
-      const y = 120 + i * 105, x = 20 + i * 14;
-      s += `<path d="M${x} ${y} L${x + 360} ${y} Q${x + 372} ${y + 22} ${x + 360} ${y + 44} L${x} ${y + 44} Q${x - 12} ${y + 22} ${x} ${y} Z" ${lineCss(6, c)}/>`;
-      s += `<path d="M${x + 30} ${y + 16} q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0" ${lineCss(4, c)}/>`;
-      s += `<path d="M${x + 30} ${y + 30} q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0" ${lineCss(4, c)}/>`;
-    }
-    return s + `<path d="M190 80 L190 560" ${lineCss(4, c)}/>`;
-  },
-  vault: (c) => `<circle cx="200" cy="300" r="200" ${lineCss(8, c)}/><circle cx="200" cy="300" r="150" ${lineCss(5, c)}/>
-    <path d="M200 160 L200 440 M60 300 L340 300 M100 200 L300 400 M300 200 L100 400" ${lineCss(5, c)}/><circle cx="200" cy="300" r="44" ${lineCss(8, c)}/>`,
-  letter: (c) => {
-    let l = '';
-    for (let r = 0; r < 8; r++) l += `<path d="M70 ${190 + r * 46} q 22 -12 44 0 t 44 0 t 44 0 t 44 0 t 44 0 ${r % 3 === 2 ? '' : 't 44 0'}" ${lineCss(4.5, c)}/>`;
-    return `<path d="M30 40 L370 40 L370 580 L30 580 Z" ${lineCss(6, c)}/>${l}<path d="M220 560 q 20 -40 40 -10 t 40 -10 t 30 0" ${lineCss(5, c)}/>`;
-  },
-  // alat tulis gaya cetak biru (kotak 400×600)
-  kalam: (c) => `<path d="M190 40 L210 40 L214 470 L200 560 L186 470 Z" ${lineCss(4, c)}/><path d="M190 120 L210 120 M189 220 L211 220 M188 330 L212 330" ${lineCss(3, c)}/><path d="M186 470 L214 470" ${lineCss(3, c)}/>`,
-  pengutik: (c) => `<path d="M175 40 Q170 200 180 330 L220 330 Q230 200 225 40 Q200 20 175 40 Z" ${lineCss(4, c)}/><path d="M182 330 L190 520 L200 570 L210 520 L218 330" ${lineCss(4, c)}/><path d="M178 110 L222 110 M178 180 L222 180 M179 250 L221 250" ${lineCss(3, c)}/>`,
-  bulu: (c) => `<path d="M200 570 L232 40" ${lineCss(4, c)}/><path d="M228 100 Q120 160 150 420 Q180 360 214 330 M230 70 Q330 180 270 380 Q240 350 216 330" ${lineCss(4, c)}/><path d="M180 260 L222 210 M170 330 L218 280 M248 170 L226 210 M266 240 L222 280" ${lineCss(3, c)}/>`,
-  pena: (c) => `<path d="M176 40 L224 40 L228 360 L172 360 Z" ${lineCss(4, c)}/><path d="M172 360 L180 440 L200 570 L220 440 L228 360" ${lineCss(4, c)}/><path d="M200 470 L200 520 M224 70 L240 72 L240 220 L226 220" ${lineCss(3, c)}/><circle cx="200" cy="455" r="7" ${lineCss(3, c)}/>`,
-  mesintik: (c) => {
-    let k = '';
-    for (let r = 0; r < 3; r++) for (let i = 0; i < 7 - r; i++) k += `<circle cx="${95 + r * 15 + i * 33}" cy="${440 + r * 36}" r="11" ${lineCss(3, c)}/>`;
-    return `<path d="M70 360 L330 360 L370 540 L30 540 Z" ${lineCss(4, c)}/><path d="M60 300 L340 300 L340 340 L60 340 Z" ${lineCss(4, c)}/><path d="M120 300 L120 180 L280 180 L280 300" ${lineCss(3, c)}/><path d="M40 320 L20 320 M360 320 L380 320" ${lineCss(4, c)}/>${k}`;
-  },
-};
-function art(parent, css, key, color, w = 400, h = 600) {
-  return svg(parent, css, w, h, ART[key](color), '0 0 400 600');
-}
+// coretan tangan (anotasi scrapbook)
+function scribble(parent, css, w, h, d, color = BLUE, sw = 5) { return svg(parent, css, w, h, `<path d="${d}" ${lc(sw, color)}/>`); }
+const credit = (parent, text, dark = true) => el(parent, `left:56px;bottom:56px;font:500 19px var(--mono);letter-spacing:.04em;color:${dark ? 'rgba(255,255,255,.55)' : 'rgba(22,22,26,.5)'};`, text);
 
 // ---------- panggung ----------
 const shake = document.getElementById('shake');
@@ -222,600 +251,602 @@ function scene(bg, grain = true) {
   r.className = 'scene' + (grain ? ' grain' : '');
   return r;
 }
-const label = (parent, css, text, color = 'rgba(22,22,26,.55)') => el(parent, `font:500 26px var(--mono);letter-spacing:.12em;color:${color};text-transform:uppercase;` + css, text);
+let shakeAmt = [0, 0];
+function hit(t, at, amp = 18) {
+  const s = t - at;
+  if (s < 0 || s > 0.5) return;
+  const a = amp * Math.exp(-9 * s);
+  shakeAmt = [shakeAmt[0] + a * Math.sin(s * 71), shakeAmt[1] + a * Math.cos(s * 53)];
+}
 
-/* ================= BABAK I — JEJAK ================= */
+/* ===================== BABAK I ===================== */
 
-/* 1 · jauh sebelum ada huruf (0 – 4.6) */
+/* 1 · jauh sebelum ada huruf (0 – 4.75) */
 const S1 = (() => {
-  const root = scene(PAPER);
-  const marks = [];
-  for (let i = 0; i < 46; i++) {
-    const a = hash(i) * Math.PI * 2, r = 220 + hash(i + 50) * 360;
-    const x = 540 + Math.cos(a) * r * 1.15, y = 960 + Math.sin(a) * r * 0.7;
-    const m = svg(root, `left:${x}px;top:${y}px;`, 30, 30, `<path d="M4 ${4 + hash(i + 7) * 20} L${16 + hash(i + 3) * 10} ${10 + hash(i + 9) * 14}" ${lineCss(3.5, hash(i + 2) > 0.7 ? BLUE : 'rgba(22,22,26,.55)')}/>`);
-    marks.push({ m, x, y, i });
-  }
-  const txt = el(root, `left:0;top:900px;width:1080px;text-align:center;${SERIF}font-weight:400;font-size:66px;color:${TEXT};`);
-  const TXT = '<span style="color:#2a14d6;font-family:var(--mono);font-size:.7em">‹ </span>jauh sebelum ada <span style="color:#2a14d6;font-style:italic">huruf</span><span style="color:#2a14d6;font-family:var(--mono);font-size:.7em"> ›</span>';
+  const root = scene(`radial-gradient(circle at 50% 50%, #1a0f6e 0%, ${NIGHT} 70%)`);
+  const d1 = dust(root, 70, LILAC, 3, 6);
+  const K = kin(root, 'left:0;top:880px;width:1080px;text-align:center;font-size:84px;color:#fff;line-height:1.1;', [['‹ ', 'font-family:var(--mono);font-size:.6em;color:#b9b0ff;'], ['jauh sebelum ada '], ['huruf', 'font-style:italic;color:#b9b0ff;'], [' ›', 'font-family:var(--mono);font-size:.6em;color:#b9b0ff;']], SERIF(400));
+  const drop = el(root, 'left:528px;top:600px;width:24px;height:30px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:#b9b0ff;');
   function update(t) {
-    if (!show(root, t, 0, 4.6)) return;
-    marks.forEach((k) => {
-      const a = 0.1 + hash(k.i + 20) * 1.4;
-      const p = eo(P(t, a, a + 0.5));
-      const g = ei(P(t, 3.7, 4.55));
-      draw(k.m, p);
-      set(k.m, { x: (540 - k.x) * g * 0.85 + Math.sin(t * 0.8 + k.i) * 6, y: (960 - k.y) * g * 0.85 + Math.cos(t * 0.7 + k.i) * 6, r: hash(k.i) * 90 + t * 8 });
+    if (!show(root, t, 0, 4.75)) return;
+    d1(t, eo(P(t, 0, 1)));
+    kinIn(K, t, 0.35, { mode: 'scatter', step: 0.04, dur: 1.1, w0: 200, w1: 420 });
+    // huruf runtuh menjadi setetes tinta
+    K.chars.forEach((c) => {
+      const p = ei(P(t, 3.3 + c.i * 0.012, 3.85 + c.i * 0.012));
+      if (p > 0) set(c.e, { x: (540 - (c.e.offsetLeft + c.e.parentNode.offsetLeft + 20)) * p * 0.9, y: -280 * p, s: 1 - 0.85 * p, o: 1 - p * 0.9, b: p * 6 });
     });
-    typed(txt, TXT, P(t, 0.5, 2.1), t, t < 3.6);
-    set(txt, { o: 1 - P(t, 3.9, 4.4), s: 1 + 0.03 * P(t, 0, 4.6) });
+    const dp = P(t, 3.85, 4.3);
+    set(drop, { y: ei(dp) * 330, o: t > 3.8 && t < 4.35 ? 1 : 0, sy: 1 + ei(dp) * 0.5 });
+    root.style.transform = `scale(${(1 + 0.04 * P(t, 0, 4.7)).toFixed(4)})`;
   }
   return { update };
 })();
 scenes.push(S1);
 
-/* 2 · kolase gua + 67.800 (4.4 – 8.6) */
+/* 2 · cap tangan gua, 67.800, kita meninggalkan tanda (4.3 – 10.9) */
 const S2 = (() => {
-  const T0 = 4.4;
-  const root = scene(PAPER);
-  root.style.setProperty('--hand-bg', SHEET);
-  const cards = [
-    { x: 90, y: 360, w: 300, h: 380, r: -6, k: 'hand' },
-    { x: 650, y: 300, w: 330, h: 300, r: 5, k: 'burung' },
-    { x: 730, y: 590, w: 250, h: 230, r: -3, k: 'hand2' },
-    { x: 120, y: 1160, w: 340, h: 290, r: 4, k: 'figur' },
-    { x: 560, y: 1240, w: 400, h: 330, r: -5, k: 'ikan' },
-    { x: 420, y: 520, w: 220, h: 220, r: 8, k: 'kosong' },
-    { x: 420, y: 150, w: 220, h: 250, r: 3, k: 'kelinci' },
-  ].map((c, i) => {
-    const e = el(root, `left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;background:${i % 3 === 1 ? '#efeee8' : SHEET};box-shadow:0 18px 40px rgba(20,20,60,.12);`);
-    let d = null;
-    if (c.k === 'hand' || c.k === 'hand2') stencil(e, `left:${c.w / 2 - 95}px;top:${c.h / 2 - 140}px;`, 190, c.k === 'hand' ? BLUE : '#8a7cf0', i + 1);
-    else if (c.k === 'figur') {
-      d = svg(e, 'left:40px;top:40px;', 260, 210, [0, 1, 2].map((j) => `<g transform="translate(${30 + j * 80} ${20 + (j % 2) * 10})"><circle cx="20" cy="14" r="12" ${lineCss(5, BLUE)}/><path d="M20 28 L20 100 M20 50 L-6 80 M20 50 L48 70 M20 100 L2 160 M20 100 L40 160" ${lineCss(5, BLUE)}/></g>`).join(''));
-    } else if (c.k !== 'kosong') {
-      const db = el(e, `left:${c.w / 2 - 90}px;top:${c.h / 2 - 90}px;`);
-      d = doodle(c.k, { size: 180, color: BLUE, sw: 3.2 }); db.appendChild(d);
-    }
-    el(e, 'left:16px;bottom:12px;font:500 16px var(--mono);color:rgba(22,22,26,.45);letter-spacing:.1em;', `FIG. 0${i + 1}`);
-    return { e, d, ...c, i };
-  });
-  const num = el(root, `left:0;top:820px;width:1080px;text-align:center;${SERIF}font-weight:600;font-size:250px;line-height:1;color:${BLUE};letter-spacing:-0.05em;font-variant-numeric:lining-nums;text-shadow:0 0 60px rgba(230,230,232,.9);`);
-  const sub = el(root, `left:0;top:1090px;width:1080px;text-align:center;font:500 30px var(--mono);color:${TEXT};`, 'tahun lalu · cap tangan di gua Liang Metanduno, Muna');
-  const line = el(root, `left:0;top:1620px;width:1080px;text-align:center;${SERIF}font-style:italic;font-size:76px;color:${TEXT};`, 'kita sudah ingin diingat.');
+  const T0 = 4.3;
+  const root = scene(NIGHT);
+  const cam = el(root, 'inset:0;transform-origin:540px 760px;');
+  const img = photo(cam, 'gua1', 'left:-240px;top:-160px;width:1560px;height:2180px;', 'duoNight');
+  el(cam, 'left:-200px;top:-200px;width:1480px;height:2320px;background:radial-gradient(circle at 50% 40%, transparent 28%, rgba(11,7,51,.88) 74%);');
+  // anotasi scrapbook di atas foto
+  const circ = scribble(cam, 'left:330px;top:300px;', 420, 420, 'M210 20 C 330 20, 400 110, 396 210 C 392 320, 300 400, 200 398 C 90 396, 18 300, 22 196 C 26 96, 110 26, 230 30', '#fff', 6);
+  const arrow = scribble(cam, 'left:640px;top:180px;', 300, 200, 'M280 20 C 220 30, 150 70, 90 150 M90 150 L 96 104 M90 150 L 136 140', '#fff', 6);
+  const note = el(cam, 'left:700px;top:110px;font:700 64px var(--hand);color:#fff;', 'cap tangan!');
+  const num = slot(root, 'left:0;top:1120px;width:1080px;', '67.800', `${SERIF(650)}font-size:250px;line-height:1.02;color:#fff;font-variant-numeric:lining-nums tabular-nums;`);
+  const sub = kin(root, 'left:120px;top:1400px;width:840px;text-align:center;font:500 32px/1.5 var(--mono);color:rgba(255,255,255,.88);', [['tahun lalu, manusia di Sulawesi sudah menempelkan tangannya di dinding gua.']]);
+  const line = kin(root, 'left:0;top:1600px;width:1080px;text-align:center;font-size:84px;color:#fff;', [['kita sudah ingin '], ['diingat.', 'font-style:italic;color:#b9b0ff;']], SERIF(400));
+  // kecocokan bentuk: tangan di foto → tangan doodle bercahaya
+  const handLayer = el(root, 'inset:0;background:radial-gradient(circle at 50% 46%, #22168a 0%, #0b0733 65%);');
+  const HAND = 'M70 250 L62 172 Q42 152 31 122 L18 95 Q14 83 25 80 Q35 78 41 90 L57 121 L50 40 Q49 27 61 27 Q72 27 73 40 L79 110 L85 22 Q86 9 97 10 Q108 11 108 24 L105 108 L115 31 Q117 19 128 21 Q138 23 136 36 L127 116 L141 61 Q144 50 154 52 Q163 55 161 67 L147 141 Q141 176 136 201 L133 250 Z';
+  const glow = el(handLayer, 'left:240px;top:360px;width:600px;height:760px;border-radius:50%;background:radial-gradient(closest-side, rgba(185,176,255,.34), transparent);');
+  const hand = svg(handLayer, 'left:340px;top:430px;', 400, 580, `<path d="${HAND}" fill="rgba(185,176,255,.12)" stroke="none"/><path d="${HAND}" ${lc(3, '#fff')}/>`, '0 0 180 260');
+  const d2 = dust(handLayer, 50, LILAC, 9, 7);
+  const tanda = kin(handLayer, 'left:0;top:1180px;width:1080px;text-align:center;font-size:92px;color:#fff;', [['✳ ', 'color:#b9b0ff;'], ['kita meninggalkan '], ['tanda.', 'font-style:italic;color:#b9b0ff;']], SERIF(400));
+  const cr = credit(root, 'foto: gua Leang Pettakere, Maros · Cahyo Ramadhani, CC BY-SA 4.0');
   function update(t) {
-    if (!show(root, t, T0, 8.6)) return;
+    if (!show(root, t, T0, 11.15)) return;
     const l = t - T0;
-    cards.forEach((c) => {
-      const s = spring(l - 0.05 - c.i * 0.09, 1.3, 6.5);
-      set(c.e, { s: 0.4 + 0.6 * clamp(s, 0, 1.15), r: c.r + (1 - clamp(s)) * 25, y: (1 - clamp(s)) * 200 - l * 6 * (c.i % 2 ? 1 : -1), o: s > 0.01 ? 1 : 0 });
-      if (c.d) draw(c.d, cub(P(l, 0.2 + c.i * 0.09, 0.9 + c.i * 0.09)));
-    });
-    const n = eo(P(l, 0.75, 2.3));
-    num.textContent = Math.round(67800 * n / 100) * 100 > 0 ? (Math.round(67800 * n / 100) * 100).toLocaleString('id-ID') : '0';
-    set(num, { o: eo(P(l, 0.7, 1.0)), s: 0.9 + 0.1 * eo(P(l, 0.7, 1.4)) });
-    set(sub, { o: eo(P(l, 1.8, 2.3)), y: (1 - eo(P(l, 1.8, 2.3))) * 20 });
-    set(line, { o: eo(P(l, 2.7, 3.3)), y: (1 - eo(P(l, 2.7, 3.3))) * 30 });
+    root.style.clipPath = blob(540, 940, 2600 * ei(P(l, 0, 0.45)) + 60 * P(l, 0, 0.05), l, 2);
+    // kamera: dorong pelan, lalu menembus telapak
+    const push = 1.15 - 0.15 * eo(P(l, 0, 1.2)) + 0.04 * l;
+    const dive = ei(P(l, 3.85, 4.35));
+    set(cam, { s: push * (1 + dive * 7), y: -l * 10 });
+    set(img, { x: Math.sin(l * 0.3) * 14 });
+    draw(circ, cub(P(l, 0.7, 1.3)));
+    draw(arrow, cub(P(l, 1.1, 1.5)));
+    set(note, { o: eo(P(l, 1.3, 1.6)), r: -6, y: (1 - eo(P(l, 1.3, 1.6))) * 20 });
+    slotRoll(num, l, 0.9, 1.5);
+    const fadeOut = 1 - P(l, 3.75, 4.05);
+    set(num.w, { o: eo(P(l, 0.85, 1.1)) * fadeOut, y: (1 - eo(P(l, 0.85, 1.3))) * 60 });
+    kinIn(sub, l, 1.7, { step: 0.008, dur: 0.4, em: 20 });
+    sub.w.style.opacity = fadeOut;
+    kinIn(line, l, 2.6, { step: 0.03, mode: 'rise' });
+    line.w.style.opacity = fadeOut;
+    // tangan doodle muncul dari dalam telapak
+    handLayer.style.display = l > 4.15 ? 'block' : 'none';
+    handLayer.style.clipPath = blob(540, 720, 2600 * eo(P(l, 4.15, 4.6)), l, 5);
+    draw(hand, cub(P(l, 4.3, 5.3)), 0);
+    set(hand, { s: 1.3 - 0.3 * eo(P(l, 4.15, 5.5)) });
+    set(glow, { o: eo(P(l, 4.6, 5.2)) * (0.85 + 0.15 * Math.sin(l * 12)) });
+    d2(l, 1);
+    kinIn(tanda, l, 4.8, { step: 0.035, mode: 'rise', w0: 200, w1: 450 });
+    cr.style.opacity = l < 4.15 ? eo(P(l, 0.6, 1)) : 0;
   }
   return { update };
 })();
 scenes.push(S2);
 
-/* 3 · kita meninggalkan tanda (8.6 – 10.8) */
-const S3 = (() => {
-  const T0 = 8.6;
-  const root = scene(`radial-gradient(circle at 50% 46%, #22168a 0%, ${NIGHT} 62%)`);
-  root.style.setProperty('--hand-bg', '#160f5c');
-  const glow = el(root, 'left:240px;top:420px;width:600px;height:760px;border-radius:50%;background:radial-gradient(closest-side, rgba(185,176,255,.35), transparent);');
-  const hand = stencil(root, 'left:340px;top:470px;', 400, LILAC, 77);
-  const sparks = [];
-  for (let i = 0; i < 40; i++) sparks.push({ e: el(root, `left:${300 + hash(i) * 480}px;top:${1250 + hash(i + 9) * 200}px;width:${4 + hash(i + 3) * 6}px;height:${4 + hash(i + 3) * 6}px;border-radius:50%;background:${hash(i + 5) > .5 ? LILAC : '#fff'};`), i });
-  const txt = el(root, `left:0;top:1360px;width:1080px;text-align:center;${SERIF}font-size:76px;color:#fff;`);
-  const TXT = '<span style="color:#b9b0ff">✳</span> kita meninggalkan <span style="font-style:italic;color:#b9b0ff">tanda</span>.';
-  function update(t) {
-    if (!show(root, t, T0, 10.8)) return;
-    const l = t - T0;
-    const flick = 0.85 + 0.15 * Math.sin(l * 17) * Math.sin(l * 7.3);
-    set(glow, { o: eo(P(l, 0, 0.5)) * flick, s: 1 + 0.04 * Math.sin(l * 5) });
-    set(hand, { o: eo(P(l, 0.05, 0.5)), s: 1.08 - 0.08 * eo(P(l, 0, 1.2)) });
-    sparks.forEach((s) => {
-      const life = (l * (0.5 + hash(s.i + 1) * 0.6) + hash(s.i + 4)) % 1;
-      set(s.e, { y: -life * 900, x: Math.sin(life * 6 + s.i) * 40, o: Math.sin(life * Math.PI) * eo(P(l, 0, 0.4)) });
-    });
-    typed(txt, TXT, P(l, 0.35, 1.3), t, false);
-  }
-  return { update };
-})();
-scenes.push(S3);
-
-/* 4 · montase peradaban tulisan (10.8 – 15.4) */
+/* 4 · jurnal sejarah: kamera meluncur turun melewati foto-foto (10.6 – 15.8) */
 const S4 = (() => {
-  const T0 = 10.8, STEP = 0.76;
-  const root = scene(PAPER, false);
-  const PL = [
-    { bg: BLUE, c: '#fff', key: 'tablet', year: '± 3.300 SM', place: 'Uruk, Mesopotamia · lempeng tanah liat' },
-    { bg: NIGHT, c: LILAC, key: 'yupa', year: '± 400 M', place: 'Kutai · Yupa, prasasti tertua Nusantara' },
-    { bg: SHEET, c: BLUE, key: 'lontar', year: 'lontar', place: 'Bali & Jawa · digores dengan pengutik' },
-    { bg: BLUE, c: '#fff', key: 'amplop', year: '1746', place: 'Batavia · kantor pos pertama' },
-    { bg: PAPER, c: BLUE, key: 'letter', year: '1899–1904', place: 'Jepara · surat-surat Kartini' },
-    { bg: NIGHT, c: LILAC, key: 'vault', year: '1940', place: 'kapsul waktu pertama · dibuka tahun 8113' },
-  ].map((p, i) => {
-    const e = el(root, `inset:0;background:${p.bg};`);
-    e.className = 'grain';
-    const holder = el(e, 'left:340px;top:380px;width:400px;height:600px;transform-origin:50% 60%;');
-    let a;
-    if (p.key === 'amplop') { a = doodle('amplop', { size: 400, color: p.c, sw: 2.6 }); holder.appendChild(a); const st = dbox(holder, 'perangko-bergerigi', 'left:250px;top:60px;', { size: 150, color: p.c, sw: 3 }); p.extra = st.d; }
-    else a = art(holder, 'left:0;top:0;', p.key, p.c);
-    const y = el(e, `left:0;top:1160px;width:1080px;text-align:center;${SERIF}font-weight:600;font-size:150px;line-height:1;color:${p.c};letter-spacing:-0.04em;`, p.year);
-    const pl = el(e, `left:0;top:1340px;width:1080px;text-align:center;font:500 31px var(--mono);color:${p.c};opacity:.85;`, p.place);
-    const fig = el(e, `left:60px;top:80px;font:500 22px var(--mono);letter-spacing:.14em;color:${p.c};opacity:.6;`, `PLATE ${String(i + 1).padStart(2, '0')} / 06`);
-    return { e, a, holder, y, pl, i, ...p };
+  const T0 = 10.6;
+  const root = scene(SHEET);
+  const canvas = el(root, 'left:0;top:0;width:1080px;height:5800px;');
+  canvas.className = 'dots';
+  const ITEMS = [
+    { src: 'uruk', x: 110, y: 380, w: 860, h: 520, r: -3, year: '± 3.300 SM', cap: 'Uruk · lempeng tanah liat, ditekan buluh', side: 'L' },
+    { src: 'yupa', x: 150, y: 1500, w: 780, h: 640, r: 3, year: '± 400 M', cap: 'Kutai · Yupa, prasasti tertua Nusantara', side: 'R' },
+    { src: 'lontar', x: 60, y: 2700, w: 960, h: 300, r: -2, year: 'lontar', cap: 'Bali · daun lontar digores pengutik', side: 'L' },
+    { src: 'pos', x: 120, y: 3520, w: 840, h: 620, r: 2.5, year: '1746', cap: 'Batavia · kantor pos pertama berdiri', side: 'R' },
+    { src: 'kartini', x: 260, y: 4640, w: 560, h: 740, r: -3, year: '1899–1904', cap: 'Jepara · Kartini menulis surat-suratnya', side: 'L' },
+  ];
+  // garis waktu tinta yang menyambung semua foto
+  let pathD = 'M540 120';
+  ITEMS.forEach((it, i) => { const cy = it.y + it.h / 2; pathD += ` C ${i % 2 ? 980 : 100} ${cy - 420}, ${i % 2 ? 100 : 980} ${cy - 220}, 540 ${cy}`; });
+  const tl = svg(canvas, 'left:0;top:0;', 1080, 5800, `<path d="${pathD}" ${lc(5, 'rgba(42,20,214,.45)')}/>`);
+  const items = ITEMS.map((it, i) => {
+    const p = print(canvas, it.src, { x: it.x, y: it.y, w: it.w, h: it.h, r: it.r });
+    const L = it.side === 'L';
+    const yr = kin(canvas, `left:80px;top:${it.y + it.h + 50}px;width:920px;text-align:${L ? 'left' : 'right'};font-size:150px;color:${BLUE};line-height:1;`, [[it.year]], SERIF(600));
+    const cp = el(canvas, `left:80px;top:${it.y + it.h + 220}px;width:920px;text-align:${L ? 'left' : 'right'};font:500 32px var(--mono);color:${TEXT};`, it.cap);
+    const star = dbox(canvas, i % 2 ? 'kilau' : 'bintang-kecil', `left:${L ? it.x + it.w - 50 : it.x - 60}px;top:${it.y - 80}px;`, { size: 110, color: BLUE, sw: 4 });
+    return { p, yr, cp, star, i, ...it };
   });
+  const STOP = 0.95, A = 0.3;
+  const target = (i) => { const it = ITEMS[Math.min(i, ITEMS.length - 1)]; return it.y + it.h / 2 + 150 - 860; };
+  function camY(l) {
+    // berhenti sebentar di tiap foto, meluncur di antaranya
+    const k = clamp((l - A) / STOP, 0, ITEMS.length - 1);
+    const i0 = Math.floor(k), f = k - i0;
+    const intro = (1 - eo(P(l, 0, 0.7))) * -500;
+    return lerp(target(i0), target(i0 + 1), eio(clamp((f - 0.5) / 0.5))) + intro;
+  }
+  const cr = credit(root, 'foto: Wikimedia Commons — Daderot, Ms Sarah Welch, Nationaal Archief (CC0) · Tropenmuseum (CC BY-SA 3.0)', false);
   function update(t) {
-    if (!show(root, t, T0, 15.4)) return;
+    if (!show(root, t, T0, 16.1)) return;
     const l = t - T0;
-    const k = Math.min(PL.length - 1, Math.floor(l / STEP));
-    PL.forEach((p) => {
-      p.e.style.display = p.i === k ? 'block' : 'none';
-      if (p.i !== k) return;
-      const ll = l - p.i * STEP;
-      draw(p.a, cub(P(ll, 0, 0.45)), 0.08);
-      if (p.extra) draw(p.extra, cub(P(ll, 0.2, 0.5)));
-      set(p.holder, { s: 1 + 0.06 * ll, y: (1 - eo(P(ll, 0, 0.3))) * 40 });
-      set(p.y, { y: (1 - eo(P(ll, 0, 0.35))) * 60, o: eo(P(ll, 0, 0.25)) });
-      set(p.pl, { o: 0.85 * eo(P(ll, 0.1, 0.35)) });
+    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.5))) - 40, 7);
+    const y = camY(l);
+    set(canvas, { y: -y, r: Math.sin(l * 0.8) * 0.5 });
+    draw(tl, clamp((y + 1400) / 5800));
+    items.forEach((it) => {
+      const a = it.i === 0 ? 0.15 : A + (it.i - 1) * STOP + STOP * 0.55;
+      const s = spring(l - a, 1.3, 6.5);
+      set(it.p, { y: (1 - clamp(s)) * 220, r: it.r + (1 - clamp(s)) * 10, s: 0.9 + 0.1 * clamp(s), o: clamp((l - a) / 0.12) });
+      kinIn(it.yr, l, a + 0.3, { step: 0.04, mode: 'rise', em: 130, w0: 300, w1: 640 });
+      it.cp.style.opacity = eo(P(l, a + 0.5, a + 0.75));
+      draw(it.star.d, cub(P(l, a + 0.35, a + 0.75)));
     });
+    cr.style.opacity = eo(P(l, 0.5, 0.9));
   }
   return { update };
 })();
 scenes.push(S4);
 
-/* 5 · cetak biru alat tulis (15.4 – 21.6) */
+/* 5 · alat tulis di lembar cetak biru (15.6 – 21.9) */
 const S5 = (() => {
-  const T0 = 15.4;
-  const root = scene(`${SHEET}`);
-  root.style.backgroundImage = 'linear-gradient(rgba(42,20,214,.07) 2px, transparent 2px), linear-gradient(90deg, rgba(42,20,214,.07) 2px, transparent 2px), linear-gradient(rgba(42,20,214,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(42,20,214,.035) 1px, transparent 1px)';
+  const T0 = 15.6;
+  const root = scene(SHEET);
+  root.style.backgroundImage = 'linear-gradient(rgba(42,20,214,.08) 2px, transparent 2px), linear-gradient(90deg, rgba(42,20,214,.08) 2px, transparent 2px), linear-gradient(rgba(42,20,214,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(42,20,214,.035) 1px, transparent 1px)';
   root.style.backgroundSize = '120px 120px, 120px 120px, 24px 24px, 24px 24px';
-  // anotasi tepi seperti lembar teknik
-  label(root, 'left:60px;top:70px;font-size:20px;', 'lembar 02 · alat tulis manusia', 'rgba(42,20,214,.55)');
-  label(root, 'right:60px;top:70px;font-size:20px;', 'skala 1 : 1', 'rgba(42,20,214,.55)');
-  label(root, 'left:60px;bottom:70px;font-size:20px;', 'sehari · arsip', 'rgba(42,20,214,.55)');
+  ['lembar 02 · alat tulis manusia', 'skala 1 : 1'].forEach((s, i) => el(root, `${i === 1 ? 'right' : 'left'}:60px;${i === 2 ? 'bottom' : 'top'}:70px;font:500 20px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:rgba(42,20,214,.55);`, s));
+  const ring = svg(root, 'left:140px;top:380px;', 800, 800, `<circle cx="400" cy="400" r="390" ${lc(2, 'rgba(42,20,214,.25)')} stroke-dasharray="6 12"/><path d="M400 0 L400 40 M400 760 L400 800 M0 400 L40 400 M760 400 L800 400" ${lc(2, 'rgba(42,20,214,.5)')}/>`);
+  const QUILL = `<path d="M160 440 Q200 400 236 330 Q270 360 300 400 Q260 240 262 60 Q240 200 236 330 Z" fill="rgba(42,20,214,.12)"/><path d="M210 580 L262 40" ${lc(5, BLUE)}/><path d="M258 90 Q120 170 160 440 Q190 380 236 330 M262 60 Q380 190 300 400 Q270 360 240 330" ${lc(5, BLUE)}/><path d="M185 270 L240 205 M175 340 L236 280 M280 165 L250 210 M300 245 L246 285" ${lc(3.5, BLUE)}/>`;
   const TOOLS = [
-    ['kalam', 'FIG. 01 — KALAM', 'buluh · Mesopotamia · ± 3.300 SM'],
-    ['pengutik', 'FIG. 02 — PENGUTIK', 'pisau penggores lontar · Nusantara'],
-    ['bulu', 'FIG. 03 — PENA BULU', 'bulu angsa · abad pertengahan'],
-    ['pena', 'FIG. 04 — PENA TINTA', 'pena celup & pena isi ulang'],
-    ['mesintik', 'FIG. 05 — MESIN TIK', 'ketik · abad ke-19 – 20'],
-  ].map(([key, title, sub], i) => {
-    const g = el(root, 'left:240px;top:420px;width:600px;height:900px;');
-    const a = art(g, 'left:0;top:0;', key, BLUE, 600, 900);
-    const dim = svg(g, 'left:0;top:0;', 600, 900, `<path d="M40 60 L40 840 M28 60 L52 60 M28 840 L52 840" ${lineCss(2, 'rgba(42,20,214,.5)')}/><path d="M560 450 L600 450 M580 430 L580 470" ${lineCss(2, 'rgba(42,20,214,.5)')}/><circle cx="300" cy="450" r="380" ${lineCss(1.5, 'rgba(42,20,214,.18)')} stroke-dasharray="6 10"/>`);
-    const tt = el(root, `left:0;top:1400px;width:1080px;text-align:center;font:600 34px var(--mono);letter-spacing:.12em;color:${BLUE};`, title);
-    const ss = el(root, `left:0;top:1456px;width:1080px;text-align:center;font:500 27px var(--mono);color:rgba(22,22,26,.6);`, sub);
-    return { g, a, dim, tt, ss, i };
+    { kind: 'photo', src: 'kalam', title: 'KALAM', sub: 'pena buluh · dipakai ribuan tahun', css: 'left:90px;top:720px;width:900px;height:150px;contain;', rot: -55 },
+    { kind: 'svg', inner: QUILL, title: 'PENA BULU', sub: 'bulu angsa dicelup tinta' },
+    { kind: 'photo', src: 'pena', title: 'PENA TINTA', sub: 'mata pena logam · surat & buku harian', css: 'left:200px;top:480px;width:680px;height:680px;border-radius:50%;', rot: 0 },
+    { kind: 'photo', src: 'mesintik', title: 'MESIN TIK', sub: 'Remington No. 1 · 1873–1878', css: 'left:250px;top:430px;width:580px;height:690px;', rot: 0 },
+  ].map((tool, i) => {
+    const g = el(root, 'inset:0;');
+    let a;
+    if (tool.kind === 'photo') { const inv = /contain/.test(tool.css); a = photo(g, tool.src, tool.css.replace('contain;', ''), inv ? 'duoInv' : 'duoInk'); if (inv) a.firstChild.style.objectFit = 'contain'; }
+    else a = svg(g, 'left:340px;top:450px;', 400, 600, tool.inner, '0 0 400 600');
+    const dim = svg(g, 'left:0;top:0;', 1080, 1920, `<path d="M110 430 L110 1150 M96 430 L124 430 M96 1150 L124 1150" ${lc(2, 'rgba(42,20,214,.55)')}/><path d="M830 540 C 900 520, 940 490, 960 450" ${lc(2.5, BLUE)}/><circle cx="812" cy="550" r="10" ${lc(3, BLUE)}/>`);
+    const num = el(g, `left:880px;top:390px;font:700 56px var(--hand);color:${BLUE};`, `no.${i + 1}`);
+    const tt = kin(g, `left:0;top:1260px;width:1080px;text-align:center;font:600 46px var(--mono);letter-spacing:.14em;color:${BLUE};`, [[`FIG. 0${i + 1} — ${tool.title}`]]);
+    const ss = el(g, 'left:0;top:1330px;width:1080px;text-align:center;font:500 28px var(--mono);color:rgba(22,22,26,.6);', tool.sub);
+    return { g, a, dim, num, tt, ss, i, ...tool };
   });
-  const STEP = 0.92;
-  const mini = dbox(root, 'pena', 'left:490px;top:880px;', { size: 100, color: BLUE, sw: 4 });
-  const say1 = el(root, `left:0;top:1010px;width:1080px;text-align:center;${SERIF}font-size:84px;color:${TEXT};`);
-  const say2 = mline(root, `left:0;top:1110px;width:1080px;padding-bottom:16px;`, 'rindunya sama.', `${SERIF}font-style:italic;font-size:110px;color:${BLUE};text-align:center;width:1080px;`);
+  const STEP = 1.0, A0 = 0.25;
+  const say1 = kin(root, 'left:0;top:820px;width:1080px;text-align:center;font-size:96px;color:#16161a;', [['Alatnya berganti.']], SERIF(400));
+  const say2 = kin(root, 'left:0;top:950px;width:1080px;text-align:center;font-size:150px;color:#2a14d6;', [['rindunya sama.', 'font-style:italic;']], SERIF(400));
+  const ink = scribble(root, 'left:280px;top:1140px;', 520, 30, 'M6 16 C 140 4, 300 26, 514 10', BLUE, 8);
+  const cr = credit(root, 'foto: Walters Art Museum (PD) · Petar Milošević, CC BY-SA 4.0 · Daderot, CC0', false);
   function update(t) {
-    if (!show(root, t, T0, 21.6)) return;
+    if (!show(root, t, T0, 21.9)) return;
     const l = t - T0;
+    root.style.clipPath = blob(540, 960, 2600 * ei(P(l, 0, 0.5)) + 40, l, 3);
+    set(ring, { r: l * 14 });
     TOOLS.forEach((k) => {
-      const a = 0.15 + k.i * STEP;
-      const on = l >= a && l < a + STEP;
-      const ll = l - a;
-      [k.g, k.tt, k.ss].forEach((e) => (e.style.display = on ? 'block' : 'none'));
+      const a = A0 + k.i * STEP, ll = l - a;
+      const on = ll >= 0 && ll < STEP;
+      k.g.style.display = on ? 'block' : 'none';
       if (!on) return;
-      draw(k.a, cub(P(ll, 0, 0.55)), 0.15);
-      draw(k.dim, cub(P(ll, 0.1, 0.6)), 0.2);
-      set(k.g, { s: 0.94 + 0.06 * eo(P(ll, 0, 0.5)), r: (1 - eo(P(ll, 0, 0.5))) * -6 });
-      set(k.tt, { o: eo(P(ll, 0.05, 0.3)) });
-      set(k.ss, { o: eo(P(ll, 0.12, 0.4)) });
+      const e = eo(P(ll, 0, 0.45));
+      if (k.kind === 'photo') set(k.a, { s: 0.85 + 0.15 * e + 0.04 * ll, r: k.rot + (1 - e) * 10, o: e, b: (1 - e) * 10 });
+      else { draw(k.a, cub(P(ll, 0, 0.6)), 0.15); set(k.a, { s: 0.9 + 0.1 * e + 0.04 * ll, r: (1 - e) * -10 }); }
+      draw(k.dim, cub(P(ll, 0.1, 0.55)), 0.2);
+      set(k.num, { o: eo(P(ll, 0.2, 0.4)), r: -8 });
+      kinIn(k.tt, ll, 0.05, { step: 0.02, mode: 'drop', em: 30, w0: 600, w1: 600 });
+      k.ss.style.opacity = eo(P(ll, 0.25, 0.5));
     });
-    const end = 0.15 + TOOLS.length * STEP; // ≈ 4.75
-    const ms = spring(l - end, 1.6, 7);
-    set(mini.b, { s: clamp(ms, 0, 1.2), o: l > end ? 1 : 0, y: -60 * eo(P(l, end + 0.3, end + 0.7)) });
-    draw(mini.d, cub(P(l, end, end + 0.4)));
-    typed(say1, 'Alatnya berganti.', P(l, end + 0.25, end + 0.75), t, false);
-    reveal(say2, l, end + 0.85);
+    const end = A0 + TOOLS.length * STEP; // 4.25
+    kinIn(say1, l, end + 0.05, { step: 0.035, mode: 'rise', w0: 200, w1: 460 });
+    kinIn(say2, l, end + 0.7, { step: 0.05, mode: 'rise', w0: 200, w1: 640, em: 150 });
+    draw(ink, cub(P(l, end + 1.15, end + 1.5)));
+    cr.style.opacity = l < end ? 1 : 0;
   }
   return { update };
 })();
 scenes.push(S5);
 
-/* ================= BABAK II — SURAT ================= */
+/* ===================== BABAK II ===================== */
 
-/* 6 · judul babak + jaringan pos (21.6 – 24.4) */
+/* 6 · judul babak di atas foto kantor pos (21.9 – 24.7) */
 const S6 = (() => {
-  const T0 = 21.6;
+  const T0 = 21.9;
   const root = scene(NIGHT);
-  const CITIES = [['Den Haag', 760, 300], ['Batavia', 250, 1040], ['Semarang', 470, 1110], ['Jepara', 560, 1010], ['Surabaya', 700, 1140], ['Makassar', 860, 1330], ['Medan', 120, 700], ['Ambon', 960, 1480]];
-  const pts = [];
-  for (let i = 0; i < 40; i++) pts.push([80 + hash(i + 100) * 920, 260 + hash(i + 200) * 1450]);
-  let lines = '';
-  pts.forEach((p, i) => { const q = pts[(i * 7 + 3) % pts.length]; lines += `<path d="M${p[0]} ${p[1]} L${q[0]} ${q[1]}" ${lineCss(1.5, 'rgba(185,176,255,.28)')}/>`; });
-  const net = svg(root, 'left:0;top:0;', 1080, 1920, lines);
-  const routes = svg(root, 'left:0;top:0;', 1080, 1920, [[0, 1], [1, 2], [2, 3], [2, 4], [4, 5], [1, 6], [5, 7], [0, 3]].map(([a, b]) => {
+  const img = photo(root, 'pos', 'left:-620px;top:160px;width:2300px;height:1540px;', 'duoNight');
+  el(root, `inset:0;background:linear-gradient(${NIGHT} 0%, rgba(11,7,51,.35) 28%, rgba(11,7,51,.35) 66%, ${NIGHT} 100%);`);
+  const CITIES = [['Den Haag', 800, 330], ['Batavia', 230, 1060], ['Semarang', 470, 1130], ['Jepara', 570, 1020], ['Surabaya', 720, 1160], ['Makassar', 880, 1350], ['Medan', 130, 720]];
+  const routes = svg(root, 'left:0;top:0;', 1080, 1920, [[0, 1], [1, 2], [2, 3], [2, 4], [4, 5], [1, 6], [0, 3]].map(([a, b]) => {
     const A = CITIES[a], B = CITIES[b];
-    const mx = (A[1] + B[1]) / 2 + (B[2] - A[2]) * 0.15, my = (A[2] + B[2]) / 2 - (B[1] - A[1]) * 0.15;
-    return `<path d="M${A[1]} ${A[2]} Q${mx} ${my} ${B[1]} ${B[2]}" ${lineCss(3, LILAC)} stroke-dasharray="1 1"/>`;
+    return `<path d="M${A[1]} ${A[2]} Q${(A[1] + B[1]) / 2 + (B[2] - A[2]) * 0.2} ${(A[2] + B[2]) / 2 - (B[1] - A[1]) * 0.2} ${B[1]} ${B[2]}" ${lc(3, LILAC)}/>`;
   }).join(''));
-  const dots = CITIES.map(([n, x, y], i) => {
-    const d = el(root, `left:${x - 9}px;top:${y - 9}px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 0 8px rgba(185,176,255,.18);`);
-    const tl = el(root, `left:${x + 18}px;top:${y - 16}px;font:500 22px var(--mono);color:rgba(255,255,255,.7);letter-spacing:.06em;`, n);
-    return { d, tl, i };
-  });
-  const title = el(root, `left:0;top:880px;width:1080px;text-align:center;font:500 46px var(--mono);letter-spacing:.06em;color:#fff;`);
-  const TT = '<span style="color:#b9b0ff">‹ </span>BABAK II — <span style="color:#b9b0ff">SURAT</span><span style="color:#b9b0ff"> ›</span>';
+  const dots = CITIES.map(([n, x, y], i) => ({ d: el(root, `left:${x - 10}px;top:${y - 10}px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 0 10px rgba(185,176,255,.2);`), tl: el(root, `left:${x + 22}px;top:${y - 16}px;font:500 23px var(--mono);color:rgba(255,255,255,.85);`, n), i }));
+  const env = dbox(root, 'amplop', 'left:0;top:0;', { size: 80, color: '#fff', sw: 4 });
+  const K = kin(root, 'left:0;top:800px;width:1080px;text-align:center;font:600 58px var(--mono);color:#fff;letter-spacing:.08em;', [['‹ ', 'color:#b9b0ff;'], ['BABAK II — '], ['SURAT', 'color:#b9b0ff;'], [' ›', 'color:#b9b0ff;']]);
+  const sub = el(root, 'left:0;top:900px;width:1080px;text-align:center;font:700 66px var(--hand);color:#b9b0ff;', 'saat kabar butuh berminggu-minggu');
+  const cr = credit(root, 'foto: kantor pos Batavia · Nationaal Archief, CC0');
   function update(t) {
-    if (!show(root, t, T0, 24.4)) return;
+    if (!show(root, t, T0, 25.15)) return;
     const l = t - T0;
-    draw(net, eo(P(l, 0, 1.4)), 0.02);
-    draw(routes, cub(P(l, 0.5, 2.3)), 0.25);
-    dots.forEach((d) => { const s = spring(l - 0.4 - d.i * 0.12, 1.6, 7); set(d.d, { s }); set(d.tl, { o: eo(P(l, 0.5 + d.i * 0.12, 0.9 + d.i * 0.12)) }); });
-    typed(title, TT, P(l, 0.25, 1.2), t, true);
-    set(title, { s: 1 + 0.02 * l });
+    set(img, { x: -l * 34, s: 1.05 + 0.03 * l, o: 0.6 });
+    draw(routes, cub(P(l, 0.3, 2.0)), 0.3);
+    dots.forEach((d) => { set(d.d, { s: spring(l - 0.3 - d.i * 0.12, 1.6, 7) }); d.tl.style.opacity = eo(P(l, 0.4 + d.i * 0.12, 0.8 + d.i * 0.12)); });
+    // amplop terbang dari Den Haag ke Jepara
+    const q = cub(P(l, 0.6, 2.2));
+    const A = CITIES[0], B = CITIES[3];
+    const cx = (A[1] + B[1]) / 2 + (B[2] - A[2]) * 0.2, cy = (A[2] + B[2]) / 2 - (B[1] - A[1]) * 0.2;
+    const ex = (1 - q) * (1 - q) * A[1] + 2 * (1 - q) * q * cx + q * q * B[1], ey = (1 - q) * (1 - q) * A[2] + 2 * (1 - q) * q * cy + q * q * B[2];
+    set(env.b, { x: ex - 40, y: ey - 40, o: l > 0.6 && l < 2.25 ? 1 : 0, r: Math.sin(l * 5) * 8 });
+    draw(env.d, 1);
+    kinIn(K, l, 0.2, { mode: 'slam', step: 0.04, dur: 0.35 });
+    set(K.w, { s: 1 + 0.015 * l });
+    set(sub, { o: eo(P(l, 1.2, 1.6)), y: (1 - eo(P(l, 1.2, 1.6))) * 20 });
   }
   return { update };
 })();
 scenes.push(S6);
 
-/* 7 · montase surat-menyurat (24.4 – 32.6) */
+/* 7 · montase surat (24.7 – 32.9) */
 const S7 = (() => {
-  const T0 = 24.4, STEP = 1.37;
-  const root = scene(PAPER, false);
+  const T0 = 24.7, STEP = 1.37;
+  const root = scene('transparent', false);
   function panel(bg, title, cap, dark) {
     const e = el(root, `inset:0;background:${bg};`);
     e.className = 'grain';
-    const c = dark ? '#fff' : TEXT;
-    const tt = mline(e, 'left:0;top:1300px;width:1080px;padding-bottom:12px;', title, `${SERIF}font-size:88px;color:${c};text-align:center;width:1080px;`);
-    const cp = el(e, `left:0;top:1440px;width:1080px;text-align:center;font:500 29px var(--mono);color:${dark ? 'rgba(255,255,255,.72)' : 'rgba(22,22,26,.6)'};`, cap);
+    const tt = kin(e, `left:0;top:1360px;width:1080px;text-align:center;font-size:116px;color:${dark ? '#fff' : TEXT};`, [[title, 'font-style:italic;']], SERIF(400));
+    const cp = el(e, `left:90px;top:1530px;width:900px;text-align:center;font:500 30px/1.5 var(--mono);color:${dark ? 'rgba(255,255,255,.78)' : 'rgba(22,22,26,.62)'};`, cap);
     return { e, tt, cp };
   }
-  // a · disegel
-  const A = panel(BLUE, 'disegel', 'lilin dilelehkan, cap ditekan', true);
-  const envA = svg(A.e, 'left:190px;top:470px;', 700, 460, `<rect x="0" y="0" width="700" height="460" rx="22" fill="#f7f7f4"/><path d="M4 16 L350 236 L696 16" fill="none" stroke="#2a14d6" stroke-opacity=".25" stroke-width="5"/>`);
-  const sealA = el(A.e, 'left:440px;top:600px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle at 38% 34%, #5a46ff, #2a14d6 58%, #1a0b9a);box-shadow:0 14px 30px rgba(4,1,31,.5);');
-  const sealMark = dbox(sealA, 'tunas', 'left:44px;top:40px;', { size: 112, color: '#fff', sw: 5 });
-  const ripA = el(A.e, 'left:340px;top:500px;width:400px;height:400px;border-radius:50%;border:6px solid rgba(255,255,255,.8);box-sizing:border-box;');
-  // b · diantar
-  const B = panel(PAPER, 'diantar', 'pak pos, berhari-hari, kadang berminggu-minggu');
-  const bike = dbox(B.e, 'sepeda', 'left:340px;top:560px;', { size: 400, color: BLUE, sw: 2.8 });
-  const bag = dbox(B.e, 'amplop', 'left:470px;top:470px;', { size: 140, color: BLUE, sw: 3.5 });
-  const speed = svg(B.e, 'left:120px;top:640px;', 260, 200, [0, 1, 2].map((i) => `<path d="M${20 + i * 30} ${30 + i * 60} L${200 - i * 20} ${30 + i * 60}" ${lineCss(5, BLUE)}/>`).join(''));
-  // c · Kartini
-  const C = panel(SHEET, 'menulis dari Jepara', 'Kartini, 1899–1904 · terbit jadi buku, 1911');
-  const sheetC = el(C.e, 'left:230px;top:300px;width:620px;height:860px;background:#fff;box-shadow:0 24px 60px rgba(20,20,60,.15);transform-origin:50% 50%;');
-  el(sheetC, 'left:56px;top:56px;font:700 52px var(--hand);color:#2a14d6;', 'Japara, 1899');
-  const hwC = svg(sheetC, 'left:56px;top:150px;', 510, 600, Array.from({ length: 10 }, (_, r) => `<path d="M0 ${r * 56 + 20} ${Array.from({ length: r % 4 === 3 ? 6 : 10 }, (_, k) => `q 12 ${-14 - hash(r * 13 + k) * 10} 25 0 t 25 0`).join(' ')}" ${lineCss(3.6, BLUE)}/>`).join(''));
-  const signC = el(sheetC, 'right:60px;bottom:40px;font:700 64px var(--hand);color:#2a14d6;', 'Kartini');
-  // d · buku harian bergembok
-  const D = panel(NIGHT, 'buku harian', 'dikunci, disimpan di bawah bantal', true);
-  const bookD = dbox(D.e, 'buku', 'left:340px;top:440px;', { size: 400, color: LILAC, sw: 2.6 });
-  const lockD = dbox(D.e, 'gembok-hati', 'left:610px;top:760px;', { size: 170, color: '#fff', sw: 3.6 });
-  // e · telegram
-  const E = panel(PAPER, 'telegram', 'dibayar per kata, jadi harus singkat');
-  const strip = el(E.e, `left:90px;top:640px;width:900px;height:200px;background:#fff6d6;box-shadow:0 18px 40px rgba(20,20,60,.12);transform:rotate(-3deg);`);
-  el(strip, 'left:34px;top:18px;font:500 20px var(--mono);letter-spacing:.2em;color:rgba(22,22,26,.5);', 'KAWAT · JAKARTA');
-  const tg = el(strip, 'left:34px;top:70px;width:840px;font:600 44px var(--mono);color:#16161a;letter-spacing:.04em;');
-  // f · perangko
+  const A = panel(PAPER, 'ditulis tangan', 'berhalaman-halaman, dengan tinta yang kadang luntur');
+  const aImg = print(A.e, 'surat1788', { x: 160, y: 200, w: 760, h: 920, r: -2 });
+  credit(A.e, 'foto: surat, 1788 · Rijksmuseum, CC0', false);
+  const B = panel(NIGHT, 'disegel', 'lilin dilelehkan, cap ditekan', true);
+  const bImg = photo(B.e, 'lak', 'left:190px;top:320px;width:700px;height:700px;border-radius:50%;', 'duoNight');
+  const bRip = el(B.e, 'left:290px;top:420px;width:500px;height:500px;border-radius:50%;border:6px solid rgba(185,176,255,.8);box-sizing:border-box;');
+  credit(B.e, 'foto: lak segel · Museum Rotterdam, CC BY-SA 3.0');
+  const C = panel(BLUE, 'Kartini', 'menulis dari Jepara, 1899–1904 · surat-suratnya terbit jadi buku, 1911', true);
+  const cImg = print(C.e, 'kartini', { x: 270, y: 220, w: 540, h: 700, r: 3 });
+  const cSig = el(C.e, 'left:560px;top:930px;font:700 100px var(--hand);color:#fff;', 'Japara');
+  const cLine = scribble(C.e, 'left:560px;top:1060px;', 330, 30, 'M6 16 C 100 4, 200 26, 324 10', '#fff', 6);
+  credit(C.e, 'foto: Tropenmuseum, CC BY-SA 3.0');
+  const D = panel(PAPER, 'diantar', 'naik kapal, kereta, sepeda · berhari-hari');
+  const dImg = print(D.e, 'surat2', { x: 90, y: 360, w: 900, h: 520, r: -3 });
+  const dBike = dbox(D.e, 'sepeda', 'left:0;top:900px;', { size: 300, color: BLUE, sw: 3 });
+  const dSpeed = scribble(D.e, 'left:0;top:980px;', 260, 160, 'M20 30 L200 30 M50 90 L220 90 M30 150 L180 150', BLUE, 6);
+  credit(D.e, 'foto: surat · Rijksmuseum, CC0', false);
+  const E = panel(SHEET, 'telegram', 'dibayar per kata, jadi harus singkat');
+  const eDots = el(E.e, 'inset:0;opacity:.6;'); eDots.className = 'dots';
+  const strip = el(E.e, 'left:70px;top:620px;width:940px;height:240px;background:#fff6d6;box-shadow:0 24px 50px rgba(20,20,60,.16);');
+  el(strip, 'left:34px;top:20px;font:500 22px var(--mono);letter-spacing:.2em;color:rgba(22,22,26,.5);', 'KAWAT · JAKARTA');
+  const tg = el(strip, 'left:34px;top:80px;width:880px;font:600 52px/1.25 var(--mono);color:#16161a;');
   const F = panel(BLUE, 'ditunggu', 'dibalas, lalu disimpan di kotak sepatu', true);
-  const stampF = dbox(F.e, 'perangko-bergerigi', 'left:330px;top:440px;', { size: 420, color: '#fff', sw: 2.6 });
-  const cancel = svg(F.e, 'left:520px;top:520px;', 320, 320, `<circle cx="160" cy="160" r="120" ${lineCss(6, LILAC)}/><circle cx="160" cy="160" r="96" ${lineCss(3, LILAC)}/><path d="M40 300 q 40 -30 80 0 t 80 0 t 80 0 M20 330 q 40 -30 80 0 t 80 0 t 80 0" ${lineCss(5, LILAC)}/>`);
-  const cancelTxt = el(F.e, `left:615px;top:655px;width:160px;text-align:center;font:600 34px var(--mono);color:${LILAC};transform:rotate(-12deg);`, 'POS');
+  const fPile = [print(F.e, 'surat2', { x: 60, y: 300, w: 620, h: 360, r: -9 }), print(F.e, 'surat1788', { x: 560, y: 520, w: 420, h: 520, r: 7 })];
+  const fStamp = dbox(F.e, 'perangko-bergerigi', 'left:290px;top:330px;', { size: 500, color: '#fff', sw: 2.4 });
+  const fCancel = svg(F.e, 'left:520px;top:480px;', 340, 340, `<circle cx="170" cy="170" r="130" ${lc(7, LILAC)}/><circle cx="170" cy="170" r="104" ${lc(3, LILAC)}/><path d="M40 320 q 40 -30 80 0 t 80 0 t 80 0 M20 350 q 40 -30 80 0 t 80 0 t 80 0" ${lc(5, LILAC)}/>`);
+  const fTxt = el(F.e, `left:610px;top:620px;width:160px;text-align:center;font:600 40px var(--mono);color:${LILAC};`, 'POS');
   const PANELS = [A, B, C, D, E, F];
   function update(t) {
-    if (!show(root, t, T0, 32.6)) return;
+    if (!show(root, t, T0, 33.35)) return;
     const l = t - T0;
     const k = Math.min(5, Math.floor(l / STEP));
-    PANELS.forEach((p, i) => (p.e.style.display = i === k ? 'block' : 'none'));
     const ll = l - k * STEP;
+    PANELS.forEach((p, i) => { p.e.style.display = i === k || (i === k - 1 && ll < 0.45) ? 'block' : 'none'; p.e.style.zIndex = i === k ? 2 : 1; });
     const cur = PANELS[k];
-    reveal(cur.tt, ll, 0.1, 0.55);
-    set(cur.cp, { o: eo(P(ll, 0.3, 0.6)) });
-    if (k === 0) {
-      set(envA, { s: 0.92 + 0.08 * eo(P(ll, 0, 0.4)) });
-      const f = P(ll, 0.35, 0.47);
-      const settle = ll > 0.47 ? 1 + Math.exp(-9 * (ll - 0.47)) * Math.sin((ll - 0.47) * 28) * 0.06 : 1;
-      set(sealA, { s: lerp(2.4, 1, ei(f)) * settle, o: ll > 0.35 ? 1 : 0, r: lerp(-30, -8, f) });
-      const q = P(ll, 0.47, 1.2);
-      set(ripA, { s: lerp(0.5, 2.2, eo(q)), o: q > 0 && q < 1 ? 0.7 * (1 - q) : 0 });
-    } else if (k === 1) {
-      const x = lerp(-700, 640, P(ll, 0, STEP));
-      set(bike.b, { x: x, y: Math.abs(Math.sin(ll * 18)) * -8 });
-      set(bag.b, { x: x, y: Math.abs(Math.sin(ll * 18)) * -8 });
-      set(speed, { x: x, o: 0.8 });
-      draw(bike.d, 1); draw(bag.d, 1); draw(speed, 1);
+    // transisi bergantian: tinta menyebar / kertas sobek naik
+    cur.e.style.clipPath = k % 2 === 0 ? blob(540, 820, 2600 * ei(P(ll, 0, 0.45)) + 30, ll, k + 8) : torn(1920 * (1 - eo(P(ll, 0, 0.42))) - 40, k);
+    kinIn(cur.tt, ll, 0.2, { step: 0.035, mode: 'rise', w0: 200, w1: 520, em: 110 });
+    cur.cp.style.opacity = eo(P(ll, 0.4, 0.7));
+    if (k === 0) set(aImg, { y: -ll * 70, r: -2 + ll, s: 1.02 + 0.03 * ll });
+    else if (k === 1) {
+      const f = P(ll, 0.25, 0.37);
+      const settle = ll > 0.37 ? 1 + Math.exp(-9 * (ll - 0.37)) * Math.sin((ll - 0.37) * 28) * 0.05 : 1;
+      set(bImg, { s: lerp(2.2, 1, ei(f)) * settle, o: ll > 0.25 ? 1 : 0, r: lerp(-20, 0, f) + ll * 4 });
+      const q = P(ll, 0.37, 1.1); set(bRip, { s: lerp(0.8, 2.4, eo(q)), o: q > 0 && q < 1 ? 0.8 * (1 - q) : 0 });
     } else if (k === 2) {
-      set(sheetC, { r: lerp(4, -2, eo(P(ll, 0, 0.6))), s: 0.95 + 0.05 * eo(P(ll, 0, 0.6)) + 0.02 * ll });
-      draw(hwC, P(ll, 0.1, 1.2), 0.25);
-      set(signC, { o: eo(P(ll, 0.9, 1.2)) });
+      set(cImg, { s: 1.06 - 0.06 * eo(P(ll, 0, 0.8)) + 0.02 * ll, r: 3 - ll });
+      set(cSig, { o: eo(P(ll, 0.5, 0.8)), r: -8 });
+      draw(cLine, cub(P(ll, 0.75, 1.05)));
     } else if (k === 3) {
-      draw(bookD.d, cub(P(ll, 0, 0.6)), 0.2);
-      const ls = spring(ll - 0.5, 1.6, 6.5);
-      set(lockD.b, { s: clamp(ls, 0, 1.2), r: (1 - clamp(ls)) * 30 + Math.sin(ll * 3) * 3, o: ll > 0.5 ? 1 : 0 });
-      draw(lockD.d, cub(P(ll, 0.5, 0.9)));
+      set(dImg, { x: -ll * 40, r: -3 + ll * 0.5 });
+      const x = lerp(-320, 1100, P(ll, 0.1, STEP));
+      set(dBike.b, { x, y: Math.abs(Math.sin(ll * 18)) * -8 }); draw(dBike.d, 1);
+      set(dSpeed, { x: x - 230, o: 0.8 }); draw(dSpeed, 1);
     } else if (k === 4) {
-      typed(tg, 'TIBA SELAMAT STOP RINDU RUMAH STOP', P(ll, 0.1, 1.15), t, true);
+      typed(tg, 'TIBA SELAMAT STOP<br>RINDU RUMAH STOP', P(ll, 0.15, 1.15), t, true);
+      set(strip, { r: -2 + ll, s: 1 + 0.03 * ll });
     } else {
-      draw(stampF.d, cub(P(ll, 0, 0.5)), 0.1);
+      fPile.forEach((pp, j) => set(pp, { y: (1 - eo(P(ll, j * 0.08, 0.4 + j * 0.08))) * 300, r: [-9, 7][j] + ll * (j ? -1 : 1), o: 1 }));
+      draw(fStamp.d, cub(P(ll, 0, 0.45)), 0.1);
+      set(fStamp.b, { s: 1 + 0.03 * ll });
       const f = P(ll, 0.5, 0.6);
-      set(cancel, { s: lerp(1.8, 1, ei(f)), o: ll > 0.5 ? 1 : 0 });
-      draw(cancel, ll > 0.5 ? 1 : 0);
-      set(cancelTxt, { o: ll > 0.55 ? 1 : 0, r: -12 });
+      set(fCancel, { s: lerp(1.8, 1, ei(f)), o: ll > 0.5 ? 1 : 0 }); draw(fCancel, ll > 0.5 ? 1 : 0);
+      set(fTxt, { o: ll > 0.55 ? 1 : 0, r: -12 });
     }
+    hit(t, T0 + STEP + 0.37, 20);
+    hit(t, T0 + 5 * STEP + 0.6, 16);
   }
-  function shakeAt(t) {
-    const l = t - T0;
-    for (const at of [0.47, 5 * STEP + 0.6]) {
-      const s = l - at;
-      if (s >= 0 && s < 0.45) { const a = 16 * Math.exp(-9 * s); return [a * Math.sin(s * 71), a * Math.cos(s * 53)]; }
-    }
-    return [0, 0];
-  }
-  return { update, shakeAt };
+  return { update };
 })();
 scenes.push(S7);
 
-/* 8 · barisan alat tulis "tidak pernah berhenti menulis" (32.6 – 38.4) */
+/* 8 · barisan alat: "kita tidak pernah berhenti menulis —" (32.9 – 38.7) */
 const S8 = (() => {
-  const T0 = 32.6;
+  const T0 = 32.9;
   const root = scene(SHEET);
-  root.style.setProperty('--hand-bg', SHEET);
-  const ground = svg(root, 'left:60px;top:1166px;', 960, 20, `<path d="M0 10 C 200 6, 400 14, 960 8" ${lineCss(3, 'rgba(22,22,26,.35)')}/>`);
-  const ITEMS = [['hand', 'gua'], ['kalam', 'kalam'], ['pengutik', 'pengutik'], ['bulu', 'pena bulu'], ['pena', 'pena'], ['mesintik', 'mesin tik'], ['hp', 'ponsel']];
-  const items = ITEMS.map(([k, name], i) => {
-    const h = 150 + i * 20; // makin ke kanan makin tinggi, seperti barisan evolusi
-    const x = 50 + i * 138;
-    const g = el(root, `left:${x}px;top:${1170 - h}px;width:130px;height:${h}px;transform-origin:50% 100%;`);
-    let a;
-    if (k === 'hand') { a = stencil(g, `left:${65 - h * 0.25}px;top:0;`, h * 0.5 * 1.0, BLUE, 91); }
-    else if (k === 'hp') { a = doodle('hp', { size: h * 0.8, color: BLUE, sw: 2.8 }); a.style.position = 'absolute'; a.style.left = `${65 - h * 0.4}px`; a.style.top = `${h * 0.2}px`; g.appendChild(a); }
-    else a = svg(g, `left:${65 - h / 3}px;top:0;`, h * 0.667, h, ART[k](BLUE), '0 0 400 600');
-    const lb = el(root, `left:${x - 10}px;top:1200px;width:150px;text-align:center;font:500 19px var(--mono);color:rgba(22,22,26,.55);`, name);
-    const fig = el(root, `left:${x - 10}px;top:${1170 - h - 50}px;width:150px;text-align:center;font:500 16px var(--mono);letter-spacing:.12em;color:rgba(42,20,214,.6);`, `FIG. ${i + 1}`);
-    return { g, a, lb, fig, i, k };
+  const track = el(root, 'left:0;top:0;width:3400px;height:1920px;');
+  track.className = 'dots';
+  const ROW = [
+    { k: 'photo', src: 'gua3', name: 'dinding gua', w: 400, h: 350, yr: '±67.800 th' },
+    { k: 'photo', src: 'uruk', name: 'tanah liat', w: 480, h: 240, yr: '3.300 SM' },
+    { k: 'photo', src: 'lontar', name: 'daun lontar', w: 540, h: 110, yr: 'lontar' },
+    { k: 'photo', src: 'surat1788', name: 'kertas & tinta', w: 310, h: 380, yr: '1788' },
+    { k: 'photo', src: 'mesintik', name: 'mesin tik', w: 340, h: 400, yr: '1873' },
+    { k: 'doodle', id: 'hp', name: 'ponsel', w: 340, h: 400, yr: 'kini' },
+  ];
+  let x = 140;
+  const items = ROW.map((it, i) => {
+    const g = el(track, `left:${x}px;top:${1140 - it.h}px;width:${it.w}px;height:${it.h}px;transform-origin:50% 100%;`);
+    if (it.k === 'photo') { const ph = photo(g, it.src, `left:0;top:0;width:${it.w}px;height:${it.h}px;`, 'duoInk'); ph.style.boxShadow = '0 14px 30px rgba(20,16,80,.22)'; }
+    else { const d = doodle(it.id, { size: it.h, color: BLUE, sw: 2.6 }); d.style.cssText += `;position:absolute;left:${(it.w - it.h) / 2}px;top:0;overflow:visible`; g.appendChild(d); it.d = d; }
+    const lb = el(track, `left:${x - 30}px;top:1180px;width:${it.w + 60}px;text-align:center;font:500 25px var(--mono);color:rgba(22,22,26,.62);`, it.name);
+    const fig = el(track, `left:${x - 30}px;top:${1140 - it.h - 66}px;width:${it.w + 60}px;text-align:center;font:700 46px var(--hand);color:${BLUE};`, it.yr);
+    const arr = i < ROW.length - 1 ? scribble(track, `left:${x + it.w + 20}px;top:${1050}px;`, 100, 40, 'M10 20 C 40 6, 60 30, 88 18 M88 18 L72 8 M88 18 L74 32', BLUE, 4) : null;
+    const res = { g, lb, fig, arr, i, ...it };
+    x += it.w + 140;
+    return res;
   });
-  const cap = el(root, `left:0;top:1420px;width:1080px;text-align:center;${SERIF}font-size:58px;color:${TEXT};`);
+  const ground = svg(track, 'left:80px;top:1146px;', x, 20, `<path d="M0 10 C ${x / 3} 4, ${x * 0.66} 16, ${x - 100} 8" ${lc(3, 'rgba(22,22,26,.35)')}/>`);
+  const cap = kin(root, 'left:60px;top:1420px;width:960px;text-align:center;font-size:72px;color:#16161a;line-height:1.15;', [['Kita tidak pernah berhenti '], ['menulis', 'font-style:italic;color:#2a14d6;'], [' —']], SERIF(400));
+  const cr = credit(root, 'foto: Cahyo Ramadhani (CC BY-SA 4.0) · Daderot, Rijksmuseum (CC0)', false);
   function update(t) {
-    if (!show(root, t, T0, 38.4)) return;
+    if (!show(root, t, T0, 38.7)) return;
     const l = t - T0;
-    draw(ground, eo(P(l, 0, 0.6)));
+    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.45))) - 40, 3);
+    set(track, { x: -lerp(0, x - 1080 + 40, cub(P(l, 0.2, 3.7))) });
+    draw(ground, eo(P(l, 0, 2.5)));
     items.forEach((it) => {
-      const a = 0.2 + it.i * 0.36;
+      const a = 0.2 + it.i * 0.55;
       const s = spring(l - a, 1.4, 6.5);
-      set(it.g, { sy: clamp(s, 0, 1.15), sx: 1, o: l > a ? 1 : 0 });
-      if (it.k !== 'hand') draw(it.a, cub(P(l, a, a + 0.5)), 0.1);
-      else set(it.a, { o: eo(P(l, a, a + 0.3)) });
-      set(it.lb, { o: eo(P(l, a + 0.15, a + 0.45)) });
-      set(it.fig, { o: eo(P(l, a + 0.2, a + 0.5)) });
+      set(it.g, { sy: clamp(s, 0, 1.15), sx: 0.7 + 0.3 * clamp(s), o: l > a ? 1 : 0 });
+      if (it.d) draw(it.d, cub(P(l, a, a + 0.6)));
+      it.lb.style.opacity = eo(P(l, a + 0.2, a + 0.5));
+      set(it.fig, { o: eo(P(l, a + 0.25, a + 0.5)), r: -4, y: (1 - eo(P(l, a + 0.25, a + 0.55))) * 20 });
+      if (it.arr) draw(it.arr, cub(P(l, a + 0.35, a + 0.6)));
     });
-    typed(cap, 'Kita tidak pernah berhenti <span style="color:#2a14d6;font-style:italic">menulis</span> —', P(l, 2.8, 4.6), t, true);
+    kinIn(cap, l, 3.3, { step: 0.03, mode: 'rise', w0: 200, w1: 480, em: 80 });
+    cr.style.opacity = 1;
   }
   return { update };
 })();
 scenes.push(S8);
 
-/* 9 · hanya berhenti menyimpannya (38.4 – 42.0) */
+/* 9 · hanya berhenti menyimpannya (38.7 – 42.3) */
 const S9 = (() => {
-  const T0 = 38.4;
+  const T0 = 38.7;
   const root = scene(NIGHT);
-  const phone = el(root, 'left:300px;top:260px;width:480px;height:880px;border-radius:70px;border:6px solid rgba(185,176,255,.55);overflow:hidden;');
-  const fade = el(phone, 'left:0;top:0;width:100%;height:220px;background:linear-gradient(#0b0733, transparent);z-index:2;');
-  const bubbles = [];
-  const MSG = ['otw', 'wkwk', 'iya', 'udah makan?', 'ok', 'nanti ya', 'hahaha', 'sip', 'lagi di jalan', 'gpp', 'besok?', 'mantap', 'nanti kabarin', 'oke deh', 'wkwkwk', 'siap'];
-  for (let i = 0; i < 26; i++) {
+  const MSG = ['otw', 'wkwk', 'iya', 'udah makan?', 'ok', 'nanti ya', 'hahaha', 'sip', 'lagi di jalan', 'gpp', 'besok?', 'mantap', 'nanti kabarin', 'oke deh', 'siap', 'hehe', 'on the way', 'mksh'];
+  const bubbles = Array.from({ length: 34 }, (_, i) => {
     const me = hash(i + 40) > 0.5;
-    const b = el(phone, `${me ? 'right' : 'left'}:24px;top:0;padding:14px 22px;border-radius:26px;font:500 26px var(--mono);white-space:nowrap;background:${me ? BLUE : 'rgba(255,255,255,.12)'};color:#fff;`, MSG[i % MSG.length]);
-    bubbles.push({ b, i });
-  }
-  const h1 = el(root, `left:0;top:1260px;width:1080px;text-align:center;${SERIF}font-size:80px;line-height:1.1;color:#fff;`);
-  const stat = el(root, `left:0;top:1560px;width:1080px;text-align:center;font:500 26px/1.6 var(--mono);color:rgba(255,255,255,.6);`, 'surat pos di Amerika: 103,6 miliar (2001)<br>→ 44,3 miliar (2024)');
+    const bx = 100 + hash(i + 70) * 720, by = 120 + hash(i + 80) * 1600;
+    const b = el(root, `left:${bx}px;top:${by}px;padding:18px 28px;border-radius:30px;font:500 34px var(--mono);white-space:nowrap;background:${me ? BLUE : 'rgba(255,255,255,.14)'};color:#fff;`, MSG[i % MSG.length]);
+    return { b, i, z: hash(i + 90), bx, by };
+  });
+  el(root, 'inset:0;background:radial-gradient(circle at 50% 50%, rgba(11,7,51,.9) 0%, rgba(11,7,51,.4) 45%, transparent 70%);');
+  const K = kin(root, 'left:0;top:820px;width:1080px;text-align:center;font-size:96px;color:#fff;line-height:1.1;', [['— hanya berhenti']], SERIF(400));
+  const K2 = kin(root, 'left:0;top:940px;width:1080px;text-align:center;font-size:136px;color:#b9b0ff;line-height:1.1;', [['menyimpannya.', 'font-style:italic;']], SERIF(400));
+  const stat = el(root, 'left:0;top:1580px;width:1080px;text-align:center;font:500 27px/1.6 var(--mono);color:rgba(255,255,255,.62);', 'surat pos di Amerika Serikat:<br>103,6 miliar (2001) → 44,3 miliar (2024)');
   function update(t) {
-    if (!show(root, t, T0, 42.0)) return;
+    if (!show(root, t, T0, 42.8)) return;
     const l = t - T0;
-    set(phone, { o: eo(P(l, 0, 0.3)) });
+    // gelembung chat melesat melewati kamera, lalu hilang
     bubbles.forEach((b) => {
-      const y = 900 + b.i * 82 - l * 620;
-      set(b.b, { y, o: y > -80 ? 1 : 0 });
+      const life = (l * (0.5 + b.z * 0.6) + b.z * 1.4) % 1.4;
+      const s = 0.3 + life * 1.6;
+      set(b.b, { s, x: (b.bx - 540) * (s - 1) * 0.6, y: (b.by - 960) * (s - 1) * 0.6, o: clamp(Math.sin(Math.PI * life / 1.4) * 1.2) * (1 - 0.7 * P(l, 1.2, 2)), b: Math.max(0, (s - 1.4) * 10) });
     });
-    typed(h1, '— hanya berhenti<br><span style="font-style:italic;color:#b9b0ff">menyimpannya.</span>', P(l, 0.3, 1.5), t, false);
-    set(stat, { o: eo(P(l, 1.8, 2.3)) });
+    kinIn(K, l, 0.3, { step: 0.03, mode: 'rise' });
+    kinIn(K2, l, 0.8, { step: 0.04, mode: 'rise', w0: 200, w1: 520, em: 120 });
+    kinOut(K2, l, 2.75, { step: 0.03 }); // kata-katanya ikut tenggelam
+    stat.style.opacity = eo(P(l, 1.7, 2.2));
   }
   return { update };
 })();
 scenes.push(S9);
 
-/* 10 · kutipan (42.0 – 48.2) */
+/* 10 · kutipan Pramoedya (42.3 – 48.5) */
 const S10 = (() => {
-  const T0 = 42.0;
+  const T0 = 42.3;
   const root = scene(SHEET);
-  const q = el(root, `left:70px;top:330px;${SERIF}font-weight:600;font-size:300px;line-height:1;color:${BLUE};`, '“');
-  const W = words(root, `left:90px;top:560px;width:900px;${SERIF}font-size:70px;line-height:1.22;color:${TEXT};`, 'Orang boleh pandai setinggi langit, tapi selama ia tidak menulis, ia akan hilang di dalam masyarakat dan dari sejarah.');
-  W.list.forEach((s) => { if (s.textContent.startsWith('menulis')) { s.style.color = BLUE; s.style.fontStyle = 'italic'; } });
-  const who = el(root, `left:90px;top:1420px;font:500 32px var(--mono);color:${TEXT};`, '— Pramoedya Ananta Toer');
-  const ink = svg(root, 'left:90px;top:1480px;', 520, 20, `<path d="M0 10 C 150 4, 300 16, 520 8" ${lineCss(5, BLUE)}/>`);
+  const bg = photo(root, 'surat2', 'left:-200px;top:180px;width:1600px;height:880px;-webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 30%, transparent 70%);mask-image:radial-gradient(ellipse at 50% 50%, #000 30%, transparent 70%);', 'duoInk');
+  const q = el(root, `left:70px;top:300px;${SERIF(600)}font-size:320px;line-height:1;color:${BLUE};`, '“');
+  const K = kin(root, 'left:90px;top:560px;width:900px;font-size:74px;line-height:1.22;color:#16161a;', [['Orang boleh pandai setinggi langit, tapi selama ia tidak '], ['menulis,', 'font-style:italic;color:#2a14d6;'], [' ia akan hilang di dalam masyarakat dan dari sejarah.']], SERIF(400));
+  const who = el(root, 'left:90px;top:1460px;font:500 34px var(--mono);color:#16161a;', '— Pramoedya Ananta Toer');
+  const ink = scribble(root, 'left:90px;top:1520px;', 520, 20, 'M0 10 C 150 4, 300 16, 520 8', BLUE, 6);
   function update(t) {
-    if (!show(root, t, T0, 48.2)) return;
+    if (!show(root, t, T0, 48.5)) return;
     const l = t - T0;
-    set(q, { o: eo(P(l, 0, 0.4)), y: (1 - eo(P(l, 0, 0.5))) * 40 });
-    wordsReveal(W, l, 0.3, 0.17);
-    set(who, { o: eo(P(l, 4.3, 4.8)), x: (1 - eo(P(l, 4.3, 4.8))) * -30 });
-    draw(ink, cub(P(l, 4.6, 5.2)));
+    root.style.clipPath = blob(540, 960, 2600 * ei(P(l, 0, 0.5)) + 40, l, 6);
+    set(bg, { x: -l * 40, o: 0.1 });
+    set(q, { o: eo(P(l, 0.1, 0.5)), y: (1 - eo(P(l, 0.1, 0.6))) * 60, r: (1 - eo(P(l, 0.1, 0.6))) * -20 });
+    kinIn(K, l, 0.35, { step: 0.024, dur: 0.5, mode: 'rise', w0: 220, w1: 440, em: 40 });
+    set(who, { o: eo(P(l, 4.4, 4.9)), x: (1 - eo(P(l, 4.4, 4.9))) * -30 });
+    draw(ink, cub(P(l, 4.7, 5.3)));
+    root.style.transform = `scale(${(1 + 0.03 * l / 6).toFixed(4)})`;
   }
   return { update };
 })();
 scenes.push(S10);
 
-/* 11 · dinding kata (48.2 – 51.2) */
+/* 11 · dinding kata (48.5 – 51.5) */
 const S11 = (() => {
-  const T0 = 48.2;
+  const T0 = 48.5;
   const root = scene(NIGHT);
+  const wall = el(root, 'left:-300px;top:-100px;width:1680px;height:2100px;transform-origin:50% 50%;');
   const W = 'surat prasasti lontar diari perangko kartu pos jurnal catatan amplop telegram puisi kabar rindu salam tanda tangan kenangan alamat balasan'.split(' ');
-  const rows = [];
-  for (let r = 0; r < 12; r++) {
-    const txt = Array.from({ length: 14 }, (_, k) => W[(r * 5 + k * 3) % W.length]).join(' ');
-    const e = el(root, `left:-200px;top:${80 + r * 150}px;white-space:nowrap;${SERIF}font-size:110px;color:rgba(185,176,255,.13);`, txt);
-    rows.push({ e, r });
-  }
-  const hi = [['tulis,', 340, 0.3], ['simpan,', 640, 0.9], ['kirim.', 940, 1.5]].map(([w, top, a]) => ({ e: el(root, `left:0;top:${top}px;width:1080px;text-align:center;${SERIF}font-style:italic;font-size:150px;color:${LILAC};text-shadow:0 0 40px rgba(185,176,255,.4);`, w), a }));
+  const rows = Array.from({ length: 13 }, (_, r) => ({ e: el(wall, `left:0;top:${r * 160}px;white-space:nowrap;${SERIF(400)}font-size:120px;color:rgba(185,176,255,.14);`, Array.from({ length: 16 }, (_, k) => W[(r * 5 + k * 3) % W.length]).join(' ')), r }));
+  const hi = [['tulis,', 360, 0.3], ['simpan,', 700, 0.95], ['kirim.', 1040, 1.6]].map(([w, top, a]) => ({ K: kin(root, `left:0;top:${top}px;width:1080px;text-align:center;font-size:180px;color:#b9b0ff;text-shadow:0 0 50px rgba(185,176,255,.45);`, [[w, 'font-style:italic;']], SERIF(400)), a }));
   function update(t) {
-    if (!show(root, t, T0, 51.2)) return;
+    if (!show(root, t, T0, 51.9)) return;
     const l = t - T0;
-    rows.forEach((w) => set(w.e, { x: (w.r % 2 ? -1 : 1) * l * 120 - (w.r % 2 ? 0 : 300) }));
-    hi.forEach((h) => set(h.e, { o: eo(P(l, h.a, h.a + 0.3)), s: 1.15 - 0.15 * eo(P(l, h.a, h.a + 0.5)), b: (1 - eo(P(l, h.a, h.a + 0.3))) * 14 }));
+    wall.style.transform = `perspective(1400px) rotateX(${(18 - l * 3).toFixed(2)}deg) rotateZ(-6deg) scale(${(1.1 + l * 0.04).toFixed(3)})`;
+    rows.forEach((w) => set(w.e, { x: (w.r % 2 ? -1 : 1) * l * 160 - (w.r % 2 ? 0 : 400) }));
+    hi.forEach((h) => kinIn(h.K, l, h.a, { step: 0.04, mode: 'slam', dur: 0.4, w0: 300, w1: 600 }));
   }
   return { update };
 })();
 scenes.push(S11);
 
-/* 12 · jadi kami membuat sebuah kapsul (51.2 – 53.8) */
+/* 12 · 1940 → 8113, lalu "jadi, kami membuat sebuah kapsul." (51.5 – 55.3) */
 const S12 = (() => {
-  const T0 = 51.2;
+  const T0 = 51.5;
   const root = scene(NIGHT);
-  const a = el(root, `left:0;top:820px;width:1080px;text-align:center;${SERIF}font-size:68px;color:#fff;`);
-  const dot = el(root, 'left:525px;top:1000px;width:30px;height:30px;border-radius:50%;background:#b9b0ff;box-shadow:0 0 50px 10px rgba(185,176,255,.6);');
-  const cap = el(root, 'left:340px;top:930px;width:400px;height:400px;');
-  const env = doodle('amplop', { size: 400, color: '#fff', sw: 2.4 });
-  cap.appendChild(env);
-  const word = mline(root, 'left:0;top:1330px;width:1080px;padding-bottom:20px;', 'kapsul.', `${SERIF}font-style:italic;font-weight:600;font-size:200px;color:${LILAC};text-align:center;width:1080px;`);
+  const vault = svg(root, 'left:240px;top:300px;', 600, 600, `<circle cx="300" cy="300" r="290" ${lc(6, LILAC)}/><circle cx="300" cy="300" r="220" ${lc(3, LILAC)}/><path d="M300 90 L300 510 M90 300 L510 300 M150 150 L450 450 M450 150 L150 450" ${lc(3, 'rgba(185,176,255,.6)')}/><circle cx="300" cy="300" r="60" ${lc(6, LILAC)}/>`);
+  const from = el(root, 'left:0;top:960px;width:1080px;text-align:center;font:500 30px var(--mono);color:rgba(255,255,255,.72);letter-spacing:.1em;', 'DISEGEL 1940 · DIBUKA TAHUN');
+  const yr = slot(root, 'left:0;top:1010px;width:1080px;', '8113', `${SERIF(650)}font-size:230px;line-height:1.02;color:#fff;`);
+  const cap = el(root, 'left:0;top:1290px;width:1080px;text-align:center;font:500 29px var(--mono);color:rgba(255,255,255,.62);', 'Crypt of Civilization · kapsul waktu modern pertama');
+  const K = kin(root, 'left:0;top:740px;width:1080px;text-align:center;font-size:76px;color:#fff;', [['jadi, kami membuat sebuah']], SERIF(400));
+  const sealBox = el(root, 'left:390px;top:880px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle at 38% 34%, #5a46ff, #2a14d6 58%, #1a0b9a);box-shadow:0 20px 50px rgba(0,0,0,.5);');
+  dbox(sealBox, 'tunas', 'left:70px;top:62px;', { size: 160, color: '#fff', sw: 5 });
+  const rip = el(root, 'left:340px;top:830px;width:400px;height:400px;border-radius:50%;border:6px solid rgba(185,176,255,.8);box-sizing:border-box;');
+  const word = kin(root, 'left:0;top:1260px;width:1080px;text-align:center;font-size:220px;color:#b9b0ff;', [['kapsul.', 'font-style:italic;']], SERIF(400));
   function update(t) {
-    if (!show(root, t, T0, 53.8)) return;
+    if (!show(root, t, T0, 55.8)) return;
     const l = t - T0;
-    typed(a, 'jadi, kami membuat sebuah', P(l, 0.05, 0.8), t, false);
-    const pulse = 1 + 0.25 * Math.sin(l * 9);
-    set(dot, { s: (l < 1.05 ? 1 : 0) * pulse * eo(P(l, 0.6, 0.8)), o: l < 1.05 ? 1 : 0 });
-    const cs = spring(l - 1.05, 1.4, 6.5);
-    set(cap, { s: clamp(cs, 0, 1.2) * 0.7 + 0.3 * clamp(cs), o: l > 1.05 ? 1 : 0 });
-    draw(env, cub(P(l, 1.05, 1.6)), 0.25);
-    reveal(word, l, 1.3, 0.6);
+    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.4))) - 40, 13);
+    const outA = P(l, 1.75, 2.0);
+    draw(vault, cub(P(l, 0, 0.8)), 0.15);
+    set(vault, { r: l * 30, s: 1 - 0.3 * ei(outA), o: 1 - outA });
+    from.style.opacity = eo(P(l, 0.2, 0.5)) * (1 - outA);
+    slotRoll(yr, l, 0.3, 1.2);
+    yr.w.style.opacity = eo(P(l, 0.25, 0.45)) * (1 - outA);
+    cap.style.opacity = eo(P(l, 0.8, 1.1)) * (1 - outA);
+    kinIn(K, l, 2.0, { step: 0.025, mode: 'rise', em: 60 });
+    const ss = l - 2.55, f = clamp(ss / 0.12);
+    const settle = ss > 0.12 ? 1 + Math.exp(-9 * (ss - 0.12)) * Math.sin((ss - 0.12) * 28) * 0.06 : 1;
+    set(sealBox, { s: lerp(2.6, 1, ei(f)) * settle, o: ss > 0 ? 1 : 0, r: lerp(-30, -6, f) });
+    const q = P(ss, 0.12, 0.9); set(rip, { s: lerp(0.7, 2.6, eo(q)), o: q > 0 && q < 1 ? 0.8 * (1 - q) : 0 });
+    kinIn(word, l, 2.75, { step: 0.05, mode: 'rise', w0: 200, w1: 620, em: 200 });
+    hit(t, T0 + 2.67, 22);
   }
   return { update };
 })();
 scenes.push(S12);
 
-/* ================= SEHARI ================= */
+/* ===================== SEHARI ===================== */
 
-/* 13 · Sehari adalah… + lingkaran fitur (53.8 – 60.0) */
+/* 13 · Sehari adalah kapsul waktu harian: HP dengan halaman hari ini (55.3 – 60.7) */
 const S13 = (() => {
-  const T0 = 53.8;
+  const T0 = 55.3;
   const root = scene(PAPER);
-  const h1 = mline(root, 'left:0;top:250px;width:1080px;padding-bottom:12px;', '<span style="font-weight:600">Sehari</span> adalah', `${SERIF}font-size:96px;color:${TEXT};text-align:center;width:1080px;`);
-  const h2 = mline(root, 'left:0;top:360px;width:1080px;padding-bottom:14px;', 'kapsul waktu harian.', `${SERIF}font-style:italic;font-size:96px;color:${BLUE};text-align:center;width:1080px;`);
-  const ringSvg = svg(root, 'left:170px;top:610px;', 740, 740, `<circle cx="370" cy="370" r="360" fill="none" stroke="#2a14d6" stroke-width="3" stroke-dasharray="4 14" opacity=".55"/>`);
-  const circ = el(root, 'left:210px;top:650px;width:660px;height:660px;border-radius:50%;overflow:hidden;box-shadow:0 30px 70px rgba(23,10,140,.2);');
-  const ITEMS = [
-    { bg: BLUE, id: 'ui-teks', c: '#fff', cap: 'tulis satu hal kecil setiap hari' },
-    { bg: '#cfe3ff', id: 'ui-foto', c: BLUE, cap: 'foto, suara, lagu, warna mood' },
-    { bg: NIGHT, id: 'segel', c: '#fff', cap: 'segel harimu tiap malam' },
-    { bg: SHEET, id: 'dua', c: BLUE, cap: 'buka bersama orang terdekat' },
-    { bg: BLUE, id: 'amplop', c: '#fff', cap: 'surat tersesat · tiba 1–12 bulan lagi' },
-    { bg: NIGHT, id: 'ui-gembok', c: LILAC, cap: 'kapsul terkunci · dibuka 1–25 tahun lagi' },
-  ].map((it, i) => {
-    const e = el(circ, `inset:0;background:${it.bg};`);
-    let d;
-    if (it.id === 'segel') {
-      d = el(e, 'left:200px;top:200px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 38% 34%, #5a46ff, #2a14d6 58%, #1a0b9a);box-shadow:0 14px 30px rgba(0,0,0,.5);');
-      d.appendChild(doodle('tunas', { size: 150, color: '#fff', sw: 5 })); d.firstChild.style.cssText = 'position:absolute;left:55px;top:50px;overflow:visible';
-    } else if (it.id === 'dua') {
-      d = el(e, 'left:110px;top:170px;width:440px;height:320px;');
-      el(d, 'left:0;top:0;width:200px;height:300px;background:#fff;border-radius:16px;transform:rotate(-5deg);box-shadow:0 12px 30px rgba(20,20,60,.15);', `<div style="position:absolute;left:20px;top:30px;font:700 34px var(--hand);color:#2a14d6;line-height:1.1">kucing tidur di atas motor…</div>`);
-      el(d, 'left:230px;top:10px;width:200px;height:300px;background:#fff;border-radius:16px;transform:rotate(5deg);box-shadow:0 12px 30px rgba(20,20,60,.15);', `<div style="position:absolute;left:20px;top:30px;font:700 34px var(--hand);color:#2a14d6;line-height:1.1">es teh gratis dari ibu warung.</div>`);
-    } else {
-      d = el(e, 'left:160px;top:160px;');
-      d.appendChild(doodle(it.id, { size: 340, color: it.c, sw: 2.8 }));
-    }
-    const cp = el(root, `left:0;top:1420px;width:1080px;text-align:center;font:500 34px var(--mono);color:${TEXT};`, it.cap);
-    return { e, d, cp, i };
+  const head = kin(root, 'left:0;top:140px;width:1080px;text-align:center;font-size:88px;color:#16161a;line-height:1.05;', [['Sehari', 'font-weight:600;'], [' adalah']], SERIF(400));
+  const head2 = kin(root, 'left:0;top:240px;width:1080px;text-align:center;font-size:92px;color:#2a14d6;', [['kapsul waktu harian.', 'font-style:italic;']], SERIF(400));
+  const phone = el(root, 'left:230px;top:420px;width:620px;height:1260px;border-radius:96px;background:#121034;box-shadow:0 40px 90px rgba(23,10,140,.28), inset 0 0 0 3px #2b2860;');
+  const scr = el(phone, `left:16px;top:16px;width:588px;height:1228px;border-radius:82px;background:${SHEET};overflow:hidden;`);
+  el(scr, 'left:214px;top:20px;width:160px;height:42px;border-radius:30px;background:#121034;');
+  el(scr, 'left:48px;top:24px;font:600 25px var(--mono);color:#16161a;', '21.40');
+  el(scr, 'left:42px;top:100px;font:500 24px var(--mono);color:#77778a;', 'rabu · 18 november');
+  el(scr, `left:40px;top:134px;${SERIF(600)}font-size:70px;color:#16161a;`, 'hari ini');
+  const sheet = el(scr, 'left:22px;top:250px;width:544px;height:800px;border-radius:36px;background:#fff;box-shadow:0 14px 36px rgba(20,20,60,.08);background-image:radial-gradient(circle, rgba(42,20,214,.13) 2px, transparent 2.4px);background-size:34px 34px;');
+  const note = el(sheet, 'left:36px;top:60px;width:470px;font:700 50px/1.12 var(--hand);color:#2a14d6;');
+  const pola = el(sheet, 'left:250px;top:400px;width:250px;height:290px;background:#fff;border-radius:8px;box-shadow:0 18px 40px rgba(20,20,60,.22);transform-origin:50% 0;');
+  photo(pola, 'kartini', 'left:16px;top:16px;width:218px;height:206px;', 'duoInk');
+  el(pola, 'left:0;top:230px;width:250px;text-align:center;font:700 38px var(--hand);color:#2a14d6;', 'buku sejarah');
+  const stick = [['hati-kecil', 70, 470, 110], ['kilau', 440, 300, 80], ['bintang-kecil', 110, 640, 80]].map(([id, x, y, s]) => dbox(sheet, id, `left:${x}px;top:${y}px;`, { size: s, color: BLUE, sw: 4 }));
+  const fab = el(scr, `left:450px;top:960px;width:112px;height:112px;border-radius:50%;background:${BLUE};box-shadow:0 12px 26px rgba(42,20,214,.45);`);
+  const ft = doodle('tunas', { size: 72, color: '#fff', sw: 4.6 }); ft.style.cssText += ';position:absolute;left:20px;top:18px;overflow:visible'; fab.appendChild(ft);
+  const FEATS = [['ui-teks', 'tulis', 'L', 760], ['ui-foto', 'foto', 'R', 900], ['ui-mikrofon', 'suara', 'L', 1100], ['amplop', 'surat tersesat', 'R', 1260], ['ui-gembok', 'kapsul 1–25 tahun', 'L', 1440]].map(([id, label, side, top], i) => {
+    const e = el(root, `${side === 'L' ? 'left:40px' : 'right:40px'};top:${top}px;padding:16px 32px 16px 22px;background:${BLUE};color:#fff;font:500 36px var(--mono);box-shadow:0 18px 40px rgba(42,20,214,.32);transform-origin:${side === 'L' ? '15%' : '85%'} 50%;`, `<span>${label}</span>`);
+    e.className = 'pill';
+    const d = doodle(id, { size: 52, color: '#fff', sw: 4.6 }); e.prepend(d);
+    return { e, d, side, i };
   });
-  const STEP = 0.8, A = 1.25;
   function update(t) {
-    if (!show(root, t, T0, 60.0)) return;
+    if (!show(root, t, T0, 61.15)) return;
     const l = t - T0;
-    reveal(h1, l, 0.1);
-    reveal(h2, l, 0.25);
-    const cs = spring(l - 0.9, 1.3, 6.5);
-    set(circ, { s: clamp(cs, 0, 1.15), o: l > 0.9 ? 1 : 0 });
-    set(ringSvg, { r: l * 20, s: clamp(cs, 0, 1.1), o: l > 0.9 ? 1 : 0 });
-    const k = clamp(Math.floor((l - A) / STEP), 0, 5);
-    ITEMS.forEach((it) => {
-      const on = it.i === k;
-      it.e.style.display = on || it.i === k - 1 ? 'block' : 'none';
-      it.cp.style.display = on ? 'block' : 'none';
-      if (!on) return;
-      const ll = l - A - k * STEP;
-      // isi baru menyapu masuk dari bawah
-      it.e.style.clipPath = it.i === 0 || ll >= 0.3 ? 'none' : `inset(${(100 * (1 - eo(P(ll, 0, 0.3)))).toFixed(1)}% 0 0 0)`;
-      it.e.style.zIndex = 2;
-      const svgD = it.d.querySelector('svg');
-      if (svgD && it.id !== 'segel') draw(svgD, cub(P(ll, 0, 0.5)), 0.1);
-      set(it.d, { s: 0.9 + 0.1 * eo(P(ll, 0, 0.4)) + 0.03 * ll });
-      set(it.cp, { o: eo(P(ll, 0, 0.25)), y: (1 - eo(P(ll, 0, 0.3))) * 20 });
+    root.style.clipPath = blob(540, 1060, 2600 * ei(P(l, 0, 0.5)) + 40, l, 4);
+    kinIn(head, l, 0.2, { step: 0.03, mode: 'rise' });
+    kinIn(head2, l, 0.45, { step: 0.025, mode: 'rise', w0: 200, w1: 520 });
+    const pin = eo(P(l, 0.3, 1.1));
+    set(phone, { y: (1 - pin) * 1400, r: (1 - pin) * 8 });
+    typed(note, 'hari ini aku belajar: Kartini menulis dari Jepara.', P(l, 1.0, 2.6), t, l < 4);
+    const pd = spring(l - 2.6, 1.1, 5.2);
+    set(pola, { y: (1 - pd) * -800, r: lerp(22, -6, clamp(pd, 0, 1.2)), o: l > 2.6 ? 1 : 0 });
+    stick.forEach((s, i) => { const a = 3.0 + i * 0.13; draw(s.d, cub(P(l, a, a + 0.35))); set(s.b, { s: 0.6 + 0.4 * spring(l - a, 1.8, 7) }); });
+    FEATS.forEach((f) => {
+      const a = 1.4 + f.i * 0.28, s = spring(l - a, 1.5, 6.5), dir = f.side === 'L' ? -1 : 1;
+      set(f.e, { s: clamp(s, 0, 1.3), x: (1 - clamp(s)) * dir * 80, y: Math.sin((l + f.i) * 2.2) * 8, r: (1 - clamp(s)) * dir * 10 + dir * 1.5, o: l > a ? 1 : 0 });
+      draw(f.d, cub(P(l, a + 0.05, a + 0.45)));
     });
-    ITEMS.forEach((it) => { if (it.i !== k) it.e.style.zIndex = 1; });
+    const press = l > 4.7 && l < 5.0 ? Math.sin(P(l, 4.7, 5.0) * Math.PI) : 0;
+    set(fab, { s: 1 - 0.14 * press });
   }
   return { update };
 })();
 scenes.push(S13);
 
-/* 14 · sapaan aplikasi (60.0 – 63.2) */
+/* 14 · selamat malam, penulis (60.7 – 63.6) */
 const S14 = (() => {
-  const T0 = 60.0;
+  const T0 = 60.7;
   const root = scene(SHEET);
-  const hi = el(root, `left:0;top:700px;width:1080px;text-align:center;${SERIF}font-size:84px;color:${TEXT};`, '<span style="color:#2a14d6">✳</span> selamat malam, <span style="font-style:italic">penulis.</span>');
+  const K = kin(root, 'left:0;top:700px;width:1080px;text-align:center;font-size:88px;color:#16161a;', [['✳ ', 'color:#2a14d6;'], ['selamat malam, '], ['penulis.', 'font-style:italic;']], SERIF(400));
   const card = el(root, 'left:110px;top:880px;width:860px;height:300px;border-radius:40px;background:#fff;box-shadow:0 24px 60px rgba(20,20,60,.12);');
-  const input = el(card, `left:44px;top:44px;width:770px;font:700 52px/1.15 var(--hand);color:${BLUE};`);
+  const input = el(card, 'left:44px;top:44px;width:770px;font:700 54px/1.15 var(--hand);color:#2a14d6;');
   const chips = ['tulisan', 'foto', 'suara', 'lagu'].map((c, i) => el(card, `left:${44 + i * 150}px;bottom:36px;padding:8px 20px;border-radius:999px;background:#ece9ff;font:500 22px var(--mono);color:${BLUE};`, c));
   const btn = el(card, `right:36px;bottom:30px;width:84px;height:84px;border-radius:50%;background:${BLUE};box-shadow:0 10px 22px rgba(42,20,214,.4);`);
-  const bt = doodle('tunas', { size: 56, color: '#fff', sw: 5 }); bt.style.cssText = 'position:absolute;left:14px;top:13px;overflow:visible'; btn.appendChild(bt);
+  const bt = doodle('tunas', { size: 56, color: '#fff', sw: 5 }); bt.style.cssText += ';position:absolute;left:14px;top:13px;overflow:visible'; btn.appendChild(bt);
   function update(t) {
-    if (!show(root, t, T0, 63.2)) return;
+    if (!show(root, t, T0, 63.95)) return;
     const l = t - T0;
-    set(hi, { o: eo(P(l, 0, 0.4)), y: (1 - eo(P(l, 0, 0.5))) * 30 });
-    const cs = spring(l - 0.3, 1.3, 7);
-    set(card, { y: (1 - clamp(cs)) * 120, o: l > 0.3 ? 1 : 0 });
-    typed(input, 'hari ini aku ingin bercerita tentang…', P(l, 0.7, 2.4), t, true);
-    chips.forEach((c, i) => set(c, { o: eo(P(l, 0.6 + i * 0.07, 0.9 + i * 0.07)) }));
-    const press = l > 2.6 && l < 2.9 ? Math.sin(P(l, 2.6, 2.9) * Math.PI) : 0;
-    set(btn, { s: 1 - 0.15 * press });
+    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.45))) - 40, 11);
+    kinIn(K, l, 0.15, { step: 0.03, mode: 'rise' });
+    const cs = spring(l - 0.35, 1.3, 7);
+    set(card, { y: (1 - clamp(cs)) * 140, o: l > 0.35 ? 1 : 0 });
+    typed(input, 'hari ini aku ingin bercerita tentang…', P(l, 0.75, 2.3), t, true);
+    chips.forEach((c, i) => (c.style.opacity = eo(P(l, 0.6 + i * 0.07, 0.9 + i * 0.07))));
+    const press = l > 2.45 && l < 2.75 ? Math.sin(P(l, 2.45, 2.75) * Math.PI) : 0;
+    set(btn, { s: 1 - 0.16 * press });
   }
   return { update };
 })();
 scenes.push(S14);
 
-/* 15 · penutup langit (63.2 – akhir) */
+/* 15 · penutup langit malam (63.4 – akhir) */
 const S15 = (() => {
-  const T0 = 63.2;
-  const root = scene('linear-gradient(180deg, #1c0ca8 0%, #2a14d6 45%, #6a58f2 80%, #a99dff 100%)');
-  const clouds = [['awan', 60, 330, 260], ['awan-kecil', 780, 520, 200], ['awan', 700, 1560, 300], ['awan-kecil', 80, 1420, 220]].map(([id, x, y, s], i) => ({ ...dbox(root, id, `left:${x}px;top:${y}px;`, { size: s, color: 'rgba(255,255,255,.6)', sw: 2.6 }), i }));
+  const T0 = 63.4;
+  const root = scene('linear-gradient(180deg, #1c0ca8 0%, #2a14d6 45%, #6a58f2 82%, #a99dff 100%)');
+  const d3 = dust(root, 60, 'rgba(255,255,255,.9)', 21, 5);
+  const clouds = [['awan', 40, 330, 280], ['awan-kecil', 780, 520, 210], ['awan', 690, 1580, 320], ['awan-kecil', 60, 1430, 230]].map(([id, x, y, s], i) => ({ ...dbox(root, id, `left:${x}px;top:${y}px;`, { size: s, color: 'rgba(255,255,255,.6)', sw: 2.6 }), i }));
   const moon = dbox(root, 'bulan', 'left:790px;top:170px;', { size: 180, color: '#fff', sw: 3 });
-  const stars = [[200, 220], [520, 160], [930, 760], [150, 980]].map(([x, y], i) => ({ ...dbox(root, 'bintang-kecil', `left:${x}px;top:${y}px;`, { size: 60, color: 'rgba(255,255,255,.7)', sw: 4 }), i }));
   const logoBox = el(root, 'left:345px;top:560px;width:390px;height:390px;transform-origin:50% 90%;');
-  const logo = doodle('tunas', { size: 390, color: '#fff', sw: 3.3 });
-  logoBox.appendChild(logo);
-  const word = letters(root, 'left:0;top:960px;width:1080px;', 'sehari', `${SERIF}font-weight:600;font-size:200px;line-height:1;color:#fff;letter-spacing:-0.04em;`);
+  const logo = doodle('tunas', { size: 390, color: '#fff', sw: 3.3 }); logoBox.appendChild(logo);
+  const word = kin(root, 'left:0;top:960px;width:1080px;text-align:center;font-size:210px;line-height:1;color:#fff;', [['sehari']], SERIF(600));
   const tag = el(root, 'left:0;top:1230px;width:1080px;text-align:center;font:700 70px var(--hand);color:#fff;', 'dulu kita menulis. kini, bersama.');
   const url = el(root, 'left:0;top:1400px;width:1080px;text-align:center;font:600 72px var(--mono);color:#fff;', 'sehari.online');
-  const ul = svg(root, 'left:270px;top:1498px;', 540, 30, `<path d="M6 16 C 140 8, 300 22, 534 12" ${lineCss(8, '#fff')}/>`);
+  const ul = scribble(root, 'left:270px;top:1498px;', 540, 30, 'M6 16 C 140 8, 300 22, 534 12', '#fff', 8);
+  const cr = el(root, 'left:90px;top:1790px;width:900px;text-align:center;font:500 18px/1.5 var(--mono);color:rgba(255,255,255,.62);', 'foto arsip: Wikimedia Commons — Cahyo Ramadhani, Tropenmuseum, Museum Rotterdam, Petar Milošević (CC BY-SA); Rijksmuseum, Nationaal Archief, Daderot, Ms Sarah Welch, Walters Art Museum (CC0/PD)');
   function update(t, vt) {
     if (!show(root, t, T0, DURATION + 1)) return;
     const l = t - T0;
     const pulse = TIMING.beatPulse(vt, 8);
-    set(root, { o: 1 });
-    clipCircle(root, 1600 * eio(P(l, 0, 0.6)), 540, 960);
-    clouds.forEach((c) => { draw(c.d, cub(P(l, 0.3 + c.i * 0.1, 1.0 + c.i * 0.1))); set(c.b, { x: Math.sin(l * 0.5 + c.i) * 20 + (c.i % 2 ? -1 : 1) * l * 8 }); });
-    draw(moon.d, cub(P(l, 0.4, 1.1)));
-    set(moon.b, { y: Math.sin(l * 0.8) * 8 });
-    stars.forEach((s) => { draw(s.d, cub(P(l, 0.6 + s.i * 0.1, 1.0 + s.i * 0.1))); set(s.b, { s: 1 + 0.2 * Math.sin(l * 3 + s.i) + 0.2 * pulse }); });
-    draw(logo, cub(P(l, 0.35, 1.45)), 0.28);
-    const sq = l > 1.45 ? 1 - 0.07 * Math.exp(-6 * (l - 1.45)) * Math.sin((l - 1.45) * 14) : 1;
+    root.style.clipPath = blob(892, 1480, 2600 * ei(P(l, 0, 0.55)) + 40, l, 12);
+    d3(l, eo(P(l, 0.3, 1)));
+    clouds.forEach((c) => { draw(c.d, cub(P(l, 0.3 + c.i * 0.1, 1.0 + c.i * 0.1))); set(c.b, { x: Math.sin(l * 0.5 + c.i) * 20 + (c.i % 2 ? -1 : 1) * l * 10 }); });
+    draw(moon.d, cub(P(l, 0.4, 1.1))); set(moon.b, { y: Math.sin(l * 0.8) * 8 });
+    draw(logo, cub(P(l, 0.3, 1.4)), 0.28);
+    const sq = l > 1.4 ? 1 - 0.07 * Math.exp(-6 * (l - 1.4)) * Math.sin((l - 1.4) * 14) : 1;
     set(logoBox, { sy: sq * (1 + 0.05 * pulse), sx: (2 - sq) * (1 + 0.05 * pulse) });
-    lettersReveal(word, l, 1.2, 0.05);
+    kinIn(word, l, 1.15, { step: 0.06, mode: 'rise', w0: 200, w1: 620, em: 200 });
     set(tag, { o: eo(P(l, 1.8, 2.3)), y: (1 - eo(P(l, 1.8, 2.3))) * 30 });
-    const us = spring(l - 2.5, 1.4, 6.5);
+    const us = spring(l - 2.4, 1.4, 6.5);
     set(url, { s: clamp(us, 0, 1.25), y: (1 - clamp(us)) * 50, o: us > 0.01 ? 1 : 0 });
-    draw(ul, cub(P(l, 2.7, 3.1)));
+    draw(ul, cub(P(l, 2.6, 3.0)));
+    cr.style.opacity = eo(P(l, 2.6, 3.0));
   }
   return { update };
 })();
@@ -824,9 +855,9 @@ scenes.push(S15);
 // vt = waktu video (ikut lagu); t = waktu animasi
 function render(vt) {
   const t = TIMING.animAt(vt);
+  shakeAmt = [0, 0];
   for (const s of scenes) s.update(t, vt);
-  const [sx, sy] = S7.shakeAt(t);
-  shake.style.transform = sx || sy ? `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px)` : 'none';
+  shake.style.transform = shakeAmt[0] || shakeAmt[1] ? `translate(${shakeAmt[0].toFixed(1)}px,${shakeAmt[1].toFixed(1)}px)` : 'none';
 }
 window.render = render;
 window.DURATION = TIMING.VIDEO_DURATION;
@@ -839,11 +870,12 @@ function fit() {
   stageEl.style.transformOrigin = '0 0'; stageEl.style.transform = `scale(${s})`;
 }
 const params = new URLSearchParams(location.search);
+const imgsReady = () => Promise.all([...document.images].map((i) => (i.complete ? Promise.resolve() : new Promise((r) => { i.onload = r; i.onerror = r; }))));
 if (params.has('render')) {
   document.body.style.cssText = 'margin:0;display:block;';
   window.ready = document.fonts.ready.then(() => Promise.all([
-    document.fonts.load('500 100px Fraunces'), document.fonts.load('600 100px Fraunces'), document.fonts.load('italic 500 100px Fraunces'),
-    document.fonts.load('700 100px Caveat'), document.fonts.load('500 30px "IBM Plex Mono"'), document.fonts.load('600 30px "IBM Plex Mono"'),
+    document.fonts.load('400 100px Fraunces'), document.fonts.load('600 100px Fraunces'), document.fonts.load('italic 400 100px Fraunces'),
+    document.fonts.load('700 100px Caveat'), document.fonts.load('500 30px "IBM Plex Mono"'), document.fonts.load('600 30px "IBM Plex Mono"'), imgsReady(),
   ])).then(() => { render(0); return true; });
 } else {
   fit();
@@ -851,7 +883,7 @@ if (params.has('render')) {
   let start = null, playing = false;
   const at = params.has('t') ? +params.get('t') : null;
   const music = new Audio('musik.m4a');
-  document.fonts.ready.then(() => {
+  document.fonts.ready.then(imgsReady).then(() => {
     if (at !== null) { render(at); return; }
     const loop = (now) => {
       if (start === null) start = now;

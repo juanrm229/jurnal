@@ -133,63 +133,79 @@ function latar() {
 }
 const typing = (t0, t1, n, o = {}) => { for (let c = 0; c < n; c++) tick(t0 + (c / n) * (t1 - t0), { gain: 0.09, f: 2600 + 1400 * Math.abs(rnd()), ...o }); };
 function sfx() {
-  // 1 · jauh sebelum ada huruf
-  typing(0.5, 2.1, 22);
-  whoosh(3.7, 0.9, { f0: 300, f1: 2600, gain: 0.28, pan0: 0, pan1: 0 });
-  // 2 · kolase + 67.800
-  for (let i = 0; i < 7; i++) pop(4.45 + i * 0.09, 420 + i * 70, { gain: 0.16, pan: -0.5 + i * 0.16 });
-  for (let k = 0; k < 40; k++) tick(5.15 + k * 0.038, { gain: 0.05, f: 3000 + k * 25 });
-  whoosh(7.05, 0.5, { f0: 700, f1: 2400, gain: 0.12 });
-  // 3 · tanda
-  thump(8.6, { gain: 0.35 });
-  pen(8.6, 10.7, { gain: 0.035 });
-  // 4 · montase plate
-  for (let k = 0; k < 6; k++) { whoosh(10.75 + k * 0.76, 0.22, { f0: 1500, f1: 400, gain: 0.16 }); thump(10.8 + k * 0.76, { gain: 0.14 }); }
+  // 1 · jauh sebelum ada huruf: huruf berhamburan masuk, runtuh jadi tetes tinta
+  for (let c = 0; c < 22; c++) tick(0.5 + c * 0.06, { gain: 0.06, f: 3000 + 900 * Math.abs(rnd()), pan: -0.5 + c * 0.045 });
+  whoosh(0.3, 1.6, { f0: 200, f1: 1800, gain: 0.18, pan0: -0.6, pan1: 0.6 });
+  whoosh(3.3, 0.6, { f0: 2500, f1: 400, gain: 0.2, pan0: 0, pan1: 0 });
+  pop(4.28, 260, { gain: 0.35 });
+  // 2 · gua
+  whoosh(4.25, 0.7, { f0: 150, f1: 1600, gain: 0.3, pan0: 0, pan1: 0 });
+  pen(5.0, 5.6, { gain: 0.07 }); pen(5.4, 5.8, { gain: 0.06 });
+  for (let k = 0; k < 40; k++) tick(5.2 + k * 0.035, { gain: 0.045, f: 2600 + k * 30 });
+  whoosh(6.85, 0.5, { f0: 700, f1: 2400, gain: 0.12 });
+  riser(7.6, 8.55, { gain: 0.22 });
+  thump(8.5, { gain: 0.5 });
+  pen(8.6, 9.6, { gain: 0.05 });
+  whoosh(9.05, 0.6, { f0: 600, f1: 2000, gain: 0.1 });
+  // 4 · jurnal: kertas naik, foto-foto ditempel
+  whoosh(10.55, 0.55, { f0: 3000, f1: 500, gain: 0.25, pan0: 0, pan1: 0 });
+  [10.75, 11.42, 12.37, 13.32, 14.27].forEach((t, i) => { whoosh(t - 0.15, 0.35, { f0: 400, f1: 1800, gain: 0.12, pan0: i % 2 ? 0.4 : -0.4, pan1: 0 }); thump(t + 0.08, { gain: 0.12 }); tick(t + 0.3, { gain: 0.12, f: 1600 }); });
   // 5 · cetak biru
-  for (let i = 0; i < 5; i++) { pen(15.55 + i * 0.92, 16.05 + i * 0.92, { gain: 0.08 }); tick(15.55 + i * 0.92, { gain: 0.15, f: 1800 }); }
-  pop(20.15, 660, { gain: 0.2 });
-  typing(20.4, 20.9, 15);
-  whoosh(21.2, 0.45, { f0: 800, f1: 2600, gain: 0.12 });
+  whoosh(15.55, 0.6, { f0: 200, f1: 2200, gain: 0.25, pan0: 0, pan1: 0 });
+  [15.85, 16.85, 17.85, 18.85].forEach((t) => { whoosh(t - 0.05, 0.3, { f0: 1800, f1: 500, gain: 0.14 }); pen(t + 0.1, t + 0.55, { gain: 0.06 }); tick(t, { gain: 0.14, f: 1800 }); });
+  whoosh(19.85, 0.5, { f0: 600, f1: 2200, gain: 0.12 });
+  whoosh(20.5, 0.6, { f0: 500, f1: 2600, gain: 0.14 });
+  pen(21.0, 21.35, { gain: 0.08 });
   // 6 · babak II
-  whoosh(21.55, 0.8, { f0: 2500, f1: 200, gain: 0.3, pan0: 0, pan1: 0 });
-  typing(21.85, 22.8, 18, { f: 1800 });
-  for (let i = 0; i < 8; i++) pop(22.0 + i * 0.12, 900 + i * 60, { gain: 0.08, pan: -0.6 + i * 0.17 });
+  whoosh(21.85, 0.8, { f0: 2500, f1: 200, gain: 0.3, pan0: 0, pan1: 0 });
+  for (let c = 0; c < 15; c++) thump(22.1 + c * 0.04, { gain: 0.05 });
+  whoosh(22.5, 1.6, { f0: 800, f1: 1400, gain: 0.08, pan0: 0.6, pan1: -0.2 });
+  for (let i = 0; i < 7; i++) pop(22.2 + i * 0.12, 900 + i * 60, { gain: 0.07, pan: -0.6 + i * 0.2 });
   // 7 · surat
-  for (let k = 0; k < 6; k++) whoosh(24.35 + k * 1.37, 0.3, { f0: 600, f1: 3000, gain: 0.2, pan0: 0.5, pan1: -0.5 });
-  thump(24.87, { gain: 0.7 });
-  pop(25.9, 1568, { gain: 0.14 }); pop(26.0, 1568, { gain: 0.12 }); // bel sepeda
-  pen(26.9, 27.9, { gain: 0.07 });
-  tick(28.65, { gain: 0.3, f: 2000 }); tick(28.7, { gain: 0.25, f: 3200 });
-  for (let c = 0; c < 30; c++) { tick(29.6 + c * 0.034, { gain: 0.16, f: 1500 + 500 * Math.abs(rnd()) }); }
-  thump(31.75, { gain: 0.55 });
+  for (let k = 0; k < 6; k++) whoosh(24.65 + k * 1.37, 0.35, { f0: 500, f1: 3000, gain: 0.2, pan0: 0.5, pan1: -0.5 });
+  pen(24.9, 25.9, { gain: 0.05 });
+  thump(26.44, { gain: 0.75 });
+  pen(27.94, 28.5, { gain: 0.07 });
+  pop(29.2, 1568, { gain: 0.12 }); pop(29.3, 1568, { gain: 0.1 });
+  for (let c = 0; c < 30; c++) tick(30.33 + c * 0.033, { gain: 0.16, f: 1400 + 500 * Math.abs(rnd()) });
+  thump(32.15, { gain: 0.55 });
   // 8 · barisan alat
-  for (let i = 0; i < 7; i++) pop(32.8 + i * 0.36, 520 + i * 90, { gain: 0.15 });
-  typing(35.4, 37.2, 38);
+  whoosh(32.85, 0.5, { f0: 3000, f1: 500, gain: 0.22, pan0: 0, pan1: 0 });
+  for (let i = 0; i < 6; i++) pop(33.1 + i * 0.55, 520 + i * 90, { gain: 0.15, pan: -0.5 + i * 0.2 });
+  whoosh(33.1, 3.4, { f0: 300, f1: 700, gain: 0.05, pan0: 0.7, pan1: -0.7 });
   // 9 · menyimpan
-  whoosh(38.35, 0.6, { f0: 3000, f1: 300, gain: 0.25, pan0: 0, pan1: 0 });
-  for (let k = 0; k < 24; k++) pop(38.5 + k * 0.13, 1300 + (k % 3) * 200, { gain: 0.05, dur: 0.05 });
+  whoosh(38.65, 0.6, { f0: 3000, f1: 300, gain: 0.25, pan0: 0, pan1: 0 });
+  for (let k = 0; k < 26; k++) pop(38.75 + k * 0.12, 1200 + (k % 4) * 180, { gain: 0.045, dur: 0.05, pan: (k % 5) / 2.5 - 0.8 });
+  whoosh(41.4, 0.8, { f0: 2000, f1: 200, gain: 0.16 });
   // 10 · kutipan
-  whoosh(41.95, 0.7, { f0: 400, f1: 1600, gain: 0.12 });
-  pen(46.6, 47.2, { gain: 0.07 });
+  whoosh(42.25, 0.7, { f0: 300, f1: 1600, gain: 0.16, pan0: 0, pan1: 0 });
+  pen(47.0, 47.6, { gain: 0.07 });
   // 11 · dinding kata
-  whoosh(48.15, 0.8, { f0: 250, f1: 2000, gain: 0.22 });
-  [48.5, 49.1, 49.7].forEach((t, i) => { pop(t, [523, 659, 784][i], { gain: 0.18 }); whoosh(t - 0.05, 0.3, { f0: 2000, f1: 600, gain: 0.1 }); });
-  // 12 · kapsul
-  typing(51.25, 52.0, 24);
-  pop(52.25, 330, { gain: 0.25 });
-  whoosh(52.45, 0.45, { f0: 600, f1: 2600, gain: 0.14 });
-  // 13 · Sehari adalah
-  whoosh(53.75, 0.6, { f0: 300, f1: 2500, gain: 0.26, pan0: 0, pan1: 0 });
-  pop(54.7, 440, { gain: 0.22 });
-  for (let k = 0; k < 6; k++) { whoosh(55.0 + k * 0.8, 0.25, { f0: 900, f1: 2800, gain: 0.1 }); pop(55.05 + k * 0.8, 880, { gain: 0.08 }); }
+  whoosh(48.45, 0.8, { f0: 250, f1: 2000, gain: 0.22 });
+  [48.8, 49.45, 50.1].forEach((t, i) => { thump(t + 0.1, { gain: 0.25 }); whoosh(t - 0.1, 0.3, { f0: 2400, f1: 500, gain: 0.12 }); pop(t + 0.12, [523, 659, 784][i], { gain: 0.12 }); });
+  // 12 · kapsul waktu → kapsul
+  whoosh(51.45, 0.55, { f0: 3000, f1: 500, gain: 0.22, pan0: 0, pan1: 0 });
+  for (let k = 0; k < 30; k++) tick(51.8 + k * 0.04, { gain: 0.05, f: 2400 + k * 40 });
+  for (let c = 0; c < 22; c++) tick(53.5 + c * 0.025, { gain: 0.06, f: 3000 });
+  thump(54.17, { gain: 0.8 });
+  whoosh(54.3, 0.6, { f0: 500, f1: 2600, gain: 0.14 });
+  // 13 · Sehari
+  whoosh(55.25, 0.7, { f0: 200, f1: 2600, gain: 0.28, pan0: 0, pan1: 0 });
+  whoosh(55.6, 0.7, { f0: 1800, f1: 250, gain: 0.2 });
+  for (let c = 0; c < 40; c++) tick(56.3 + c * 0.04, { gain: 0.08, f: 2600 + 1200 * Math.abs(rnd()) });
+  for (let i = 0; i < 5; i++) pop(56.7 + i * 0.28, [523, 659, 784, 880, 1046][i], { gain: 0.16, pan: i % 2 ? 0.5 : -0.5 });
+  whoosh(57.85, 0.3, { f0: 3000, f1: 600, gain: 0.16 }); thump(58.0, { gain: 0.15 });
+  [58.3, 58.43, 58.56].forEach((t, i) => pop(t, 1200 + i * 180, { gain: 0.12 }));
+  tick(60.0, { gain: 0.2, f: 1500 });
   // 14 · sapaan
-  typing(60.7, 62.4, 36);
-  tick(62.6, { gain: 0.25, f: 1500 }); pop(62.68, 300, { gain: 0.22 });
+  whoosh(60.65, 0.55, { f0: 3000, f1: 500, gain: 0.2, pan0: 0, pan1: 0 });
+  for (let c = 0; c < 36; c++) tick(61.45 + c * 0.043, { gain: 0.08, f: 2600 + 1200 * Math.abs(rnd()) });
+  tick(63.15, { gain: 0.25, f: 1500 }); pop(63.22, 300, { gain: 0.22 });
   // 15 · penutup
-  whoosh(63.15, 0.8, { f0: 250, f1: 3200, gain: 0.3, pan0: 0, pan1: 0 });
-  pen(63.55, 64.65, { gain: 0.06 });
-  for (let i = 0; i < 6; i++) tick(64.4 + i * 0.05, { gain: 0.09, f: 2600 + i * 200 });
-  pop(65.7, 880, { gain: 0.18 });
+  whoosh(63.35, 0.8, { f0: 250, f1: 3200, gain: 0.3, pan0: 0, pan1: 0 });
+  pen(63.7, 64.8, { gain: 0.06 });
+  for (let i = 0; i < 6; i++) tick(64.55 + i * 0.06, { gain: 0.09, f: 2600 + i * 200 });
+  pop(65.8, 880, { gain: 0.18 });
 }
 
 if (process.argv.includes('--latar')) latar();
