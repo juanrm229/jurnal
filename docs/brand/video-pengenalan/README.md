@@ -13,7 +13,7 @@ Gaya: UI motion dengan warna dasar biru tinta Sehari (`#2A14D6`), kertas `#E6E6E
 | 14–18 | Dua sisi satu hari: halaman teman yang terkunci terbuka bersama |
 | 18–21,7 | Streak 127 hari dan papan tahun 365 petak (masuk di hentakan 18,1) |
 | 21,7–25,4 | hari jadi halaman → minggu jadi adegan → bulan jadi bab → tahun jadi jilid, satu kata per beat |
-| 25,45–31 | Penutup dibuka di jeda lagu; saat drop (28,45) muncul lingkaran, "terenkripsi end-to-end", dan logo berdenyut setiap beat |
+| 25,45–31 | Penutup dibuka di jeda lagu; saat drop (28,45) muncul lingkaran dan "terenkripsi end-to-end", lalu **sehari.online** di beat 29,0; logo berdenyut setiap beat |
 
 ## Mengubah & merender ulang
 
