@@ -4,22 +4,24 @@ Hasil jadi: [`../sehari-dulu-kita-menulis.mp4`](../sehari-dulu-kita-menulis.mp4)
 
 Strukturnya meniru video esai sejarah (babak I → babak II → kutipan → produk → logo). Versi 2 bergaya **scrapbook jurnal**: foto arsip asli (domain publik / CC, lihat [`arsip/CREDITS.md`](arsip/CREDITS.md)) diberi duotone biru Sehari, ditempel di halaman bertitik dengan selotip dan coretan tangan. Kamera terus bergerak, transisinya menyambung (tinta menyebar, kertas sobek, menembus telapak tangan), dan teks muncul per huruf dengan bobot huruf yang ikut bergerak. Bagian aplikasi memakai ilustrasi Sehari.
 
-| Detik | Adegan | Isi & sumber |
+### Versi 3 (melankolis)
+
+Adegan lebih sedikit dan masing-masing lebih lama (5–8 detik, berganti di ketukan pertama birama). Transisinya larut pelan seperti tinta atau cahaya meresap, dan narasi muncul kata demi kata.
+
+| Detik (video) | Narasi | Gambar |
 | --- | --- | --- |
-| 0–4,6 | ‹ jauh sebelum ada huruf › | goresan tinta berkumpul |
-| 4,3–10,9 | foto cap tangan gua Maros + **67.800** → kamera menembus telapak → "✳ kita meninggalkan *tanda*." | cap tangan di Liang Metanduno, Muna, setidaknya 67.800 tahun (Nature, Jan 2026) |
-| 10,6–15,8 | kamera meluncur turun di halaman jurnal | lempeng Uruk ± 3.300 SM · Yupa Kutai ± 400 M · lontar Bali · kantor pos Batavia 1746 · Kartini 1899–1904 |
-| 15,6–21,9 | cetak biru alat tulis (foto kalam, pena, mesin tik + ilustrasi pena bulu) | "Alatnya berganti. *rindunya sama.*" |
-| 21,6–24,4 | ‹ BABAK II — SURAT › | jaringan rute pos |
-| 24,4–32,6 | disegel · diantar · Kartini · buku harian · telegram · ditunggu | |
-| 32,6–38,4 | barisan alat tulis | "Kita tidak pernah berhenti menulis —" |
-| 38,4–42 | chat menggulung | "— hanya berhenti *menyimpannya.*" + surat pos AS 103,6 miliar (2001) → 44,3 miliar (2024) |
-| 42–48,2 | kutipan | Pramoedya Ananta Toer: "Orang boleh pandai setinggi langit…" |
-| 48,2–51,2 | dinding kata | *tulis, simpan, kirim.* |
-| 51,5–55,3 | disegel 1940 · dibuka **8113** → jadi, kami membuat sebuah *kapsul.* | Crypt of Civilization |
-| 55,3–60,7 | Sehari adalah kapsul waktu harian (HP + label fitur) | tulis · foto · suara · surat tersesat · kapsul 1–25 tahun |
-| 60–63,2 | ✳ selamat malam, *penulis.* | |
-| 63,2–67 | langit malam, logo, sehari.online | |
+| 0–6 | Dulu, *jauh sebelum ada huruf,* | malam, debu cahaya |
+| 5,3–14 | kita menempelkan telapak tangan di dinding gua — *seolah berkata: aku pernah di sini.* | foto cap tangan gua Maros; ±67.800 tahun (Muna, Sulawesi) |
+| 13–22 | Lalu kita belajar menulis. *Di tanah liat. Di batu. Di daun lontar.* | lempeng Uruk, Yupa Kutai, lontar Bali |
+| 20,6–27 | Alatnya berganti, *rindunya tidak.* | pena tinta → mesin tik |
+| 25,8–32 | Kita menulis surat, *lalu menunggu —* berhari-hari, berminggu-minggu. | kantor pos Batavia (1746) |
+| 31–40 (reff) | Dari Jepara, seorang perempuan menulis surat demi surat. *Seratus tahun kemudian, suaranya masih sampai kepada kita.* | potret Kartini (1899–1904) |
+| 38,7–48 | Surat-surat itu kita ikat, kita simpan, *dan kita baca lagi setiap kali rindu.* | surat lama, lak segel |
+| 46,5–53,5 | Hari ini, kita menulis lebih banyak dari sebelumnya. *Tapi semuanya lewat — lalu hilang.* | chat yang menggulung lalu memudar |
+| 52,8–54,5 (jeda hening) | Maka kami membuat sebuah… | diketik |
+| 54,56 (hantaman reff) | *kapsul.* untuk hari-hari yang ingin kita simpan. | segel lak Sehari |
+| 57–64 | Satu hal kecil, setiap hari. *Disegel malam ini. Dibuka bersama orang yang kamu sayang.* | HP, halaman hari ini |
+| 62,5–71,2 | untuk kamu, di hari nanti. → sehari · *tulis hari ini, baca bersama, nanti.* · sehari.online | tulisan tangan di atas surat lama, lalu langit malam dan logo |
 
 ## Musik & sinkron beat
 

@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,300..800;1,9..144,300..800&family=IBM+Plex+Mono:wght@400;500;600&display=block" rel="stylesheet" />
 <style>
   :root {
-    --blue: #2a14d6; --night: #0b0733; --paper: #e6e6e8; --sheet: #f7f7f4; --text: #16161a; --lilac: #b9b0ff;
+    --blue: #2a14d6; --night: #0b0733; --paper: #e6e6e8; --sheet: #f4f2ec; --text: #16161a; --lilac: #b9b0ff;
     --mono: 'IBM Plex Mono', ui-monospace, monospace; --hand: 'Caveat', cursive; --serif: 'Fraunces', Georgia, serif;
   }
   html, body { margin: 0; background: #0b0b10; }
@@ -19,46 +19,31 @@
   #shake { position: absolute; inset: 0; }
   .scene { position: absolute; inset: 0; overflow: hidden; display: none; }
   .grain::after {
-    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .55; z-index: 40;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
-  .dots { background-image: radial-gradient(circle, rgba(42,20,214,.16) 2px, transparent 2.6px); background-size: 40px 40px; }
-  .ch { display: inline-block; will-change: transform; }
-  .wd { display: inline-block; white-space: nowrap; }
+  .wd { display: inline-block; white-space: nowrap; will-change: transform, opacity, filter; }
   img { display: block; }
-  .caret { display: inline-block; width: 0.07em; height: 0.85em; margin-left: 0.05em; background: currentColor; vertical-align: -0.08em; }
-  .pill { display: flex; align-items: center; gap: 16px; border-radius: 999px; white-space: nowrap; }
+  .caret { display: inline-block; width: 0.06em; height: 0.85em; margin-left: 0.05em; background: currentColor; vertical-align: -0.08em; }
 </style>
 </head>
 <body>
-<!-- filter warna untuk foto arsip -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
-    <!-- malam: hitam → biru malam, putih → lilac pucat -->
     <filter id="duoNight" color-interpolation-filters="sRGB">
       <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
       <feComponentTransfer>
-        <feFuncR type="table" tableValues="0.035 0.16 0.93"/>
-        <feFuncG type="table" tableValues="0.02 0.08 0.91"/>
-        <feFuncB type="table" tableValues="0.17 0.84 1"/>
+        <feFuncR type="table" tableValues="0.03 0.13 0.88"/>
+        <feFuncG type="table" tableValues="0.02 0.07 0.86"/>
+        <feFuncB type="table" tableValues="0.15 0.62 1"/>
       </feComponentTransfer>
     </filter>
-    <!-- tinta: gelap → biru tinta, terang → kertas -->
     <filter id="duoInk" color-interpolation-filters="sRGB">
       <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
       <feComponentTransfer>
-        <feFuncR type="table" tableValues="0.1 0.165 0.97"/>
-        <feFuncG type="table" tableValues="0.04 0.078 0.97"/>
-        <feFuncB type="table" tableValues="0.55 0.84 0.955"/>
-      </feComponentTransfer>
-    </filter>
-    <!-- tinta terbalik: latar hitam → kertas, benda terang → biru tinta -->
-    <filter id="duoInv" color-interpolation-filters="sRGB">
-      <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1 0"/>
-      <feComponentTransfer>
-        <feFuncR type="table" tableValues="0.97 0.4 0.165 0.1"/>
-        <feFuncG type="table" tableValues="0.97 0.33 0.078 0.04"/>
-        <feFuncB type="table" tableValues="0.955 0.88 0.84 0.55"/>
+        <feFuncR type="table" tableValues="0.1 0.2 0.955"/>
+        <feFuncG type="table" tableValues="0.04 0.11 0.95"/>
+        <feFuncB type="table" tableValues="0.5 0.78 0.925"/>
       </feComponentTransfer>
     </filter>
   </defs>
@@ -69,25 +54,24 @@
 <script>
 'use strict';
 /* =====================================================================
-   "Dulu kita menulis" — v2: scrapbook jurnal dengan foto arsip.
-   Kamera terus bergerak, transisi menyambung (tinta menyebar, kertas
-   disobek, potongan yang cocok bentuknya), teks muncul per huruf.
+   "Dulu kita menulis" — v3, versi melankolis.
+   Sedikit adegan, masing-masing lama; narasi muncul kata demi kata;
+   transisi larut pelan seperti tinta meresap. Adegan berganti di ketukan
+   pertama birama lagu "Prayer for Her" (waktu di bawah = waktu video).
    ===================================================================== */
-const DURATION = 67;
-const BLUE = '#2a14d6', NIGHT = '#0b0733', PAPER = '#e6e6e8', SHEET = '#f7f7f4', WHITE = '#ffffff', LILAC = '#b9b0ff', TEXT = '#16161a';
+const DURATION = 71.2;
+const NIGHT = '#0b0733', BLUE = '#2a14d6', SHEET = '#f4f2ec', LILAC = '#b9b0ff', TEXT = '#16161a';
 
-// ---------- util ----------
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const P = (t, a, b) => clamp((t - a) / (b - a));
 const lerp = (a, b, x) => a + (b - a) * x;
 const eo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
 const ei = (x) => (x <= 0 ? 0 : Math.pow(2, 10 * x - 10));
-const eio = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x < 0.5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2);
-const cub = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-const spring = (s, f = 1.6, d = 7) => (s <= 0 ? 0 : 1 - Math.exp(-d * s) * Math.cos(f * 2 * Math.PI * s));
+const sine = (x) => -(Math.cos(Math.PI * clamp(x)) - 1) / 2; // gerak lembut
+const qo = (x) => 1 - Math.pow(1 - clamp(x), 3);
 const hash = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 const NS = 'http://www.w3.org/2000/svg';
-const SERIF = (w = 500) => `font-family:var(--serif);font-variation-settings:"opsz" 144, "wght" ${w};letter-spacing:-0.03em;`;
+const SERIF = (w = 400) => `font-family:var(--serif);font-variation-settings:"opsz" 144, "wght" ${w};letter-spacing:-0.02em;`;
 
 function el(parent, css = '', html = '', tag = 'div') {
   const e = document.createElement(tag);
@@ -96,773 +80,365 @@ function el(parent, css = '', html = '', tag = 'div') {
   parent.appendChild(e);
   return e;
 }
-function svg(parent, css, w, h, inner, vb) {
-  const s = document.createElementNS(NS, 'svg');
-  s.setAttribute('width', w); s.setAttribute('height', h);
-  s.setAttribute('viewBox', vb || `0 0 ${w} ${h}`);
-  s.style.cssText = 'position:absolute;overflow:visible;' + css;
-  s.innerHTML = inner;
-  parent.appendChild(s);
-  return s;
-}
-function set(e, { x = 0, y = 0, s = 1, sx, sy, r = 0, o = 1, b = 0 } = {}) {
-  e.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) rotate(${r.toFixed(3)}deg) scale(${(sx ?? s).toFixed(4)},${(sy ?? s).toFixed(4)})`;
+function set(e, { x = 0, y = 0, s = 1, r = 0, o = 1, b = 0 } = {}) {
+  e.style.transform = `translate(${x.toFixed(2)}px,${y.toFixed(2)}px) rotate(${r.toFixed(3)}deg) scale(${s.toFixed(4)})`;
   e.style.opacity = clamp(o).toFixed(3);
   e.style.filter = b > 0.15 ? `blur(${b.toFixed(1)}px)` : '';
 }
-function show(root, t, a, b) { const on = t >= a && t < b; root.style.display = on ? 'block' : 'none'; return on; }
 const lc = (w, c) => `fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" pathLength="1"`;
-function doodle(id, { size = 100, color = WHITE, sw = 4 } = {}) {
-  const d = window.DOODLES[id];
-  const s = document.createElementNS(NS, 'svg');
-  s.setAttribute('viewBox', '0 0 64 64'); s.setAttribute('width', size); s.setAttribute('height', size);
-  s.style.overflow = 'visible'; s.style.display = 'block';
-  for (const p of d.s) s.innerHTML += `<path d="${p}" ${lc(sw, color)}/>`;
-  for (const f of d.f) s.innerHTML += `<path d="${f}" fill="${color}" data-fill="1"/>`;
-  return s;
-}
-function dbox(parent, id, css, opt) { const b = el(parent, css); const d = doodle(id, opt); b.appendChild(d); return { b, d }; }
-function draw(s, pr, stagger = 0.35) {
+function draw(s, pr, stagger = 0.3) {
   const ps = s.querySelectorAll('[pathLength]');
   const span = 1 + stagger * Math.max(0, ps.length - 1);
-  ps.forEach((p, i) => {
-    const lp = clamp(pr * span - i * stagger);
-    p.style.strokeDasharray = '1 1';
-    p.style.strokeDashoffset = (1 - lp).toFixed(4);
-    p.style.opacity = lp > 0.002 ? 1 : 0;
-  });
-  s.querySelectorAll('[data-fill]').forEach((f) => (f.style.opacity = clamp((pr - 0.85) / 0.15)));
+  ps.forEach((p, i) => { const lp = clamp(pr * span - i * stagger); p.style.strokeDasharray = '1 1'; p.style.strokeDashoffset = (1 - lp).toFixed(4); p.style.opacity = lp > 0.002 ? 1 : 0; });
 }
-// foto arsip; filter duotone dipasang di pembungkus supaya set() bebas memakai blur
 function photo(parent, src, css, filter = 'duoInk') {
   const wrap = el(parent, css + 'overflow:hidden;');
-  const i = el(wrap, `inset:0;width:100%;height:100%;object-fit:${/contain/.test(css) ? 'contain' : 'cover'};filter:url(#${filter});`, '', 'img');
+  const i = el(wrap, `inset:0;width:100%;height:100%;object-fit:cover;filter:url(#${filter});`, '', 'img');
   i.src = 'arsip/' + src + '.jpg';
   return wrap;
 }
-// cetakan foto ditempel di jurnal: bingkai putih, bayangan, selotip
-function print(parent, src, { x, y, w, h, r = 0, filter = 'duoInk', pad = 18 }) {
-  const box = el(parent, `left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fdfdfb;box-shadow:0 2px 0 rgba(0,0,0,.04),0 24px 50px rgba(20,16,80,.22);transform-origin:50% 0;`);
+function print(parent, src, { x, y, w, h, pad = 20, filter = 'duoInk', tape = true }) {
+  const box = el(parent, `left:${x}px;top:${y}px;width:${w}px;height:${h}px;background:#fbfaf6;box-shadow:0 2px 0 rgba(0,0,0,.04),0 30px 60px rgba(15,10,60,.25);transform-origin:50% 50%;`);
   photo(box, src, `left:${pad}px;top:${pad}px;width:${w - pad * 2}px;height:${h - pad * 2}px;`, filter);
-  el(box, `left:${w / 2 - 70}px;top:-22px;width:140px;height:44px;background:rgba(207,227,255,.78);transform:rotate(${(hash(x + y) - 0.5) * 10}deg);box-shadow:0 2px 6px rgba(0,0,0,.06);`);
+  if (tape) el(box, `left:${w / 2 - 70}px;top:-22px;width:140px;height:44px;background:rgba(220,214,255,.7);transform:rotate(${(hash(x + y) - 0.5) * 8}deg);`);
   return box;
 }
-// teks kinetik: per huruf, dengan bobot huruf yang ikut bergerak
-function kin(parent, css, parts, base = '') {
+// narasi: kata demi kata, muncul pelan dari kabut
+function narr(parent, css, parts, base = SERIF(400)) {
   const w = el(parent, css);
-  const chars = [];
-  let n = 0;
-  parts.forEach(([text, style = '']) => {
-    text.split(/( )/).forEach((tok) => {
-      if (tok === ' ') { w.appendChild(document.createTextNode(' ')); return; }
-      if (!tok) return;
-      const wd = el(w, 'position:relative;', '', 'span'); wd.className = 'wd';
-      [...tok].forEach((c) => {
-        const s = el(wd, 'position:relative;' + base + style, c, 'span'); s.className = 'ch';
-        chars.push({ e: s, i: n++, style });
-      });
-    });
-  });
-  return { w, chars, n };
+  const words = [];
+  parts.forEach(([text, style = '']) => text.split(' ').forEach((tok, k, arr) => {
+    if (!tok) return;
+    const s = el(w, 'position:relative;' + base + style, tok, 'span');
+    s.className = 'wd';
+    words.push(s);
+    w.appendChild(document.createTextNode(' '));
+  }));
+  return { w, words };
 }
-function kinIn(K, t, a, { step = 0.028, dur = 0.6, mode = 'rise', w0 = 250, w1 = 560, em = 90 } = {}) {
-  K.chars.forEach((c) => {
-    const p = eo(P(t, a + c.i * step, a + c.i * step + dur));
-    const wt = lerp(w0, w1, p);
-    c.e.style.fontVariationSettings = `"opsz" 144, "wght" ${wt.toFixed(0)}`;
-    if (mode === 'rise') set(c.e, { y: (1 - p) * em, r: (1 - p) * 12, o: p, b: (1 - p) * 12 });
-    else if (mode === 'scatter') set(c.e, { x: (hash(c.i + 3) - 0.5) * 700 * (1 - p), y: (hash(c.i + 9) - 0.5) * 900 * (1 - p), r: (hash(c.i) - 0.5) * 180 * (1 - p), o: p, b: (1 - p) * 20 });
-    else if (mode === 'slam') set(c.e, { s: lerp(2.4, 1, p), o: p, b: (1 - p) * 16 });
-    else if (mode === 'drop') set(c.e, { y: (1 - p) * -em * 1.2, o: p, b: (1 - p) * 8 });
-  });
+function narrIn(N, t, a, { step = 0.16, dur = 1.1, rise = 18 } = {}) {
+  N.words.forEach((s, i) => { const p = qo(P(t, a + i * step, a + i * step + dur)); set(s, { y: (1 - p) * rise, o: p, b: (1 - p) * 10 }); });
 }
-function kinOut(K, t, a, { step = 0.02, dur = 0.45 } = {}) {
+function narrOut(N, t, a, dur = 0.9) {
   if (t < a) return;
-  K.chars.forEach((c) => {
-    const p = ei(P(t, a + c.i * step, a + c.i * step + dur));
-    if (p <= 0) return;
-    set(c.e, { y: p * 260 * (0.6 + hash(c.i)), r: p * (hash(c.i + 1) - 0.5) * 120, o: 1 - p, b: p * 10 });
-  });
+  const p = sine(P(t, a, a + dur));
+  N.w.style.opacity = (1 - p).toFixed(3);
+  N.w.style.filter = p > 0.02 ? `blur(${(p * 8).toFixed(1)}px)` : '';
 }
-// angka slot (setiap digit berputar)
-function slot(parent, css, str, digitCss) {
-  const w = el(parent, css + ';display:flex;justify-content:center;');
-  const cols = [...str].map((ch) => {
-    const m = el(w, 'position:relative;overflow:hidden;height:1.02em;' + digitCss, '', 'span');
-    if (!/\d/.test(ch)) { el(m, 'position:relative;display:block;', ch, 'span'); return null; }
-    const strip = el(m, 'position:relative;display:block;', Array.from({ length: 30 }, (_, k) => `<span style="display:block;height:1.02em;line-height:1.02em">${k % 10}</span>`).join(''), 'span');
-    return { strip, target: 20 + +ch };
-  });
-  return { w, cols: cols.filter(Boolean) };
-}
-function slotRoll(S, t, a, dur = 1.4) {
-  S.cols.forEach((c, i) => {
-    const p = eo(P(t, a + i * 0.08, a + i * 0.08 + dur));
-    c.strip.style.transform = `translateY(${(-p * c.target * 1.02).toFixed(3)}em)`;
-    c.strip.style.filter = p > 0 && p < 0.92 ? `blur(${((1 - p) * 6).toFixed(1)}px)` : '';
-  });
-}
-// partikel debu / percikan tinta
+const fact = (parent, css, text, dark = true) => el(parent, `left:0;width:1080px;text-align:center;font:500 25px var(--mono);letter-spacing:.08em;color:${dark ? 'rgba(255,255,255,.62)' : 'rgba(22,22,26,.55)'};` + css, text);
+const credit = (parent, text, dark = true) => el(parent, `left:0;bottom:46px;width:1080px;text-align:center;font:500 17px var(--mono);letter-spacing:.04em;color:${dark ? 'rgba(255,255,255,.4)' : 'rgba(22,22,26,.4)'};`, text);
 function dust(parent, n, color, seed = 1, size = 5) {
   const ps = Array.from({ length: n }, (_, i) => ({ e: el(parent, `left:${hash(i * 3 + seed) * 1080}px;top:${hash(i * 7 + seed) * 1920}px;width:${size * (0.4 + hash(i + seed))}px;height:${size * (0.4 + hash(i + seed))}px;border-radius:50%;background:${color};`), i }));
   return (t, k = 1) => ps.forEach((p) => {
-    const sp = 20 + hash(p.i + seed + 5) * 50;
-    const yy = ((hash(p.i * 7 + seed) * 1920 - t * sp) % 1920 + 1920) % 1920 - hash(p.i * 7 + seed) * 1920;
-    set(p.e, { x: Math.sin(t * 0.4 + p.i) * 30, y: yy, o: k * (0.25 + 0.5 * hash(p.i + 11)) * (0.6 + 0.4 * Math.sin(t * 2 + p.i)) });
+    const sp = 12 + hash(p.i + seed + 5) * 26, y0 = hash(p.i * 7 + seed) * 1920;
+    const yy = ((y0 - t * sp) % 1920 + 1920) % 1920 - y0;
+    set(p.e, { x: Math.sin(t * 0.3 + p.i) * 24, y: yy, o: k * (0.2 + 0.45 * hash(p.i + 11)) * (0.6 + 0.4 * Math.sin(t * 1.3 + p.i)) });
   });
 }
-// gumpalan tinta yang membesar (transisi)
-function blob(cx, cy, R, t, seed = 1) {
-  if (R <= 0) return 'circle(0px at 0 0)';
-  if (R > 2500) return 'none';
-  const pts = [];
-  for (let k = 0; k < 72; k++) {
-    const a = (k / 72) * Math.PI * 2;
-    const r = R * (1 + 0.11 * Math.sin(3 * a + seed) + 0.07 * Math.sin(7 * a + seed * 2 + t * 3) + 0.04 * Math.sin(13 * a + seed * 3 - t * 2));
-    pts.push(`${(cx + Math.cos(a) * r).toFixed(1)}px ${(cy + Math.sin(a) * r).toFixed(1)}px`);
-  }
-  return `polygon(${pts.join(',')})`;
+// tinta meresap: topeng radial berpinggiran lembut
+function bloom(e, p, cx = 540, cy = 960) {
+  if (p >= 1) { e.style.maskImage = e.style.webkitMaskImage = ''; return; }
+  const r = 2300 * sine(p);
+  const m = `radial-gradient(circle at ${cx}px ${cy}px, #000 ${Math.max(0, r - 420).toFixed(0)}px, transparent ${r.toFixed(0)}px)`;
+  e.style.maskImage = m; e.style.webkitMaskImage = m;
 }
-// tepi kertas sobek di atas (transisi kertas naik)
-function torn(topY, seed = 1) {
-  if (topY < -60) return 'none';
-  const pts = [];
-  for (let k = 0; k <= 40; k++) pts.push(`${(k * 27).toFixed(0)}px ${(topY + (hash(k * 5 + seed) - 0.5) * 34).toFixed(1)}px`);
-  return `polygon(${pts.join(',')},1080px 2200px,0px 2200px)`;
-}
-function typed(e, html, p, t, caret = true) {
-  const parts = html.split(/(<[^>]+>)/);
-  const total = parts.reduce((n, s) => n + (s.startsWith('<') ? 0 : s.length), 0);
-  let left = Math.round(total * clamp(p)), out = '';
-  for (const s of parts) { if (s.startsWith('<')) { out += s; continue; } out += s.slice(0, Math.max(0, left)); left -= s.length; }
-  const on = caret && (p < 1 || Math.floor(t * 2.6) % 2 === 0);
-  e.innerHTML = out + (caret ? `<span class="caret" style="opacity:${on ? 1 : 0}"></span>` : '');
-}
-// coretan tangan (anotasi scrapbook)
-function scribble(parent, css, w, h, d, color = BLUE, sw = 5) { return svg(parent, css, w, h, `<path d="${d}" ${lc(sw, color)}/>`); }
-const credit = (parent, text, dark = true) => el(parent, `left:56px;bottom:56px;font:500 19px var(--mono);letter-spacing:.04em;color:${dark ? 'rgba(255,255,255,.55)' : 'rgba(22,22,26,.5)'};`, text);
 
-// ---------- panggung ----------
+// ---------- panggung: adegan saling larut ----------
 const shake = document.getElementById('shake');
 const stageEl = document.getElementById('stage');
 const scenes = [];
-function scene(bg, grain = true) {
-  const r = el(shake, `inset:0;background:${bg};`);
-  r.className = 'scene' + (grain ? ' grain' : '');
-  return r;
+// a = mulai, b = selesai, fi = lama larut masuk, kind = 'fade' | 'bloom'
+function scene(bg, a, b, fi, kind = 'fade', origin = [540, 960]) {
+  const root = el(shake, `inset:0;background:${bg};`);
+  root.className = 'scene grain';
+  const sc = { root, a, b, fi, kind, origin, update: () => {} };
+  scenes.push(sc);
+  return sc;
+}
+function apply(sc, t, vt) {
+  const on = t >= sc.a && t < sc.b;
+  sc.root.style.display = on ? 'block' : 'none';
+  if (!on) return;
+  const p = sc.fi > 0 ? P(t, sc.a, sc.a + sc.fi) : 1;
+  if (sc.kind === 'bloom') { bloom(sc.root, p, ...sc.origin); sc.root.style.opacity = 1; }
+  else { sc.root.style.opacity = sine(p).toFixed(3); sc.root.style.filter = p < 1 ? `blur(${((1 - sine(p)) * 14).toFixed(1)}px)` : ''; }
+  sc.update(t - sc.a, vt);
 }
 let shakeAmt = [0, 0];
-function hit(t, at, amp = 18) {
-  const s = t - at;
-  if (s < 0 || s > 0.5) return;
-  const a = amp * Math.exp(-9 * s);
-  shakeAmt = [shakeAmt[0] + a * Math.sin(s * 71), shakeAmt[1] + a * Math.cos(s * 53)];
+
+/* 1 · dulu, jauh sebelum ada huruf (0 – 6.6) */
+{
+  const sc = scene(`radial-gradient(circle at 50% 46%, #170e5e 0%, ${NIGHT} 68%)`, 0, 6.6, 0.6);
+  const d = dust(sc.root, 80, LILAC, 3, 6);
+  const N = narr(sc.root, 'left:110px;top:840px;width:860px;text-align:center;font-size:76px;line-height:1.3;color:#fff;', [['Dulu,'], ['jauh sebelum ada huruf,', 'font-style:italic;color:#b9b0ff;']]);
+  sc.update = (l) => {
+    d(l, sine(P(l, 0, 1.5)));
+    narrIn(N, l, 0.5, { step: 0.32, dur: 1.4 });
+    set(N.w, { s: 1 + 0.02 * l, o: 1 });
+    narrOut(N, l, 4.6, 1.0);
+  };
 }
 
-/* ===================== BABAK I ===================== */
+/* 2 · cap tangan di gua (5.31 – 13.6) */
+{
+  const sc = scene(NIGHT, 5.31, 14.2, 1.3, 'bloom', [540, 760]);
+  const cam = el(sc.root, 'inset:0;transform-origin:540px 700px;');
+  photo(cam, 'gua1', 'left:-240px;top:-160px;width:1560px;height:2180px;', 'duoNight');
+  el(sc.root, 'inset:0;background:radial-gradient(circle at 50% 38%, rgba(11,7,51,0) 20%, rgba(11,7,51,.55) 55%, rgba(11,7,51,.96) 85%);');
+  const N1 = narr(sc.root, 'left:90px;top:1230px;width:900px;text-align:center;font-size:66px;line-height:1.3;color:#fff;', [['kita menempelkan telapak tangan di dinding gua —']]);
+  const N2 = narr(sc.root, 'left:90px;top:1420px;width:900px;text-align:center;font-size:74px;line-height:1.3;color:#b9b0ff;', [['seolah berkata: aku pernah di sini.', 'font-style:italic;']]);
+  const f = fact(sc.root, 'top:1660px;', '±67.800 TAHUN LALU · CAP TANGAN DI GUA SULAWESI');
+  credit(sc.root, 'foto: gua Leang Pettakere, Maros · Cahyo Ramadhani, CC BY-SA 4.0');
+  sc.update = (l) => {
+    set(cam, { s: 1.18 - 0.1 * sine(P(l, 0, 8.3)), y: -40 * sine(P(l, 0, 8.3)) });
+    narrIn(N1, l, 1.0, { step: 0.17 });
+    narrIn(N2, l, 3.5, { step: 0.2, dur: 1.3 });
+    f.style.opacity = sine(P(l, 2.4, 3.6)).toFixed(3);
+  };
+}
 
-/* 1 · jauh sebelum ada huruf (0 – 4.75) */
-const S1 = (() => {
-  const root = scene(`radial-gradient(circle at 50% 50%, #1a0f6e 0%, ${NIGHT} 70%)`);
-  const d1 = dust(root, 70, LILAC, 3, 6);
-  const K = kin(root, 'left:0;top:880px;width:1080px;text-align:center;font-size:84px;color:#fff;line-height:1.1;', [['‹ ', 'font-family:var(--mono);font-size:.6em;color:#b9b0ff;'], ['jauh sebelum ada '], ['huruf', 'font-style:italic;color:#b9b0ff;'], [' ›', 'font-family:var(--mono);font-size:.6em;color:#b9b0ff;']], SERIF(400));
-  const drop = el(root, 'left:528px;top:600px;width:24px;height:30px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:#b9b0ff;');
-  function update(t) {
-    if (!show(root, t, 0, 4.75)) return;
-    d1(t, eo(P(t, 0, 1)));
-    kinIn(K, t, 0.35, { mode: 'scatter', step: 0.04, dur: 1.1, w0: 200, w1: 420 });
-    // huruf runtuh menjadi setetes tinta
-    K.chars.forEach((c) => {
-      const p = ei(P(t, 3.3 + c.i * 0.012, 3.85 + c.i * 0.012));
-      if (p > 0) set(c.e, { x: (540 - (c.e.offsetLeft + c.e.parentNode.offsetLeft + 20)) * p * 0.9, y: -280 * p, s: 1 - 0.85 * p, o: 1 - p * 0.9, b: p * 6 });
+/* 3 · lalu kita belajar menulis: tanah liat, batu, daun lontar (12.97 – 21.26) */
+{
+  const sc = scene(SHEET, 12.97, 21.9, 1.4, 'bloom', [540, 700]);
+  const desk = el(sc.root, 'inset:0;transform-origin:540px 900px;');
+  const PH = [
+    { src: 'uruk', x: 90, y: 330, w: 900, h: 560, r: -2.5, cap: 'tanah liat · Uruk, ±3.300 SM', at: 0.4 },
+    { src: 'yupa', x: 160, y: 300, w: 760, h: 620, r: 2, cap: 'batu · Yupa, Kutai, ±400 M', at: 2.67 },
+    { src: 'lontar', x: 50, y: 470, w: 980, h: 320, r: -1.5, cap: 'daun lontar · Bali', at: 5.11 },
+  ].map((p) => ({ ...p, e: print(desk, p.src, { x: p.x, y: p.y, w: p.w, h: p.h }), c: fact(desk, `top:${p.y + p.h + 50}px;`, p.cap.toUpperCase(), false) }));
+  const N0 = narr(sc.root, 'left:90px;top:1230px;width:900px;text-align:center;font-size:76px;color:#16161a;', [['Lalu kita belajar menulis.']]);
+  const W = [['Di tanah liat.', 0.4], ['Di batu.', 2.67], ['Di daun lontar.', 5.11]].map(([w, a]) => ({ N: narr(sc.root, 'left:90px;top:1400px;width:900px;text-align:center;font-size:84px;color:#2a14d6;', [[w, 'font-style:italic;']]), a }));
+  credit(sc.root, 'foto: Daderot · Ms Sarah Welch · lontar Bali (CC0)', false);
+  sc.update = (l) => {
+    set(desk, { s: 1.04 - 0.04 * sine(P(l, 0, 8.3)), y: -20 * l / 8 });
+    PH.forEach((p, i) => {
+      const next = PH[i + 1];
+      const pin = sine(P(l, p.at - 0.4, p.at + 0.9));
+      const pout = next ? sine(P(l, next.at - 0.3, next.at + 0.7)) : 0;
+      set(p.e, { y: (1 - pin) * 60 - pout * 40, r: p.r + (1 - pin) * 3, s: 0.97 + 0.03 * pin + 0.02 * pout, o: pin * (1 - pout), b: (1 - pin) * 8 + pout * 10 });
+      p.c.style.opacity = (pin * (1 - pout) * 0.9).toFixed(3);
     });
-    const dp = P(t, 3.85, 4.3);
-    set(drop, { y: ei(dp) * 330, o: t > 3.8 && t < 4.35 ? 1 : 0, sy: 1 + ei(dp) * 0.5 });
-    root.style.transform = `scale(${(1 + 0.04 * P(t, 0, 4.7)).toFixed(4)})`;
-  }
-  return { update };
-})();
-scenes.push(S1);
+    narrIn(N0, l, 0.6, { step: 0.2 });
+    W.forEach((w, i) => { narrIn(w.N, l, w.a + 0.3, { step: 0.22, dur: 1.2 }); if (i < 2) narrOut(w.N, l, W[i + 1].a - 0.2, 0.7); });
+  };
+}
 
-/* 2 · cap tangan gua, 67.800, kita meninggalkan tanda (4.3 – 10.9) */
-const S2 = (() => {
-  const T0 = 4.3;
-  const root = scene(NIGHT);
-  const cam = el(root, 'inset:0;transform-origin:540px 760px;');
-  const img = photo(cam, 'gua1', 'left:-240px;top:-160px;width:1560px;height:2180px;', 'duoNight');
-  el(cam, 'left:-200px;top:-200px;width:1480px;height:2320px;background:radial-gradient(circle at 50% 40%, transparent 28%, rgba(11,7,51,.88) 74%);');
-  // anotasi scrapbook di atas foto
-  const circ = scribble(cam, 'left:330px;top:300px;', 420, 420, 'M210 20 C 330 20, 400 110, 396 210 C 392 320, 300 400, 200 398 C 90 396, 18 300, 22 196 C 26 96, 110 26, 230 30', '#fff', 6);
-  const arrow = scribble(cam, 'left:640px;top:180px;', 300, 200, 'M280 20 C 220 30, 150 70, 90 150 M90 150 L 96 104 M90 150 L 136 140', '#fff', 6);
-  const note = el(cam, 'left:700px;top:110px;font:700 64px var(--hand);color:#fff;', 'cap tangan!');
-  const num = slot(root, 'left:0;top:1120px;width:1080px;', '67.800', `${SERIF(650)}font-size:250px;line-height:1.02;color:#fff;font-variant-numeric:lining-nums tabular-nums;`);
-  const sub = kin(root, 'left:120px;top:1400px;width:840px;text-align:center;font:500 32px/1.5 var(--mono);color:rgba(255,255,255,.88);', [['tahun lalu, manusia di Sulawesi sudah menempelkan tangannya di dinding gua.']]);
-  const line = kin(root, 'left:0;top:1600px;width:1080px;text-align:center;font-size:84px;color:#fff;', [['kita sudah ingin '], ['diingat.', 'font-style:italic;color:#b9b0ff;']], SERIF(400));
-  // kecocokan bentuk: tangan di foto → tangan doodle bercahaya
-  const handLayer = el(root, 'inset:0;background:radial-gradient(circle at 50% 46%, #22168a 0%, #0b0733 65%);');
-  const HAND = 'M70 250 L62 172 Q42 152 31 122 L18 95 Q14 83 25 80 Q35 78 41 90 L57 121 L50 40 Q49 27 61 27 Q72 27 73 40 L79 110 L85 22 Q86 9 97 10 Q108 11 108 24 L105 108 L115 31 Q117 19 128 21 Q138 23 136 36 L127 116 L141 61 Q144 50 154 52 Q163 55 161 67 L147 141 Q141 176 136 201 L133 250 Z';
-  const glow = el(handLayer, 'left:240px;top:360px;width:600px;height:760px;border-radius:50%;background:radial-gradient(closest-side, rgba(185,176,255,.34), transparent);');
-  const hand = svg(handLayer, 'left:340px;top:430px;', 400, 580, `<path d="${HAND}" fill="rgba(185,176,255,.12)" stroke="none"/><path d="${HAND}" ${lc(3, '#fff')}/>`, '0 0 180 260');
-  const d2 = dust(handLayer, 50, LILAC, 9, 7);
-  const tanda = kin(handLayer, 'left:0;top:1180px;width:1080px;text-align:center;font-size:92px;color:#fff;', [['✳ ', 'color:#b9b0ff;'], ['kita meninggalkan '], ['tanda.', 'font-style:italic;color:#b9b0ff;']], SERIF(400));
-  const cr = credit(root, 'foto: gua Leang Pettakere, Maros · Cahyo Ramadhani, CC BY-SA 4.0');
-  function update(t) {
-    if (!show(root, t, T0, 11.15)) return;
-    const l = t - T0;
-    root.style.clipPath = blob(540, 940, 2600 * ei(P(l, 0, 0.45)) + 60 * P(l, 0, 0.05), l, 2);
-    // kamera: dorong pelan, lalu menembus telapak
-    const push = 1.15 - 0.15 * eo(P(l, 0, 1.2)) + 0.04 * l;
-    const dive = ei(P(l, 3.85, 4.35));
-    set(cam, { s: push * (1 + dive * 7), y: -l * 10 });
-    set(img, { x: Math.sin(l * 0.3) * 14 });
-    draw(circ, cub(P(l, 0.7, 1.3)));
-    draw(arrow, cub(P(l, 1.1, 1.5)));
-    set(note, { o: eo(P(l, 1.3, 1.6)), r: -6, y: (1 - eo(P(l, 1.3, 1.6))) * 20 });
-    slotRoll(num, l, 0.9, 1.5);
-    const fadeOut = 1 - P(l, 3.75, 4.05);
-    set(num.w, { o: eo(P(l, 0.85, 1.1)) * fadeOut, y: (1 - eo(P(l, 0.85, 1.3))) * 60 });
-    kinIn(sub, l, 1.7, { step: 0.008, dur: 0.4, em: 20 });
-    sub.w.style.opacity = fadeOut;
-    kinIn(line, l, 2.6, { step: 0.03, mode: 'rise' });
-    line.w.style.opacity = fadeOut;
-    // tangan doodle muncul dari dalam telapak
-    handLayer.style.display = l > 4.15 ? 'block' : 'none';
-    handLayer.style.clipPath = blob(540, 720, 2600 * eo(P(l, 4.15, 4.6)), l, 5);
-    draw(hand, cub(P(l, 4.3, 5.3)), 0);
-    set(hand, { s: 1.3 - 0.3 * eo(P(l, 4.15, 5.5)) });
-    set(glow, { o: eo(P(l, 4.6, 5.2)) * (0.85 + 0.15 * Math.sin(l * 12)) });
-    d2(l, 1);
-    kinIn(tanda, l, 4.8, { step: 0.035, mode: 'rise', w0: 200, w1: 450 });
-    cr.style.opacity = l < 4.15 ? eo(P(l, 0.6, 1)) : 0;
-  }
-  return { update };
-})();
-scenes.push(S2);
+/* 4 · alatnya berganti, rindunya tidak (20.64 – 26.46) */
+{
+  const sc = scene(NIGHT, 20.64, 27.0, 1.2, 'bloom', [540, 820]);
+  const a = photo(sc.root, 'pena', 'left:-120px;top:120px;width:1320px;height:968px;-webkit-mask-image:radial-gradient(ellipse 72% 62% at 50% 46%, #000 52%, transparent 100%);mask-image:radial-gradient(ellipse 72% 62% at 50% 46%, #000 52%, transparent 100%);', 'duoNight');
+  const b = photo(sc.root, 'mesintik', 'left:90px;top:120px;width:900px;height:1060px;-webkit-mask-image:radial-gradient(ellipse 72% 62% at 50% 46%, #000 52%, transparent 100%);mask-image:radial-gradient(ellipse 72% 62% at 50% 46%, #000 52%, transparent 100%);', 'duoNight');
+  el(sc.root, 'inset:0;background:linear-gradient(rgba(11,7,51,.2) 0%, rgba(11,7,51,.1) 40%, rgba(11,7,51,.9) 66%, #0b0733 80%);');
+  const N1 = narr(sc.root, 'left:90px;top:1270px;width:900px;text-align:center;font-size:80px;color:#fff;', [['Alatnya berganti,']]);
+  const N2 = narr(sc.root, 'left:90px;top:1400px;width:900px;text-align:center;font-size:104px;color:#b9b0ff;', [['rindunya tidak.', 'font-style:italic;']]);
+  credit(sc.root, 'foto: Petar Milošević, CC BY-SA 4.0 · Daderot, CC0');
+  sc.update = (l) => {
+    set(a, { s: 1.1 - 0.06 * sine(P(l, 0, 3.4)), x: -30 * l / 3, o: 1 - sine(P(l, 2.6, 3.6)) });
+    set(b, { s: 1.06 - 0.05 * sine(P(l, 2.6, 5.8)), o: sine(P(l, 2.6, 3.6)) });
+    narrIn(N1, l, 0.6, { step: 0.25 });
+    narrIn(N2, l, 2.6, { step: 0.35, dur: 1.4 });
+  };
+}
 
-/* 4 · jurnal sejarah: kamera meluncur turun melewati foto-foto (10.6 – 15.8) */
-const S4 = (() => {
-  const T0 = 10.6;
-  const root = scene(SHEET);
-  const canvas = el(root, 'left:0;top:0;width:1080px;height:5800px;');
-  canvas.className = 'dots';
-  const ITEMS = [
-    { src: 'uruk', x: 110, y: 380, w: 860, h: 520, r: -3, year: '± 3.300 SM', cap: 'Uruk · lempeng tanah liat, ditekan buluh', side: 'L' },
-    { src: 'yupa', x: 150, y: 1500, w: 780, h: 640, r: 3, year: '± 400 M', cap: 'Kutai · Yupa, prasasti tertua Nusantara', side: 'R' },
-    { src: 'lontar', x: 60, y: 2700, w: 960, h: 300, r: -2, year: 'lontar', cap: 'Bali · daun lontar digores pengutik', side: 'L' },
-    { src: 'pos', x: 120, y: 3520, w: 840, h: 620, r: 2.5, year: '1746', cap: 'Batavia · kantor pos pertama berdiri', side: 'R' },
-    { src: 'kartini', x: 260, y: 4640, w: 560, h: 740, r: -3, year: '1899–1904', cap: 'Jepara · Kartini menulis surat-suratnya', side: 'L' },
-  ];
-  // garis waktu tinta yang menyambung semua foto
-  let pathD = 'M540 120';
-  ITEMS.forEach((it, i) => { const cy = it.y + it.h / 2; pathD += ` C ${i % 2 ? 980 : 100} ${cy - 420}, ${i % 2 ? 100 : 980} ${cy - 220}, 540 ${cy}`; });
-  const tl = svg(canvas, 'left:0;top:0;', 1080, 5800, `<path d="${pathD}" ${lc(5, 'rgba(42,20,214,.45)')}/>`);
-  const items = ITEMS.map((it, i) => {
-    const p = print(canvas, it.src, { x: it.x, y: it.y, w: it.w, h: it.h, r: it.r });
-    const L = it.side === 'L';
-    const yr = kin(canvas, `left:80px;top:${it.y + it.h + 50}px;width:920px;text-align:${L ? 'left' : 'right'};font-size:150px;color:${BLUE};line-height:1;`, [[it.year]], SERIF(600));
-    const cp = el(canvas, `left:80px;top:${it.y + it.h + 220}px;width:920px;text-align:${L ? 'left' : 'right'};font:500 32px var(--mono);color:${TEXT};`, it.cap);
-    const star = dbox(canvas, i % 2 ? 'kilau' : 'bintang-kecil', `left:${L ? it.x + it.w - 50 : it.x - 60}px;top:${it.y - 80}px;`, { size: 110, color: BLUE, sw: 4 });
-    return { p, yr, cp, star, i, ...it };
-  });
-  const STOP = 0.95, A = 0.3;
-  const target = (i) => { const it = ITEMS[Math.min(i, ITEMS.length - 1)]; return it.y + it.h / 2 + 150 - 860; };
-  function camY(l) {
-    // berhenti sebentar di tiap foto, meluncur di antaranya
-    const k = clamp((l - A) / STOP, 0, ITEMS.length - 1);
-    const i0 = Math.floor(k), f = k - i0;
-    const intro = (1 - eo(P(l, 0, 0.7))) * -500;
-    return lerp(target(i0), target(i0 + 1), eio(clamp((f - 0.5) / 0.5))) + intro;
-  }
-  const cr = credit(root, 'foto: Wikimedia Commons — Daderot, Ms Sarah Welch, Nationaal Archief (CC0) · Tropenmuseum (CC BY-SA 3.0)', false);
-  function update(t) {
-    if (!show(root, t, T0, 16.1)) return;
-    const l = t - T0;
-    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.5))) - 40, 7);
-    const y = camY(l);
-    set(canvas, { y: -y, r: Math.sin(l * 0.8) * 0.5 });
-    draw(tl, clamp((y + 1400) / 5800));
-    items.forEach((it) => {
-      const a = it.i === 0 ? 0.15 : A + (it.i - 1) * STOP + STOP * 0.55;
-      const s = spring(l - a, 1.3, 6.5);
-      set(it.p, { y: (1 - clamp(s)) * 220, r: it.r + (1 - clamp(s)) * 10, s: 0.9 + 0.1 * clamp(s), o: clamp((l - a) / 0.12) });
-      kinIn(it.yr, l, a + 0.3, { step: 0.04, mode: 'rise', em: 130, w0: 300, w1: 640 });
-      it.cp.style.opacity = eo(P(l, a + 0.5, a + 0.75));
-      draw(it.star.d, cub(P(l, a + 0.35, a + 0.75)));
-    });
-    cr.style.opacity = eo(P(l, 0.5, 0.9));
-  }
-  return { update };
-})();
-scenes.push(S4);
+/* 5 · kita menulis surat, lalu menunggu (25.79 – 31.64) */
+{
+  const sc = scene(NIGHT, 25.79, 32.05, 1.2);
+  const ph = photo(sc.root, 'pos', 'left:-600px;top:120px;width:2250px;height:1504px;', 'duoNight');
+  el(sc.root, 'inset:0;background:linear-gradient(#0b0733 0%, rgba(11,7,51,.25) 22%, rgba(11,7,51,.3) 52%, rgba(11,7,51,.92) 72%, #0b0733 86%);');
+  const N1 = narr(sc.root, 'left:90px;top:1260px;width:900px;text-align:center;font-size:74px;line-height:1.28;color:#fff;', [['Kita menulis surat,'], ['lalu menunggu —', 'font-style:italic;color:#b9b0ff;']]);
+  const N2 = narr(sc.root, 'left:90px;top:1470px;width:900px;text-align:center;font-size:52px;line-height:1.3;color:rgba(255,255,255,.82);', [['berhari-hari, berminggu-minggu.']]);
+  const f = fact(sc.root, 'top:1640px;', '1746 · KANTOR POS PERTAMA DI BATAVIA');
+  credit(sc.root, 'foto: kantor pos Batavia · Nationaal Archief, CC0');
+  sc.update = (l) => {
+    set(ph, { x: -90 * sine(P(l, 0, 5.85)), s: 1.04 });
+    narrIn(N1, l, 0.7, { step: 0.22 });
+    narrIn(N2, l, 2.9, { step: 0.3, dur: 1.2 });
+    f.style.opacity = sine(P(l, 3.4, 4.4)).toFixed(3);
+  };
+}
 
-/* 5 · alat tulis di lembar cetak biru (15.6 – 21.9) */
-const S5 = (() => {
-  const T0 = 15.6;
-  const root = scene(SHEET);
-  root.style.backgroundImage = 'linear-gradient(rgba(42,20,214,.08) 2px, transparent 2px), linear-gradient(90deg, rgba(42,20,214,.08) 2px, transparent 2px), linear-gradient(rgba(42,20,214,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(42,20,214,.035) 1px, transparent 1px)';
-  root.style.backgroundSize = '120px 120px, 120px 120px, 24px 24px, 24px 24px';
-  ['lembar 02 · alat tulis manusia', 'skala 1 : 1'].forEach((s, i) => el(root, `${i === 1 ? 'right' : 'left'}:60px;${i === 2 ? 'bottom' : 'top'}:70px;font:500 20px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:rgba(42,20,214,.55);`, s));
-  const ring = svg(root, 'left:140px;top:380px;', 800, 800, `<circle cx="400" cy="400" r="390" ${lc(2, 'rgba(42,20,214,.25)')} stroke-dasharray="6 12"/><path d="M400 0 L400 40 M400 760 L400 800 M0 400 L40 400 M760 400 L800 400" ${lc(2, 'rgba(42,20,214,.5)')}/>`);
-  const QUILL = `<path d="M160 440 Q200 400 236 330 Q270 360 300 400 Q260 240 262 60 Q240 200 236 330 Z" fill="rgba(42,20,214,.12)"/><path d="M210 580 L262 40" ${lc(5, BLUE)}/><path d="M258 90 Q120 170 160 440 Q190 380 236 330 M262 60 Q380 190 300 400 Q270 360 240 330" ${lc(5, BLUE)}/><path d="M185 270 L240 205 M175 340 L236 280 M280 165 L250 210 M300 245 L246 285" ${lc(3.5, BLUE)}/>`;
-  const TOOLS = [
-    { kind: 'photo', src: 'kalam', title: 'KALAM', sub: 'pena buluh · dipakai ribuan tahun', css: 'left:90px;top:720px;width:900px;height:150px;contain;', rot: -55 },
-    { kind: 'svg', inner: QUILL, title: 'PENA BULU', sub: 'bulu angsa dicelup tinta' },
-    { kind: 'photo', src: 'pena', title: 'PENA TINTA', sub: 'mata pena logam · surat & buku harian', css: 'left:200px;top:480px;width:680px;height:680px;border-radius:50%;', rot: 0 },
-    { kind: 'photo', src: 'mesintik', title: 'MESIN TIK', sub: 'Remington No. 1 · 1873–1878', css: 'left:250px;top:430px;width:580px;height:690px;', rot: 0 },
-  ].map((tool, i) => {
-    const g = el(root, 'inset:0;');
-    let a;
-    if (tool.kind === 'photo') { const inv = /contain/.test(tool.css); a = photo(g, tool.src, tool.css.replace('contain;', ''), inv ? 'duoInv' : 'duoInk'); if (inv) a.firstChild.style.objectFit = 'contain'; }
-    else a = svg(g, 'left:340px;top:450px;', 400, 600, tool.inner, '0 0 400 600');
-    const dim = svg(g, 'left:0;top:0;', 1080, 1920, `<path d="M110 430 L110 1150 M96 430 L124 430 M96 1150 L124 1150" ${lc(2, 'rgba(42,20,214,.55)')}/><path d="M830 540 C 900 520, 940 490, 960 450" ${lc(2.5, BLUE)}/><circle cx="812" cy="550" r="10" ${lc(3, BLUE)}/>`);
-    const num = el(g, `left:880px;top:390px;font:700 56px var(--hand);color:${BLUE};`, `no.${i + 1}`);
-    const tt = kin(g, `left:0;top:1260px;width:1080px;text-align:center;font:600 46px var(--mono);letter-spacing:.14em;color:${BLUE};`, [[`FIG. 0${i + 1} — ${tool.title}`]]);
-    const ss = el(g, 'left:0;top:1330px;width:1080px;text-align:center;font:500 28px var(--mono);color:rgba(22,22,26,.6);', tool.sub);
-    return { g, a, dim, num, tt, ss, i, ...tool };
-  });
-  const STEP = 1.0, A0 = 0.25;
-  const say1 = kin(root, 'left:0;top:820px;width:1080px;text-align:center;font-size:96px;color:#16161a;', [['Alatnya berganti.']], SERIF(400));
-  const say2 = kin(root, 'left:0;top:950px;width:1080px;text-align:center;font-size:150px;color:#2a14d6;', [['rindunya sama.', 'font-style:italic;']], SERIF(400));
-  const ink = scribble(root, 'left:280px;top:1140px;', 520, 30, 'M6 16 C 140 4, 300 26, 514 10', BLUE, 8);
-  const cr = credit(root, 'foto: Walters Art Museum (PD) · Petar Milošević, CC BY-SA 4.0 · Daderot, CC0', false);
-  function update(t) {
-    if (!show(root, t, T0, 21.9)) return;
-    const l = t - T0;
-    root.style.clipPath = blob(540, 960, 2600 * ei(P(l, 0, 0.5)) + 40, l, 3);
-    set(ring, { r: l * 14 });
-    TOOLS.forEach((k) => {
-      const a = A0 + k.i * STEP, ll = l - a;
-      const on = ll >= 0 && ll < STEP;
-      k.g.style.display = on ? 'block' : 'none';
-      if (!on) return;
-      const e = eo(P(ll, 0, 0.45));
-      if (k.kind === 'photo') set(k.a, { s: 0.85 + 0.15 * e + 0.04 * ll, r: k.rot + (1 - e) * 10, o: e, b: (1 - e) * 10 });
-      else { draw(k.a, cub(P(ll, 0, 0.6)), 0.15); set(k.a, { s: 0.9 + 0.1 * e + 0.04 * ll, r: (1 - e) * -10 }); }
-      draw(k.dim, cub(P(ll, 0.1, 0.55)), 0.2);
-      set(k.num, { o: eo(P(ll, 0.2, 0.4)), r: -8 });
-      kinIn(k.tt, ll, 0.05, { step: 0.02, mode: 'drop', em: 30, w0: 600, w1: 600 });
-      k.ss.style.opacity = eo(P(ll, 0.25, 0.5));
-    });
-    const end = A0 + TOOLS.length * STEP; // 4.25
-    kinIn(say1, l, end + 0.05, { step: 0.035, mode: 'rise', w0: 200, w1: 460 });
-    kinIn(say2, l, end + 0.7, { step: 0.05, mode: 'rise', w0: 200, w1: 640, em: 150 });
-    draw(ink, cub(P(l, end + 1.15, end + 1.5)));
-    cr.style.opacity = l < end ? 1 : 0;
-  }
-  return { update };
-})();
-scenes.push(S5);
+/* 6 · Kartini, di awal reff (31.02 – 39.31) */
+{
+  const sc = scene(BLUE, 31.02, 40.0, 1.0, 'bloom', [540, 640]);
+  sc.root.style.background = `radial-gradient(circle at 50% 30%, #3b26e8 0%, ${BLUE} 40%, #170a8c 100%)`;
+  const p = print(sc.root, 'kartini', { x: 250, y: 200, w: 580, h: 750, tape: true });
+  const N1 = narr(sc.root, 'left:80px;top:1080px;width:920px;text-align:center;font-size:64px;line-height:1.3;color:#fff;', [['Dari Jepara, seorang perempuan menulis surat demi surat.']]);
+  const N2 = narr(sc.root, 'left:80px;top:1330px;width:920px;text-align:center;font-size:68px;line-height:1.3;color:#dcd7ff;', [['Seratus tahun kemudian, suaranya masih sampai kepada kita.', 'font-style:italic;']]);
+  const f = fact(sc.root, 'top:1620px;', 'R.A. KARTINI · SURAT-SURAT 1899–1904');
+  credit(sc.root, 'foto: Tropenmuseum, CC BY-SA 3.0');
+  sc.update = (l) => {
+    set(p, { s: 1.04 - 0.05 * sine(P(l, 0, 8.3)), r: 2.5 - 1.5 * sine(P(l, 0, 8.3)), y: 30 * (1 - qo(P(l, 0, 1.5))), o: 1 });
+    narrIn(N1, l, 0.8, { step: 0.17 });
+    narrIn(N2, l, 3.6, { step: 0.19, dur: 1.3 });
+    f.style.opacity = sine(P(l, 2.2, 3.2)).toFixed(3);
+  };
+}
 
-/* ===================== BABAK II ===================== */
+/* 7 · surat-surat yang kita simpan (38.68 – 47.11) */
+{
+  const sc = scene(SHEET, 38.68, 47.85, 1.4, 'bloom', [540, 600]);
+  const desk = el(sc.root, 'inset:0;transform-origin:540px 700px;');
+  const pA = print(desk, 'surat1788', { x: 90, y: 180, w: 560, h: 680 });
+  const pB = print(desk, 'surat2', { x: 380, y: 520, w: 640, h: 380 });
+  const seal = el(desk, 'left:300px;top:650px;width:300px;height:300px;border-radius:50%;overflow:hidden;box-shadow:0 18px 40px rgba(15,10,60,.35);');
+  photo(seal, 'lak', 'inset:0;width:300px;height:300px;', 'duoInk');
+  const N1 = narr(sc.root, 'left:70px;top:1200px;width:940px;text-align:center;font-size:64px;line-height:1.3;color:#16161a;', [['Surat-surat itu kita ikat,'], ['kita simpan,']]);
+  const N2 = narr(sc.root, 'left:90px;top:1420px;width:900px;text-align:center;font-size:74px;line-height:1.3;color:#2a14d6;', [['dan kita baca lagi setiap kali rindu.', 'font-style:italic;']]);
+  credit(sc.root, 'foto: Rijksmuseum (CC0) · lak: Museum Rotterdam (CC BY-SA 3.0)', false);
+  sc.update = (l) => {
+    set(desk, { s: 1.08 - 0.08 * sine(P(l, 0, 8.4)), y: 30 * sine(P(l, 0, 8.4)), r: -1 + l * 0.15 });
+    set(pA, { r: -5 + (1 - qo(P(l, 0, 1.6))) * -4, y: (1 - qo(P(l, 0, 1.6))) * 50, o: 1 });
+    set(pB, { r: 6 + (1 - qo(P(l, 0.4, 2.0))) * 5, y: (1 - qo(P(l, 0.4, 2.0))) * 70, o: sine(P(l, 0.3, 1.2)) });
+    set(seal, { s: 0.9 + 0.1 * qo(P(l, 1.0, 2.4)), o: sine(P(l, 1.0, 1.9)), r: -10 });
+    narrIn(N1, l, 1.0, { step: 0.2 });
+    narrIn(N2, l, 3.9, { step: 0.22, dur: 1.3 });
+  };
+}
 
-/* 6 · judul babak di atas foto kantor pos (21.9 – 24.7) */
-const S6 = (() => {
-  const T0 = 21.9;
-  const root = scene(NIGHT);
-  const img = photo(root, 'pos', 'left:-620px;top:160px;width:2300px;height:1540px;', 'duoNight');
-  el(root, `inset:0;background:linear-gradient(${NIGHT} 0%, rgba(11,7,51,.35) 28%, rgba(11,7,51,.35) 66%, ${NIGHT} 100%);`);
-  const CITIES = [['Den Haag', 800, 330], ['Batavia', 230, 1060], ['Semarang', 470, 1130], ['Jepara', 570, 1020], ['Surabaya', 720, 1160], ['Makassar', 880, 1350], ['Medan', 130, 720]];
-  const routes = svg(root, 'left:0;top:0;', 1080, 1920, [[0, 1], [1, 2], [2, 3], [2, 4], [4, 5], [1, 6], [0, 3]].map(([a, b]) => {
-    const A = CITIES[a], B = CITIES[b];
-    return `<path d="M${A[1]} ${A[2]} Q${(A[1] + B[1]) / 2 + (B[2] - A[2]) * 0.2} ${(A[2] + B[2]) / 2 - (B[1] - A[1]) * 0.2} ${B[1]} ${B[2]}" ${lc(3, LILAC)}/>`;
-  }).join(''));
-  const dots = CITIES.map(([n, x, y], i) => ({ d: el(root, `left:${x - 10}px;top:${y - 10}px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 0 10px rgba(185,176,255,.2);`), tl: el(root, `left:${x + 22}px;top:${y - 16}px;font:500 23px var(--mono);color:rgba(255,255,255,.85);`, n), i }));
-  const env = dbox(root, 'amplop', 'left:0;top:0;', { size: 80, color: '#fff', sw: 4 });
-  const K = kin(root, 'left:0;top:800px;width:1080px;text-align:center;font:600 58px var(--mono);color:#fff;letter-spacing:.08em;', [['‹ ', 'color:#b9b0ff;'], ['BABAK II — '], ['SURAT', 'color:#b9b0ff;'], [' ›', 'color:#b9b0ff;']]);
-  const sub = el(root, 'left:0;top:900px;width:1080px;text-align:center;font:700 66px var(--hand);color:#b9b0ff;', 'saat kabar butuh berminggu-minggu');
-  const cr = credit(root, 'foto: kantor pos Batavia · Nationaal Archief, CC0');
-  function update(t) {
-    if (!show(root, t, T0, 25.15)) return;
-    const l = t - T0;
-    set(img, { x: -l * 34, s: 1.05 + 0.03 * l, o: 0.6 });
-    draw(routes, cub(P(l, 0.3, 2.0)), 0.3);
-    dots.forEach((d) => { set(d.d, { s: spring(l - 0.3 - d.i * 0.12, 1.6, 7) }); d.tl.style.opacity = eo(P(l, 0.4 + d.i * 0.12, 0.8 + d.i * 0.12)); });
-    // amplop terbang dari Den Haag ke Jepara
-    const q = cub(P(l, 0.6, 2.2));
-    const A = CITIES[0], B = CITIES[3];
-    const cx = (A[1] + B[1]) / 2 + (B[2] - A[2]) * 0.2, cy = (A[2] + B[2]) / 2 - (B[1] - A[1]) * 0.2;
-    const ex = (1 - q) * (1 - q) * A[1] + 2 * (1 - q) * q * cx + q * q * B[1], ey = (1 - q) * (1 - q) * A[2] + 2 * (1 - q) * q * cy + q * q * B[2];
-    set(env.b, { x: ex - 40, y: ey - 40, o: l > 0.6 && l < 2.25 ? 1 : 0, r: Math.sin(l * 5) * 8 });
-    draw(env.d, 1);
-    kinIn(K, l, 0.2, { mode: 'slam', step: 0.04, dur: 0.35 });
-    set(K.w, { s: 1 + 0.015 * l });
-    set(sub, { o: eo(P(l, 1.2, 1.6)), y: (1 - eo(P(l, 1.2, 1.6))) * 20 });
-  }
-  return { update };
-})();
-scenes.push(S6);
-
-/* 7 · montase surat (24.7 – 32.9) */
-const S7 = (() => {
-  const T0 = 24.7, STEP = 1.37;
-  const root = scene('transparent', false);
-  function panel(bg, title, cap, dark) {
-    const e = el(root, `inset:0;background:${bg};`);
-    e.className = 'grain';
-    const tt = kin(e, `left:0;top:1360px;width:1080px;text-align:center;font-size:116px;color:${dark ? '#fff' : TEXT};`, [[title, 'font-style:italic;']], SERIF(400));
-    const cp = el(e, `left:90px;top:1530px;width:900px;text-align:center;font:500 30px/1.5 var(--mono);color:${dark ? 'rgba(255,255,255,.78)' : 'rgba(22,22,26,.62)'};`, cap);
-    return { e, tt, cp };
-  }
-  const A = panel(PAPER, 'ditulis tangan', 'berhalaman-halaman, dengan tinta yang kadang luntur');
-  const aImg = print(A.e, 'surat1788', { x: 160, y: 200, w: 760, h: 920, r: -2 });
-  credit(A.e, 'foto: surat, 1788 · Rijksmuseum, CC0', false);
-  const B = panel(NIGHT, 'disegel', 'lilin dilelehkan, cap ditekan', true);
-  const bImg = photo(B.e, 'lak', 'left:190px;top:320px;width:700px;height:700px;border-radius:50%;', 'duoNight');
-  const bRip = el(B.e, 'left:290px;top:420px;width:500px;height:500px;border-radius:50%;border:6px solid rgba(185,176,255,.8);box-sizing:border-box;');
-  credit(B.e, 'foto: lak segel · Museum Rotterdam, CC BY-SA 3.0');
-  const C = panel(BLUE, 'Kartini', 'menulis dari Jepara, 1899–1904 · surat-suratnya terbit jadi buku, 1911', true);
-  const cImg = print(C.e, 'kartini', { x: 270, y: 220, w: 540, h: 700, r: 3 });
-  const cSig = el(C.e, 'left:560px;top:930px;font:700 100px var(--hand);color:#fff;', 'Japara');
-  const cLine = scribble(C.e, 'left:560px;top:1060px;', 330, 30, 'M6 16 C 100 4, 200 26, 324 10', '#fff', 6);
-  credit(C.e, 'foto: Tropenmuseum, CC BY-SA 3.0');
-  const D = panel(PAPER, 'diantar', 'naik kapal, kereta, sepeda · berhari-hari');
-  const dImg = print(D.e, 'surat2', { x: 90, y: 360, w: 900, h: 520, r: -3 });
-  const dBike = dbox(D.e, 'sepeda', 'left:0;top:900px;', { size: 300, color: BLUE, sw: 3 });
-  const dSpeed = scribble(D.e, 'left:0;top:980px;', 260, 160, 'M20 30 L200 30 M50 90 L220 90 M30 150 L180 150', BLUE, 6);
-  credit(D.e, 'foto: surat · Rijksmuseum, CC0', false);
-  const E = panel(SHEET, 'telegram', 'dibayar per kata, jadi harus singkat');
-  const eDots = el(E.e, 'inset:0;opacity:.6;'); eDots.className = 'dots';
-  const strip = el(E.e, 'left:70px;top:620px;width:940px;height:240px;background:#fff6d6;box-shadow:0 24px 50px rgba(20,20,60,.16);');
-  el(strip, 'left:34px;top:20px;font:500 22px var(--mono);letter-spacing:.2em;color:rgba(22,22,26,.5);', 'KAWAT · JAKARTA');
-  const tg = el(strip, 'left:34px;top:80px;width:880px;font:600 52px/1.25 var(--mono);color:#16161a;');
-  const F = panel(BLUE, 'ditunggu', 'dibalas, lalu disimpan di kotak sepatu', true);
-  const fPile = [print(F.e, 'surat2', { x: 60, y: 300, w: 620, h: 360, r: -9 }), print(F.e, 'surat1788', { x: 560, y: 520, w: 420, h: 520, r: 7 })];
-  const fStamp = dbox(F.e, 'perangko-bergerigi', 'left:290px;top:330px;', { size: 500, color: '#fff', sw: 2.4 });
-  const fCancel = svg(F.e, 'left:520px;top:480px;', 340, 340, `<circle cx="170" cy="170" r="130" ${lc(7, LILAC)}/><circle cx="170" cy="170" r="104" ${lc(3, LILAC)}/><path d="M40 320 q 40 -30 80 0 t 80 0 t 80 0 M20 350 q 40 -30 80 0 t 80 0 t 80 0" ${lc(5, LILAC)}/>`);
-  const fTxt = el(F.e, `left:610px;top:620px;width:160px;text-align:center;font:600 40px var(--mono);color:${LILAC};`, 'POS');
-  const PANELS = [A, B, C, D, E, F];
-  function update(t) {
-    if (!show(root, t, T0, 33.35)) return;
-    const l = t - T0;
-    const k = Math.min(5, Math.floor(l / STEP));
-    const ll = l - k * STEP;
-    PANELS.forEach((p, i) => { p.e.style.display = i === k || (i === k - 1 && ll < 0.45) ? 'block' : 'none'; p.e.style.zIndex = i === k ? 2 : 1; });
-    const cur = PANELS[k];
-    // transisi bergantian: tinta menyebar / kertas sobek naik
-    cur.e.style.clipPath = k % 2 === 0 ? blob(540, 820, 2600 * ei(P(ll, 0, 0.45)) + 30, ll, k + 8) : torn(1920 * (1 - eo(P(ll, 0, 0.42))) - 40, k);
-    kinIn(cur.tt, ll, 0.2, { step: 0.035, mode: 'rise', w0: 200, w1: 520, em: 110 });
-    cur.cp.style.opacity = eo(P(ll, 0.4, 0.7));
-    if (k === 0) set(aImg, { y: -ll * 70, r: -2 + ll, s: 1.02 + 0.03 * ll });
-    else if (k === 1) {
-      const f = P(ll, 0.25, 0.37);
-      const settle = ll > 0.37 ? 1 + Math.exp(-9 * (ll - 0.37)) * Math.sin((ll - 0.37) * 28) * 0.05 : 1;
-      set(bImg, { s: lerp(2.2, 1, ei(f)) * settle, o: ll > 0.25 ? 1 : 0, r: lerp(-20, 0, f) + ll * 4 });
-      const q = P(ll, 0.37, 1.1); set(bRip, { s: lerp(0.8, 2.4, eo(q)), o: q > 0 && q < 1 ? 0.8 * (1 - q) : 0 });
-    } else if (k === 2) {
-      set(cImg, { s: 1.06 - 0.06 * eo(P(ll, 0, 0.8)) + 0.02 * ll, r: 3 - ll });
-      set(cSig, { o: eo(P(ll, 0.5, 0.8)), r: -8 });
-      draw(cLine, cub(P(ll, 0.75, 1.05)));
-    } else if (k === 3) {
-      set(dImg, { x: -ll * 40, r: -3 + ll * 0.5 });
-      const x = lerp(-320, 1100, P(ll, 0.1, STEP));
-      set(dBike.b, { x, y: Math.abs(Math.sin(ll * 18)) * -8 }); draw(dBike.d, 1);
-      set(dSpeed, { x: x - 230, o: 0.8 }); draw(dSpeed, 1);
-    } else if (k === 4) {
-      typed(tg, 'TIBA SELAMAT STOP<br>RINDU RUMAH STOP', P(ll, 0.15, 1.15), t, true);
-      set(strip, { r: -2 + ll, s: 1 + 0.03 * ll });
-    } else {
-      fPile.forEach((pp, j) => set(pp, { y: (1 - eo(P(ll, j * 0.08, 0.4 + j * 0.08))) * 300, r: [-9, 7][j] + ll * (j ? -1 : 1), o: 1 }));
-      draw(fStamp.d, cub(P(ll, 0, 0.45)), 0.1);
-      set(fStamp.b, { s: 1 + 0.03 * ll });
-      const f = P(ll, 0.5, 0.6);
-      set(fCancel, { s: lerp(1.8, 1, ei(f)), o: ll > 0.5 ? 1 : 0 }); draw(fCancel, ll > 0.5 ? 1 : 0);
-      set(fTxt, { o: ll > 0.55 ? 1 : 0, r: -12 });
-    }
-    hit(t, T0 + STEP + 0.37, 20);
-    hit(t, T0 + 5 * STEP + 0.6, 16);
-  }
-  return { update };
-})();
-scenes.push(S7);
-
-/* 8 · barisan alat: "kita tidak pernah berhenti menulis —" (32.9 – 38.7) */
-const S8 = (() => {
-  const T0 = 32.9;
-  const root = scene(SHEET);
-  const track = el(root, 'left:0;top:0;width:3400px;height:1920px;');
-  track.className = 'dots';
-  const ROW = [
-    { k: 'photo', src: 'gua3', name: 'dinding gua', w: 400, h: 350, yr: '±67.800 th' },
-    { k: 'photo', src: 'uruk', name: 'tanah liat', w: 480, h: 240, yr: '3.300 SM' },
-    { k: 'photo', src: 'lontar', name: 'daun lontar', w: 540, h: 110, yr: 'lontar' },
-    { k: 'photo', src: 'surat1788', name: 'kertas & tinta', w: 310, h: 380, yr: '1788' },
-    { k: 'photo', src: 'mesintik', name: 'mesin tik', w: 340, h: 400, yr: '1873' },
-    { k: 'doodle', id: 'hp', name: 'ponsel', w: 340, h: 400, yr: 'kini' },
-  ];
-  let x = 140;
-  const items = ROW.map((it, i) => {
-    const g = el(track, `left:${x}px;top:${1140 - it.h}px;width:${it.w}px;height:${it.h}px;transform-origin:50% 100%;`);
-    if (it.k === 'photo') { const ph = photo(g, it.src, `left:0;top:0;width:${it.w}px;height:${it.h}px;`, 'duoInk'); ph.style.boxShadow = '0 14px 30px rgba(20,16,80,.22)'; }
-    else { const d = doodle(it.id, { size: it.h, color: BLUE, sw: 2.6 }); d.style.cssText += `;position:absolute;left:${(it.w - it.h) / 2}px;top:0;overflow:visible`; g.appendChild(d); it.d = d; }
-    const lb = el(track, `left:${x - 30}px;top:1180px;width:${it.w + 60}px;text-align:center;font:500 25px var(--mono);color:rgba(22,22,26,.62);`, it.name);
-    const fig = el(track, `left:${x - 30}px;top:${1140 - it.h - 66}px;width:${it.w + 60}px;text-align:center;font:700 46px var(--hand);color:${BLUE};`, it.yr);
-    const arr = i < ROW.length - 1 ? scribble(track, `left:${x + it.w + 20}px;top:${1050}px;`, 100, 40, 'M10 20 C 40 6, 60 30, 88 18 M88 18 L72 8 M88 18 L74 32', BLUE, 4) : null;
-    const res = { g, lb, fig, arr, i, ...it };
-    x += it.w + 140;
-    return res;
-  });
-  const ground = svg(track, 'left:80px;top:1146px;', x, 20, `<path d="M0 10 C ${x / 3} 4, ${x * 0.66} 16, ${x - 100} 8" ${lc(3, 'rgba(22,22,26,.35)')}/>`);
-  const cap = kin(root, 'left:60px;top:1420px;width:960px;text-align:center;font-size:72px;color:#16161a;line-height:1.15;', [['Kita tidak pernah berhenti '], ['menulis', 'font-style:italic;color:#2a14d6;'], [' —']], SERIF(400));
-  const cr = credit(root, 'foto: Cahyo Ramadhani (CC BY-SA 4.0) · Daderot, Rijksmuseum (CC0)', false);
-  function update(t) {
-    if (!show(root, t, T0, 38.7)) return;
-    const l = t - T0;
-    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.45))) - 40, 3);
-    set(track, { x: -lerp(0, x - 1080 + 40, cub(P(l, 0.2, 3.7))) });
-    draw(ground, eo(P(l, 0, 2.5)));
-    items.forEach((it) => {
-      const a = 0.2 + it.i * 0.55;
-      const s = spring(l - a, 1.4, 6.5);
-      set(it.g, { sy: clamp(s, 0, 1.15), sx: 0.7 + 0.3 * clamp(s), o: l > a ? 1 : 0 });
-      if (it.d) draw(it.d, cub(P(l, a, a + 0.6)));
-      it.lb.style.opacity = eo(P(l, a + 0.2, a + 0.5));
-      set(it.fig, { o: eo(P(l, a + 0.25, a + 0.5)), r: -4, y: (1 - eo(P(l, a + 0.25, a + 0.55))) * 20 });
-      if (it.arr) draw(it.arr, cub(P(l, a + 0.35, a + 0.6)));
-    });
-    kinIn(cap, l, 3.3, { step: 0.03, mode: 'rise', w0: 200, w1: 480, em: 80 });
-    cr.style.opacity = 1;
-  }
-  return { update };
-})();
-scenes.push(S8);
-
-/* 9 · hanya berhenti menyimpannya (38.7 – 42.3) */
-const S9 = (() => {
-  const T0 = 38.7;
-  const root = scene(NIGHT);
-  const MSG = ['otw', 'wkwk', 'iya', 'udah makan?', 'ok', 'nanti ya', 'hahaha', 'sip', 'lagi di jalan', 'gpp', 'besok?', 'mantap', 'nanti kabarin', 'oke deh', 'siap', 'hehe', 'on the way', 'mksh'];
-  const bubbles = Array.from({ length: 34 }, (_, i) => {
+/* 8 · hari ini: menulis lebih banyak, tapi semuanya hilang (46.5 – 53.38) */
+{
+  const sc = scene(NIGHT, 46.5, 53.45, 1.4, 'bloom', [540, 1300]);
+  const MSG = ['udah sampai?', 'iya', 'nanti ya', 'wkwk', 'ok', 'kangen', 'lagi apa?', 'sip', 'besok?', 'gpp', 'hehe', 'otw', 'nanti kabarin', 'makasih', 'oke deh', 'met tidur'];
+  const bubbles = Array.from({ length: 22 }, (_, i) => {
     const me = hash(i + 40) > 0.5;
-    const bx = 100 + hash(i + 70) * 720, by = 120 + hash(i + 80) * 1600;
-    const b = el(root, `left:${bx}px;top:${by}px;padding:18px 28px;border-radius:30px;font:500 34px var(--mono);white-space:nowrap;background:${me ? BLUE : 'rgba(255,255,255,.14)'};color:#fff;`, MSG[i % MSG.length]);
-    return { b, i, z: hash(i + 90), bx, by };
+    return { e: el(sc.root, `${me ? 'right' : 'left'}:${80 + hash(i + 70) * 140}px;top:0;padding:18px 28px;border-radius:30px;font:500 34px var(--mono);white-space:nowrap;background:${me ? 'rgba(42,20,214,.85)' : 'rgba(255,255,255,.12)'};color:#fff;`, MSG[i % MSG.length]), i };
   });
-  el(root, 'inset:0;background:radial-gradient(circle at 50% 50%, rgba(11,7,51,.9) 0%, rgba(11,7,51,.4) 45%, transparent 70%);');
-  const K = kin(root, 'left:0;top:820px;width:1080px;text-align:center;font-size:96px;color:#fff;line-height:1.1;', [['— hanya berhenti']], SERIF(400));
-  const K2 = kin(root, 'left:0;top:940px;width:1080px;text-align:center;font-size:136px;color:#b9b0ff;line-height:1.1;', [['menyimpannya.', 'font-style:italic;']], SERIF(400));
-  const stat = el(root, 'left:0;top:1580px;width:1080px;text-align:center;font:500 27px/1.6 var(--mono);color:rgba(255,255,255,.62);', 'surat pos di Amerika Serikat:<br>103,6 miliar (2001) → 44,3 miliar (2024)');
-  function update(t) {
-    if (!show(root, t, T0, 42.8)) return;
-    const l = t - T0;
-    // gelembung chat melesat melewati kamera, lalu hilang
+  el(sc.root, 'inset:0;background:linear-gradient(#0b0733 0%, rgba(11,7,51,0) 30%, rgba(11,7,51,0) 45%, rgba(11,7,51,.92) 62%, #0b0733 75%);');
+  const N1 = narr(sc.root, 'left:90px;top:1230px;width:900px;text-align:center;font-size:66px;line-height:1.3;color:#fff;', [['Hari ini, kita menulis lebih banyak dari sebelumnya.']]);
+  const N2 = narr(sc.root, 'left:90px;top:1460px;width:900px;text-align:center;font-size:76px;line-height:1.3;color:#b9b0ff;', [['Tapi semuanya lewat —', 'font-style:italic;'], ['lalu hilang.', 'font-style:italic;']]);
+  sc.update = (l) => {
     bubbles.forEach((b) => {
-      const life = (l * (0.5 + b.z * 0.6) + b.z * 1.4) % 1.4;
-      const s = 0.3 + life * 1.6;
-      set(b.b, { s, x: (b.bx - 540) * (s - 1) * 0.6, y: (b.by - 960) * (s - 1) * 0.6, o: clamp(Math.sin(Math.PI * life / 1.4) * 1.2) * (1 - 0.7 * P(l, 1.2, 2)), b: Math.max(0, (s - 1.4) * 10) });
+      const y = 1150 + b.i * 120 - l * 210;
+      set(b.e, { y, o: clamp((y - 80) / 400) * (1 - clamp((300 - y) / 200)) * 0.95, b: y < 420 ? (420 - y) / 30 : 0 });
     });
-    kinIn(K, l, 0.3, { step: 0.03, mode: 'rise' });
-    kinIn(K2, l, 0.8, { step: 0.04, mode: 'rise', w0: 200, w1: 520, em: 120 });
-    kinOut(K2, l, 2.75, { step: 0.03 }); // kata-katanya ikut tenggelam
-    stat.style.opacity = eo(P(l, 1.7, 2.2));
-  }
-  return { update };
-})();
-scenes.push(S9);
+    narrIn(N1, l, 0.9, { step: 0.16 });
+    narrIn(N2, l, 3.3, { step: 0.26, dur: 1.3 });
+    // "hilang." perlahan larut
+    const last = N2.words[N2.words.length - 1];
+    if (l > 5.6) set(last, { o: 1 - sine(P(l, 5.6, 6.8)), b: sine(P(l, 5.6, 6.8)) * 16, y: -10 * sine(P(l, 5.6, 6.8)) });
+  };
+}
 
-/* 10 · kutipan Pramoedya (42.3 – 48.5) */
-const S10 = (() => {
-  const T0 = 42.3;
-  const root = scene(SHEET);
-  const bg = photo(root, 'surat2', 'left:-200px;top:180px;width:1600px;height:880px;-webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 30%, transparent 70%);mask-image:radial-gradient(ellipse at 50% 50%, #000 30%, transparent 70%);', 'duoInk');
-  const q = el(root, `left:70px;top:300px;${SERIF(600)}font-size:320px;line-height:1;color:${BLUE};`, '“');
-  const K = kin(root, 'left:90px;top:560px;width:900px;font-size:74px;line-height:1.22;color:#16161a;', [['Orang boleh pandai setinggi langit, tapi selama ia tidak '], ['menulis,', 'font-style:italic;color:#2a14d6;'], [' ia akan hilang di dalam masyarakat dan dari sejarah.']], SERIF(400));
-  const who = el(root, 'left:90px;top:1460px;font:500 34px var(--mono);color:#16161a;', '— Pramoedya Ananta Toer');
-  const ink = scribble(root, 'left:90px;top:1520px;', 520, 20, 'M0 10 C 150 4, 300 16, 520 8', BLUE, 6);
-  function update(t) {
-    if (!show(root, t, T0, 48.5)) return;
-    const l = t - T0;
-    root.style.clipPath = blob(540, 960, 2600 * ei(P(l, 0, 0.5)) + 40, l, 6);
-    set(bg, { x: -l * 40, o: 0.1 });
-    set(q, { o: eo(P(l, 0.1, 0.5)), y: (1 - eo(P(l, 0.1, 0.6))) * 60, r: (1 - eo(P(l, 0.1, 0.6))) * -20 });
-    kinIn(K, l, 0.35, { step: 0.024, dur: 0.5, mode: 'rise', w0: 220, w1: 440, em: 40 });
-    set(who, { o: eo(P(l, 4.4, 4.9)), x: (1 - eo(P(l, 4.4, 4.9))) * -30 });
-    draw(ink, cub(P(l, 4.7, 5.3)));
-    root.style.transform = `scale(${(1 + 0.03 * l / 6).toFixed(4)})`;
-  }
-  return { update };
-})();
-scenes.push(S10);
+/* 9 · jeda hening: "Maka kami membuat sebuah…" (52.8 – 55.79) */
+{
+  const sc = scene(NIGHT, 52.8, 55.79, 0.6);
+  const T = el(sc.root, `left:90px;top:860px;width:900px;text-align:center;${SERIF(400)}font-size:76px;color:#fff;`);
+  sc.update = (l, vt) => {
+    const txt = 'Maka kami membuat sebuah…';
+    const n = Math.round(txt.length * clamp((l - 0.15) / 1.4));
+    const on = l < 1.55 || Math.floor(l * 2.6) % 2 === 0;
+    T.innerHTML = txt.slice(0, n) + `<span class="caret" style="opacity:${on && vt < 54.56 ? 1 : 0}"></span>`;
+    set(T, { o: 1 - sine(P(vt, 54.56, 55.2)), y: -40 * sine(P(vt, 54.56, 55.5)) });
+  };
+}
 
-/* 11 · dinding kata (48.5 – 51.5) */
-const S11 = (() => {
-  const T0 = 48.5;
-  const root = scene(NIGHT);
-  const wall = el(root, 'left:-300px;top:-100px;width:1680px;height:2100px;transform-origin:50% 50%;');
-  const W = 'surat prasasti lontar diari perangko kartu pos jurnal catatan amplop telegram puisi kabar rindu salam tanda tangan kenangan alamat balasan'.split(' ');
-  const rows = Array.from({ length: 13 }, (_, r) => ({ e: el(wall, `left:0;top:${r * 160}px;white-space:nowrap;${SERIF(400)}font-size:120px;color:rgba(185,176,255,.14);`, Array.from({ length: 16 }, (_, k) => W[(r * 5 + k * 3) % W.length]).join(' ')), r }));
-  const hi = [['tulis,', 360, 0.3], ['simpan,', 700, 0.95], ['kirim.', 1040, 1.6]].map(([w, top, a]) => ({ K: kin(root, `left:0;top:${top}px;width:1080px;text-align:center;font-size:180px;color:#b9b0ff;text-shadow:0 0 50px rgba(185,176,255,.45);`, [[w, 'font-style:italic;']], SERIF(400)), a }));
-  function update(t) {
-    if (!show(root, t, T0, 51.9)) return;
-    const l = t - T0;
-    wall.style.transform = `perspective(1400px) rotateX(${(18 - l * 3).toFixed(2)}deg) rotateZ(-6deg) scale(${(1.1 + l * 0.04).toFixed(3)})`;
-    rows.forEach((w) => set(w.e, { x: (w.r % 2 ? -1 : 1) * l * 160 - (w.r % 2 ? 0 : 400) }));
-    hi.forEach((h) => kinIn(h.K, l, h.a, { step: 0.04, mode: 'slam', dur: 0.4, w0: 300, w1: 600 }));
-  }
-  return { update };
-})();
-scenes.push(S11);
+/* 10 · hantaman reff: kapsul (54.56 – 57.63) */
+{
+  const sc = scene(`radial-gradient(circle at 50% 44%, #2c19c9 0%, ${NIGHT} 70%)`, 54.56, 58.25, 0.0);
+  const glow = el(sc.root, 'left:190px;top:470px;width:700px;height:700px;border-radius:50%;background:radial-gradient(closest-side, rgba(185,176,255,.4), transparent);');
+  const seal = el(sc.root, 'left:390px;top:670px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle at 38% 34%, #5a46ff, #2a14d6 58%, #1a0b9a);box-shadow:0 26px 60px rgba(0,0,0,.55), inset 0 -10px 0 rgba(0,0,0,.18);');
+  const sv = document.createElementNS(NS, 'svg');
+  sv.setAttribute('viewBox', '0 0 64 64'); sv.setAttribute('width', 170); sv.setAttribute('height', 170);
+  sv.style.cssText = 'position:absolute;left:65px;top:58px;overflow:visible';
+  for (const p of window.DOODLES.tunas.s) sv.innerHTML += `<path d="${p}" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  seal.appendChild(sv);
+  el(seal, 'inset:22px;border-radius:50%;border:5px solid rgba(15,6,100,.5);');
+  const rip = el(sc.root, 'left:290px;top:570px;width:500px;height:500px;border-radius:50%;border:4px solid rgba(185,176,255,.7);box-sizing:border-box;');
+  const word = narr(sc.root, 'left:0;top:1080px;width:1080px;text-align:center;font-size:190px;color:#b9b0ff;', [['kapsul.', 'font-style:italic;']]);
+  const sub = narr(sc.root, 'left:90px;top:1330px;width:900px;text-align:center;font-size:54px;line-height:1.3;color:rgba(255,255,255,.85);', [['untuk hari-hari yang ingin kita simpan.']]);
+  sc.update = (l) => {
+    const f = clamp(l / 0.16);
+    const settle = l > 0.16 ? 1 + Math.exp(-6 * (l - 0.16)) * Math.sin((l - 0.16) * 18) * 0.04 : 1;
+    set(seal, { s: lerp(1.9, 1, qo(f)) * settle, o: clamp(l / 0.08), r: lerp(-14, -4, f) });
+    set(glow, { o: sine(P(l, 0.1, 1.0)) * (0.85 + 0.15 * Math.sin(l * 4)), s: 1 + 0.05 * Math.sin(l * 2) });
+    const q = P(l, 0.16, 1.6); set(rip, { s: lerp(0.7, 2.4, qo(q)), o: q > 0 && q < 1 ? 0.7 * (1 - q) : 0 });
+    narrIn(word, l, 0.25, { step: 0.1, dur: 1.2, rise: 40 });
+    narrIn(sub, l, 1.0, { step: 0.15 });
+    const s = l - 0.16; if (s >= 0 && s < 0.6) { const a = 9 * Math.exp(-8 * s); shakeAmt = [a * Math.sin(s * 60), a * Math.cos(s * 47)]; }
+  };
+}
 
-/* 12 · 1940 → 8113, lalu "jadi, kami membuat sebuah kapsul." (51.5 – 55.3) */
-const S12 = (() => {
-  const T0 = 51.5;
-  const root = scene(NIGHT);
-  const vault = svg(root, 'left:240px;top:300px;', 600, 600, `<circle cx="300" cy="300" r="290" ${lc(6, LILAC)}/><circle cx="300" cy="300" r="220" ${lc(3, LILAC)}/><path d="M300 90 L300 510 M90 300 L510 300 M150 150 L450 450 M450 150 L150 450" ${lc(3, 'rgba(185,176,255,.6)')}/><circle cx="300" cy="300" r="60" ${lc(6, LILAC)}/>`);
-  const from = el(root, 'left:0;top:960px;width:1080px;text-align:center;font:500 30px var(--mono);color:rgba(255,255,255,.72);letter-spacing:.1em;', 'DISEGEL 1940 · DIBUKA TAHUN');
-  const yr = slot(root, 'left:0;top:1010px;width:1080px;', '8113', `${SERIF(650)}font-size:230px;line-height:1.02;color:#fff;`);
-  const cap = el(root, 'left:0;top:1290px;width:1080px;text-align:center;font:500 29px var(--mono);color:rgba(255,255,255,.62);', 'Crypt of Civilization · kapsul waktu modern pertama');
-  const K = kin(root, 'left:0;top:740px;width:1080px;text-align:center;font-size:76px;color:#fff;', [['jadi, kami membuat sebuah']], SERIF(400));
-  const sealBox = el(root, 'left:390px;top:880px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle at 38% 34%, #5a46ff, #2a14d6 58%, #1a0b9a);box-shadow:0 20px 50px rgba(0,0,0,.5);');
-  dbox(sealBox, 'tunas', 'left:70px;top:62px;', { size: 160, color: '#fff', sw: 5 });
-  const rip = el(root, 'left:340px;top:830px;width:400px;height:400px;border-radius:50%;border:6px solid rgba(185,176,255,.8);box-sizing:border-box;');
-  const word = kin(root, 'left:0;top:1260px;width:1080px;text-align:center;font-size:220px;color:#b9b0ff;', [['kapsul.', 'font-style:italic;']], SERIF(400));
-  function update(t) {
-    if (!show(root, t, T0, 55.8)) return;
-    const l = t - T0;
-    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.4))) - 40, 13);
-    const outA = P(l, 1.75, 2.0);
-    draw(vault, cub(P(l, 0, 0.8)), 0.15);
-    set(vault, { r: l * 30, s: 1 - 0.3 * ei(outA), o: 1 - outA });
-    from.style.opacity = eo(P(l, 0.2, 0.5)) * (1 - outA);
-    slotRoll(yr, l, 0.3, 1.2);
-    yr.w.style.opacity = eo(P(l, 0.25, 0.45)) * (1 - outA);
-    cap.style.opacity = eo(P(l, 0.8, 1.1)) * (1 - outA);
-    kinIn(K, l, 2.0, { step: 0.025, mode: 'rise', em: 60 });
-    const ss = l - 2.55, f = clamp(ss / 0.12);
-    const settle = ss > 0.12 ? 1 + Math.exp(-9 * (ss - 0.12)) * Math.sin((ss - 0.12) * 28) * 0.06 : 1;
-    set(sealBox, { s: lerp(2.6, 1, ei(f)) * settle, o: ss > 0 ? 1 : 0, r: lerp(-30, -6, f) });
-    const q = P(ss, 0.12, 0.9); set(rip, { s: lerp(0.7, 2.6, eo(q)), o: q > 0 && q < 1 ? 0.8 * (1 - q) : 0 });
-    kinIn(word, l, 2.75, { step: 0.05, mode: 'rise', w0: 200, w1: 620, em: 200 });
-    hit(t, T0 + 2.67, 22);
-  }
-  return { update };
-})();
-scenes.push(S12);
-
-/* ===================== SEHARI ===================== */
-
-/* 13 · Sehari adalah kapsul waktu harian: HP dengan halaman hari ini (55.3 – 60.7) */
-const S13 = (() => {
-  const T0 = 55.3;
-  const root = scene(PAPER);
-  const head = kin(root, 'left:0;top:140px;width:1080px;text-align:center;font-size:88px;color:#16161a;line-height:1.05;', [['Sehari', 'font-weight:600;'], [' adalah']], SERIF(400));
-  const head2 = kin(root, 'left:0;top:240px;width:1080px;text-align:center;font-size:92px;color:#2a14d6;', [['kapsul waktu harian.', 'font-style:italic;']], SERIF(400));
-  const phone = el(root, 'left:230px;top:420px;width:620px;height:1260px;border-radius:96px;background:#121034;box-shadow:0 40px 90px rgba(23,10,140,.28), inset 0 0 0 3px #2b2860;');
-  const scr = el(phone, `left:16px;top:16px;width:588px;height:1228px;border-radius:82px;background:${SHEET};overflow:hidden;`);
-  el(scr, 'left:214px;top:20px;width:160px;height:42px;border-radius:30px;background:#121034;');
-  el(scr, 'left:48px;top:24px;font:600 25px var(--mono);color:#16161a;', '21.40');
-  el(scr, 'left:42px;top:100px;font:500 24px var(--mono);color:#77778a;', 'rabu · 18 november');
-  el(scr, `left:40px;top:134px;${SERIF(600)}font-size:70px;color:#16161a;`, 'hari ini');
-  const sheet = el(scr, 'left:22px;top:250px;width:544px;height:800px;border-radius:36px;background:#fff;box-shadow:0 14px 36px rgba(20,20,60,.08);background-image:radial-gradient(circle, rgba(42,20,214,.13) 2px, transparent 2.4px);background-size:34px 34px;');
-  const note = el(sheet, 'left:36px;top:60px;width:470px;font:700 50px/1.12 var(--hand);color:#2a14d6;');
-  const pola = el(sheet, 'left:250px;top:400px;width:250px;height:290px;background:#fff;border-radius:8px;box-shadow:0 18px 40px rgba(20,20,60,.22);transform-origin:50% 0;');
-  photo(pola, 'kartini', 'left:16px;top:16px;width:218px;height:206px;', 'duoInk');
-  el(pola, 'left:0;top:230px;width:250px;text-align:center;font:700 38px var(--hand);color:#2a14d6;', 'buku sejarah');
-  const stick = [['hati-kecil', 70, 470, 110], ['kilau', 440, 300, 80], ['bintang-kecil', 110, 640, 80]].map(([id, x, y, s]) => dbox(sheet, id, `left:${x}px;top:${y}px;`, { size: s, color: BLUE, sw: 4 }));
-  const fab = el(scr, `left:450px;top:960px;width:112px;height:112px;border-radius:50%;background:${BLUE};box-shadow:0 12px 26px rgba(42,20,214,.45);`);
-  const ft = doodle('tunas', { size: 72, color: '#fff', sw: 4.6 }); ft.style.cssText += ';position:absolute;left:20px;top:18px;overflow:visible'; fab.appendChild(ft);
-  const FEATS = [['ui-teks', 'tulis', 'L', 760], ['ui-foto', 'foto', 'R', 900], ['ui-mikrofon', 'suara', 'L', 1100], ['amplop', 'surat tersesat', 'R', 1260], ['ui-gembok', 'kapsul 1–25 tahun', 'L', 1440]].map(([id, label, side, top], i) => {
-    const e = el(root, `${side === 'L' ? 'left:40px' : 'right:40px'};top:${top}px;padding:16px 32px 16px 22px;background:${BLUE};color:#fff;font:500 36px var(--mono);box-shadow:0 18px 40px rgba(42,20,214,.32);transform-origin:${side === 'L' ? '15%' : '85%'} 50%;`, `<span>${label}</span>`);
-    e.className = 'pill';
-    const d = doodle(id, { size: 52, color: '#fff', sw: 4.6 }); e.prepend(d);
-    return { e, d, side, i };
-  });
-  function update(t) {
-    if (!show(root, t, T0, 61.15)) return;
-    const l = t - T0;
-    root.style.clipPath = blob(540, 1060, 2600 * ei(P(l, 0, 0.5)) + 40, l, 4);
-    kinIn(head, l, 0.2, { step: 0.03, mode: 'rise' });
-    kinIn(head2, l, 0.45, { step: 0.025, mode: 'rise', w0: 200, w1: 520 });
-    const pin = eo(P(l, 0.3, 1.1));
-    set(phone, { y: (1 - pin) * 1400, r: (1 - pin) * 8 });
-    typed(note, 'hari ini aku belajar: Kartini menulis dari Jepara.', P(l, 1.0, 2.6), t, l < 4);
-    const pd = spring(l - 2.6, 1.1, 5.2);
-    set(pola, { y: (1 - pd) * -800, r: lerp(22, -6, clamp(pd, 0, 1.2)), o: l > 2.6 ? 1 : 0 });
-    stick.forEach((s, i) => { const a = 3.0 + i * 0.13; draw(s.d, cub(P(l, a, a + 0.35))); set(s.b, { s: 0.6 + 0.4 * spring(l - a, 1.8, 7) }); });
-    FEATS.forEach((f) => {
-      const a = 1.4 + f.i * 0.28, s = spring(l - a, 1.5, 6.5), dir = f.side === 'L' ? -1 : 1;
-      set(f.e, { s: clamp(s, 0, 1.3), x: (1 - clamp(s)) * dir * 80, y: Math.sin((l + f.i) * 2.2) * 8, r: (1 - clamp(s)) * dir * 10 + dir * 1.5, o: l > a ? 1 : 0 });
-      draw(f.d, cub(P(l, a + 0.05, a + 0.45)));
-    });
-    const press = l > 4.7 && l < 5.0 ? Math.sin(P(l, 4.7, 5.0) * Math.PI) : 0;
+/* 11 · Sehari: satu hal kecil, setiap hari (57.02 – 63.76) */
+{
+  const sc = scene(SHEET, 57.02, 63.95, 1.4, 'bloom', [540, 700]);
+  const phone = el(sc.root, 'left:250px;top:150px;width:580px;height:1180px;border-radius:92px;background:#121034;box-shadow:0 40px 90px rgba(23,10,140,.28), inset 0 0 0 3px #2b2860;transform-origin:50% 40%;');
+  const scr = el(phone, `left:15px;top:15px;width:550px;height:1150px;border-radius:78px;background:#f7f7f4;overflow:hidden;`);
+  el(scr, 'left:195px;top:20px;width:160px;height:40px;border-radius:30px;background:#121034;');
+  el(scr, 'left:44px;top:96px;font:500 23px var(--mono);color:#77778a;', 'rabu · 18 november');
+  el(scr, `left:40px;top:128px;${SERIF(600)}font-size:66px;color:#16161a;`, 'hari ini');
+  const sheet = el(scr, 'left:20px;top:240px;width:510px;height:760px;border-radius:34px;background:#fff;box-shadow:0 14px 36px rgba(20,20,60,.08);background-image:radial-gradient(circle, rgba(42,20,214,.12) 2px, transparent 2.4px);background-size:34px 34px;');
+  const note = el(sheet, 'left:34px;top:54px;width:440px;font:700 48px/1.14 var(--hand);color:#2a14d6;');
+  const pola = el(sheet, 'left:200px;top:360px;width:270px;height:310px;background:#fff;border-radius:6px;box-shadow:0 18px 40px rgba(20,20,60,.22);');
+  photo(pola, 'kartini', 'left:16px;top:16px;width:238px;height:228px;', 'duoInk');
+  el(pola, 'left:0;top:250px;width:270px;text-align:center;font:700 38px var(--hand);color:#2a14d6;', 'yang kubaca hari ini');
+  const fab = el(scr, `left:418px;top:1010px;width:100px;height:100px;border-radius:50%;background:${BLUE};box-shadow:0 12px 26px rgba(42,20,214,.45);`);
+  const fsv = document.createElementNS(NS, 'svg');
+  fsv.setAttribute('viewBox', '0 0 64 64'); fsv.setAttribute('width', 62); fsv.setAttribute('height', 62);
+  fsv.style.cssText = 'position:absolute;left:19px;top:17px;overflow:visible';
+  for (const p of window.DOODLES.tunas.s) fsv.innerHTML += `<path d="${p}" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  fab.appendChild(fsv);
+  const LINES = [['Satu hal kecil, setiap hari.', 0.5], ['Disegel malam ini.', 2.42], ['Dibuka bersama orang yang kamu sayang.', 4.48]];
+  const NS3 = LINES.map(([w, a]) => ({ N: narr(sc.root, 'left:80px;top:1430px;width:920px;text-align:center;font-size:70px;line-height:1.25;color:#16161a;', [[w, a > 0.5 ? 'font-style:italic;color:#2a14d6;' : '']]), a }));
+  sc.update = (l) => {
+    set(phone, { y: (1 - qo(P(l, 0, 1.6))) * 160, s: 1 - 0.02 * sine(P(l, 0, 6.7)), o: 1 });
+    note.innerHTML = 'hari ini aku membaca surat Kartini. rasanya seperti ia menulis untukku.'.slice(0, Math.round(70 * clamp((l - 0.8) / 2.6)));
+    set(pola, { y: (1 - qo(P(l, 2.2, 3.4))) * -300, r: lerp(10, -5, qo(P(l, 2.2, 3.4))), o: sine(P(l, 2.2, 2.7)) });
+    const press = l > 2.4 && l < 2.8 ? Math.sin(P(l, 2.4, 2.8) * Math.PI) : 0;
     set(fab, { s: 1 - 0.14 * press });
-  }
-  return { update };
-})();
-scenes.push(S13);
+    NS3.forEach((x, i) => { narrIn(x.N, l, x.a, { step: 0.17 }); if (i < 2) narrOut(x.N, l, NS3[i + 1].a - 0.45, 0.5); });
+  };
+}
 
-/* 14 · selamat malam, penulis (60.7 – 63.6) */
-const S14 = (() => {
-  const T0 = 60.7;
-  const root = scene(SHEET);
-  const K = kin(root, 'left:0;top:700px;width:1080px;text-align:center;font-size:88px;color:#16161a;', [['✳ ', 'color:#2a14d6;'], ['selamat malam, '], ['penulis.', 'font-style:italic;']], SERIF(400));
-  const card = el(root, 'left:110px;top:880px;width:860px;height:300px;border-radius:40px;background:#fff;box-shadow:0 24px 60px rgba(20,20,60,.12);');
-  const input = el(card, 'left:44px;top:44px;width:770px;font:700 54px/1.15 var(--hand);color:#2a14d6;');
-  const chips = ['tulisan', 'foto', 'suara', 'lagu'].map((c, i) => el(card, `left:${44 + i * 150}px;bottom:36px;padding:8px 20px;border-radius:999px;background:#ece9ff;font:500 22px var(--mono);color:${BLUE};`, c));
-  const btn = el(card, `right:36px;bottom:30px;width:84px;height:84px;border-radius:50%;background:${BLUE};box-shadow:0 10px 22px rgba(42,20,214,.4);`);
-  const bt = doodle('tunas', { size: 56, color: '#fff', sw: 5 }); bt.style.cssText += ';position:absolute;left:14px;top:13px;overflow:visible'; btn.appendChild(bt);
-  function update(t) {
-    if (!show(root, t, T0, 63.95)) return;
-    const l = t - T0;
-    root.style.clipPath = torn(1920 * (1 - eo(P(l, 0, 0.45))) - 40, 11);
-    kinIn(K, l, 0.15, { step: 0.03, mode: 'rise' });
-    const cs = spring(l - 0.35, 1.3, 7);
-    set(card, { y: (1 - clamp(cs)) * 140, o: l > 0.35 ? 1 : 0 });
-    typed(input, 'hari ini aku ingin bercerita tentang…', P(l, 0.75, 2.3), t, true);
-    chips.forEach((c, i) => (c.style.opacity = eo(P(l, 0.6 + i * 0.07, 0.9 + i * 0.07))));
-    const press = l > 2.45 && l < 2.75 ? Math.sin(P(l, 2.45, 2.75) * Math.PI) : 0;
-    set(btn, { s: 1 - 0.16 * press });
-  }
-  return { update };
-})();
-scenes.push(S14);
+/* 12 · penutup: surat untuk hari nanti, lalu logo (62.5 – akhir) */
+{
+  const sc = scene(SHEET, 62.5, DURATION + 1, 1.5, 'bloom', [540, 900]);
+  const paper = el(sc.root, 'inset:0;transform-origin:540px 900px;');
+  const bgL = photo(paper, 'surat1788', 'left:-120px;top:-120px;width:1320px;height:2160px;-webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 45%, #000 40%, transparent 100%);mask-image:radial-gradient(ellipse 70% 55% at 50% 45%, #000 40%, transparent 100%);', 'duoInk');
+  bgL.style.opacity = '.13';
+  const hand = el(paper, `left:120px;top:760px;width:840px;font:700 92px/1.15 var(--hand);color:${BLUE};text-align:center;`, 'untuk kamu,<br>di hari nanti.');
+  const night = el(sc.root, `inset:0;background:radial-gradient(circle at 50% 42%, #2a19b8 0%, #140b6e 45%, ${NIGHT} 85%);`);
+  const d = dust(night, 70, 'rgba(220,214,255,.95)', 31, 5);
+  const halo = el(night, 'left:190px;top:330px;width:700px;height:700px;border-radius:50%;background:radial-gradient(closest-side, rgba(185,176,255,.35), transparent);');
+  const logo = document.createElementNS(NS, 'svg');
+  logo.setAttribute('viewBox', '0 0 64 64'); logo.setAttribute('width', 360); logo.setAttribute('height', 360);
+  logo.style.cssText = 'position:absolute;left:360px;top:500px;overflow:visible;filter:drop-shadow(0 0 18px rgba(185,176,255,.6))';
+  for (const p of window.DOODLES.tunas.s) logo.innerHTML += `<path d="${p}" ${lc(3.2, '#fff')}/>`;
+  night.appendChild(logo);
+  const word = narr(night, 'left:0;top:900px;width:1080px;text-align:center;font-size:200px;line-height:1;color:#fff;', [['sehari']], SERIF(600));
+  const tag = narr(night, 'left:90px;top:1170px;width:900px;text-align:center;font-size:62px;line-height:1.3;color:#dcd7ff;', [['tulis hari ini,'], ['baca bersama, nanti.', 'font-style:italic;']]);
+  const url = el(night, 'left:0;top:1430px;width:1080px;text-align:center;font:500 54px var(--mono);letter-spacing:.06em;color:#fff;', 'sehari.online');
+  const cr = el(night, 'left:110px;top:1760px;width:860px;text-align:center;font:500 16px/1.6 var(--mono);color:rgba(255,255,255,.4);', 'foto arsip: Wikimedia Commons — Cahyo Ramadhani, Tropenmuseum, Museum Rotterdam, Petar Milošević (CC BY-SA); Rijksmuseum, Nationaal Archief, Daderot, Ms Sarah Welch (CC0)');
+  const fadeOut = el(sc.root, 'inset:0;background:#05031c;');
+  sc.update = (l, vt) => {
+    // tulisan tangan muncul seperti ditulis dari kiri ke kanan
+    const wp = sine(P(l, 0.6, 2.9));
+    hand.style.clipPath = `inset(0 ${(100 - wp * 100).toFixed(1)}% 0 0)`;
+    set(paper, { s: 1.06 - 0.06 * sine(P(l, 0, 4.2)), o: 1 });
+    // langit malam meresap naik dari tengah tulisan
+    bloom(night, P(l, 3.4, 5.0), 540, 880);
+    night.style.display = l > 3.4 ? 'block' : 'none';
+    d(l, sine(P(l, 3.6, 5)));
+    set(halo, { o: sine(P(l, 3.9, 5.2)) * (0.8 + 0.2 * Math.sin(l * 2)), s: 1 + 0.03 * Math.sin(l * 1.3) });
+    draw(logo, sine(P(l, 3.8, 5.6)), 0.25);
+    const pulse = TIMING.beatPulse(vt, 6) * 0.03;
+    set(logo, { s: 1 + pulse, y: -10 * sine(P(l, 3.8, 6)) });
+    narrIn(word, l, 4.9, { step: 0.12, dur: 1.3, rise: 30 });
+    narrIn(tag, l, 5.6, { step: 0.2, dur: 1.2 });
+    url.style.opacity = sine(P(l, 6.3, 7.1)).toFixed(3);
+    cr.style.opacity = (0.9 * sine(P(l, 6.5, 7.2))).toFixed(3);
+    fadeOut.style.opacity = sine(P(vt, DURATION - 0.9, DURATION)).toFixed(3);
+  };
+}
 
-/* 15 · penutup langit malam (63.4 – akhir) */
-const S15 = (() => {
-  const T0 = 63.4;
-  const root = scene('linear-gradient(180deg, #1c0ca8 0%, #2a14d6 45%, #6a58f2 82%, #a99dff 100%)');
-  const d3 = dust(root, 60, 'rgba(255,255,255,.9)', 21, 5);
-  const clouds = [['awan', 40, 330, 280], ['awan-kecil', 780, 520, 210], ['awan', 690, 1580, 320], ['awan-kecil', 60, 1430, 230]].map(([id, x, y, s], i) => ({ ...dbox(root, id, `left:${x}px;top:${y}px;`, { size: s, color: 'rgba(255,255,255,.6)', sw: 2.6 }), i }));
-  const moon = dbox(root, 'bulan', 'left:790px;top:170px;', { size: 180, color: '#fff', sw: 3 });
-  const logoBox = el(root, 'left:345px;top:560px;width:390px;height:390px;transform-origin:50% 90%;');
-  const logo = doodle('tunas', { size: 390, color: '#fff', sw: 3.3 }); logoBox.appendChild(logo);
-  const word = kin(root, 'left:0;top:960px;width:1080px;text-align:center;font-size:210px;line-height:1;color:#fff;', [['sehari']], SERIF(600));
-  const tag = el(root, 'left:0;top:1230px;width:1080px;text-align:center;font:700 70px var(--hand);color:#fff;', 'dulu kita menulis. kini, bersama.');
-  const url = el(root, 'left:0;top:1400px;width:1080px;text-align:center;font:600 72px var(--mono);color:#fff;', 'sehari.online');
-  const ul = scribble(root, 'left:270px;top:1498px;', 540, 30, 'M6 16 C 140 8, 300 22, 534 12', '#fff', 8);
-  const cr = el(root, 'left:90px;top:1790px;width:900px;text-align:center;font:500 18px/1.5 var(--mono);color:rgba(255,255,255,.62);', 'foto arsip: Wikimedia Commons — Cahyo Ramadhani, Tropenmuseum, Museum Rotterdam, Petar Milošević (CC BY-SA); Rijksmuseum, Nationaal Archief, Daderot, Ms Sarah Welch, Walters Art Museum (CC0/PD)');
-  function update(t, vt) {
-    if (!show(root, t, T0, DURATION + 1)) return;
-    const l = t - T0;
-    const pulse = TIMING.beatPulse(vt, 8);
-    root.style.clipPath = blob(892, 1480, 2600 * ei(P(l, 0, 0.55)) + 40, l, 12);
-    d3(l, eo(P(l, 0.3, 1)));
-    clouds.forEach((c) => { draw(c.d, cub(P(l, 0.3 + c.i * 0.1, 1.0 + c.i * 0.1))); set(c.b, { x: Math.sin(l * 0.5 + c.i) * 20 + (c.i % 2 ? -1 : 1) * l * 10 }); });
-    draw(moon.d, cub(P(l, 0.4, 1.1))); set(moon.b, { y: Math.sin(l * 0.8) * 8 });
-    draw(logo, cub(P(l, 0.3, 1.4)), 0.28);
-    const sq = l > 1.4 ? 1 - 0.07 * Math.exp(-6 * (l - 1.4)) * Math.sin((l - 1.4) * 14) : 1;
-    set(logoBox, { sy: sq * (1 + 0.05 * pulse), sx: (2 - sq) * (1 + 0.05 * pulse) });
-    kinIn(word, l, 1.15, { step: 0.06, mode: 'rise', w0: 200, w1: 620, em: 200 });
-    set(tag, { o: eo(P(l, 1.8, 2.3)), y: (1 - eo(P(l, 1.8, 2.3))) * 30 });
-    const us = spring(l - 2.4, 1.4, 6.5);
-    set(url, { s: clamp(us, 0, 1.25), y: (1 - clamp(us)) * 50, o: us > 0.01 ? 1 : 0 });
-    draw(ul, cub(P(l, 2.6, 3.0)));
-    cr.style.opacity = eo(P(l, 2.6, 3.0));
-  }
-  return { update };
-})();
-scenes.push(S15);
-
-// vt = waktu video (ikut lagu); t = waktu animasi
 function render(vt) {
   const t = TIMING.animAt(vt);
   shakeAmt = [0, 0];
-  for (const s of scenes) s.update(t, vt);
+  for (const s of scenes) apply(s, t, vt);
   shake.style.transform = shakeAmt[0] || shakeAmt[1] ? `translate(${shakeAmt[0].toFixed(1)}px,${shakeAmt[1].toFixed(1)}px)` : 'none';
 }
 window.render = render;
 window.DURATION = TIMING.VIDEO_DURATION;
 
-// ---------- pratinjau di peramban ----------
 function fit() {
   const s = Math.min(innerWidth / 1080, innerHeight / 1920);
   const f = document.getElementById('fit');
@@ -875,7 +451,7 @@ if (params.has('render')) {
   document.body.style.cssText = 'margin:0;display:block;';
   window.ready = document.fonts.ready.then(() => Promise.all([
     document.fonts.load('400 100px Fraunces'), document.fonts.load('600 100px Fraunces'), document.fonts.load('italic 400 100px Fraunces'),
-    document.fonts.load('700 100px Caveat'), document.fonts.load('500 30px "IBM Plex Mono"'), document.fonts.load('600 30px "IBM Plex Mono"'), imgsReady(),
+    document.fonts.load('700 100px Caveat'), document.fonts.load('500 30px "IBM Plex Mono"'), imgsReady(),
   ])).then(() => { render(0); return true; });
 } else {
   fit();
@@ -887,13 +463,13 @@ if (params.has('render')) {
     if (at !== null) { render(at); return; }
     const loop = (now) => {
       if (start === null) start = now;
-      const vt = playing ? music.currentTime : ((now - start) / 1000) % (TIMING.VIDEO_DURATION + 0.5);
+      const vt = playing ? music.currentTime - TIMING.MUSIC_START : ((now - start) / 1000) % (TIMING.VIDEO_DURATION + 0.5);
       if (playing && vt >= TIMING.VIDEO_DURATION) { music.pause(); playing = false; start = null; }
-      render(Math.min(vt, TIMING.VIDEO_DURATION));
+      render(clamp(vt, 0, TIMING.VIDEO_DURATION));
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
-    stageEl.addEventListener('click', () => { start = null; music.currentTime = 0; music.play().then(() => (playing = true)).catch(() => (playing = false)); });
+    stageEl.addEventListener('click', () => { start = null; music.currentTime = TIMING.MUSIC_START; music.play().then(() => (playing = true)).catch(() => (playing = false)); });
   });
 }
 </script>

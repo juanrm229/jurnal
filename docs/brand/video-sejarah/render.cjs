@@ -15,7 +15,7 @@ const stills = opt('--stills') ? opt('--stills').split(',').map(Number) : null;
 const musik = path.resolve(opt('--musik') || path.join(DIR, 'musik.m4a'));
 const MUSIK_GAIN = +(opt('--gain') || 0.85);
 const { MUSIC_START } = require('./timing.js');
-const SFX_GAIN = 0.25; // efek suara pelan di bawah lagu
+const SFX_GAIN = 0.18; // efek suara pelan di bawah lagu
 const out = path.resolve(args.find((a, i) => !a.startsWith('--') && !valueIdx.includes(i)) || path.join(DIR, '..', 'sehari-dulu-kita-menulis.mp4'));
 const FPS = 30;
 
