@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react';
 import { useParams } from '@/lib/router';
 import { kalimat, useMeja, WARNA_HEX } from '@/lib/satu';
 import { speak } from '@/lib/sidik';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing } from '@/ui/kit';
 import { PlayerFace } from '../../sidik/parts';
 import { BelakangSatu, KartuSatu, Kursi } from './parts';

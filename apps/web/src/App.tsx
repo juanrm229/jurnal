@@ -1,17 +1,16 @@
 import { Component, type ComponentType, lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
-import { useKeyMaintenance } from './lib/data';
+import { useCircles, useKeyMaintenance } from './lib/data';
 import { bersihkanLencana, refreshPushToken } from './lib/push';
 import { match, navigate, ParamsProvider, usePath } from './lib/router';
 import { isChunkError, reloadOnce } from './lib/reload';
 import { useSession } from './lib/session';
 import { trackPlay } from './lib/play';
 import { useThemeSync } from './lib/theme';
-import { Growing } from './ui/kit';
+import { Doodle, ErrorNote, Growing, Header } from './ui/kit';
 import { Laci } from './ui/Laci';
 import { TabBar } from './ui/TabBar';
-import Landing from './pages/Landing';
 
-const PAGES = import.meta.glob<{ default: ComponentType }>(['./pages/**/*.tsx', '!./pages/Landing.tsx']);
+const PAGES = import.meta.glob<{ default: ComponentType }>('./pages/**/*.tsx');
 const Missing = () => <Growing label="halaman ini belum ada" />;
 const page = (name: string) =>
   lazy((): Promise<{ default: ComponentType }> => {
@@ -75,6 +74,18 @@ class PageErrorBoundary extends Component<{ children: ReactNode; resetKey: strin
       </main>
     );
   }
+}
+
+const LandingPage = page('Landing');
+/** Beranda publik: dimuat terpisah supaya pengguna yang sudah masuk tidak ikut mengunduhnya. */
+function Landing() {
+  return (
+    <PageErrorBoundary resetKey="/">
+      <Suspense fallback={<Growing />}>
+        <LandingPage />
+      </Suspense>
+    </PageErrorBoundary>
+  );
 }
 
 /** [pola, komponen, butuh sesi siap?, tampilkan tab bar?] */
@@ -197,6 +208,35 @@ function Guard({ children }: { children: React.ReactNode }) {
   return <Ready>{children}</Ready>;
 }
 
+/**
+ * Halaman di bawah /l/:id hanya masuk akal untuk lingkaran yang memang kamu ikuti.
+ * Tautan lama, lingkaran yang sudah dihapus, atau id yang salah ketik dulu
+ * berputar "menyiram…" selamanya; sekarang langsung dijelaskan.
+ */
+function CircleExists({ id, children }: { id: string; children: ReactNode }) {
+  const q = useCircles();
+  if (q.circles.some((c) => c.id === id)) return <>{children}</>;
+  if (q.isError && !q.data)
+    return (
+      <main className="screen">
+        <Header title="lingkaran" backTo="/lingkaran" />
+        <ErrorNote error={q.error} onRetry={() => void q.refetch()} />
+      </main>
+    );
+  if (!q.isSuccess) return <Growing />;
+  return (
+    <main className="screen">
+      <Header title="lingkaran" backTo="/lingkaran" />
+      <div className="col center" style={{ alignItems: 'center', textAlign: 'center', gap: 12, paddingTop: '12vh' }}>
+        <Doodle id="awan" size={56} />
+        <h1 className="h2" style={{ fontSize: 20, margin: 0 }}>Lingkaran ini tidak ditemukan</h1>
+        <p className="soft small" style={{ maxWidth: 320, margin: 0 }}>Mungkin sudah dihapus, kamu sudah keluar, atau tautannya keliru.</p>
+        <a className="btn auto" href="/lingkaran" onClick={(e) => { e.preventDefault(); navigate('/lingkaran'); }}>ke daftar lingkaran</a>
+      </div>
+    </main>
+  );
+}
+
 function Ready({ children }: { children: React.ReactNode }) {
   useKeyMaintenance();
   useEffect(() => {
@@ -229,7 +269,13 @@ export function App() {
         <PageErrorBoundary resetKey={path}>
           <Suspense fallback={<Growing />}>
             <RouteIn key={pattern}>
-              <Comp />
+              {needsReady && pattern.startsWith('/l/:id') ? (
+                <CircleExists id={params.id ?? ''}>
+                  <Comp />
+                </CircleExists>
+              ) : (
+                <Comp />
+              )}
             </RouteIn>
           </Suspense>
         </PageErrorBoundary>

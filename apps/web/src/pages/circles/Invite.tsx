@@ -4,7 +4,7 @@ import { createInvite } from '@/lib/circles';
 import { useCircle, useMe } from '@/lib/data';
 import { navigate, useParams } from '@/lib/router';
 import { shareOrCopy } from '@/lib/share';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing, Header, useToast } from '@/ui/kit';
 
 export default function Invite() {

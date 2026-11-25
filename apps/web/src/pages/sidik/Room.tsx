@@ -9,7 +9,7 @@ import { compressImage } from '@/lib/media';
 import { navigate, useParams } from '@/lib/router';
 import { useSession } from '@/lib/session';
 import { hush, joinRoom, leaveRoom, profile, sendAct, sfx, speak, stats, useCountdown, useRoom, useWakeLock, vibrate, type View } from '@/lib/sidik';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing, Header, Toggle, useToast } from '@/ui/kit';
 import { Scene } from '@/ui/art';
 import { KabariLingkaran } from '../main/shared';

@@ -7,7 +7,7 @@ import { sidik } from '@sehari/core';
 import { useEffect, useRef } from 'react';
 import { useParams } from '@/lib/router';
 import { sfx, speak, useCountdown, useRoom } from '@/lib/sidik';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing } from '@/ui/kit';
 import { Board, IntelList, PlayerFace, Timer } from './parts';
 

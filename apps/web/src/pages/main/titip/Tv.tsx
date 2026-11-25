@@ -4,7 +4,7 @@
  */
 import { useParams } from '@/lib/router';
 import { kalimat, useMeja } from '@/lib/titip';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing } from '@/ui/kit';
 import { PlayerFace } from '../../sidik/parts';
 import { HasilRonde } from './Meja';

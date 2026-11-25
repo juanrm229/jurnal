@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useCircles } from '@/lib/data';
 import { compressImage } from '@/lib/media';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Header, useToast } from '@/ui/kit';
 import { PlayerFace } from '../sidik/parts';
 

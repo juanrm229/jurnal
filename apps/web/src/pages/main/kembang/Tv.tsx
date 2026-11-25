@@ -5,7 +5,7 @@
 import { hanabi as H } from '@sehari/core';
 import { kalimat, useMeja } from '@/lib/hanabi';
 import { useParams } from '@/lib/router';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing } from '@/ui/kit';
 import { PlayerFace } from '../../sidik/parts';
 import { Api, Token } from './parts';

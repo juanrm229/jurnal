@@ -1,5 +1,9 @@
 /* Sehari service worker: cangkang aplikasi luring + notifikasi push. */
-const CACHE = 'sehari-v5';
+const CACHE = 'sehari-v6';
+// Berkas ber-hash menumpuk tiap rilis; simpan secukupnya saja.
+const MAX_ASSETS = 260;
+// Jaringan lemah: jangan biarkan layar putih menunggu lama, pakai cangkang tersimpan.
+const NAV_TIMEOUT = 4500;
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
@@ -23,15 +27,46 @@ self.addEventListener('fetch', (e) => {
   // API & media terenkripsi tidak pernah di-cache di sini.
   if (url.pathname.startsWith('/v1/') || url.pathname.startsWith('/admin') || url.pathname.startsWith('/cron')) return;
   if (req.mode === 'navigate') {
-    // Jaringan dulu; kalau luring, pakai cangkang terakhir.
-    e.respondWith(
-      fetch(req)
+    // Jaringan dulu; kalau luring atau terlalu lambat, pakai cangkang terakhir.
+    // Permintaan jaringan tetap berjalan dan memperbarui cangkang untuk kunjungan berikutnya.
+    const net = fetch(req);
+    e.waitUntil(
+      net
         .then((res) => {
+          if (!res.ok || !(res.headers.get('content-type') || '').includes('text/html')) return;
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('/', copy));
-          return res;
+          return caches.open(CACHE).then((c) => c.put('/', copy));
         })
-        .catch(() => caches.match('/').then((r) => r || Response.error())),
+        .catch(() => {}),
+    );
+    e.respondWith(
+      new Promise((resolve, reject) => {
+        let done = false;
+        const fallback = () =>
+          caches.match('/').then((r) => {
+            if (r && !done) {
+              done = true;
+              resolve(r);
+            }
+            return r;
+          });
+        const t = setTimeout(fallback, NAV_TIMEOUT);
+        net.then(
+          (res) => {
+            clearTimeout(t);
+            if (!done) {
+              done = true;
+              resolve(res);
+            }
+          },
+          () => {
+            clearTimeout(t);
+            fallback().then((r) => {
+              if (!r && !done) reject(new Error('luring'));
+            });
+          },
+        );
+      }).catch(() => Response.error()),
     );
     return;
   }
@@ -45,7 +80,7 @@ self.addEventListener('fetch', (e) => {
             // Jangan simpan halaman HTML sebagai berkas aset (dulu terjadi saat aset lama sudah hilang).
             if (res.ok && !(res.headers.get('content-type') || '').includes('text/html')) {
               const copy = res.clone();
-              caches.open(CACHE).then((c) => c.put(req, copy));
+              e.waitUntil(caches.open(CACHE).then((c) => c.put(req, copy)).then(trim));
             }
             return res;
           }),
@@ -53,6 +88,17 @@ self.addEventListener('fetch', (e) => {
     );
   }
 });
+
+/** Buang aset paling lama bila sudah terlalu banyak (urutan kunci = urutan disimpan). */
+function trim() {
+  return caches.open(CACHE).then((c) =>
+    c.keys().then((keys) => {
+      const assets = keys.filter((k) => new URL(k.url).pathname.startsWith('/assets/'));
+      const extra = assets.length - MAX_ASSETS;
+      return extra > 0 ? Promise.all(assets.slice(0, extra).map((k) => c.delete(k))) : undefined;
+    }),
+  );
+}
 
 function routeFor(d) {
   switch (d && d.type) {

@@ -135,7 +135,7 @@ export function Toggle({ label, hint, value, onChange }: { label: string; hint?:
         <span>{label}</span>
         {hint ? <span className="tiny soft" style={{ display: 'block' }}>{hint}</span> : null}
       </span>
-      <button type="button" role="switch" aria-checked={value} className="switch" onClick={() => onChange(!value)} />
+      <button type="button" role="switch" aria-checked={value} aria-label={label} className="switch" onClick={() => onChange(!value)} />
     </label>
   );
 }
@@ -254,7 +254,45 @@ export function ToastHost({ children }: { children: ReactNode }) {
     <ToastCtx.Provider value={show}>
       {children}
       {msg ? <div className="toast" role="status">{msg}</div> : null}
+      {msg ? null : <OfflineNote />}
     </ToastCtx.Provider>
+  );
+}
+
+/**
+ * Penanda kecil saat perangkat kehilangan sinyal, supaya tombol yang "tidak
+ * bereaksi" tidak disangka rusak. Saat tersambung lagi, data dimuat ulang
+ * otomatis (React Query) dan penanda berpamitan sebentar.
+ */
+function OfflineNote() {
+  const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+  const [back, setBack] = useState(false);
+  useEffect(() => {
+    let t = 0;
+    const up = () => {
+      setOnline(true);
+      setBack(true);
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setBack(false), 2400);
+    };
+    const down = () => {
+      window.clearTimeout(t);
+      setBack(false);
+      setOnline(false);
+    };
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
+  if (online && !back) return null;
+  return (
+    <div className={`toast offline-note ${online ? 'back' : ''}`} role="status" aria-live="polite">
+      {online ? 'tersambung lagi' : 'luring · periksa sinyalmu'}
+    </div>
   );
 }
 

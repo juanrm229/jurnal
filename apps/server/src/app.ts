@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
+import { compress } from 'hono/compress';
 import { cors } from 'hono/cors';
 import { ZodError } from 'zod';
 import type { AppEnv, Services } from './context';
@@ -39,6 +40,9 @@ export function createApp(s: Services) {
   const app = new Hono<AppEnv>();
   const auth = requireAuth(s);
 
+  // JSON & HTML dikompres saat dikirim; berkas web app sudah dipra-kompres saat build
+  // (serveStatic di bawah memilih .br/.gz), dan media biner dilewati.
+  app.use('*', compress());
   app.use('/v1/*', cors({ origin: (o) => o ?? '*', allowHeaders: ['authorization', 'content-type', 'x-sidik-guest'], allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] }));
 
   app.onError((err, c) => {
@@ -101,7 +105,7 @@ export function createApp(s: Services) {
   // Web app (PWA) disajikan dari server yang sama: satu alamat, tanpa CORS.
   if (s.cfg.webDist) {
     const root = s.cfg.webDist;
-    app.use('/*', serveStatic({ root, onFound: (path, c) => {
+    app.use('/*', serveStatic({ root, precompressed: true, onFound: (path, c) => {
       c.header('cache-control', /\/assets\//.test(path) ? 'public, max-age=31536000, immutable' : 'no-cache');
     } }));
     app.get('*', async (c, next) => {
@@ -110,7 +114,9 @@ export function createApp(s: Services) {
       // bukan index.html: kalau tidak, peramban memuat HTML sebagai JS dan layar kosong.
       if (c.req.path.startsWith('/assets/') || /\.(js|mjs|css|map|json|png|jpe?g|svg|webp|woff2?)$/.test(c.req.path)) return c.notFound();
       const html = await readFile(path.join(root, 'index.html'), 'utf8').catch(() => null);
-      return html ? c.html(html) : next();
+      if (!html) return next();
+      c.header('cache-control', 'no-cache');
+      return c.html(html);
     });
   }
   return app;

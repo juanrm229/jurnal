@@ -502,6 +502,19 @@ textarea.field {
   }
 }
 
+.toast.offline-note {
+  z-index: 89;
+  padding: 6px 14px;
+  font-size: var(--fs-xs, 12px);
+  white-space: nowrap;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--ink-faint);
+}
+.toast.offline-note.back {
+  background: var(--ink);
+  color: var(--on-ink);
+}
 .toast {
   position: fixed;
   left: 50%;

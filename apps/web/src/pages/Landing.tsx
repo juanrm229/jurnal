@@ -3,8 +3,8 @@
  * dan pengingat pelan bahwa hari ini tidak akan terulang.
  */
 import { COPY, dayName, dayOfYear, daysInYear, type DropPayload, formatDayLong, type MoodCode, MOODS, type PageLayout } from '@sehari/core';
-import { gardenDoodleFor, getScene, sceneToSvg } from '@sehari/doodles';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { gardenDoodleFor, getDoodle, getScene, sceneToSvg } from '@sehari/doodles';
+import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Page, type PageItem } from '@/editor/Page';
 import { Link, navigate } from '@/lib/router';
 import { useSession } from '@/lib/session';
@@ -455,9 +455,25 @@ function TwoWindows() {
 function YearGrid({ n, total }: { n: number; total: number }) {
   const [ref, seen] = useInView<HTMLDivElement>('-10% 0px');
   const year = new Date().getFullYear();
+  const uid = useId().replace(/:/g, '');
   const cells = useMemo(() => Array.from({ length: total }, (_, i) => (i < n - 1 ? gardenDoodleFor(`${year}:${i}`).id : null)), [n, total, year]);
+  // Ratusan sel memakai belasan doodle yang sama: gambar tiap doodle sekali sebagai
+  // <symbol>, lalu tiap sel cukup merujuknya. Dulu ~5.000 <path> di DOM, kini ratusan.
+  const sprites = useMemo(() => [...new Set(cells.filter((c): c is string => !!c))].map((id) => getDoodle(id)), [cells]);
   return (
-    <div ref={ref} className={`l-year ${seen ? 'in' : ''}`} aria-label={`${n - 1} dari ${total} hari sudah lewat`}>
+    <div ref={ref} className={`l-year ${seen ? 'in' : ''}`} role="img" aria-label={`${n - 1} dari ${total} hari sudah lewat`}>
+      <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
+        <defs>
+          {sprites.map((d) => (
+            <symbol key={d.id} id={`${uid}-${d.id}`} viewBox={d.viewBox} overflow="visible">
+              {d.strokes.map((p, i) => (
+                <path key={i} d={p} stroke="currentColor" strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              ))}
+              {d.fills?.map((p, i) => <path key={`f${i}`} d={p} fill="currentColor" />)}
+            </symbol>
+          ))}
+        </defs>
+      </svg>
       {cells.map((id, i) =>
         i === n - 1 ? (
           <span key={i} className="cell today" title="hari ini">
@@ -465,7 +481,9 @@ function YearGrid({ n, total }: { n: number; total: number }) {
           </span>
         ) : id ? (
           <span key={i} className="cell past" style={{ transitionDelay: `${Math.min(2.4, i * 0.006)}s` }}>
-            <Doodle id={id} size="100%" sw={3} />
+            <svg width="100%" height="100%" aria-hidden="true" style={{ color: 'var(--ink)', overflow: 'visible' }}>
+              <use href={`#${uid}-${id}`} />
+            </svg>
           </span>
         ) : (
           <span key={i} className="cell future" />

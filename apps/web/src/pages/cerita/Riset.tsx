@@ -262,7 +262,7 @@ function ResearchForm({ m, kind, onDone }: { m: StoryModel; kind: Kind; onDone: 
             <b>bagikan ke meja</b>
             <span className="tiny soft">{shared ? 'Semua penulis bisa melihat dan menandai statusnya.' : 'Hanya kamu yang bisa membacanya.'}</span>
           </span>
-          <button type="button" role="switch" aria-checked={shared} className="switch" onClick={() => setShared(!shared)} data-testid="riset-bagi" />
+          <button type="button" role="switch" aria-checked={shared} aria-label="bagikan ke meja" className="switch" onClick={() => setShared(!shared)} data-testid="riset-bagi" />
         </label>
       ) : null}
       <button
