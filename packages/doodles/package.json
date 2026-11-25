@@ -8,5 +8,6 @@
     "typecheck": "tsc --noEmit -p .",
     "preview": "npx tsx scripts/preview.ts"
   },
-  "type": "module"
+  "type": "module",
+  "sideEffects": false
 }

@@ -12,6 +12,27 @@
     <link rel="icon" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>Sehari</title>
+    <script>
+      // Terapkan tema tersimpan sebelum lukisan pertama, supaya pengguna kertas malam
+      // tidak melihat kilatan putih sambil menunggu aplikasi dimuat. Senja otomatis &
+      // sinkron akun tetap diurus applyTheme() (src/lib/theme.tsx) begitu aplikasi jalan.
+      (function () {
+        try {
+          var t = JSON.parse(localStorage.getItem('sehari.theme') || 'null');
+          if (!t) return;
+          var papers = { putih: '#F7F7F4', abu: '#E6E6E8', krem: '#F1EBDD', tua: '#E9DFC8', malam: '#0B0B0E' };
+          var paper = papers[t.paper] || papers.putih;
+          var dark = t.paper === 'malam';
+          var ink = /^#[0-9a-f]{6}$/i.test(t.ink) ? t.ink : '#2A14D6';
+          var r = document.documentElement;
+          r.style.setProperty('--ink', dark ? 'color-mix(in srgb, ' + ink + ' 55%, #ffffff)' : ink);
+          r.style.setProperty('--paper', paper);
+          r.dataset.dark = dark ? '1' : '0';
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', paper);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -36,10 +36,25 @@ async function request<T>(method: string, path: string, body?: unknown, raw?: { 
   }
   if (res.status === 401 && token) onUnauthorized?.();
   const text = await res.text();
-  const json = text ? (JSON.parse(text) as unknown) : null;
+  // Proksi/hosting kadang membalas halaman HTML (502, 504, batas laju): jangan sampai
+  // pengguna melihat "Unexpected token <" — jatuhkan ke pesan yang bisa dimengerti.
+  let json: unknown = null;
+  if (text) {
+    try {
+      json = JSON.parse(text) as unknown;
+    } catch {
+      if (res.ok) throw new ApiError(res.status, 'bad_response', 'Balasan server tidak terbaca. Coba lagi sebentar lagi.');
+    }
+  }
   if (!res.ok) {
     const err = (json as ApiErrorBody | null)?.error;
-    throw new ApiError(res.status, err?.code ?? 'error', err?.message ?? `Gagal (${res.status})`);
+    const fallback =
+      res.status === 429
+        ? 'Terlalu cepat. Tunggu sebentar, lalu coba lagi.'
+        : res.status >= 500
+          ? 'Server sedang sibuk. Coba lagi sebentar lagi.'
+          : `Gagal (${res.status})`;
+    throw new ApiError(res.status, err?.code ?? 'error', err?.message ?? fallback);
   }
   return json as T;
 }

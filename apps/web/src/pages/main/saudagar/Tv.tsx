@@ -4,7 +4,7 @@
 import type { CSSProperties } from 'react';
 import { useParams } from '@/lib/router';
 import { kalimat, rp, useMeja, WARNA_PEMAIN } from '@/lib/saudagar';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing } from '@/ui/kit';
 import { PlayerFace } from '../../sidik/parts';
 import { Dadu } from '../tangga/parts';

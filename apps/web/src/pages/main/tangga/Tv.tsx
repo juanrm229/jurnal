@@ -3,7 +3,7 @@
  */
 import { useParams } from '@/lib/router';
 import { kalimat, useMeja } from '@/lib/tangga';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, Growing } from '@/ui/kit';
 import { PlayerFace } from '../../sidik/parts';
 import { Dadu, Papan } from './parts';

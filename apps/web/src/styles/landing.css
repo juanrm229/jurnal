@@ -179,6 +179,12 @@
   margin: 0 auto;
   padding: 90px var(--gutter);
 }
+/* Bagian di bawah layar tidak ditata/dilukis sampai mendekati layar: halaman pertama
+   tampil jauh lebih cepat di HP. Tinggi perkiraan diingat peramban setelah terlihat. */
+.l-sec:not(#coba) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
 .l-head {
   max-width: 640px;
   margin: 0 auto 32px;

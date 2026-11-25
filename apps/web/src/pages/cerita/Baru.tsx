@@ -179,7 +179,7 @@ export default function Baru() {
                 <b>pilih satu dari dua kartu</b>
                 <span className="tiny soft">Tiap penulis ditawari dua kartu role secara privat. Matikan untuk langsung diundi.</span>
               </span>
-              <button type="button" role="switch" aria-checked={pick} className="switch" onClick={() => setPick(!pick)} />
+              <button type="button" role="switch" aria-checked={pick} aria-label="pilih satu dari dua kartu" className="switch" onClick={() => setPick(!pick)} />
             </label>
             <label className="opsi-row">
               <span className="grow">
@@ -188,14 +188,14 @@ export default function Baru() {
                   {storyDeckIds('lengkap').length} kartu, termasuk kartu Lanjutan. Dek awal berisi {storyDeckIds('awal').length} kartu yang mudah dipahami.
                 </span>
               </span>
-              <button type="button" role="switch" aria-checked={deck === 'lengkap'} className="switch" onClick={() => setDeck(deck === 'lengkap' ? 'awal' : 'lengkap')} data-testid="dek-lengkap" />
+              <button type="button" role="switch" aria-checked={deck === 'lengkap'} aria-label="dek lengkap" className="switch" onClick={() => setDeck(deck === 'lengkap' ? 'awal' : 'lengkap')} data-testid="dek-lengkap" />
             </label>
             <label className="opsi-row">
               <span className="grow">
                 <b>mode kejutan</b>
                 <span className="tiny soft">Di ruang baca hanya lipatan dan jejak yang terlihat. Adegan penuh dan kartu role baru terbuka di pengungkapan.</span>
               </span>
-              <button type="button" role="switch" aria-checked={kejutan} className="switch" onClick={() => setKejutan(!kejutan)} data-testid="kejutan" />
+              <button type="button" role="switch" aria-checked={kejutan} aria-label="mode kejutan" className="switch" onClick={() => setKejutan(!kejutan)} data-testid="kejutan" />
             </label>
           </>
         ) : null}

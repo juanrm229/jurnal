@@ -19,6 +19,7 @@ export const INKS = [
   { id: '#222226', name: 'arang' },
 ] as const;
 
+// Warna kertas juga disalin ke skrip kecil di index.html (tema sebelum lukisan pertama).
 export const PAPERS = [
   { id: 'putih', name: 'putih', color: '#F7F7F4', dark: false },
   { id: 'abu', name: 'abu kertas', color: '#E6E6E8', dark: false },

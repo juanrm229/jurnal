@@ -325,7 +325,7 @@ export function Tulis({ m }: { m: StoryModel }) {
                   <b>pakai keuntungan {role.name}</b>
                   <span className="tiny soft">{m.st.perkUsed && !perk ? (st.rounds > 3 ? 'Jatah keuntungan babak ini sudah kamu pakai. Kartu baru di babak berikutnya membawa jatah baru.' : 'Jatah keuntungan kartumu sudah kamu pakai di cerita ini.') : `${role.keuntungan} ${st.rounds > 3 ? 'Sekali per babak.' : 'Sekali per cerita.'}`}</span>
                 </span>
-                <button type="button" role="switch" aria-checked={perk} disabled={m.st.perkUsed && !perk} className="switch" onClick={() => setPerk(!perk)} data-testid="pakai-keuntungan" />
+                <button type="button" role="switch" aria-checked={perk} aria-label={`pakai keuntungan ${role.name}`} disabled={m.st.perkUsed && !perk} className="switch" onClick={() => setPerk(!perk)} data-testid="pakai-keuntungan" />
               </label>
             ) : null}
             {perk && role?.kind === 'prompt' ? (

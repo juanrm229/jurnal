@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { navigate } from '@/lib/router';
 import { useSession } from '@/lib/session';
-import { QR } from '@/ui/art';
+import { QR } from '@/ui/qr';
 import { Doodle, useToast } from '@/ui/kit';
 
 /** Perangkat baru: pulihkan dengan kode, atau tautkan dari perangkat lama. */
